@@ -16,19 +16,21 @@ func init() {
 func main(){
     // sceneGraph = Renderer.CreateSceneGraph(renderer)
     // sceneGraph.GetRootNode().Add(geom)
+    var geom Renderer.Geometry
 
     renderer := Renderer.OpenglRenderer{
         WindowTitle : "Go Engine",
         WindowWidth : 800,
         WindowHeight : 800,
         Init : func(renderer Renderer.Renderer){
-
+            geom = Renderer.Geometry{ Indicies : cubeIndicies, Verticies : cubeVertices  }
+            renderer.CreateGeometry(&geom)
         },
         Update : func(renderer Renderer.Renderer){
 
         },
         Render : func(renderer Renderer.Renderer){
-
+            renderer.DrawGeometry(&geom)
         }}
      renderer.Start();
 }
