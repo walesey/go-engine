@@ -1,0 +1,11 @@
+A Simple Rendering and scene graph library for Golang.
+
+Current features:
+ - very basic openGL renderer.
+ - scenegraph translation system 
+
+Planned features:
+ - 2D/3D physics 
+ - basic asset importing
+ - Direct lighting (ambient / diffuse / spec)
+ - PBR lighting

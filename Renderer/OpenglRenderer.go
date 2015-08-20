@@ -6,6 +6,7 @@ import (
 	"image"
 	"image/draw"
 	_ "image/png"
+	_ "image/jpeg"
 	"log"
 	"os"
 	"strings"
@@ -22,16 +23,50 @@ type Renderer interface {
 	BackGroundColor( r,g,b,a float32 )
 	Projection( angle, aspect, near, far float32 )
 	Camera( location, lookat, up vectorMath.Vector3 )
+	PopTransform()
+	PushTransform()
+	ApplyTransform( transform Transform )
 	CreateGeometry( geometry *Geometry )
 	DestroyGeometry( geometry *Geometry )
 	DrawGeometry( geometry *Geometry )
 }
 
+type Transform interface {
+	ApplyTransform( transform Transform ) 
+}
+
+type GlTransform struct {
+	Mat mgl32.Mat4
+}
+
+func (glTx *GlTransform) ApplyTransform( transform Transform ) {
+	switch v := transform.(type) {
+    default:
+        fmt.Printf("unexpected type for ApplyTransform GlTransform: %T", v)
+    case *GlTransform:
+		glTx.Mat = glTx.Mat.Mul4( transform.(*GlTransform).Mat )
+    } 
+}
+
+//used to combine transformations
+func (s *Stack) MultiplyAll() mgl32.Mat4 {
+	result := mgl32.Ident4()
+	for i:=0 ; i<s.size ; i++ {
+		tx := s.Get(i).(*GlTransform)
+		result = result.Mul4(tx.Mat)
+	}
+	return result
+}
+
+///////////////////
+//OPEN GL Renderer
 type OpenglRenderer struct {
-	program uint32
 	Init, Update, Render func()
 	WindowWidth, WindowHeight int
 	WindowTitle string
+	matStack *Stack
+	program uint32
+	modelUniform int32
 }
 
 func (glRenderer *OpenglRenderer) Start() {
@@ -70,9 +105,11 @@ func (glRenderer *OpenglRenderer) Start() {
 	glRenderer.Projection( 45.0, float32(glRenderer.WindowWidth)/float32(glRenderer.WindowHeight), 0.1, 10000.0 )
 	glRenderer.Camera( vectorMath.Vector3{3,3,3}, vectorMath.Vector3{0,0,0}, vectorMath.Vector3{0,1,0} )
 
+	matStack := CreateStack()
+	glRenderer.matStack = matStack
 	model := mgl32.Ident4()
-	modelUniform := gl.GetUniformLocation(program, gl.Str("model\x00"))
-	gl.UniformMatrix4fv(modelUniform, 1, false, &model[0])
+	glRenderer.modelUniform = gl.GetUniformLocation(program, gl.Str("model\x00"))
+	gl.UniformMatrix4fv(glRenderer.modelUniform, 1, false, &model[0])
 
 	textureUniform := gl.GetUniformLocation(program, gl.Str("tex\x00"))
 	gl.Uniform1i(textureUniform, 0)
@@ -82,7 +119,7 @@ func (glRenderer *OpenglRenderer) Start() {
 	// Configure global settings
 	gl.Enable(gl.DEPTH_TEST)
 	gl.DepthFunc(gl.LESS)
-	gl.ClearColor(1.0, 1.0, 1.0, 1.0)
+	gl.ClearColor(0.2, 0.0, 0.0, 1.0)
 
 	glRenderer.Init()
 
@@ -93,9 +130,6 @@ func (glRenderer *OpenglRenderer) Start() {
 
 		// Render
 		gl.UseProgram(program)
-
-		model = mgl32.HomogRotate3D(float32(0), mgl32.Vec3{0, 1, 0})
-		gl.UniformMatrix4fv(modelUniform, 1, false, &model[0])
 
 		glRenderer.Render()
 
@@ -121,6 +155,24 @@ func (glRenderer *OpenglRenderer) Camera( location, lookat, up vectorMath.Vector
 	gl.UniformMatrix4fv(cameraUniform, 1, false, &camera[0])
 }
 
+func (glRenderer *OpenglRenderer) PushTransform(){
+	glRenderer.matStack.Push( &GlTransform{ mgl32.Ident4() } )
+}
+
+func (glRenderer *OpenglRenderer) PopTransform(){
+	glRenderer.matStack.Pop()
+	model := glRenderer.matStack.MultiplyAll()
+	gl.UniformMatrix4fv(glRenderer.modelUniform, 1, false, &model[0])
+}
+
+func (glRenderer *OpenglRenderer) ApplyTransform( transform Transform ){
+	tx := glRenderer.matStack.Pop().(*GlTransform)
+	tx.ApplyTransform( transform )
+	glRenderer.matStack.Push(tx)
+	model := glRenderer.matStack.MultiplyAll()
+	gl.UniformMatrix4fv(glRenderer.modelUniform, 1, false, &model[0])
+}
+
 func convertVector( v vectorMath.Vector3 ) mgl32.Vec3{
 	return mgl32.Vec3{(float32)(v.X), (float32)(v.Y), (float32)(v.Z)}
 }
@@ -138,7 +190,7 @@ func (glRenderer *OpenglRenderer) CreateGeometry( geometry *Geometry ) {
 	gl.BufferData(gl.ARRAY_BUFFER, len(geometry.Verticies)*4, gl.Ptr(geometry.Verticies), gl.STATIC_DRAW)
 
 	// Load the texture
-	texture, err := newTexture("square.png")
+	texture, err := newTexture("square.jpg")
 	if err != nil {
 		panic(err)
 	}
@@ -260,7 +312,6 @@ func newTexture(file string) (uint32, error) {
 
 	return texture, nil
 }
-
 
 ////////////////
 //TEST data

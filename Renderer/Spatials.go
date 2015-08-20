@@ -1,9 +1,5 @@
 package renderer
 
-import (
-    "goEngine/vectorMath"
-)
-
 type Spatial interface {
     load( renderer Renderer )
     draw( renderer Renderer )
@@ -17,8 +13,8 @@ type Geometry struct {
     Verticies []float32
 }
 
-func CreateGeometry( indicies []uint32, verticies []float32 ) Geometry {
-    return Geometry{ Indicies : indicies, Verticies : verticies, loaded : false }
+func CreateGeometry( indicies []uint32, verticies []float32 ) *Geometry {
+    return &Geometry{ Indicies : indicies, Verticies : verticies, loaded : false }
 }
 
 func (geometry *Geometry) draw( renderer Renderer ) {
@@ -35,28 +31,30 @@ func (geometry *Geometry) load( renderer Renderer ) {
 //Node
 type Node struct {
     children []Spatial
-    location vectorMath.Vector
-    orientation vectorMath.Quaternion
+    Transform Transform
 }
 
-func CreateNode() Node{
+func CreateNode() *Node{
     //create slice to store children
     children := make([]Spatial, 0, 20)
-    newNode := Node{ children: children }
-    return newNode
+    return &Node{ children: children }
 }
 
 func (node *Node) draw( renderer Renderer ) {
+    renderer.PushTransform()
+    if node.Transform != nil{
+        renderer.ApplyTransform( node.Transform )
+    }
     for _,child := range node.children {
         child.draw(renderer)
     }
+    renderer.PopTransform()
 }
 
-func (node *Node) load( renderer Renderer ) bool {
+func (node *Node) load( renderer Renderer ) {
     for _,child := range node.children {
         child.load(renderer)
     }
-    return false
 }
 
 func (node *Node) Add( spatial Spatial ) {
@@ -66,7 +64,7 @@ func (node *Node) Add( spatial Spatial ) {
         node.children = append(node.children, make([]Spatial, 20)...)
     }
     //append to the slice
-    node.children = append(node.children, spatial);
+    node.children = append(node.children, spatial)
 }
 
 func (node *Node) Remove( spatial Spatial ) {
