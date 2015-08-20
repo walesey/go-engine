@@ -1,4 +1,4 @@
-package VectorMath
+package vectorMath
 
 
 import (

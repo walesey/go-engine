@@ -1,8 +1,4 @@
-package Renderer
-
-import (
-    "fmt"
-)
+package renderer
 
 //Interfaces
 type SceneGraph interface {
@@ -13,23 +9,20 @@ type SceneGraph interface {
 //DefaultSceneGraph
 type DefaultSceneGraph struct {
     SceneRenderer Renderer
-    root Node
+    root *Node
 }
 
+//factory
 func CreateSceneGraph( renderer Renderer ) SceneGraph{
-    return DefaultSceneGraph{ renderer, CreateNode() }
+	rootNode := CreateNode()
+    return DefaultSceneGraph{ renderer, &rootNode }
 }
 
 func (sceneGraph DefaultSceneGraph) RenderScene() {
-    // sceneGraph.root.load( sceneGraph.SceneRenderer )
+    sceneGraph.root.load( sceneGraph.SceneRenderer )
     sceneGraph.root.draw( sceneGraph.SceneRenderer )
 }
 
-func (sceneGraph DefaultSceneGraph) GetRootNode() Node {
-    return sceneGraph.root
-}
-
-func (sceneGraph DefaultSceneGraph) Add( spatial Spatial) {
-    // sceneGraph.root.Add(spatial)
-    fmt.Println(sceneGraph.root.children)
+func (sceneGraph DefaultSceneGraph) Add( spatial Spatial ) {
+    sceneGraph.root.Add(spatial)
 }

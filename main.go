@@ -1,12 +1,10 @@
 package main
 
 import (
-    "runtime"
+	"runtime"
 
-    "goEngine/Renderer"
+	"goEngine/renderer"
 )
-
-// var sceneGraph Renderer.SceneGraph
 
 func init() {
 	// GLFW event handling must run on the main OS thread
@@ -14,25 +12,29 @@ func init() {
 }
 
 func main(){
-    // sceneGraph = Renderer.CreateSceneGraph(renderer)
-    // sceneGraph.GetRootNode().Add(geom)
-    var geom Renderer.Geometry
 
-    renderer := Renderer.OpenglRenderer{
+    var sceneGraph renderer.SceneGraph
+    var mainRenderer renderer.Renderer
+
+    var geom renderer.Geometry
+
+	mainRenderer = &renderer.OpenglRenderer{
         WindowTitle : "Go Engine",
         WindowWidth : 800,
         WindowHeight : 800,
-        Init : func(renderer Renderer.Renderer){
-            geom = Renderer.Geometry{ Indicies : cubeIndicies, Verticies : cubeVertices  }
-            renderer.CreateGeometry(&geom)
+        Init : func(){
+    		sceneGraph = renderer.CreateSceneGraph(mainRenderer)
+			geom = renderer.CreateGeometry( cubeIndicies, cubeVertices )
+        	sceneGraph.Add(&geom)
         },
-        Update : func(renderer Renderer.Renderer){
-
+        Update : func(){
+        	
         },
-        Render : func(renderer Renderer.Renderer){
-            renderer.DrawGeometry(&geom)
+        Render : func(){
+        	sceneGraph.RenderScene()
         }}
-     renderer.Start();
+
+     mainRenderer.Start();
 }
 
 
@@ -88,13 +90,13 @@ var cubeVertices = []float32{
 }
 
 var cubeIndicies = []uint32{
-    //top
-    1, 2, 3,
-    3, 2, 4,
+//top
+	1, 2, 3,
+	3, 2, 4,
 
-    //bottom
-    5, 6, 7,
-    7, 6, 8,
+//bottom
+	5, 6, 7,
+	7, 6, 8,
 }
 
 // //TEST

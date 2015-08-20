@@ -1,41 +1,41 @@
-package Renderer
+package renderer
 
 import (
-    "errors"
-    "fmt"
-    "image"
-    "image/draw"
-    _ "image/png"
-    "log"
-    "os"
-    "strings"
+	"errors"
+	"fmt"
+	"image"
+	"image/draw"
+	_ "image/png"
+	"log"
+	"os"
+	"strings"
 
-    "goEngine/VectorMath"
+	"goEngine/vectorMath"
 
-    "github.com/go-gl/gl/v4.1-core/gl"
-    "github.com/go-gl/glfw/v3.1/glfw"
-    "github.com/go-gl/mathgl/mgl32"
+	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/go-gl/glfw/v3.1/glfw"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 type Renderer interface {
-    Start()
-    BackGroundColor( r,g,b,a float32 )
-    Projection( angle, aspect, near, far float32 )
-    Camera( location, lookat, up VectorMath.Vector3 )
-    CreateGeometry( geometry *Geometry )
-    DestroyGeometry( geometry *Geometry )
-    DrawGeometry( geometry *Geometry )
+	Start()
+	BackGroundColor( r,g,b,a float32 )
+	Projection( angle, aspect, near, far float32 )
+	Camera( location, lookat, up vectorMath.Vector3 )
+	CreateGeometry( geometry *Geometry )
+	DestroyGeometry( geometry *Geometry )
+	DrawGeometry( geometry *Geometry )
 }
 
 type OpenglRenderer struct {
-    programPtr *uint32
-    Init, Update, Render func(renderer Renderer)
-    WindowWidth, WindowHeight int
-    WindowTitle string
+	program uint32
+	Init, Update, Render func()
+	WindowWidth, WindowHeight int
+	WindowTitle string
 }
 
-func (glRenderer OpenglRenderer) Start() {
-    if err := glfw.Init(); err != nil {
+func (glRenderer *OpenglRenderer) Start() {
+	if err := glfw.Init(); err != nil {
 		log.Fatalln("failed to initialize glfw:", err)
 	}
 	defer glfw.Terminate()
@@ -65,10 +65,10 @@ func (glRenderer OpenglRenderer) Start() {
 		panic(err)
 	}
 	gl.UseProgram(program)
-    glRenderer.programPtr = &program
+	glRenderer.program = program
 
-    glRenderer.Projection( 45.0, float32(glRenderer.WindowWidth)/float32(glRenderer.WindowHeight), 0.1, 10000.0 )
-    glRenderer.Camera( VectorMath.Vector3{3,3,3}, VectorMath.Vector3{0,0,0}, VectorMath.Vector3{0,1,0} )
+	glRenderer.Projection( 45.0, float32(glRenderer.WindowWidth)/float32(glRenderer.WindowHeight), 0.1, 10000.0 )
+	glRenderer.Camera( vectorMath.Vector3{3,3,3}, vectorMath.Vector3{0,0,0}, vectorMath.Vector3{0,1,0} )
 
 	model := mgl32.Ident4()
 	modelUniform := gl.GetUniformLocation(program, gl.Str("model\x00"))
@@ -84,11 +84,11 @@ func (glRenderer OpenglRenderer) Start() {
 	gl.DepthFunc(gl.LESS)
 	gl.ClearColor(1.0, 1.0, 1.0, 1.0)
 
-    glRenderer.Init( glRenderer )
+	glRenderer.Init()
 
 	for !window.ShouldClose() {
 
-        glRenderer.Update(glRenderer)
+		glRenderer.Update()
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 		// Render
@@ -97,7 +97,7 @@ func (glRenderer OpenglRenderer) Start() {
 		model = mgl32.HomogRotate3D(float32(0), mgl32.Vec3{0, 1, 0})
 		gl.UniformMatrix4fv(modelUniform, 1, false, &model[0])
 
-        glRenderer.Render(glRenderer)
+		glRenderer.Render()
 
 		// Maintenance
 		window.SwapBuffers()
@@ -105,70 +105,65 @@ func (glRenderer OpenglRenderer) Start() {
 	}
 }
 
-func (glRenderer OpenglRenderer) ClearBuffers() {
-      gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+func (glRenderer *OpenglRenderer) BackGroundColor( r,g,b,a float32 ){
+	gl.ClearColor( r,g,b,a )
 }
 
-func (glRenderer OpenglRenderer) BackGroundColor( r,g,b,a float32 ){
-      gl.ClearColor( r,g,b,a )
+func (glRenderer *OpenglRenderer) Projection( angle, aspect, near, far float32 ) {
+	projection := mgl32.Perspective(mgl32.DegToRad(angle), aspect, near, far)
+	projectionUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("projection\x00"))
+	gl.UniformMatrix4fv(projectionUniform, 1, false, &projection[0])
 }
 
-func (glRenderer OpenglRenderer) Projection( angle, aspect, near, far float32 ) {
-  	projection := mgl32.Perspective(mgl32.DegToRad(angle), aspect, near, far)
-    projectionUniform := gl.GetUniformLocation((*glRenderer.programPtr), gl.Str("projection\x00"))
-  	gl.UniformMatrix4fv(projectionUniform, 1, false, &projection[0])
+func (glRenderer *OpenglRenderer) Camera( location, lookat, up vectorMath.Vector3 ) {
+	camera := mgl32.LookAtV(convertVector(location), convertVector(lookat), convertVector(up))
+	cameraUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("camera\x00"))
+	gl.UniformMatrix4fv(cameraUniform, 1, false, &camera[0])
 }
 
-func (glRenderer OpenglRenderer) Camera( location, lookat, up VectorMath.Vector3 ) {
-    camera := mgl32.LookAtV(convertVector(location), convertVector(lookat), convertVector(up))
-	cameraUniform := gl.GetUniformLocation((*glRenderer.programPtr), gl.Str("camera\x00"))
-    gl.UniformMatrix4fv(cameraUniform, 1, false, &camera[0])
+func convertVector( v vectorMath.Vector3 ) mgl32.Vec3{
+	return mgl32.Vec3{(float32)(v.X), (float32)(v.Y), (float32)(v.Z)}
 }
 
-func convertVector( v VectorMath.Vector3 ) mgl32.Vec3{
-    return mgl32.Vec3{(float32)(v.X), (float32)(v.Y), (float32)(v.Z)}
-}
+func (glRenderer *OpenglRenderer) CreateGeometry( geometry *Geometry ) {
+	// Configure the vertex data
+	var vao uint32
+	gl.GenVertexArrays(1, &vao)
+	gl.BindVertexArray(vao)
+	geometry.vaoId = vao
 
-func (glRenderer OpenglRenderer) CreateGeometry( geometry *Geometry ) {
-    // Configure the vertex data
-    var vao uint32
-    gl.GenVertexArrays(1, &vao)
-    gl.BindVertexArray(vao)
-    (*geometry).vaoId = vao
+	var vbo uint32
+	gl.GenBuffers(1, &vbo)
+	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+	gl.BufferData(gl.ARRAY_BUFFER, len(geometry.Verticies)*4, gl.Ptr(geometry.Verticies), gl.STATIC_DRAW)
 
-    var vbo uint32
-    gl.GenBuffers(1, &vbo)
-    gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-    gl.BufferData(gl.ARRAY_BUFFER, len((*geometry).Verticies)*4, gl.Ptr((*geometry).Verticies), gl.STATIC_DRAW)
-
-    // Load the texture
+	// Load the texture
 	texture, err := newTexture("square.png")
 	if err != nil {
 		panic(err)
 	}
-    (*geometry).textureId = texture
+	(*geometry).textureId = texture
 
-    vertAttrib := uint32(gl.GetAttribLocation((*glRenderer.programPtr), gl.Str("vert\x00")))
-    gl.EnableVertexAttribArray(vertAttrib)
-    gl.VertexAttribPointer(vertAttrib, 3, gl.FLOAT, false, 5*4, gl.PtrOffset(0))
+	vertAttrib := uint32(gl.GetAttribLocation(glRenderer.program, gl.Str("vert\x00")))
+	gl.EnableVertexAttribArray(vertAttrib)
+	gl.VertexAttribPointer(vertAttrib, 3, gl.FLOAT, false, 5*4, gl.PtrOffset(0))
 
-    texCoordAttrib := uint32(gl.GetAttribLocation((*glRenderer.programPtr), gl.Str("vertTexCoord\x00")))
-    gl.EnableVertexAttribArray(texCoordAttrib)
-    gl.VertexAttribPointer(texCoordAttrib, 2, gl.FLOAT, false, 5*4, gl.PtrOffset(3*4))
+	texCoordAttrib := uint32(gl.GetAttribLocation(glRenderer.program, gl.Str("vertTexCoord\x00")))
+	gl.EnableVertexAttribArray(texCoordAttrib)
+	gl.VertexAttribPointer(texCoordAttrib, 2, gl.FLOAT, false, 5*4, gl.PtrOffset(3*4))
 }
 
-func (glRenderer OpenglRenderer) DestroyGeometry( geometry *Geometry ) {
+func (glRenderer *OpenglRenderer) DestroyGeometry( geometry *Geometry ) {
 
 }
 
+func (glRenderer *OpenglRenderer) DrawGeometry( geometry *Geometry ) {
+	gl.BindVertexArray(geometry.vaoId)
 
-func (glRenderer OpenglRenderer) DrawGeometry( geometry *Geometry ) {
-    gl.BindVertexArray((*geometry).vaoId)
+	gl.ActiveTexture(gl.TEXTURE0)
+	gl.BindTexture(gl.TEXTURE_2D, geometry.textureId)
 
-    gl.ActiveTexture(gl.TEXTURE0)
-    gl.BindTexture(gl.TEXTURE_2D, (*geometry).textureId)
-
-    gl.DrawArrays(gl.TRIANGLES, 0, 6*2*3)
+	gl.DrawArrays(gl.TRIANGLES, 0, 6*2*3)
 }
 
 func newProgram(vertexShaderSource, fragmentShaderSource string) (uint32, error) {
@@ -279,8 +274,8 @@ in vec3 vert;
 in vec2 vertTexCoord;
 out vec2 fragTexCoord;
 void main() {
-    fragTexCoord = vertTexCoord;
-    gl_Position = projection * camera * model * vec4(vert, 1);
+	fragTexCoord = vertTexCoord;
+	gl_Position = projection * camera * model * vec4(vert, 1);
 }
 ` + "\x00"
 
@@ -290,6 +285,6 @@ uniform sampler2D tex;
 in vec2 fragTexCoord;
 out vec4 outputColor;
 void main() {
-    outputColor = texture(tex, fragTexCoord);
+	outputColor = texture(tex, fragTexCoord);
 }
 ` + "\x00"
