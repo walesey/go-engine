@@ -182,12 +182,17 @@ func (glRenderer *OpenglRenderer) CreateGeometry( geometry *Geometry ) {
 	var vao uint32
 	gl.GenVertexArrays(1, &vao)
 	gl.BindVertexArray(vao)
-	geometry.vaoId = vao
 
 	var vbo uint32
 	gl.GenBuffers(1, &vbo)
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
 	gl.BufferData(gl.ARRAY_BUFFER, len(geometry.Verticies)*4, gl.Ptr(geometry.Verticies), gl.STATIC_DRAW)
+
+	var elementbuffer uint32
+	gl.GenBuffers(1, &elementbuffer)
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, elementbuffer)
+	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(geometry.Indicies)*4, gl.Ptr(geometry.Indicies), gl.STATIC_DRAW)
+	geometry.vaoId = elementbuffer
 
 	// Load the texture
 	texture, err := newTexture("square.jpg")
@@ -195,14 +200,6 @@ func (glRenderer *OpenglRenderer) CreateGeometry( geometry *Geometry ) {
 		panic(err)
 	}
 	(*geometry).textureId = texture
-
-	vertAttrib := uint32(gl.GetAttribLocation(glRenderer.program, gl.Str("vert\x00")))
-	gl.EnableVertexAttribArray(vertAttrib)
-	gl.VertexAttribPointer(vertAttrib, 3, gl.FLOAT, false, 5*4, gl.PtrOffset(0))
-
-	texCoordAttrib := uint32(gl.GetAttribLocation(glRenderer.program, gl.Str("vertTexCoord\x00")))
-	gl.EnableVertexAttribArray(texCoordAttrib)
-	gl.VertexAttribPointer(texCoordAttrib, 2, gl.FLOAT, false, 5*4, gl.PtrOffset(3*4))
 }
 
 func (glRenderer *OpenglRenderer) DestroyGeometry( geometry *Geometry ) {
@@ -210,12 +207,21 @@ func (glRenderer *OpenglRenderer) DestroyGeometry( geometry *Geometry ) {
 }
 
 func (glRenderer *OpenglRenderer) DrawGeometry( geometry *Geometry ) {
-	gl.BindVertexArray(geometry.vaoId)
+
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, geometry.vaoId)
+
+	vertAttrib := uint32(gl.GetAttribLocation(glRenderer.program, gl.Str("vert\x00")))
+	gl.EnableVertexAttribArray(vertAttrib)
+	gl.VertexAttribPointer(vertAttrib, 3, gl.FLOAT, false, 3*4, gl.PtrOffset(0))
+
+	texCoordAttrib := uint32(gl.GetAttribLocation(glRenderer.program, gl.Str("vertTexCoord\x00")))
+	gl.EnableVertexAttribArray(texCoordAttrib)
+	gl.VertexAttribPointer(texCoordAttrib, 2, gl.FLOAT, false, 2*4, gl.PtrOffset(len(geometry.Verticies)*4))
 
 	gl.ActiveTexture(gl.TEXTURE0)
 	gl.BindTexture(gl.TEXTURE_2D, geometry.textureId)
 
-	gl.DrawArrays(gl.TRIANGLES, 0, 6*2*3)
+	gl.DrawElements(gl.TRIANGLES, (int32)(len(geometry.Indicies)), gl.UNSIGNED_INT, gl.PtrOffset(0))
 }
 
 func newProgram(vertexShaderSource, fragmentShaderSource string) (uint32, error) {
