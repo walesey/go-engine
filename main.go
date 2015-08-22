@@ -17,6 +17,9 @@ func init() {
 
 func main(){
 
+    fps := renderer.CreateFPSMeter(1.0)
+    fps.FpsCap = 60
+
     var sceneGraph renderer.SceneGraph
     var mainRenderer renderer.Renderer
 
@@ -45,6 +48,7 @@ func main(){
         },
 
         Update : func(){
+            fps.UpdateFPSMeter()
         	i = i + 0.02
         	if i > 130 {
         		i = -30
@@ -62,7 +66,7 @@ func main(){
         	sceneGraph.RenderScene()
         }}
 
-     mainRenderer.Start()
+    mainRenderer.Start()
 }
 
 var cubeIndicies = []uint32{

@@ -217,7 +217,7 @@ func (glRenderer *OpenglRenderer) DrawGeometry( geometry *Geometry ) {
 	texCoordAttrib := uint32(gl.GetAttribLocation(glRenderer.program, gl.Str("vertTexCoord\x00")))
 	gl.EnableVertexAttribArray(texCoordAttrib)
 	gl.VertexAttribPointer(texCoordAttrib, 2, gl.FLOAT, false, 2*4, gl.PtrOffset(len(geometry.Verticies)*4))
-
+	
 	gl.ActiveTexture(gl.TEXTURE0)
 	gl.BindTexture(gl.TEXTURE_2D, geometry.textureId)
 
