@@ -39,8 +39,8 @@ func main(){
         Init : func(){
     		sceneGraph = renderer.CreateSceneGraph(mainRenderer)
 
-            hulk := assets.ImportObj("TestAssets/hulk.obj")
-            ares := assets.ImportObj("TestAssets/OREK_Ares.obj")
+            hulk := assets.ImportObj("TestAssets/faces.obj")
+            ares := assets.ImportObj("TestAssets/faces.obj")
 
 			geom := renderer.CreateGeometry( hulk.Indicies, hulk.Vertices )
 			boxNode = renderer.CreateNode()
@@ -55,7 +55,7 @@ func main(){
 
         Update : func(){
             fps.UpdateFPSMeter()
-        	i = i + 0.03
+        	i = i + 0.01
         	if i > 15 {
         		i = -5
         	}

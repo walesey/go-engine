@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"bufio"
 	"os"
-	"fmt"
 	"log"
 )
 
@@ -21,10 +20,11 @@ func (obj *ObjData) pushVert( x,y,z,nx,ny,nz,u,v float32 ) uint32 {
 	return (uint32)((len(obj.Vertices) / 8) - 1)
 }
 
-func (obj *ObjData) pushIndex( f1,f2,f3 uint32 ) {
-	obj.Indicies = append(obj.Indicies, f1,f2,f3 )
+func (obj *ObjData) pushIndex( indicies ...uint32 ) {
+	obj.Indicies = append(obj.Indicies, indicies... )
 }
 
+//
 func (obj *ObjData) processFaceVertex( token string, vertexList, uvList, normalList []float32 ) uint32 {
 	face := strings.Split(token, "/")
 	var index int32
@@ -62,16 +62,34 @@ func (obj *ObjData) processFaceVertex( token string, vertexList, uvList, normalL
 	return obj.pushVert( vx,vy,vz, vnx,vny,vnz, vtx,vty )
 }
 
+//Processes a polygonal face by splitting it into triangles 
 func (obj *ObjData) processFace( line string, vertexList, uvList, normalList []float32 ){
 	tokens := strings.Fields(line)
 	if tokens[0] == "f" {
-		i1 := obj.processFaceVertex(tokens[1], vertexList, uvList, normalList)
-		i2 := obj.processFaceVertex(tokens[2], vertexList, uvList, normalList)
-		i3 := obj.processFaceVertex(tokens[3], vertexList, uvList, normalList)
-		obj.pushIndex(i1, i2, i3)
+		tokens = append(tokens[:0], tokens[1:]...)
+		for len(tokens) > 0 {
+			tempTokens := make([]string, 0, 0)
+			for i:=0 ; i < (len(tokens)-1); i+=2 {
+				obj.pushIndex( obj.processFaceVertex(tokens[i], vertexList, uvList, normalList) )
+				obj.pushIndex( obj.processFaceVertex(tokens[i+1], vertexList, uvList, normalList) )
+				if len(tokens) > (i+2){
+					obj.pushIndex( obj.processFaceVertex(tokens[i+2], vertexList, uvList, normalList) )
+				} else {
+					obj.pushIndex( obj.processFaceVertex(tokens[0], vertexList, uvList, normalList) )
+				}
+				if len(tokens) > 4 {
+					tempTokens = append(tempTokens, tokens[i])
+				}
+			}
+			if len(tokens) > 4 && len(tokens)%2 == 1 {
+				tempTokens = append(tempTokens, tokens[len(tokens)-1])
+			}
+			tokens = tempTokens
+		}
 	}
 }
 
+//
 func ImportObj(filePath string) *ObjData {
 
 	obj := &ObjData{ Indicies: make([]uint32, 0, 0), Vertices: make([]float32, 0, 0) }
@@ -99,12 +117,8 @@ func ImportObj(filePath string) *ObjData {
 		} else if dataType == "vn" { //xyz vertex normal
 			normalList = append(normalList, stf(tokens[1]), stf(tokens[2]), stf(tokens[3]) )
 		} else if dataType == "usemtl" { //mtl material
-			fmt.Println("NOTE: mtl not yet supported: " + line)
+			//TODO
 		} else if dataType == "f" { // v/t/n face
-			//check triangles
-			if len(tokens) != 4 {
-				fmt.Println("WARNING: ImportObj only supports triangles: " + line)
-			}
 			obj.processFace( line, vertexList, uvList, normalList );
 		}
 	}
