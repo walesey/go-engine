@@ -16,6 +16,7 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/disintegration/imaging"
 )
 
 type Renderer interface {
@@ -195,7 +196,7 @@ func (glRenderer *OpenglRenderer) CreateGeometry( geometry *Geometry ) {
 	geometry.vaoId = elementbuffer
 
 	// Load the texture
-	texture, err := newTexture("square.jpg")
+	texture, err := newTexture("TestAssets/hulk_UV.png")
 	if err != nil {
 		panic(err)
 	}
@@ -210,14 +211,21 @@ func (glRenderer *OpenglRenderer) DrawGeometry( geometry *Geometry ) {
 
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, geometry.vaoId)
 
+	//set verticies attribute
 	vertAttrib := uint32(gl.GetAttribLocation(glRenderer.program, gl.Str("vert\x00")))
 	gl.EnableVertexAttribArray(vertAttrib)
-	gl.VertexAttribPointer(vertAttrib, 3, gl.FLOAT, false, 3*4, gl.PtrOffset(0))
+	gl.VertexAttribPointer(vertAttrib, 3, gl.FLOAT, false, 8*4, gl.PtrOffset(0))
 
+	//set normals attribute
+	normAttrib := uint32(gl.GetAttribLocation(glRenderer.program, gl.Str("norm\x00")))
+	gl.EnableVertexAttribArray(normAttrib)
+	gl.VertexAttribPointer(normAttrib, 3, gl.FLOAT, false, 8*4, gl.PtrOffset(3*4))
+
+	//set texture coord attribute
 	texCoordAttrib := uint32(gl.GetAttribLocation(glRenderer.program, gl.Str("vertTexCoord\x00")))
 	gl.EnableVertexAttribArray(texCoordAttrib)
-	gl.VertexAttribPointer(texCoordAttrib, 2, gl.FLOAT, false, 2*4, gl.PtrOffset(len(geometry.Verticies)*4))
-	
+	gl.VertexAttribPointer(texCoordAttrib, 2, gl.FLOAT, false, 8*4, gl.PtrOffset(6*4))
+
 	gl.ActiveTexture(gl.TEXTURE0)
 	gl.BindTexture(gl.TEXTURE_2D, geometry.textureId)
 
@@ -295,6 +303,7 @@ func newTexture(file string) (uint32, error) {
 	if rgba.Stride != rgba.Rect.Size().X*4 {
 		return 0, fmt.Errorf("unsupported stride")
 	}
+	img = imaging.FlipV(img)
 	draw.Draw(rgba, rgba.Bounds(), img, image.Point{0, 0}, draw.Src)
 
 	var texture uint32
@@ -328,6 +337,7 @@ uniform mat4 projection;
 uniform mat4 camera;
 uniform mat4 model;
 in vec3 vert;
+in vec3 norm;
 in vec2 vertTexCoord;
 out vec2 fragTexCoord;
 void main() {

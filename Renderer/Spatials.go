@@ -13,6 +13,8 @@ type Geometry struct {
     Verticies []float32
 }
 
+//vericies format : x,y,z,   nx,ny,nz,   u,v
+//indicies format : f1,f2,f3 (triangles)
 func CreateGeometry( indicies []uint32, verticies []float32 ) *Geometry {
     return &Geometry{ Indicies : indicies, Verticies : verticies, loaded : false }
 }
@@ -36,7 +38,7 @@ type Node struct {
 
 func CreateNode() *Node{
     //create slice to store children
-    children := make([]Spatial, 0, 20)
+    children := make([]Spatial, 0, 0)
     return &Node{ children: children }
 }
 
@@ -58,11 +60,6 @@ func (node *Node) load( renderer Renderer ) {
 }
 
 func (node *Node) Add( spatial Spatial ) {
-    length := len(node.children)
-    if length >= cap(node.children) {
-        //expand the slice if necissary
-        node.children = append(node.children, make([]Spatial, 20)...)
-    }
     //append to the slice
     node.children = append(node.children, spatial)
 }
