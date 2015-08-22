@@ -7,7 +7,7 @@ type Spatial interface {
 
 //Geometry
 type Geometry struct {
-    vaoId, textureId uint32
+    vboId, iboId, textureId uint32
     loaded bool
     Indicies []uint32
     Verticies []float32

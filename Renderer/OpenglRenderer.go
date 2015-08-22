@@ -117,10 +117,14 @@ func (glRenderer *OpenglRenderer) Start() {
 
 	gl.BindFragDataLocation(program, 0, gl.Str("outputColor\x00"))
 
+	var vao uint32
+	gl.GenVertexArrays(1, &vao)
+	gl.BindVertexArray(vao)
+
 	// Configure global settings
 	gl.Enable(gl.DEPTH_TEST)
 	gl.DepthFunc(gl.LESS)
-	gl.ClearColor(0.2, 0.0, 0.0, 1.0)
+	gl.ClearColor(0.0, 0.0, 0.0, 1.0)
 
 	glRenderer.Init()
 
@@ -179,21 +183,19 @@ func convertVector( v vectorMath.Vector3 ) mgl32.Vec3{
 }
 
 func (glRenderer *OpenglRenderer) CreateGeometry( geometry *Geometry ) {
-	// Configure the vertex data
-	var vao uint32
-	gl.GenVertexArrays(1, &vao)
-	gl.BindVertexArray(vao)
 
+	// Configure the vertex data
 	var vbo uint32
 	gl.GenBuffers(1, &vbo)
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
 	gl.BufferData(gl.ARRAY_BUFFER, len(geometry.Verticies)*4, gl.Ptr(geometry.Verticies), gl.STATIC_DRAW)
+	geometry.vboId = vbo
 
-	var elementbuffer uint32
-	gl.GenBuffers(1, &elementbuffer)
-	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, elementbuffer)
+	var ibo uint32
+	gl.GenBuffers(1, &ibo)
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo)
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(geometry.Indicies)*4, gl.Ptr(geometry.Indicies), gl.STATIC_DRAW)
-	geometry.vaoId = elementbuffer
+	geometry.iboId = ibo
 
 	// Load the texture
 	texture, err := newTexture("TestAssets/hulk_UV.png")
@@ -209,7 +211,8 @@ func (glRenderer *OpenglRenderer) DestroyGeometry( geometry *Geometry ) {
 
 func (glRenderer *OpenglRenderer) DrawGeometry( geometry *Geometry ) {
 
-	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, geometry.vaoId)
+	gl.BindBuffer(gl.ARRAY_BUFFER, geometry.vboId)
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, geometry.iboId)
 
 	//set verticies attribute
 	vertAttrib := uint32(gl.GetAttribLocation(glRenderer.program, gl.Str("vert\x00")))

@@ -39,14 +39,15 @@ func main(){
         Init : func(){
     		sceneGraph = renderer.CreateSceneGraph(mainRenderer)
 
-            cubeObj := assets.ImportObj("TestAssets/hulk.obj")
+            hulk := assets.ImportObj("TestAssets/hulk.obj")
+            ares := assets.ImportObj("TestAssets/OREK_Ares.obj")
 
-			geom := renderer.CreateGeometry( cubeObj.Indicies, cubeObj.Vertices )
+			geom := renderer.CreateGeometry( hulk.Indicies, hulk.Vertices )
 			boxNode = renderer.CreateNode()
 			boxNode.Add(geom)
         	sceneGraph.Add(boxNode)
 
-			geom = renderer.CreateGeometry( cubeObj.Indicies, cubeObj.Vertices )
+			geom = renderer.CreateGeometry( ares.Indicies, ares.Vertices )
 			boxNode2 = renderer.CreateNode()
 			boxNode2.Add(geom)
         	boxNode.Add(boxNode2)

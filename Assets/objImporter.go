@@ -33,7 +33,7 @@ func (obj *ObjData) processFaceVertex( token string, vertexList, uvList, normalL
 	vx := (float32)(0.0)
 	vy := (float32)(0.0)
 	vz := (float32)(0.0)
-	if( face[0] != "" ){
+	if len(face) > 0 && face[0] != "" {
 		index = (sti(face[0])-1) * 3
 		vx = vertexList[index]
 		vy = vertexList[index+1]
@@ -43,7 +43,7 @@ func (obj *ObjData) processFaceVertex( token string, vertexList, uvList, normalL
 	//texture
 	vtx := (float32)(0.0)
 	vty := (float32)(0.0)
-	if( face[1] != "" ){
+	if len(face) > 1 && face[1] != "" {
 		index = (sti(face[1])-1) * 2
 		vtx = uvList[index]
 		vty = uvList[index+1]
@@ -52,7 +52,7 @@ func (obj *ObjData) processFaceVertex( token string, vertexList, uvList, normalL
 	vnx := (float32)(0.0)
 	vny := (float32)(0.0)
 	vnz := (float32)(0.0)
-	if( face[2] != "" ){
+	if len(face) > 2 && face[2] != "" {
 		index = (sti(face[2])-1) * 3
 		vnx = normalList[index]
 		vny = normalList[index+1]
