@@ -8,6 +8,8 @@ import (
 	"log"
 )
 
+//Vertices format : x,y,z,   nx,ny,nz,   u,v 
+//Indicies format : f1,f2,f3 (triangles)
 type ObjData struct{
 	Name string
 	Indicies []uint32
@@ -24,11 +26,11 @@ func (obj *ObjData) pushIndex( indicies ...uint32 ) {
 	obj.Indicies = append(obj.Indicies, indicies... )
 }
 
-//
+//parses a single triangle vertex, returning the newly generated index
 func (obj *ObjData) processFaceVertex( token string, vertexList, uvList, normalList []float32 ) uint32 {
 	face := strings.Split(token, "/")
 	var index int32
-
+	
 	//vertex
 	vx := (float32)(0.0)
 	vy := (float32)(0.0)
@@ -39,7 +41,7 @@ func (obj *ObjData) processFaceVertex( token string, vertexList, uvList, normalL
 		vy = vertexList[index+1]
 		vz = vertexList[index+2]
 	}
-
+	
 	//texture
 	vtx := (float32)(0.0)
 	vty := (float32)(0.0)
@@ -48,6 +50,7 @@ func (obj *ObjData) processFaceVertex( token string, vertexList, uvList, normalL
 		vtx = uvList[index]
 		vty = uvList[index+1]
 	}
+	
 	//normal
 	vnx := (float32)(0.0)
 	vny := (float32)(0.0)
@@ -58,7 +61,7 @@ func (obj *ObjData) processFaceVertex( token string, vertexList, uvList, normalL
 		vny = normalList[index+1]
 		vnz = normalList[index+2]
 	}
-
+	
 	return obj.pushVert( vx,vy,vz, vnx,vny,vnz, vtx,vty )
 }
 
@@ -89,8 +92,8 @@ func (obj *ObjData) processFace( line string, vertexList, uvList, normalList []f
 	}
 }
 
-//
-func ImportObj(filePath string) *ObjData {
+//imports an obj filePath into an ObjData reference containing index and vertex buffers
+func ImportObj(filePath string) (*ObjData, error) {
 
 	obj := &ObjData{ Indicies: make([]uint32, 0, 0), Vertices: make([]float32, 0, 0) }
 	vertexList := make([]float32, 0, 0)
@@ -99,7 +102,7 @@ func ImportObj(filePath string) *ObjData {
 
 	file, err := os.Open(filePath)
 	if err != nil {
-	    log.Fatal(err)
+		return obj, err
 	}
 	defer file.Close()
 
@@ -124,10 +127,10 @@ func ImportObj(filePath string) *ObjData {
 	}
 
 	if err := scanner.Err(); err != nil {
-	    log.Fatal(err)
+		return obj, err
 	}
 
-	return obj
+	return obj, nil
 }
 
 //string to float32

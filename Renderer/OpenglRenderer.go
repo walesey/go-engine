@@ -3,22 +3,19 @@ package renderer
 import (
 	"errors"
 	"fmt"
+	"log"
+	"strings"
 	"image"
 	"image/draw"
-	_ "image/png"
-	_ "image/jpeg"
-	"log"
-	"os"
-	"strings"
 
 	"goEngine/vectorMath"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
 	"github.com/go-gl/mathgl/mgl32"
-	"github.com/disintegration/imaging"
 )
 
+//Renderer API 
 type Renderer interface {
 	Start()
 	BackGroundColor( r,g,b,a float32 )
@@ -29,6 +26,8 @@ type Renderer interface {
 	ApplyTransform( transform Transform )
 	CreateGeometry( geometry *Geometry )
 	DestroyGeometry( geometry *Geometry )
+	CreateMaterial( material *Material )
+	DestroyMaterial( material *Material )
 	DrawGeometry( geometry *Geometry )
 }
 
@@ -112,8 +111,16 @@ func (glRenderer *OpenglRenderer) Start() {
 	glRenderer.modelUniform = gl.GetUniformLocation(program, gl.Str("model\x00"))
 	gl.UniformMatrix4fv(glRenderer.modelUniform, 1, false, &model[0])
 
-	textureUniform := gl.GetUniformLocation(program, gl.Str("tex\x00"))
+	textureUniform := gl.GetUniformLocation(program, gl.Str("diffuse\x00"))
 	gl.Uniform1i(textureUniform, 0)
+	textureUniform = gl.GetUniformLocation(program, gl.Str("normal\x00"))
+	gl.Uniform1i(textureUniform, 1)
+	textureUniform = gl.GetUniformLocation(program, gl.Str("specular\x00"))
+	gl.Uniform1i(textureUniform, 2)
+	textureUniform = gl.GetUniformLocation(program, gl.Str("gloss\x00"))
+	gl.Uniform1i(textureUniform, 3)
+	textureUniform = gl.GetUniformLocation(program, gl.Str("roughness\x00"))
+	gl.Uniform1i(textureUniform, 4)
 
 	gl.BindFragDataLocation(program, 0, gl.Str("outputColor\x00"))
 
@@ -182,6 +189,7 @@ func convertVector( v vectorMath.Vector3 ) mgl32.Vec3{
 	return mgl32.Vec3{(float32)(v.X), (float32)(v.Y), (float32)(v.Z)}
 }
 
+//
 func (glRenderer *OpenglRenderer) CreateGeometry( geometry *Geometry ) {
 
 	// Configure the vertex data
@@ -196,19 +204,66 @@ func (glRenderer *OpenglRenderer) CreateGeometry( geometry *Geometry ) {
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo)
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(geometry.Indicies)*4, gl.Ptr(geometry.Indicies), gl.STATIC_DRAW)
 	geometry.iboId = ibo
-
-	// Load the texture
-	texture, err := newTexture("TestAssets/hulk_UV.png")
-	if err != nil {
-		panic(err)
-	}
-	(*geometry).textureId = texture
 }
 
+//
 func (glRenderer *OpenglRenderer) DestroyGeometry( geometry *Geometry ) {
 
 }
 
+//setup Texture
+func (glRenderer *OpenglRenderer) CreateMaterial( material *Material ) {
+	if material.Diffuse != nil {
+		material.diffuseId = glRenderer.newTexture( material.Diffuse, gl.TEXTURE0 )
+	}
+	if material.Normal != nil {
+		material.normalId = glRenderer.newTexture( material.Normal, gl.TEXTURE1 )
+	}
+	if material.Specular != nil {
+		material.specularId = glRenderer.newTexture( material.Specular, gl.TEXTURE2 )
+	}
+	if material.Gloss != nil {
+		material.glossId = glRenderer.newTexture( material.Gloss, gl.TEXTURE3 )
+	}
+	if material.Roughness != nil {
+		material.roughnessId = glRenderer.newTexture( material.Roughness, gl.TEXTURE4 )
+	}
+}
+
+//setup Texture
+func (glRenderer *OpenglRenderer) newTexture( img image.Image, textureUnit uint32 ) uint32 {
+	rgba := image.NewRGBA(img.Bounds())
+	if rgba.Stride != rgba.Rect.Size().X*4 {
+	    log.Fatal("unsupported stride")
+	}
+	draw.Draw(rgba, rgba.Bounds(), img, image.Point{0, 0}, draw.Src)
+	var texId uint32
+	gl.GenTextures(1, &texId)
+	gl.ActiveTexture(textureUnit)
+	gl.BindTexture(gl.TEXTURE_2D, texId)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+	gl.TexImage2D(
+		gl.TEXTURE_2D,
+		0,
+		gl.RGBA,
+		int32(rgba.Rect.Size().X),
+		int32(rgba.Rect.Size().Y),
+		0,
+		gl.RGBA,
+		gl.UNSIGNED_BYTE,
+		gl.Ptr(rgba.Pix))
+	return texId
+}
+
+//
+func (glRenderer *OpenglRenderer) DestroyMaterial( material *Material ) {
+
+}
+
+//
 func (glRenderer *OpenglRenderer) DrawGeometry( geometry *Geometry ) {
 
 	gl.BindBuffer(gl.ARRAY_BUFFER, geometry.vboId)
@@ -229,8 +284,17 @@ func (glRenderer *OpenglRenderer) DrawGeometry( geometry *Geometry ) {
 	gl.EnableVertexAttribArray(texCoordAttrib)
 	gl.VertexAttribPointer(texCoordAttrib, 2, gl.FLOAT, false, 8*4, gl.PtrOffset(6*4))
 
+	//setup textures
 	gl.ActiveTexture(gl.TEXTURE0)
-	gl.BindTexture(gl.TEXTURE_2D, geometry.textureId)
+	gl.BindTexture(gl.TEXTURE_2D, geometry.Material.diffuseId)
+	gl.ActiveTexture(gl.TEXTURE1)
+	gl.BindTexture(gl.TEXTURE_2D, geometry.Material.normalId)
+	gl.ActiveTexture(gl.TEXTURE2)
+	gl.BindTexture(gl.TEXTURE_2D, geometry.Material.specularId)
+	gl.ActiveTexture(gl.TEXTURE3)
+	gl.BindTexture(gl.TEXTURE_2D, geometry.Material.glossId)
+	gl.ActiveTexture(gl.TEXTURE4)
+	gl.BindTexture(gl.TEXTURE_2D, geometry.Material.roughnessId)
 
 	gl.DrawElements(gl.TRIANGLES, (int32)(len(geometry.Indicies)), gl.UNSIGNED_INT, gl.PtrOffset(0))
 }
@@ -292,48 +356,6 @@ func compileShader(source string, shaderType uint32) (uint32, error) {
 	return shader, nil
 }
 
-func newTexture(file string) (uint32, error) {
-	imgFile, err := os.Open(file)
-	if err != nil {
-		return 0, err
-	}
-	img, _, err := image.Decode(imgFile)
-	if err != nil {
-		return 0, err
-	}
-
-	rgba := image.NewRGBA(img.Bounds())
-	if rgba.Stride != rgba.Rect.Size().X*4 {
-		return 0, fmt.Errorf("unsupported stride")
-	}
-	img = imaging.FlipV(img)
-	draw.Draw(rgba, rgba.Bounds(), img, image.Point{0, 0}, draw.Src)
-
-	var texture uint32
-	gl.GenTextures(1, &texture)
-	gl.ActiveTexture(gl.TEXTURE0)
-	gl.BindTexture(gl.TEXTURE_2D, texture)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-	gl.TexImage2D(
-		gl.TEXTURE_2D,
-		0,
-		gl.RGBA,
-		int32(rgba.Rect.Size().X),
-		int32(rgba.Rect.Size().Y),
-		0,
-		gl.RGBA,
-		gl.UNSIGNED_BYTE,
-		gl.Ptr(rgba.Pix))
-
-	return texture, nil
-}
-
-////////////////
-//TEST data
-
 var vertexShader string = `
 #version 330
 uniform mat4 projection;
@@ -343,6 +365,7 @@ in vec3 vert;
 in vec3 norm;
 in vec2 vertTexCoord;
 out vec2 fragTexCoord;
+
 void main() {
 	fragTexCoord = vertTexCoord;
 	gl_Position = projection * camera * model * vec4(vert, 1);
@@ -351,10 +374,15 @@ void main() {
 
 var fragmentShader = `
 #version 330
-uniform sampler2D tex;
+uniform sampler2D diffuse;
+uniform sampler2D normal;
+uniform sampler2D specular;
+uniform sampler2D gloss;
+uniform sampler2D roughness;
 in vec2 fragTexCoord;
 out vec4 outputColor;
+
 void main() {
-	outputColor = texture(tex, fragTexCoord);
+	outputColor = texture(diffuse, fragTexCoord);
 }
 ` + "\x00"

@@ -39,15 +39,26 @@ func main(){
         Init : func(){
     		sceneGraph = renderer.CreateSceneGraph(mainRenderer)
 
-            hulk := assets.ImportObj("TestAssets/faces.obj")
-            ares := assets.ImportObj("TestAssets/faces.obj")
+            hulk,_ := assets.ImportObj("TestAssets/hulk.obj")
+            hulkUV := assets.ImportImage("TestAssets/hulk_UV.png")
+            hulkNM := assets.ImportImage("TestAssets/hulk_NM.png")
+            hulkMat := renderer.CreateMaterial()
+            hulkMat.Diffuse = hulkUV
+            hulkMat.Normal = hulkNM
+
+            ares,_ := assets.ImportObj("TestAssets/OREK_Ares.obj")
+            aresUV := assets.ImportImage("TestAssets/OREK_Ares_UV.png")
+            aresMat := renderer.CreateMaterial()
+            aresMat.Diffuse = aresUV
 
 			geom := renderer.CreateGeometry( hulk.Indicies, hulk.Vertices )
+            geom.Material = hulkMat
 			boxNode = renderer.CreateNode()
 			boxNode.Add(geom)
         	sceneGraph.Add(boxNode)
 
 			geom = renderer.CreateGeometry( ares.Indicies, ares.Vertices )
+            geom.Material = aresMat
 			boxNode2 = renderer.CreateNode()
 			boxNode2.Add(geom)
         	boxNode.Add(boxNode2)

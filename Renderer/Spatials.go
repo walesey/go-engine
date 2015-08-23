@@ -1,17 +1,35 @@
 package renderer
 
+import "image"
+
 type Spatial interface {
     load( renderer Renderer )
     draw( renderer Renderer )
 }
 
+type Material struct {
+    diffuseId, normalId, specularId, glossId, roughnessId uint32
+    loaded bool
+    Diffuse image.Image
+    Normal image.Image
+    Specular image.Image
+    Gloss image.Image
+    Roughness image.Image
+}
+
+func CreateMaterial() *Material {
+    return &Material{ loaded : false }
+}
+
 //Geometry
 type Geometry struct {
-    vboId, iboId, textureId uint32
+    vboId, iboId uint32
     loaded bool
     Indicies []uint32
     Verticies []float32
+    Material *Material
 }
+
 
 //vericies format : x,y,z,   nx,ny,nz,   u,v
 //indicies format : f1,f2,f3 (triangles)
@@ -28,7 +46,12 @@ func (geometry *Geometry) load( renderer Renderer ) {
         renderer.CreateGeometry( geometry )
         geometry.loaded = true
     }
+    if !geometry.Material.loaded {
+        renderer.CreateMaterial( geometry.Material )
+        geometry.Material.loaded = true
+    }
 }
+
 
 //Node
 type Node struct {
