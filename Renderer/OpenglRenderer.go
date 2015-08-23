@@ -167,6 +167,10 @@ func (glRenderer *OpenglRenderer) Camera( location, lookat, up vectorMath.Vector
 	gl.UniformMatrix4fv(cameraUniform, 1, false, &camera[0])
 }
 
+func convertVector( v vectorMath.Vector3 ) mgl32.Vec3{
+	return mgl32.Vec3{(float32)(v.X), (float32)(v.Y), (float32)(v.Z)}
+}
+
 func (glRenderer *OpenglRenderer) PushTransform(){
 	glRenderer.matStack.Push( &GlTransform{ mgl32.Ident4() } )
 }
@@ -183,10 +187,6 @@ func (glRenderer *OpenglRenderer) ApplyTransform( transform Transform ){
 	glRenderer.matStack.Push(tx)
 	model := glRenderer.matStack.MultiplyAll()
 	gl.UniformMatrix4fv(glRenderer.modelUniform, 1, false, &model[0])
-}
-
-func convertVector( v vectorMath.Vector3 ) mgl32.Vec3{
-	return mgl32.Vec3{(float32)(v.X), (float32)(v.Y), (float32)(v.Z)}
 }
 
 //
@@ -272,17 +272,23 @@ func (glRenderer *OpenglRenderer) DrawGeometry( geometry *Geometry ) {
 	//set verticies attribute
 	vertAttrib := uint32(gl.GetAttribLocation(glRenderer.program, gl.Str("vert\x00")))
 	gl.EnableVertexAttribArray(vertAttrib)
-	gl.VertexAttribPointer(vertAttrib, 3, gl.FLOAT, false, 8*4, gl.PtrOffset(0))
+	gl.VertexAttribPointer(vertAttrib, 3, gl.FLOAT, false, 14*4, gl.PtrOffset(0))
 
-	//set normals attribute
-	normAttrib := uint32(gl.GetAttribLocation(glRenderer.program, gl.Str("norm\x00")))
+	//set normals/tangent attribute
+	normAttrib := uint32(gl.GetAttribLocation(glRenderer.program, gl.Str("normal\x00")))
 	gl.EnableVertexAttribArray(normAttrib)
-	gl.VertexAttribPointer(normAttrib, 3, gl.FLOAT, false, 8*4, gl.PtrOffset(3*4))
+	gl.VertexAttribPointer(normAttrib, 3, gl.FLOAT, false, 14*4, gl.PtrOffset(3*4))
+	tangentAttrib := uint32(gl.GetAttribLocation(glRenderer.program, gl.Str("tangent\x00")))
+	gl.EnableVertexAttribArray(tangentAttrib)
+	gl.VertexAttribPointer(tangentAttrib, 3, gl.FLOAT, false, 14*4, gl.PtrOffset(6*4))
+	bitangentAttrib := uint32(gl.GetAttribLocation(glRenderer.program, gl.Str("bitangent\x00")))
+	gl.EnableVertexAttribArray(bitangentAttrib)
+	gl.VertexAttribPointer(bitangentAttrib, 3, gl.FLOAT, false, 14*4, gl.PtrOffset(9*4))
 
 	//set texture coord attribute
 	texCoordAttrib := uint32(gl.GetAttribLocation(glRenderer.program, gl.Str("vertTexCoord\x00")))
 	gl.EnableVertexAttribArray(texCoordAttrib)
-	gl.VertexAttribPointer(texCoordAttrib, 2, gl.FLOAT, false, 8*4, gl.PtrOffset(6*4))
+	gl.VertexAttribPointer(texCoordAttrib, 2, gl.FLOAT, false, 14*4, gl.PtrOffset(12*4))
 
 	//setup textures
 	gl.ActiveTexture(gl.TEXTURE0)
@@ -358,31 +364,69 @@ func compileShader(source string, shaderType uint32) (uint32, error) {
 
 var vertexShader string = `
 #version 330
+
 uniform mat4 projection;
 uniform mat4 camera;
 uniform mat4 model;
+
 in vec3 vert;
-in vec3 norm;
+in vec3 normal;
+in vec3 tangent;
+in vec3 bitangent;
 in vec2 vertTexCoord;
+
+out vec3 fragNormal;
+out vec3 fragTangent;
+out vec3 fragBitangent;
+out vec3 lightDirection;
+out vec4 lightColor;
 out vec2 fragTexCoord;
 
 void main() {
 	fragTexCoord = vertTexCoord;
+	fragNormal = normal;
+	fragTangent = tangent;
+	fragBitangent = bitangent;
+	lightDirection = normalize(vec4( 5, 7, 3, 1 )*model).xyz;
+	lightColor = vec4( 1, 1, 1, 1 );
 	gl_Position = projection * camera * model * vec4(vert, 1);
 }
+
 ` + "\x00"
 
 var fragmentShader = `
 #version 330
+
 uniform sampler2D diffuse;
 uniform sampler2D normal;
 uniform sampler2D specular;
 uniform sampler2D gloss;
 uniform sampler2D roughness;
+
+in vec3 fragNormal;
+in vec3 fragTangent;
+in vec3 fragBitangent;
+in vec3 lightDirection;
+in vec4 lightColor;
 in vec2 fragTexCoord;
+
 out vec4 outputColor;
 
 void main() {
-	outputColor = texture(diffuse, fragTexCoord);
+	vec4 diffuseValue = texture(diffuse, fragTexCoord);
+	vec4 normalValue = texture(normal, fragTexCoord);
+	vec4 specularValue = texture(specular, fragTexCoord);
+	vec4 glossValue = texture(gloss, fragTexCoord);
+	vec4 roughnessValue = texture(roughness, fragTexCoord);
+ 
+	//Normal calculations
+	mat3 TBNMatrix = mat3(fragTangent, fragBitangent, fragNormal);
+	vec3 TBNlightDirection = normalize( lightDirection * TBNMatrix );
+ 	vec3 normalMapValue = vec3( normalValue.rgb ) * 2 - 1;
+ 	float normMultiplier = max(0.0, dot(normalMapValue, TBNlightDirection));
+
+	//final output
+	outputColor = vec4( diffuseValue ) * normMultiplier;
 }
+
 ` + "\x00"

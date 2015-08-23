@@ -31,7 +31,7 @@ type Geometry struct {
 }
 
 
-//vericies format : x,y,z,   nx,ny,nz,   u,v
+//vericies format : x,y,z,   nx,ny,nz,tx,ty,tz,btx,bty,btz,   u,v
 //indicies format : f1,f2,f3 (triangles)
 func CreateGeometry( indicies []uint32, verticies []float32 ) *Geometry {
     return &Geometry{ Indicies : indicies, Verticies : verticies, loaded : false }

@@ -6,9 +6,11 @@ import (
 	"bufio"
 	"os"
 	"log"
+
+	"github.com/go-gl/mathgl/mgl32"
 )
 
-//Vertices format : x,y,z,   nx,ny,nz,   u,v 
+//vericies format : x,y,z,   nx,ny,nz,tx,ty,tz,btx,bty,btz,   u,v
 //Indicies format : f1,f2,f3 (triangles)
 type ObjData struct{
 	Name string
@@ -17,9 +19,9 @@ type ObjData struct{
 } 
 
 //returns corresponding index (0,1,2...)
-func (obj *ObjData) pushVert( x,y,z,nx,ny,nz,u,v float32 ) uint32 {
-	obj.Vertices = append(obj.Vertices, x,y,z,nx,ny,nz,u,v )
-	return (uint32)((len(obj.Vertices) / 8) - 1)
+func (obj *ObjData) pushVert( x,y,z,nx,ny,nz,tx,ty,tz,btx,bty,btz,u,v float32 ) uint32 {
+	obj.Vertices = append(obj.Vertices, x,y,z,nx,ny,nz,tx,ty,tz,btx,bty,btz,u,v )
+	return (uint32)((len(obj.Vertices) / 14) - 1)
 }
 
 func (obj *ObjData) pushIndex( indicies ...uint32 ) {
@@ -30,7 +32,7 @@ func (obj *ObjData) pushIndex( indicies ...uint32 ) {
 func (obj *ObjData) processFaceVertex( token string, vertexList, uvList, normalList []float32 ) uint32 {
 	face := strings.Split(token, "/")
 	var index int32
-	
+
 	//vertex
 	vx := (float32)(0.0)
 	vy := (float32)(0.0)
@@ -41,7 +43,7 @@ func (obj *ObjData) processFaceVertex( token string, vertexList, uvList, normalL
 		vy = vertexList[index+1]
 		vz = vertexList[index+2]
 	}
-	
+
 	//texture
 	vtx := (float32)(0.0)
 	vty := (float32)(0.0)
@@ -50,19 +52,34 @@ func (obj *ObjData) processFaceVertex( token string, vertexList, uvList, normalL
 		vtx = uvList[index]
 		vty = uvList[index+1]
 	}
-	
-	//normal
-	vnx := (float32)(0.0)
-	vny := (float32)(0.0)
-	vnz := (float32)(0.0)
+
+	//normal / tangents
+	nx := (float32)(0.0)
+	ny := (float32)(0.0)
+	nz := (float32)(0.0)
+	tanx := (float32)(0.0)
+	tany := (float32)(0.0)
+	tanz := (float32)(0.0)
+	bitanx := (float32)(0.0)
+	bitany := (float32)(0.0)
+	bitanz := (float32)(0.0)
 	if len(face) > 2 && face[2] != "" {
 		index = (sti(face[2])-1) * 3
-		vnx = normalList[index]
-		vny = normalList[index+1]
-		vnz = normalList[index+2]
+		nx = normalList[index]
+		ny = normalList[index+1]
+		nz = normalList[index+2]
+		norm := mgl32.Vec3{nx,ny,nz}
+		tangent := norm.Cross(norm.Add(mgl32.Vec3{1,1,1}))
+		bitangent := norm.Cross(tangent)
+		tanx = tangent.X()
+		tany = tangent.Y()
+		tanz = tangent.Z()
+		bitanx = bitangent.X()
+		bitany = bitangent.Y()
+		bitanz = bitangent.Z()
 	}
-	
-	return obj.pushVert( vx,vy,vz, vnx,vny,vnz, vtx,vty )
+
+	return obj.pushVert( vx,vy,vz, nx,ny,nz, tanx,tany,tanz, bitanx,bitany,bitanz, vtx,vty )
 }
 
 //Processes a polygonal face by splitting it into triangles 
