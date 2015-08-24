@@ -6,17 +6,26 @@ import (
 	"bufio"
 	"os"
 	"log"
+	"image"
 
 	"github.com/go-gl/mathgl/mgl32"
 )
 
 //vericies format : x,y,z,   nx,ny,nz,tx,ty,tz,btx,bty,btz,   u,v
 //Indicies format : f1,f2,f3 (triangles)
-type ObjData struct{
+type ObjData struct {
 	Name string
 	Indicies []uint32
 	Vertices []float32
-} 
+	Mtl *mtlData
+}
+
+type mtlData struct {
+	Name string
+	Ns,Ka,Kd,Ks,Ni,D float32
+	Illum int
+	Map_Kd, Map_Disp, Map_Spec, Map_Roughness image.Image
+}
 
 //returns corresponding index (0,1,2...)
 func (obj *ObjData) pushVert( x,y,z,nx,ny,nz,tx,ty,tz,btx,bty,btz,u,v float32 ) uint32 {
@@ -82,7 +91,7 @@ func (obj *ObjData) processFaceVertex( token string, vertexList, uvList, normalL
 	return obj.pushVert( vx,vy,vz, nx,ny,nz, tanx,tany,tanz, bitanx,bitany,bitanz, vtx,vty )
 }
 
-//Processes a polygonal face by splitting it into triangles 
+//Processes a polygonal face by splitting it into triangles
 func (obj *ObjData) processFace( line string, vertexList, uvList, normalList []float32 ){
 	tokens := strings.Fields(line)
 	if tokens[0] == "f" {
@@ -117,6 +126,12 @@ func ImportObj(filePath string) (*ObjData, error) {
 	uvList := make([]float32, 0, 0)
 	normalList := make([]float32, 0, 0)
 
+	//split the file name from the file path
+	filePathTokens := strings.Split(filePath, "/")
+	fileName := filePathTokens[ len(filePathTokens)-1 ]
+	path := strings.TrimRight(filePath, fileName)
+
+	//open the file and read all lines
 	file, err := os.Open(filePath)
 	if err != nil {
 		return obj, err
@@ -127,19 +142,27 @@ func ImportObj(filePath string) (*ObjData, error) {
 	for scanner.Scan() {
 		line := scanner.Text()
 		tokens := strings.Fields(line)
-		dataType := tokens[0]
-		if dataType == "o" { //sub mesh
-			obj.Name = tokens[1]
-		} else if dataType == "v" { //xyz vertex
-			vertexList = append(vertexList, stf(tokens[1]), stf(tokens[2]), stf(tokens[3]) )
-		} else if dataType == "vt" { //uv coord
-			uvList = append(uvList, stf(tokens[1]), stf(tokens[2]) )
-		} else if dataType == "vn" { //xyz vertex normal
-			normalList = append(normalList, stf(tokens[1]), stf(tokens[2]), stf(tokens[3]) )
-		} else if dataType == "usemtl" { //mtl material
-			//TODO
-		} else if dataType == "f" { // v/t/n face
-			obj.processFace( line, vertexList, uvList, normalList );
+		if len(tokens) > 0 {
+			dataType := tokens[0]
+			if dataType == "o" { //sub mesh
+				obj.Name = tokens[1]
+			} else if dataType == "v" { //xyz vertex
+				vertexList = append(vertexList, stf(tokens[1]), stf(tokens[2]), stf(tokens[3]) )
+			} else if dataType == "vt" { //uv coord
+				uvList = append(uvList, stf(tokens[1]), stf(tokens[2]) )
+			} else if dataType == "vn" { //xyz vertex normal
+				normalList = append(normalList, stf(tokens[1]), stf(tokens[2]), stf(tokens[3]) )
+			} else if dataType == "f" { // v/t/n face
+				obj.processFace( line, vertexList, uvList, normalList );
+			} else if dataType == "mtllib" {
+				mtl,err := importMTL( path, tokens[1] )
+				if err != nil {
+					return obj, err
+				}
+				obj.Mtl = mtl
+			} else if dataType == "usemtl" { //mtl material
+				//TODO: multiple mtls
+			}
 		}
 	}
 
@@ -148,6 +171,45 @@ func ImportObj(filePath string) (*ObjData, error) {
 	}
 
 	return obj, nil
+}
+
+//Returns mtl object data type
+func importMTL( filePath, fileName string ) (*mtlData, error){
+ 	mtl := &mtlData{}
+
+	file, err := os.Open(filePath + fileName)
+	if err != nil {
+		return mtl, err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		tokens := strings.Fields(line)
+		if len(tokens) > 0 {
+			dataType := tokens[0]
+			if dataType == "newmtl" {
+				mtl.Name = tokens[1]
+			} else if dataType == "Ns" {
+				mtl.Ns = stf(tokens[1])
+				//TODO: Other mtl variables
+			} else if dataType == "map_Kd" {
+				mtl.Map_Kd = ImportImage( filePath + tokens[1] )
+			} else if dataType == "map_Disp" {
+				mtl.Map_Disp = ImportImage( filePath + tokens[1] )
+			} else if dataType == "map_Spec" {
+				mtl.Map_Spec = ImportImage( filePath + tokens[1] )
+			} else if dataType == "map_Roughness" {
+				mtl.Map_Roughness = ImportImage( filePath + tokens[1] )
+			}
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return mtl, err
+	}
+
+	return mtl, nil
 }
 
 //string to float32

@@ -6,7 +6,7 @@ import (
 
 	"goEngine/vectorMath"
     "goEngine/assets"
-	
+
 	"goEngine/renderer"
 	"github.com/go-gl/mathgl/mgl32"
 )
@@ -15,7 +15,7 @@ func init() {
 	// GLFW event handling must run on the main OS thread
 	runtime.LockOSThread()
     //Use all cpu cores
-    runtime.GOMAXPROCS(runtime.NumCPU()) 
+    runtime.GOMAXPROCS(runtime.NumCPU())
 }
 
 func main(){
@@ -29,27 +29,29 @@ func main(){
     var boxNode *renderer.Node
     var boxNode2 *renderer.Node
 
-    i := (float32)(-5.0)
+    i := (float32)(-45.0)
 
 	mainRenderer = &renderer.OpenglRenderer{
         WindowTitle : "Go Engine",
-        WindowWidth : 2400,
-        WindowHeight : 1200,
+        WindowWidth : 1700,
+        WindowHeight : 950,
 
         Init : func(){
     		sceneGraph = renderer.CreateSceneGraph(mainRenderer)
 
-            hulk,_ := assets.ImportObj("TestAssets/hulk.obj")
-            hulkUV := assets.ImportImage("TestAssets/hulk_UV.png")
-            hulkNM := assets.ImportImage("TestAssets/hulk_NM.png")
+            hulk,_ := assets.ImportObj("TestAssets/gun/rifle.obj")
             hulkMat := renderer.CreateMaterial()
-            hulkMat.Diffuse = hulkUV
-            hulkMat.Normal = hulkNM
+            hulkMat.Diffuse = hulk.Mtl.Map_Kd
+            hulkMat.Normal = hulk.Mtl.Map_Disp
+            hulkMat.Specular = hulk.Mtl.Map_Spec
+            hulkMat.Roughness = hulk.Mtl.Map_Roughness
 
-            ares,_ := assets.ImportObj("TestAssets/OREK_Ares.obj")
-            aresUV := assets.ImportImage("TestAssets/OREK_Ares_UV.png")
+            ares,_ := assets.ImportObj("TestAssets/alarm/alarm.obj")
             aresMat := renderer.CreateMaterial()
-            aresMat.Diffuse = aresUV
+            aresMat.Diffuse = ares.Mtl.Map_Kd
+            aresMat.Normal = ares.Mtl.Map_Disp
+            aresMat.Specular = ares.Mtl.Map_Spec
+            aresMat.Roughness = ares.Mtl.Map_Roughness
 
 			geom := renderer.CreateGeometry( hulk.Indicies, hulk.Vertices )
             geom.Material = hulkMat
@@ -61,22 +63,24 @@ func main(){
             geom.Material = aresMat
 			boxNode2 = renderer.CreateNode()
 			boxNode2.Add(geom)
-        	boxNode.Add(boxNode2)
+        	sceneGraph.Add(boxNode2)
         },
 
         Update : func(){
             fps.UpdateFPSMeter()
-        	i = i + 0.01
-        	if i > 15 {
-        		i = -5
+        	i = i + 0.04
+        	if i > 80 {
+        		i = -45
         	}
-        	sine := 2*(float32)(math.Sin((float64)(i/6)))
-        	cosine := 2*(float32)(math.Cos((float64)(i/6)))
-        	//move the boxes
-        	boxNode.Transform = &renderer.GlTransform{ mgl32.Translate3D(0 , 0, i) }
-        	boxNode2.Transform = &renderer.GlTransform{ mgl32.Translate3D(cosine, sine, 0) }
+        	sine := math.Sin((float64)(i/36))
+        	cosine := math.Cos((float64)(i/36))
+
+        	boxNode.Transform = &renderer.GlTransform{ mgl32.Translate3D(0 , 0, 5).Mul4(mgl32.HomogRotate3DY(1.57))  }
+            boxNode2.Transform = &renderer.GlTransform{ mgl32.Translate3D(1, 3, i) }
         	//look at the box
-        	mainRenderer.Camera( vectorMath.Vector3{2,2,2}, vectorMath.Vector3{0 , 0, (float64)(i)}, vectorMath.Vector3{0,1,0} )
+        	mainRenderer.Camera( vectorMath.Vector3{10*cosine,2,10*sine}, vectorMath.Vector3{0 , 0, (float64)(5-5)}, vectorMath.Vector3{0,1,0} )
+
+            mainRenderer.CreateLight( 5,5,5,   160,0,0,   120,0,0,   vectorMath.Vector3{1, 3, (float64)(i)}, 1 )
         },
 
         Render : func(){

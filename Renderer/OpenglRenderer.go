@@ -15,7 +15,11 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-//Renderer API 
+const(
+	MAX_LIGHTS int = 8
+)
+
+//Renderer API
 type Renderer interface {
 	Start()
 	BackGroundColor( r,g,b,a float32 )
@@ -29,10 +33,12 @@ type Renderer interface {
 	CreateMaterial( material *Material )
 	DestroyMaterial( material *Material )
 	DrawGeometry( geometry *Geometry )
+	CreateLight( ar,ag,ab, dr,dg,db, sr,sg,sb float32, position vectorMath.Vector3, i int )
+	DestroyLight( i int )
 }
 
 type Transform interface {
-	ApplyTransform( transform Transform ) 
+	ApplyTransform( transform Transform )
 }
 
 type GlTransform struct {
@@ -45,7 +51,7 @@ func (glTx *GlTransform) ApplyTransform( transform Transform ) {
         fmt.Printf("unexpected type for ApplyTransform GlTransform: %T", v)
     case *GlTransform:
 		glTx.Mat = glTx.Mat.Mul4( transform.(*GlTransform).Mat )
-    } 
+    }
 }
 
 //used to combine transformations
@@ -67,6 +73,7 @@ type OpenglRenderer struct {
 	matStack *Stack
 	program uint32
 	modelUniform int32
+	lights []float32
 }
 
 func (glRenderer *OpenglRenderer) Start() {
@@ -117,10 +124,8 @@ func (glRenderer *OpenglRenderer) Start() {
 	gl.Uniform1i(textureUniform, 1)
 	textureUniform = gl.GetUniformLocation(program, gl.Str("specular\x00"))
 	gl.Uniform1i(textureUniform, 2)
-	textureUniform = gl.GetUniformLocation(program, gl.Str("gloss\x00"))
-	gl.Uniform1i(textureUniform, 3)
 	textureUniform = gl.GetUniformLocation(program, gl.Str("roughness\x00"))
-	gl.Uniform1i(textureUniform, 4)
+	gl.Uniform1i(textureUniform, 3)
 
 	gl.BindFragDataLocation(program, 0, gl.Str("outputColor\x00"))
 
@@ -132,6 +137,10 @@ func (glRenderer *OpenglRenderer) Start() {
 	gl.Enable(gl.DEPTH_TEST)
 	gl.DepthFunc(gl.LESS)
 	gl.ClearColor(0.0, 0.0, 0.0, 1.0)
+
+	//setup Lights
+	glRenderer.lights = make([]float32, MAX_LIGHTS*16, MAX_LIGHTS*16)
+	glRenderer.CreateLight( 100000,100000,100000,   1600000,1600000,1600000,   1200000,1200000,1200000,   vectorMath.Vector3{500, 500, 500}, 0 )
 
 	glRenderer.Init()
 
@@ -221,12 +230,9 @@ func (glRenderer *OpenglRenderer) CreateMaterial( material *Material ) {
 	}
 	if material.Specular != nil {
 		material.specularId = glRenderer.newTexture( material.Specular, gl.TEXTURE2 )
-	}
-	if material.Gloss != nil {
-		material.glossId = glRenderer.newTexture( material.Gloss, gl.TEXTURE3 )
-	}
+	} 
 	if material.Roughness != nil {
-		material.roughnessId = glRenderer.newTexture( material.Roughness, gl.TEXTURE4 )
+		material.roughnessId = glRenderer.newTexture( material.Roughness, gl.TEXTURE3 )
 	}
 }
 
@@ -298,11 +304,40 @@ func (glRenderer *OpenglRenderer) DrawGeometry( geometry *Geometry ) {
 	gl.ActiveTexture(gl.TEXTURE2)
 	gl.BindTexture(gl.TEXTURE_2D, geometry.Material.specularId)
 	gl.ActiveTexture(gl.TEXTURE3)
-	gl.BindTexture(gl.TEXTURE_2D, geometry.Material.glossId)
-	gl.ActiveTexture(gl.TEXTURE4)
 	gl.BindTexture(gl.TEXTURE_2D, geometry.Material.roughnessId)
 
 	gl.DrawElements(gl.TRIANGLES, (int32)(len(geometry.Indicies)), gl.UNSIGNED_INT, gl.PtrOffset(0))
+}
+
+// ambient, diffuse and specular light values ( i is the light index )
+func (glRenderer *OpenglRenderer) CreateLight( ar,ag,ab, dr,dg,db, sr,sg,sb float32, position vectorMath.Vector3, i int ){
+	//position
+	glRenderer.lights[(i*16)] = (float32)(position.X)
+	glRenderer.lights[(i*16)+1] = (float32)(position.Y)
+	glRenderer.lights[(i*16)+2] = (float32)(position.Z)
+	glRenderer.lights[(i*16)+3] = 1
+	//ambient
+	glRenderer.lights[(i*16)+4] = ar
+	glRenderer.lights[(i*16)+5] = ag
+	glRenderer.lights[(i*16)+6] = ab
+	glRenderer.lights[(i*16)+7] = 1
+	//diffuse
+	glRenderer.lights[(i*16)+8] = dr
+	glRenderer.lights[(i*16)+9] = dg
+	glRenderer.lights[(i*16)+10] = db
+	glRenderer.lights[(i*16)+11] = 1
+	//specular
+	glRenderer.lights[(i*16)+12] = sr
+	glRenderer.lights[(i*16)+13] = sg
+	glRenderer.lights[(i*16)+14] = sb
+	glRenderer.lights[(i*16)+15] = 1
+	//set uniform array
+	lightsUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("lights\x00"))
+	gl.Uniform4fv( lightsUniform, (int32)(MAX_LIGHTS*16), &glRenderer.lights[0] )
+}
+
+func (glRenderer *OpenglRenderer) DestroyLight( i int ){
+
 }
 
 func newProgram(vertexShaderSource, fragmentShaderSource string) (uint32, error) {
@@ -378,37 +413,44 @@ in vec2 vertTexCoord;
 out vec3 fragNormal;
 out vec3 fragTangent;
 out vec3 fragBitangent;
-out vec3 lightDirection;
-out vec4 lightColor;
 out vec2 fragTexCoord;
+out vec4 vertexPosition;
 
 void main() {
 	fragTexCoord = vertTexCoord;
 	fragNormal = normal;
 	fragTangent = tangent;
 	fragBitangent = bitangent;
-	lightDirection = normalize(vec4( 5, 7, 3, 1 )*model).xyz;
-	lightColor = vec4( 1, 1, 1, 1 );
-	gl_Position = projection * camera * model * vec4(vert, 1);
-}
-
-` + "\x00"
+	vertexPosition = projection * camera * model * vec4(vert, 1);
+	gl_Position = vertexPosition;
+}` + "\x00"
 
 var fragmentShader = `
 #version 330
 
+#define MAX_LIGHTS 8
+
+#define LIGHT_POSITION 0
+#define LIGHT_AMBIENT 1
+#define LIGHT_DIFFUSE 2
+#define LIGHT_SPECULAR 3
+
+uniform mat4 projection;
+uniform mat4 camera;
+uniform mat4 model;
+
+uniform vec4 lights[ MAX_LIGHTS * 4 ];
+
 uniform sampler2D diffuse;
 uniform sampler2D normal;
 uniform sampler2D specular;
-uniform sampler2D gloss;
 uniform sampler2D roughness;
 
 in vec3 fragNormal;
 in vec3 fragTangent;
 in vec3 fragBitangent;
-in vec3 lightDirection;
-in vec4 lightColor;
 in vec2 fragTexCoord;
+in vec4 vertexPosition;
 
 out vec4 outputColor;
 
@@ -416,17 +458,50 @@ void main() {
 	vec4 diffuseValue = texture(diffuse, fragTexCoord);
 	vec4 normalValue = texture(normal, fragTexCoord);
 	vec4 specularValue = texture(specular, fragTexCoord);
-	vec4 glossValue = texture(gloss, fragTexCoord);
 	vec4 roughnessValue = texture(roughness, fragTexCoord);
- 
+	vec4 finalColor = vec4(0,0,0,1);
+
 	//Normal calculations
-	mat3 TBNMatrix = mat3(fragTangent, fragBitangent, fragNormal);
-	vec3 TBNlightDirection = normalize( lightDirection * TBNMatrix );
  	vec3 normalMapValue = vec3( normalValue.rgb ) * 2 - 1;
- 	float normMultiplier = max(0.0, dot(normalMapValue, TBNlightDirection));
+ 	if( abs(normalMapValue.x) < 0.1 && abs(normalMapValue.y) < 0.1 && abs(normalMapValue.z) < 0.1 ){
+ 		normalMapValue = vec3(0,0,1);
+ 	}
+
+	//tangent space conversion
+	mat3 TBNMatrix = mat3(fragTangent, fragBitangent, fragNormal);
+
+	//lights
+	for (int i=0;i<MAX_LIGHTS;i++){
+
+		//light components
+		vec4 LightPos = projection * camera * lights[(i*4)+LIGHT_POSITION];
+		vec4 LightAmb = lights[(i*4)+LIGHT_AMBIENT];
+		vec4 LightDiff = lights[(i*4)+LIGHT_DIFFUSE];
+		vec4 LightSpec = lights[(i*4)+LIGHT_SPECULAR];
+
+		//point light source 
+		vec4 lightDirection = vec4( LightPos - vertexPosition );
+		float lightDistanceSQ = lightDirection.x*lightDirection.x + lightDirection.y*lightDirection.y + lightDirection.z*lightDirection.z;
+		float illuminanceMultiplier = 1 / lightDistanceSQ;
+		vec4 eyeDirection = vec4( - vertexPosition ); // eyePos is zero
+
+		//tangent space
+		vec3 TBNlightDirection = normalize( lightDirection.xyz * TBNMatrix );
+		vec3 TBNeyeDirection = normalize( eyeDirection.xyz * TBNMatrix );
+
+		//ambient component
+		vec4 ambientOut = diffuseValue * LightAmb;
+		//diffuse component
+	 	float diffuseMultiplier = max(0.0, dot(normalMapValue, TBNlightDirection));
+		vec4 diffuseOut = diffuseValue * diffuseMultiplier * LightDiff;
+		//specular component
+		vec4 reflectedEye = vec4( reflect( TBNeyeDirection, normalMapValue ), 1);
+	 	float specularMultiplier = max(0.0, pow( dot(reflectedEye.xyz, TBNlightDirection), 2.0));
+		vec4 specularOut = vec4( specularValue.rgb, 1 ) * specularMultiplier * LightSpec;
+
+		finalColor += (( ambientOut + diffuseOut + specularOut ) * illuminanceMultiplier);
+   	}
 
 	//final output
-	outputColor = vec4( diffuseValue ) * normMultiplier;
-}
-
-` + "\x00"
+	outputColor = finalColor;
+}` + "\x00"

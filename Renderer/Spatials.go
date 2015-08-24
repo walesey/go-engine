@@ -10,11 +10,7 @@ type Spatial interface {
 type Material struct {
     diffuseId, normalId, specularId, glossId, roughnessId uint32
     loaded bool
-    Diffuse image.Image
-    Normal image.Image
-    Specular image.Image
-    Gloss image.Image
-    Roughness image.Image
+    Diffuse, Normal, Specular, Roughness image.Image
 }
 
 func CreateMaterial() *Material {
