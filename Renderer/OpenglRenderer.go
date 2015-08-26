@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"io/ioutil"
 	"strings"
 	"image"
 	"image/draw"
@@ -103,6 +104,16 @@ func (glRenderer *OpenglRenderer) Start() {
 	fmt.Println("OpenGL version", version)
 
 	// Configure the vertex and fragment shaders
+	bufVert, err := ioutil.ReadFile("Shaders/main.vert")
+	if err != nil {
+	    panic(err)
+	} 
+	vertexShader := string(bufVert) + "\x00"
+	bufFrag, err := ioutil.ReadFile("Shaders/main.frag")
+	if err != nil {
+	    panic(err)
+	}
+	fragmentShader := string(bufFrag) + "\x00"
 	program, err := newProgram(vertexShader, fragmentShader)
 	if err != nil {
 		panic(err)
@@ -110,12 +121,16 @@ func (glRenderer *OpenglRenderer) Start() {
 	gl.UseProgram(program)
 	glRenderer.program = program
 
+	//set default camera
 	glRenderer.Projection( 45.0, float32(glRenderer.WindowWidth)/float32(glRenderer.WindowHeight), 0.1, 10000.0 )
 	glRenderer.Camera( vectorMath.Vector3{3,3,3}, vectorMath.Vector3{0,0,0}, vectorMath.Vector3{0,1,0} )
 
+	//create mat stack for push pop stack 
 	matStack := CreateStack()
 	glRenderer.matStack = matStack
 	model := mgl32.Ident4()
+
+	//set shader uniforms
 	glRenderer.modelUniform = gl.GetUniformLocation(program, gl.Str("model\x00"))
 	gl.UniformMatrix4fv(glRenderer.modelUniform, 1, false, &model[0])
 
@@ -147,6 +162,7 @@ func (glRenderer *OpenglRenderer) Start() {
 
 	glRenderer.Init()
 
+	//Main loop
 	for !window.ShouldClose() {
 
 		glRenderer.Update()
@@ -455,131 +471,3 @@ func compileShader(source string, shaderType uint32) (uint32, error) {
 
 	return shader, nil
 }
-
-var vertexShader string = `
-#version 330
-
-uniform mat4 projection;
-uniform mat4 camera;
-uniform mat4 model;
-
-in vec3 vert;
-in vec3 normal;
-in vec3 tangent;
-in vec3 bitangent;
-in vec2 vertTexCoord;
-
-out mat3 TBNMatrix;
-out mat3 inverseTBNMatrix;
-out vec4 worldCamPos;
-out vec4 worldVertex;
-out vec3 worldNormal;
-out vec2 fragTexCoord;
-
-void main() {
-   	worldCamPos = inverse( projection * camera ) * vec4(0,0,0,1);
-	worldVertex = model * vec4(vert, 1);
-	gl_Position = projection * camera * worldVertex;
-	mat4 modelNormal = transpose(inverse(model));
-	worldNormal = (modelNormal * vec4(normal,1)).xyz;
-	vec3 worldTangent = (modelNormal * vec4(tangent,1)).xyz;
-	vec3 worldBitangent = (modelNormal * vec4(bitangent,1)).xyz;
-	//tangent space conversion - worldToTangent
-	TBNMatrix = mat3(worldTangent, worldBitangent, worldNormal);
-	inverseTBNMatrix = inverse(TBNMatrix);
-	fragTexCoord = vertTexCoord;
-}` + "\x00"
-
-var fragmentShader = `
-#version 330
-
-#define MAX_LIGHTS 8
-
-#define LIGHT_POSITION 0
-#define LIGHT_AMBIENT 1
-#define LIGHT_DIFFUSE 2
-#define LIGHT_SPECULAR 3
-
-uniform vec4 lights[ MAX_LIGHTS * 4 ];
-
-//material
-uniform sampler2D diffuse;
-uniform sampler2D normal;
-uniform sampler2D specular;
-uniform sampler2D roughness;
-uniform samplerCube environmentMap;
-
-uniform mat4 projection;
-uniform mat4 camera;
-uniform mat4 model;
-
-in mat3 TBNMatrix;
-in mat3 inverseTBNMatrix;
-in vec4 worldCamPos;
-in vec4 worldVertex;
-in vec3 worldNormal;
-in vec2 fragTexCoord;
-
-out vec4 outputColor;
-
-void main() {
-	vec4 diffuseValue = texture(diffuse, fragTexCoord);
-	vec4 normalValue = texture(normal, fragTexCoord);
-	vec4 specularValue = texture(specular, fragTexCoord);
-	vec4 roughnessValue = texture(roughness, fragTexCoord);
-	vec4 finalColor = vec4(0,0,0,1);
-
-	//Normal calculations
- 	vec3 normalMapValue = vec3( normalValue.rgb ) * 2 - 1;
- 	if( abs(normalMapValue.x) < 0.1 && abs(normalMapValue.y) < 0.1 && abs(normalMapValue.z) < 0.1 ){
- 		normalMapValue = vec3(0,0,1);
- 	}
-
-	//eye 
-	vec4 worldEyeDirection = vec4( worldVertex - worldCamPos );
-	vec3 tangentEyeDirection = normalize( worldEyeDirection.xyz * TBNMatrix );
-	vec4 tangentReflectedEye = vec4( reflect( tangentEyeDirection, normalMapValue ), 1);
-
-	//lights
-	for (int i=0;i<MAX_LIGHTS;i++){
-
-		//light components
-		vec4 LightPos = lights[(i*4)+LIGHT_POSITION];
-		vec4 LightAmb = lights[(i*4)+LIGHT_AMBIENT];
-		vec4 LightDiff = lights[(i*4)+LIGHT_DIFFUSE];
-		vec4 LightSpec = lights[(i*4)+LIGHT_SPECULAR];
-
-		//point light source
-		vec4 worldLightDir = vec4( LightPos - worldVertex );
-		float lightDistanceSQ = worldLightDir.x*worldLightDir.x + worldLightDir.y*worldLightDir.y + worldLightDir.z*worldLightDir.z;
-		float illuminanceMultiplier = 1 / lightDistanceSQ;
-		
-		//directional light source (only index 0)
-		if( i == 0 ){
-			worldLightDir = normalize( LightPos );
-			illuminanceMultiplier = 1;
-		}
-
-		//tangent space
-		vec3 tangentLightDirection = normalize( worldLightDir.xyz * TBNMatrix );
-
-		//ambient component
-		vec4 ambientOut = diffuseValue * LightAmb;
-		//diffuse component
-	 	float diffuseMultiplier = max(0.0, dot(normalMapValue, tangentLightDirection));
-		vec4 diffuseOut = diffuseValue * diffuseMultiplier * LightDiff;
-		//specular component
-	 	float specularMultiplier = max(0.0, pow( dot(tangentReflectedEye.xyz, tangentLightDirection), 2.0));
-		vec4 specularOut = vec4( specularValue.rgb, 1 ) * specularMultiplier * LightSpec;
-
-		finalColor += (( ambientOut + diffuseOut + specularOut ) * illuminanceMultiplier);
-   	}
-
-   	//indirect lighting
-   	vec4 worldReflectedEye = vec4( tangentReflectedEye.xyz * inverseTBNMatrix , 1);
-   	worldReflectedEye = worldReflectedEye + vec4( ( noise3(1) * roughnessValue.xyz ), 1 );
-	finalColor = texture(environmentMap, worldReflectedEye.xyz) * specularValue.a;
-	
-	//final output
-	outputColor = finalColor;
-}` + "\x00"
