@@ -35,6 +35,7 @@ type Renderer interface {
 	DrawGeometry( geometry *Geometry )
 	CreateLight( ar,ag,ab, dr,dg,db, sr,sg,sb float32, position vectorMath.Vector3, i int )
 	DestroyLight( i int )
+	ReflectionMap( right, left, top, bottom, back, front image.Image )
 }
 
 type Transform interface {
@@ -71,7 +72,7 @@ type OpenglRenderer struct {
 	WindowWidth, WindowHeight int
 	WindowTitle string
 	matStack *Stack
-	program uint32
+	program, cubeMapId uint32
 	modelUniform int32
 	lights []float32
 }
@@ -126,6 +127,8 @@ func (glRenderer *OpenglRenderer) Start() {
 	gl.Uniform1i(textureUniform, 2)
 	textureUniform = gl.GetUniformLocation(program, gl.Str("roughness\x00"))
 	gl.Uniform1i(textureUniform, 3)
+	textureUniform = gl.GetUniformLocation(program, gl.Str("environmentMap\x00"))
+	gl.Uniform1i(textureUniform, 4)
 
 	gl.BindFragDataLocation(program, 0, gl.Str("outputColor\x00"))
 
@@ -140,7 +143,7 @@ func (glRenderer *OpenglRenderer) Start() {
 
 	//setup Lights
 	glRenderer.lights = make([]float32, MAX_LIGHTS*16, MAX_LIGHTS*16)
-	glRenderer.CreateLight( 100000,100000,100000,   1600000,1600000,1600000,   1200000,1200000,1200000,   vectorMath.Vector3{500, 500, 500}, 0 )
+	glRenderer.CreateLight( 0.1,0.1,0.1,   1,1,1,   0.7,0.7,0.7,   vectorMath.Vector3{0, -1, 0}, 0 )
 
 	glRenderer.Init()
 
@@ -264,6 +267,60 @@ func (glRenderer *OpenglRenderer) newTexture( img image.Image, textureUnit uint3
 	return texId
 }
 
+func (glRenderer *OpenglRenderer) ReflectionMap( right, left, top, bottom, back, front image.Image ) {
+	glRenderer.cubeMapId = glRenderer.newCubeMap( right, left, top, bottom, back, front)
+}
+
+func (glRenderer *OpenglRenderer) newCubeMap( right, left, top, bottom, back, front image.Image ) uint32 {
+	var texId uint32
+	gl.GenTextures(1, &texId)
+	gl.ActiveTexture(gl.TEXTURE4)
+	gl.BindTexture(gl.TEXTURE_CUBE_MAP, texId)
+
+	for i:=0 ; i<6 ; i++ {
+		img := right
+		texIndex := (uint32)(gl.TEXTURE_CUBE_MAP_POSITIVE_X)
+		if i == 1 {
+			img = left
+			texIndex = gl.TEXTURE_CUBE_MAP_NEGATIVE_X
+		} else if i == 2 {
+			img = top
+			texIndex = gl.TEXTURE_CUBE_MAP_POSITIVE_Y
+		} else if i == 3 {
+			img = bottom
+			texIndex = gl.TEXTURE_CUBE_MAP_NEGATIVE_Y
+		} else if i == 4 {
+			img = back
+			texIndex = gl.TEXTURE_CUBE_MAP_NEGATIVE_Z
+		} else if i == 5 {
+			img = front
+			texIndex = gl.TEXTURE_CUBE_MAP_POSITIVE_Z
+		}
+		rgba := image.NewRGBA(img.Bounds())
+		if rgba.Stride != rgba.Rect.Size().X*4 {
+		    log.Fatal("unsupported stride")
+		}
+		draw.Draw(rgba, rgba.Bounds(), img, image.Point{0, 0}, draw.Src)
+		
+		gl.TexImage2D(
+			texIndex,
+			0,
+			gl.RGBA,
+			int32(rgba.Rect.Size().X),
+			int32(rgba.Rect.Size().Y),
+			0,
+			gl.RGBA,
+			gl.UNSIGNED_BYTE,
+			gl.Ptr(rgba.Pix))
+	}
+	gl.TexParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+	gl.TexParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+	gl.TexParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+	gl.TexParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+	gl.TexParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE)
+	return texId
+}
+
 //
 func (glRenderer *OpenglRenderer) DestroyMaterial( material *Material ) {
 
@@ -305,6 +362,8 @@ func (glRenderer *OpenglRenderer) DrawGeometry( geometry *Geometry ) {
 	gl.BindTexture(gl.TEXTURE_2D, geometry.Material.specularId)
 	gl.ActiveTexture(gl.TEXTURE3)
 	gl.BindTexture(gl.TEXTURE_2D, geometry.Material.roughnessId)
+	gl.ActiveTexture(gl.TEXTURE4)
+	gl.BindTexture(gl.TEXTURE_CUBE_MAP, glRenderer.cubeMapId)
 
 	gl.DrawElements(gl.TRIANGLES, (int32)(len(geometry.Indicies)), gl.UNSIGNED_INT, gl.PtrOffset(0))
 }
@@ -410,19 +469,25 @@ in vec3 tangent;
 in vec3 bitangent;
 in vec2 vertTexCoord;
 
-out vec3 fragNormal;
-out vec3 fragTangent;
-out vec3 fragBitangent;
+out mat3 TBNMatrix;
+out mat3 inverseTBNMatrix;
+out vec4 worldCamPos;
+out vec4 worldVertex;
+out vec3 worldNormal;
 out vec2 fragTexCoord;
-out vec4 vertexPosition;
 
 void main() {
+   	worldCamPos = inverse( projection * camera ) * vec4(0,0,0,1);
+	worldVertex = model * vec4(vert, 1);
+	gl_Position = projection * camera * worldVertex;
+	mat4 modelNormal = transpose(inverse(model));
+	worldNormal = (modelNormal * vec4(normal,1)).xyz;
+	vec3 worldTangent = (modelNormal * vec4(tangent,1)).xyz;
+	vec3 worldBitangent = (modelNormal * vec4(bitangent,1)).xyz;
+	//tangent space conversion - worldToTangent
+	TBNMatrix = mat3(worldTangent, worldBitangent, worldNormal);
+	inverseTBNMatrix = inverse(TBNMatrix);
 	fragTexCoord = vertTexCoord;
-	fragNormal = normal;
-	fragTangent = tangent;
-	fragBitangent = bitangent;
-	vertexPosition = projection * camera * model * vec4(vert, 1);
-	gl_Position = vertexPosition;
 }` + "\x00"
 
 var fragmentShader = `
@@ -435,22 +500,25 @@ var fragmentShader = `
 #define LIGHT_DIFFUSE 2
 #define LIGHT_SPECULAR 3
 
-uniform mat4 projection;
-uniform mat4 camera;
-uniform mat4 model;
-
 uniform vec4 lights[ MAX_LIGHTS * 4 ];
 
+//material
 uniform sampler2D diffuse;
 uniform sampler2D normal;
 uniform sampler2D specular;
 uniform sampler2D roughness;
+uniform samplerCube environmentMap;
 
-in vec3 fragNormal;
-in vec3 fragTangent;
-in vec3 fragBitangent;
+uniform mat4 projection;
+uniform mat4 camera;
+uniform mat4 model;
+
+in mat3 TBNMatrix;
+in mat3 inverseTBNMatrix;
+in vec4 worldCamPos;
+in vec4 worldVertex;
+in vec3 worldNormal;
 in vec2 fragTexCoord;
-in vec4 vertexPosition;
 
 out vec4 outputColor;
 
@@ -467,41 +535,51 @@ void main() {
  		normalMapValue = vec3(0,0,1);
  	}
 
-	//tangent space conversion
-	mat3 TBNMatrix = mat3(fragTangent, fragBitangent, fragNormal);
+	//eye 
+	vec4 worldEyeDirection = vec4( worldVertex - worldCamPos );
+	vec3 tangentEyeDirection = normalize( worldEyeDirection.xyz * TBNMatrix );
+	vec4 tangentReflectedEye = vec4( reflect( tangentEyeDirection, normalMapValue ), 1);
 
 	//lights
 	for (int i=0;i<MAX_LIGHTS;i++){
 
 		//light components
-		vec4 LightPos = projection * camera * lights[(i*4)+LIGHT_POSITION];
+		vec4 LightPos = lights[(i*4)+LIGHT_POSITION];
 		vec4 LightAmb = lights[(i*4)+LIGHT_AMBIENT];
 		vec4 LightDiff = lights[(i*4)+LIGHT_DIFFUSE];
 		vec4 LightSpec = lights[(i*4)+LIGHT_SPECULAR];
 
-		//point light source 
-		vec4 lightDirection = vec4( LightPos - vertexPosition );
-		float lightDistanceSQ = lightDirection.x*lightDirection.x + lightDirection.y*lightDirection.y + lightDirection.z*lightDirection.z;
+		//point light source
+		vec4 worldLightDir = vec4( LightPos - worldVertex );
+		float lightDistanceSQ = worldLightDir.x*worldLightDir.x + worldLightDir.y*worldLightDir.y + worldLightDir.z*worldLightDir.z;
 		float illuminanceMultiplier = 1 / lightDistanceSQ;
-		vec4 eyeDirection = vec4( - vertexPosition ); // eyePos is zero
+		
+		//directional light source (only index 0)
+		if( i == 0 ){
+			worldLightDir = normalize( LightPos );
+			illuminanceMultiplier = 1;
+		}
 
 		//tangent space
-		vec3 TBNlightDirection = normalize( lightDirection.xyz * TBNMatrix );
-		vec3 TBNeyeDirection = normalize( eyeDirection.xyz * TBNMatrix );
+		vec3 tangentLightDirection = normalize( worldLightDir.xyz * TBNMatrix );
 
 		//ambient component
 		vec4 ambientOut = diffuseValue * LightAmb;
 		//diffuse component
-	 	float diffuseMultiplier = max(0.0, dot(normalMapValue, TBNlightDirection));
+	 	float diffuseMultiplier = max(0.0, dot(normalMapValue, tangentLightDirection));
 		vec4 diffuseOut = diffuseValue * diffuseMultiplier * LightDiff;
 		//specular component
-		vec4 reflectedEye = vec4( reflect( TBNeyeDirection, normalMapValue ), 1);
-	 	float specularMultiplier = max(0.0, pow( dot(reflectedEye.xyz, TBNlightDirection), 2.0));
+	 	float specularMultiplier = max(0.0, pow( dot(tangentReflectedEye.xyz, tangentLightDirection), 2.0));
 		vec4 specularOut = vec4( specularValue.rgb, 1 ) * specularMultiplier * LightSpec;
 
 		finalColor += (( ambientOut + diffuseOut + specularOut ) * illuminanceMultiplier);
    	}
 
+   	//indirect lighting
+   	vec4 worldReflectedEye = vec4( tangentReflectedEye.xyz * inverseTBNMatrix , 1);
+   	worldReflectedEye = worldReflectedEye + vec4( ( noise3(1) * roughnessValue.xyz ), 1 );
+	finalColor = texture(environmentMap, worldReflectedEye.xyz) * specularValue.a;
+	
 	//final output
 	outputColor = finalColor;
 }` + "\x00"

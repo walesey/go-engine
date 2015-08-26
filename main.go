@@ -39,7 +39,17 @@ func main(){
         Init : func(){
     		sceneGraph = renderer.CreateSceneGraph(mainRenderer)
 
-            hulk,_ := assets.ImportObj("TestAssets/gun/rifle.obj")
+            //setup reflection map
+            cubeMap := assets.ImportCubemap("TestAssets/skybox/cubemap.jpg")
+            mainRenderer.ReflectionMap( cubeMap.Right, cubeMap.Left, cubeMap.Top, cubeMap.Bottom, cubeMap.Back, cubeMap.Front )
+
+            //setup skybox
+            skycube,_ := assets.ImportObj("TestAssets/skybox/skybox.obj")
+            skyMat := renderer.CreateMaterial()
+            skyMat.Diffuse = skycube.Mtl.Map_Kd
+
+            hulk,_ := assets.ImportObj("TestAssets/sphere.obj")
+            // hulk,_ := assets.ImportObj("TestAssets/gun/rifle.obj")
             hulkMat := renderer.CreateMaterial()
             hulkMat.Diffuse = hulk.Mtl.Map_Kd
             hulkMat.Normal = hulk.Mtl.Map_Disp
@@ -53,7 +63,15 @@ func main(){
             aresMat.Specular = ares.Mtl.Map_Spec
             aresMat.Roughness = ares.Mtl.Map_Roughness
 
-			geom := renderer.CreateGeometry( hulk.Indicies, hulk.Vertices )
+            //setup scenegraph
+            geom := renderer.CreateGeometry( skycube.Indicies, skycube.Vertices )
+            geom.Material = skyMat
+            skyNode := renderer.CreateNode()
+            skyNode.Add(geom)
+            sceneGraph.Add(skyNode)
+            skyNode.Transform = &renderer.GlTransform{ mgl32.Scale3D(5000, 5000, 5000) }
+
+			geom = renderer.CreateGeometry( hulk.Indicies, hulk.Vertices )
             geom.Material = hulkMat
 			boxNode = renderer.CreateNode()
 			boxNode.Add(geom)
@@ -68,19 +86,19 @@ func main(){
 
         Update : func(){
             fps.UpdateFPSMeter()
-        	i = i + 0.04
-        	if i > 80 {
+        	i = i + 0.08
+        	if i > 180 {
         		i = -45
         	}
-        	sine := math.Sin((float64)(i/36))
-        	cosine := math.Cos((float64)(i/36))
+        	sine := math.Sin((float64)(i/26))
+        	cosine := math.Cos((float64)(i/26))
 
-        	boxNode.Transform = &renderer.GlTransform{ mgl32.Translate3D(0 , 0, 5).Mul4(mgl32.HomogRotate3DY(1.57))  }
+        	boxNode.Transform = &renderer.GlTransform{ mgl32.Translate3D(0 , 0, 0).Mul4(mgl32.HomogRotate3DY(1.57))  }
             boxNode2.Transform = &renderer.GlTransform{ mgl32.Translate3D(1, 3, i) }
         	//look at the box
-        	mainRenderer.Camera( vectorMath.Vector3{10*cosine,2,10*sine}, vectorMath.Vector3{0 , 0, (float64)(5-5)}, vectorMath.Vector3{0,1,0} )
+        	mainRenderer.Camera( vectorMath.Vector3{3*cosine,0,3*sine}, vectorMath.Vector3{0 , 0, 0}, vectorMath.Vector3{0,1,0} )
 
-            mainRenderer.CreateLight( 5,5,5,   160,0,0,   120,0,0,   vectorMath.Vector3{1, 3, (float64)(i)}, 1 )
+            mainRenderer.CreateLight( 5,5,5,   300,300,300,   120,120,120,   vectorMath.Vector3{1, 3, (float64)(i)}, 1 )
         },
 
         Render : func(){
