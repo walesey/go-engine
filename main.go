@@ -47,6 +47,7 @@ func main(){
             skycube,_ := assets.ImportObj("TestAssets/skybox/skybox.obj")
             skyMat := renderer.CreateMaterial()
             skyMat.Diffuse = skycube.Mtl.Map_Kd
+            skyMat.LightingMode = renderer.MODE_UNLIT
 
             hulk,_ := assets.ImportObj("TestAssets/sphere.obj")
             // hulk,_ := assets.ImportObj("TestAssets/gun/rifle.obj")
@@ -94,11 +95,11 @@ func main(){
         	cosine := math.Cos((float64)(i/26))
 
         	boxNode.Transform = &renderer.GlTransform{ mgl32.Translate3D(0 , 0, 0).Mul4(mgl32.HomogRotate3DY(1.57))  }
-            boxNode2.Transform = &renderer.GlTransform{ mgl32.Translate3D(1, 3, i) }
+            boxNode2.Transform = &renderer.GlTransform{ mgl32.Translate3D(1, 2, i) }
         	//look at the box
-        	mainRenderer.Camera( vectorMath.Vector3{3*cosine,0,3*sine}, vectorMath.Vector3{0 , 0, 0}, vectorMath.Vector3{0,1,0} )
+        	mainRenderer.Camera( vectorMath.Vector3{6*cosine,0,6*sine}, vectorMath.Vector3{0,0,0}, vectorMath.Vector3{0,1,0} )
 
-            mainRenderer.CreateLight( 5,5,5,   300,300,300,   120,120,120,   vectorMath.Vector3{1, 3, (float64)(i)}, 1 )
+            mainRenderer.CreateLight( 5,5,5, 300,300,300, 120,120,120, false, vectorMath.Vector3{1, 2, (float64)(i)}, 1 )
         },
 
         Render : func(){

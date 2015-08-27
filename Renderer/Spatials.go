@@ -2,6 +2,11 @@ package renderer
 
 import "image"
 
+const (
+    MODE_UNLIT int32 = 0 + iota
+    MODE_LIT
+)
+
 type Spatial interface {
     load( renderer Renderer )
     draw( renderer Renderer )
@@ -10,11 +15,12 @@ type Spatial interface {
 type Material struct {
     diffuseId, normalId, specularId, glossId, roughnessId uint32
     loaded bool
+    LightingMode int32
     Diffuse, Normal, Specular, Roughness image.Image
 }
 
 func CreateMaterial() *Material {
-    return &Material{ loaded : false }
+    return &Material{ loaded : false, LightingMode : MODE_LIT }
 }
 
 //Geometry
@@ -30,6 +36,7 @@ type Geometry struct {
 //vericies format : x,y,z,   nx,ny,nz,tx,ty,tz,btx,bty,btz,   u,v
 //indicies format : f1,f2,f3 (triangles)
 func CreateGeometry( indicies []uint32, verticies []float32 ) *Geometry {
+
     return &Geometry{ Indicies : indicies, Verticies : verticies, loaded : false }
 }
 

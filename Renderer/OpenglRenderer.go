@@ -34,7 +34,7 @@ type Renderer interface {
 	CreateMaterial( material *Material )
 	DestroyMaterial( material *Material )
 	DrawGeometry( geometry *Geometry )
-	CreateLight( ar,ag,ab, dr,dg,db, sr,sg,sb float32, position vectorMath.Vector3, i int )
+	CreateLight( ar,ag,ab, dr,dg,db, sr,sg,sb float32, directional bool, position vectorMath.Vector3, i int )
 	DestroyLight( i int )
 	ReflectionMap( right, left, top, bottom, back, front image.Image )
 }
@@ -76,6 +76,7 @@ type OpenglRenderer struct {
 	program, cubeMapId uint32
 	modelUniform int32
 	lights []float32
+	directionalLights []float32
 }
 
 func (glRenderer *OpenglRenderer) Start() {
@@ -158,7 +159,8 @@ func (glRenderer *OpenglRenderer) Start() {
 
 	//setup Lights
 	glRenderer.lights = make([]float32, MAX_LIGHTS*16, MAX_LIGHTS*16)
-	glRenderer.CreateLight( 0.1,0.1,0.1,   1,1,1,   0.7,0.7,0.7,   vectorMath.Vector3{0, -1, 0}, 0 )
+	glRenderer.directionalLights = make([]float32, MAX_LIGHTS*16, MAX_LIGHTS*16)
+	glRenderer.CreateLight( 0.1,0.1,0.1, 1,1,1, 0.7,0.7,0.7, true, vectorMath.Vector3{0, -1, 0}, 0 )
 
 	glRenderer.Init()
 
@@ -347,6 +349,10 @@ func (glRenderer *OpenglRenderer) DrawGeometry( geometry *Geometry ) {
 
 	gl.BindBuffer(gl.ARRAY_BUFFER, geometry.vboId)
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, geometry.iboId)
+	
+	//set lighting mode
+	lightsUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("mode\x00"))
+	gl.Uniform1i( lightsUniform, geometry.Material.LightingMode )
 
 	//set verticies attribute
 	vertAttrib := uint32(gl.GetAttribLocation(glRenderer.program, gl.Str("vert\x00")))
@@ -385,30 +391,40 @@ func (glRenderer *OpenglRenderer) DrawGeometry( geometry *Geometry ) {
 }
 
 // ambient, diffuse and specular light values ( i is the light index )
-func (glRenderer *OpenglRenderer) CreateLight( ar,ag,ab, dr,dg,db, sr,sg,sb float32, position vectorMath.Vector3, i int ){
+func (glRenderer *OpenglRenderer) CreateLight( ar,ag,ab, dr,dg,db, sr,sg,sb float32, directional bool, position vectorMath.Vector3, i int ){
+	lights := &glRenderer.lights
+	if directional {
+		lights = &glRenderer.directionalLights
+	}
+	
 	//position
-	glRenderer.lights[(i*16)] = (float32)(position.X)
-	glRenderer.lights[(i*16)+1] = (float32)(position.Y)
-	glRenderer.lights[(i*16)+2] = (float32)(position.Z)
-	glRenderer.lights[(i*16)+3] = 1
+	(*lights)[(i*16)] = (float32)(position.X)
+	(*lights)[(i*16)+1] = (float32)(position.Y)
+	(*lights)[(i*16)+2] = (float32)(position.Z)
+	(*lights)[(i*16)+3] = 1
 	//ambient
-	glRenderer.lights[(i*16)+4] = ar
-	glRenderer.lights[(i*16)+5] = ag
-	glRenderer.lights[(i*16)+6] = ab
-	glRenderer.lights[(i*16)+7] = 1
+	(*lights)[(i*16)+4] = ar
+	(*lights)[(i*16)+5] = ag
+	(*lights)[(i*16)+6] = ab
+	(*lights)[(i*16)+7] = 1
 	//diffuse
-	glRenderer.lights[(i*16)+8] = dr
-	glRenderer.lights[(i*16)+9] = dg
-	glRenderer.lights[(i*16)+10] = db
-	glRenderer.lights[(i*16)+11] = 1
+	(*lights)[(i*16)+8] = dr
+	(*lights)[(i*16)+9] = dg
+	(*lights)[(i*16)+10] = db
+	(*lights)[(i*16)+11] = 1
 	//specular
-	glRenderer.lights[(i*16)+12] = sr
-	glRenderer.lights[(i*16)+13] = sg
-	glRenderer.lights[(i*16)+14] = sb
-	glRenderer.lights[(i*16)+15] = 1
+	(*lights)[(i*16)+12] = sr
+	(*lights)[(i*16)+13] = sg
+	(*lights)[(i*16)+14] = sb
+	(*lights)[(i*16)+15] = 1
+
 	//set uniform array
-	lightsUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("lights\x00"))
-	gl.Uniform4fv( lightsUniform, (int32)(MAX_LIGHTS*16), &glRenderer.lights[0] )
+	uniformName := "lights\x00"
+	if directional {
+		uniformName = "directionalLights\x00"
+	}
+	lightsUniform := gl.GetUniformLocation(glRenderer.program, gl.Str( uniformName ))
+	gl.Uniform4fv( lightsUniform, (int32)(MAX_LIGHTS*16), &(*lights)[0] )
 }
 
 func (glRenderer *OpenglRenderer) DestroyLight( i int ){

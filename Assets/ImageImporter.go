@@ -23,7 +23,7 @@ func ImportImage( file string ) image.Image {
 	if err != nil {
 	    log.Fatal(err)
 	}
-	// img = imaging.FlipV(img)
+	img = imaging.FlipV(img)
 	return img
 }
 
