@@ -9,7 +9,7 @@ import (
 	"image"
 	"image/draw"
 
-	"goEngine/vectorMath"
+	"github.com/Walesey/goEngine/vectorMath"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
@@ -160,7 +160,7 @@ func (glRenderer *OpenglRenderer) Start() {
 	//setup Lights
 	glRenderer.lights = make([]float32, MAX_LIGHTS*16, MAX_LIGHTS*16)
 	glRenderer.directionalLights = make([]float32, MAX_LIGHTS*16, MAX_LIGHTS*16)
-	glRenderer.CreateLight( 0.1,0.1,0.1, 1,1,1, 0.7,0.7,0.7, true, vectorMath.Vector3{0, -1, 0}, 0 )
+	glRenderer.CreateLight( 0.1,0.1,0.1, 1,1,1, 1,1,1, true, vectorMath.Vector3{0, -1, 0}, 0 )
 
 	glRenderer.Init()
 

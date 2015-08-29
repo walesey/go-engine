@@ -39,7 +39,7 @@ vec4 directLight( vec4 LightAmb, vec4 LightDiff, vec4 LightSpec, vec4 LightDir,
 				vec4 diffuseValue, vec4 specularValue, vec4 normalMapValue, 
 				vec4 tangentReflectedEye, float illuminanceMultiplier){
 	//tangent space
-	vec3 tangentLightDirection = normalize( LightDir.xyz * TBNMatrix );
+	vec3 tangentLightDirection = LightDir.xyz * TBNMatrix;
 
 	//ambient component
 	vec4 ambientOut = diffuseValue * LightAmb;
@@ -47,7 +47,7 @@ vec4 directLight( vec4 LightAmb, vec4 LightDiff, vec4 LightSpec, vec4 LightDir,
  	float diffuseMultiplier = max(0.0, dot(normalMapValue.xyz, -tangentLightDirection));
 	vec4 diffuseOut = diffuseValue * diffuseMultiplier * LightDiff;
 	//specular component
- 	float specularMultiplier = max(0.0, pow( dot(tangentReflectedEye.xyz, -tangentLightDirection), 2.0));
+ 	float specularMultiplier = max(0.0, pow( dot(tangentReflectedEye.xyz, -tangentLightDirection), 3.0));
 	vec4 specularOut = vec4( specularValue.rgb, 1 ) * specularMultiplier * LightSpec;
 
 	return (( ambientOut + diffuseOut + specularOut ) * illuminanceMultiplier);
@@ -59,6 +59,7 @@ void main() {
 	vec4 specularValue = texture(specular, fragTexCoord);
 	vec4 roughnessValue = texture(roughness, fragTexCoord);
 	vec4 finalColor = vec4(0,0,0,1);
+	vec4 indirectValue = vec4(0,0,0,1);
 
 
  	if( mode == MODE_LIT ){
@@ -72,7 +73,8 @@ void main() {
 		//eye 
 		vec4 worldEyeDirection = vec4( worldVertex - worldCamPos );
 		vec3 tangentEyeDirection = normalize( worldEyeDirection.xyz * TBNMatrix );
-		vec4 tangentReflectedEye = - vec4( reflect( tangentEyeDirection, normalMapValue.xyz ), 1);
+		vec4 tangentReflectedEye = vec4( reflect( tangentEyeDirection, normalMapValue.xyz ), 1);
+	   	vec4 worldReflectedEye = vec4( tangentReflectedEye.xyz * inverseTBNMatrix , 1);
 
 		//point lights
 		for (int i=0;i<MAX_LIGHTS;i++){
@@ -87,6 +89,7 @@ void main() {
 			vec4 worldLightDir = vec4( worldVertex - LightPos );
 			float lightDistanceSQ = worldLightDir.x*worldLightDir.x + worldLightDir.y*worldLightDir.y + worldLightDir.z*worldLightDir.z;
 			float illuminanceMultiplier = 1 / lightDistanceSQ;
+			worldLightDir = normalize( worldLightDir );
 
 			finalColor += directLight( 
 				LightAmb, LightDiff, LightSpec, worldLightDir,
@@ -110,12 +113,12 @@ void main() {
 		}
 
 	   	//indirect lighting
-	   	vec4 worldReflectedEye = vec4( tangentReflectedEye.xyz * inverseTBNMatrix , 1);
-		vec4 indirectValue = texture(environmentMap, worldReflectedEye.xyz);
+	   	//TODO: roughness - gaussian blur the cubemap
+		indirectValue += texture(environmentMap, -worldReflectedEye.xyz);
 
 		//freznel effect
 		float ratio = 1.0-specularValue.a;
-		ratio = min( 1.0, ratio + pow(1-dot(-tangentEyeDirection, normalMapValue.xyz), 2) );
+		ratio = min( 1.0, ratio + 0.7*pow(1-dot(-tangentEyeDirection, normalMapValue.xyz), 3) );
 
 		//blend direct/indirect
 		finalColor = vec4(min(1.0,finalColor.r), min(1.0,finalColor.g), min(1.0,finalColor.b), 1);
