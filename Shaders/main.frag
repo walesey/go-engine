@@ -111,12 +111,15 @@ void main() {
 
 	   	//indirect lighting
 	   	vec4 worldReflectedEye = vec4( tangentReflectedEye.xyz * inverseTBNMatrix , 1);
-	   	worldReflectedEye = worldReflectedEye + vec4( ( noise3(1) * roughnessValue.xyz ), 1 );
 		vec4 indirectValue = texture(environmentMap, worldReflectedEye.xyz);
 
+		//freznel effect
+		float ratio = 1.0-specularValue.a;
+		ratio = min( 1.0, ratio + pow(1-dot(-tangentEyeDirection, normalMapValue.xyz), 2) );
+
 		//blend direct/indirect
-		float ratio = 0.01;
-		finalColor = (1.0-ratio)*finalColor + ratio*indirectValue;
+		finalColor = vec4(min(1.0,finalColor.r), min(1.0,finalColor.g), min(1.0,finalColor.b), 1);
+		finalColor = (1.0-ratio)*finalColor + ratio*diffuseValue*indirectValue;
 	}
 	
 	if( mode == MODE_UNLIT ){

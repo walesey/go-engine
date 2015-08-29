@@ -57,7 +57,7 @@ func main(){
             hulkMat.Specular = hulk.Mtl.Map_Spec
             hulkMat.Roughness = hulk.Mtl.Map_Roughness
 
-            ares,_ := assets.ImportObj("TestAssets/alarm/alarm.obj")
+            ares,_ := assets.ImportObj("TestAssets/sphere.obj")
             aresMat := renderer.CreateMaterial()
             aresMat.Diffuse = ares.Mtl.Map_Kd
             aresMat.Normal = ares.Mtl.Map_Disp
@@ -97,7 +97,7 @@ func main(){
         	boxNode.Transform = &renderer.GlTransform{ mgl32.Translate3D(0 , 0, 0).Mul4(mgl32.HomogRotate3DY(1.57))  }
             boxNode2.Transform = &renderer.GlTransform{ mgl32.Translate3D(1, 2, i) }
         	//look at the box
-        	mainRenderer.Camera( vectorMath.Vector3{6*cosine,0,6*sine}, vectorMath.Vector3{0,0,0}, vectorMath.Vector3{0,1,0} )
+        	mainRenderer.Camera( vectorMath.Vector3{5*cosine,0,5*sine}, vectorMath.Vector3{0,0,0}, vectorMath.Vector3{0,1,0} )
 
             mainRenderer.CreateLight( 5,5,5, 300,300,300, 120,120,120, false, vectorMath.Vector3{1, 2, (float64)(i)}, 1 )
         },
