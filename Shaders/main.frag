@@ -39,23 +39,24 @@ in vec2 fragTexCoord;
 
 out vec4 outputColor;
 
-vec4 directBRDF( vec4 LightDiff, vec4 LightSpec, vec4 LightDir, vec4 diffuseValue, vec4 specularValue, vec4 roughnessValue, vec4 tangentNormal, vec4 tangentReflectedEye){
+vec4 directBRDF( vec4 LightDiff, vec4 LightSpec, vec4 LightDir, vec4 albedoValue, vec4 specularValue, vec4 roughnessValue, vec4 tangentNormal, vec4 tangentReflectedEye){
 	vec3 tangentLightDirection = LightDir.xyz * TBNMatrix;
 
  	float diffuseMultiplier = max(0.0, dot(tangentNormal.xyz, -tangentLightDirection));
-	vec4 diffuseOut = diffuseValue * diffuseMultiplier * LightDiff;
+	vec4 diffuseOut = albedoValue * diffuseMultiplier * LightDiff;
 
- 	float specularMultiplier = max(0.0, pow( dot( tangentReflectedEye.xyz, -tangentLightDirection), 3.0 ));
+ 	float specularMultiplier = pow( max(0.0, dot( tangentReflectedEye.xyz, -tangentLightDirection)), 2.0);
 	vec4 specularOut = vec4( specularValue.rgb, 1 ) * specularMultiplier * LightSpec;
 
 	return diffuseOut + specularOut;
 }
 
 void main() {
-	vec4 diffuseValue = texture(diffuse, fragTexCoord);
+	vec4 albedoValue = texture(diffuse, fragTexCoord);
 	vec4 normalValue = texture(normal, fragTexCoord);
 	vec4 specularValue = texture(specular, fragTexCoord);
 	vec4 roughnessValue = texture(roughness, fragTexCoord);
+   	float metalness = 0;
 
 	vec4 finalColor = vec4(0,0,0,1);
 	vec4 directColor = vec4(0,0,0,1);
@@ -90,7 +91,7 @@ void main() {
 			float brightness = 1 / lightDistanceSQ;
 			worldLightDir = normalize( worldLightDir );
 
-			directColor += ( brightness * directBRDF( LightDiff, LightSpec, worldLightDir, diffuseValue, specularValue, roughnessValue, tangentNormal, tangentReflectedEye) );
+			directColor += ( brightness * directBRDF( LightDiff, LightSpec, worldLightDir, albedoValue, specularValue, roughnessValue, tangentNormal, tangentReflectedEye) );
 
 	   	}
 
@@ -105,19 +106,35 @@ void main() {
 			
 			vec4 worldLightDir = normalize( LightPos );
 
-			directColor += directBRDF( LightDiff, LightSpec, worldLightDir, diffuseValue, specularValue, roughnessValue, tangentNormal, tangentReflectedEye);
+			directColor += directBRDF( LightDiff, LightSpec, worldLightDir, albedoValue, specularValue, roughnessValue, tangentNormal, tangentReflectedEye);
 			
 		}
 
 	   	//indirect lighting
-	   	indirectColor += texture(illuminanceMap, worldReflectedEye.xyz);
+	   	vec4 indirectDiffuse = texture(illuminanceMap, worldReflectedEye.xyz);
+	   	vec4 indirectSpecular = vec4(0,0,0,1);
+	   	if( roughnessValue.x < 0.1 ){
+	   		indirectSpecular = texture(environmentMap, worldReflectedEye.xyz);
+	   	} else if( roughnessValue.x < 0.3 ){
+	   		indirectSpecular = texture(environmentMapLOD1, worldReflectedEye.xyz);
+	   	} else if( roughnessValue.x < 0.7 ){
+	   		indirectSpecular = texture(environmentMapLOD2, worldReflectedEye.xyz);
+	   	} else {
+	   		indirectSpecular = texture(environmentMapLOD3, worldReflectedEye.xyz);
+	   	}
 
+	   	//freznel effect
+	   	float reflectivity = max(metalness, pow((1.0-dot(-tangentEyeDirection, normalValue.xyz)), 2));
+	   	//blend indirect light types
+	   	indirectColor += (1.0-metalness) * 0.3 * indirectDiffuse;
+	   	indirectColor += reflectivity * albedoValue * indirectSpecular;
 
-	   	finalColor = directColor + indirectColor;
+	   	finalColor += (1.0-metalness) * directColor;
+	   	finalColor += indirectColor;
 	}
 	
 	if( mode == MODE_UNLIT ){
-		finalColor = diffuseValue;
+		finalColor = albedoValue;
 	}
 
 	//final output

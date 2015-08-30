@@ -37,7 +37,7 @@ type Renderer interface {
 	DrawGeometry( geometry *Geometry )
 	CreateLight( ar,ag,ab, dr,dg,db, sr,sg,sb float32, directional bool, position vectorMath.Vector3, i int )
 	DestroyLight( i int )
-	ReflectionMap( cm *assets.CubeMapData )
+	ReflectionMap( cm assets.CubeMapData )
 }
 
 type Transform interface {
@@ -163,6 +163,7 @@ func (glRenderer *OpenglRenderer) Start() {
 
 	// Configure global settings
 	gl.Enable(gl.DEPTH_TEST)
+	gl.Enable(gl.TEXTURE_CUBE_MAP_SEAMLESS)
 	gl.DepthFunc(gl.LESS)
 	gl.ClearColor(0.0, 0.0, 0.0, 1.0)
 
@@ -294,13 +295,16 @@ func (glRenderer *OpenglRenderer) newTexture( img image.Image, textureUnit uint3
 	return texId
 }
 
-func (glRenderer *OpenglRenderer) ReflectionMap( cm *assets.CubeMapData ) {
-	cm.Resize(64)
-	cm.Blur(14.5)
+func (glRenderer *OpenglRenderer) ReflectionMap( cm assets.CubeMapData ) {
+	cm.Resize(512)
 	glRenderer.envMapId = glRenderer.newCubeMap( cm.Right, cm.Left, cm.Top, cm.Bottom, cm.Back, cm.Front, gl.TEXTURE4)
+	cm.Resize(64)
 	glRenderer.envMapLOD1Id = glRenderer.newCubeMap( cm.Right, cm.Left, cm.Top, cm.Bottom, cm.Back, cm.Front, gl.TEXTURE5)
+	cm.Resize(32)
 	glRenderer.envMapLOD2Id = glRenderer.newCubeMap( cm.Right, cm.Left, cm.Top, cm.Bottom, cm.Back, cm.Front, gl.TEXTURE6)
+	cm.Resize(16)
 	glRenderer.envMapLOD3Id = glRenderer.newCubeMap( cm.Right, cm.Left, cm.Top, cm.Bottom, cm.Back, cm.Front, gl.TEXTURE7)
+	cm.Resize(8)
 	glRenderer.illuminanceMapId = glRenderer.newCubeMap( cm.Right, cm.Left, cm.Top, cm.Bottom, cm.Back, cm.Front, gl.TEXTURE8)
 }
 

@@ -41,8 +41,7 @@ func main(){
 
             //setup reflection map
             cubeMap := assets.ImportCubemap("TestAssets/skybox/cubemap.png")
-            irradianceMap := cubeMap.Clone()
-            mainRenderer.ReflectionMap( irradianceMap )
+            mainRenderer.ReflectionMap( *cubeMap )
 
             //setup skybox
             skycube,_ := assets.ImportObj("TestAssets/skybox/skybox.obj")
