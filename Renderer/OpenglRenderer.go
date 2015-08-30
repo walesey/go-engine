@@ -10,7 +10,8 @@ import (
 	"image/draw"
 
 	"github.com/Walesey/goEngine/vectorMath"
-
+	"github.com/Walesey/goEngine/assets"
+	"github.com/disintegration/imaging"
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
 	"github.com/go-gl/mathgl/mgl32"
@@ -36,7 +37,7 @@ type Renderer interface {
 	DrawGeometry( geometry *Geometry )
 	CreateLight( ar,ag,ab, dr,dg,db, sr,sg,sb float32, directional bool, position vectorMath.Vector3, i int )
 	DestroyLight( i int )
-	ReflectionMap( right, left, top, bottom, back, front image.Image )
+	ReflectionMap( cm *assets.CubeMapData )
 }
 
 type Transform interface {
@@ -73,7 +74,7 @@ type OpenglRenderer struct {
 	WindowWidth, WindowHeight int
 	WindowTitle string
 	matStack *Stack
-	program, cubeMapId uint32
+	program, envMapId, envMapLOD1Id, envMapLOD2Id, envMapLOD3Id, illuminanceMapId uint32
 	modelUniform int32
 	lights []float32
 	directionalLights []float32
@@ -145,6 +146,14 @@ func (glRenderer *OpenglRenderer) Start() {
 	gl.Uniform1i(textureUniform, 3)
 	textureUniform = gl.GetUniformLocation(program, gl.Str("environmentMap\x00"))
 	gl.Uniform1i(textureUniform, 4)
+	textureUniform = gl.GetUniformLocation(program, gl.Str("environmentMapLOD1\x00"))
+	gl.Uniform1i(textureUniform, 5)
+	textureUniform = gl.GetUniformLocation(program, gl.Str("environmentMapLOD2\x00"))
+	gl.Uniform1i(textureUniform, 6)
+	textureUniform = gl.GetUniformLocation(program, gl.Str("environmentMapLOD3\x00"))
+	gl.Uniform1i(textureUniform, 7)
+	textureUniform = gl.GetUniformLocation(program, gl.Str("illuminanceMap\x00"))
+	gl.Uniform1i(textureUniform, 8)
 
 	gl.BindFragDataLocation(program, 0, gl.Str("outputColor\x00"))
 
@@ -285,14 +294,20 @@ func (glRenderer *OpenglRenderer) newTexture( img image.Image, textureUnit uint3
 	return texId
 }
 
-func (glRenderer *OpenglRenderer) ReflectionMap( right, left, top, bottom, back, front image.Image ) {
-	glRenderer.cubeMapId = glRenderer.newCubeMap( right, left, top, bottom, back, front)
+func (glRenderer *OpenglRenderer) ReflectionMap( cm *assets.CubeMapData ) {
+	cm.Resize(64)
+	cm.Blur(14.5)
+	glRenderer.envMapId = glRenderer.newCubeMap( cm.Right, cm.Left, cm.Top, cm.Bottom, cm.Back, cm.Front, gl.TEXTURE4)
+	glRenderer.envMapLOD1Id = glRenderer.newCubeMap( cm.Right, cm.Left, cm.Top, cm.Bottom, cm.Back, cm.Front, gl.TEXTURE5)
+	glRenderer.envMapLOD2Id = glRenderer.newCubeMap( cm.Right, cm.Left, cm.Top, cm.Bottom, cm.Back, cm.Front, gl.TEXTURE6)
+	glRenderer.envMapLOD3Id = glRenderer.newCubeMap( cm.Right, cm.Left, cm.Top, cm.Bottom, cm.Back, cm.Front, gl.TEXTURE7)
+	glRenderer.illuminanceMapId = glRenderer.newCubeMap( cm.Right, cm.Left, cm.Top, cm.Bottom, cm.Back, cm.Front, gl.TEXTURE8)
 }
 
-func (glRenderer *OpenglRenderer) newCubeMap( right, left, top, bottom, back, front image.Image ) uint32 {
+func (glRenderer *OpenglRenderer) newCubeMap( right, left, top, bottom, back, front image.Image, textureUnit uint32 ) uint32 {
 	var texId uint32
 	gl.GenTextures(1, &texId)
-	gl.ActiveTexture(gl.TEXTURE4)
+	gl.ActiveTexture(textureUnit)
 	gl.BindTexture(gl.TEXTURE_CUBE_MAP, texId)
 
 	for i:=0 ; i<6 ; i++ {
@@ -303,10 +318,10 @@ func (glRenderer *OpenglRenderer) newCubeMap( right, left, top, bottom, back, fr
 			texIndex = gl.TEXTURE_CUBE_MAP_NEGATIVE_X
 		} else if i == 2 {
 			img = top
-			texIndex = gl.TEXTURE_CUBE_MAP_POSITIVE_Y
+			texIndex = gl.TEXTURE_CUBE_MAP_NEGATIVE_Y
 		} else if i == 3 {
 			img = bottom
-			texIndex = gl.TEXTURE_CUBE_MAP_NEGATIVE_Y
+			texIndex = gl.TEXTURE_CUBE_MAP_POSITIVE_Y
 		} else if i == 4 {
 			img = back
 			texIndex = gl.TEXTURE_CUBE_MAP_NEGATIVE_Z
@@ -314,6 +329,7 @@ func (glRenderer *OpenglRenderer) newCubeMap( right, left, top, bottom, back, fr
 			img = front
 			texIndex = gl.TEXTURE_CUBE_MAP_POSITIVE_Z
 		}
+		img = imaging.FlipV(img)
 		rgba := image.NewRGBA(img.Bounds())
 		if rgba.Stride != rgba.Rect.Size().X*4 {
 		    log.Fatal("unsupported stride")
@@ -385,7 +401,15 @@ func (glRenderer *OpenglRenderer) DrawGeometry( geometry *Geometry ) {
 	gl.ActiveTexture(gl.TEXTURE3)
 	gl.BindTexture(gl.TEXTURE_2D, geometry.Material.roughnessId)
 	gl.ActiveTexture(gl.TEXTURE4)
-	gl.BindTexture(gl.TEXTURE_CUBE_MAP, glRenderer.cubeMapId)
+	gl.BindTexture(gl.TEXTURE_CUBE_MAP, glRenderer.envMapId)
+	gl.ActiveTexture(gl.TEXTURE5)
+	gl.BindTexture(gl.TEXTURE_CUBE_MAP, glRenderer.envMapLOD1Id)
+	gl.ActiveTexture(gl.TEXTURE6)
+	gl.BindTexture(gl.TEXTURE_CUBE_MAP, glRenderer.envMapLOD2Id)
+	gl.ActiveTexture(gl.TEXTURE7)
+	gl.BindTexture(gl.TEXTURE_CUBE_MAP, glRenderer.envMapLOD3Id)
+	gl.ActiveTexture(gl.TEXTURE8)
+	gl.BindTexture(gl.TEXTURE_CUBE_MAP, glRenderer.illuminanceMapId)
 
 	gl.DrawElements(gl.TRIANGLES, (int32)(len(geometry.Indicies)), gl.UNSIGNED_INT, gl.PtrOffset(0))
 }

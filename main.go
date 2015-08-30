@@ -40,8 +40,9 @@ func main(){
     		sceneGraph = renderer.CreateSceneGraph(mainRenderer)
 
             //setup reflection map
-            cubeMap := assets.ImportCubemap("TestAssets/skybox/cubemap.jpg")
-            mainRenderer.ReflectionMap( cubeMap.Right, cubeMap.Left, cubeMap.Top, cubeMap.Bottom, cubeMap.Back, cubeMap.Front )
+            cubeMap := assets.ImportCubemap("TestAssets/skybox/cubemap.png")
+            irradianceMap := cubeMap.Clone()
+            mainRenderer.ReflectionMap( irradianceMap )
 
             //setup skybox
             skycube,_ := assets.ImportObj("TestAssets/skybox/skybox.obj")
@@ -70,7 +71,7 @@ func main(){
             skyNode := renderer.CreateNode()
             skyNode.Add(geom)
             sceneGraph.Add(skyNode)
-            skyNode.Transform = &renderer.GlTransform{ mgl32.Scale3D(5000, 5000, 5000) }
+            skyNode.Transform = &renderer.GlTransform{ mgl32.Scale3D(5000, 5000, 5000).Mul4(mgl32.HomogRotate3DY(1.57)) }
 
 			geom = renderer.CreateGeometry( hulk.Indicies, hulk.Vertices )
             geom.Material = hulkMat

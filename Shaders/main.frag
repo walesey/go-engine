@@ -21,6 +21,10 @@ uniform sampler2D normal;
 uniform sampler2D specular;
 uniform sampler2D roughness;
 uniform samplerCube environmentMap;
+uniform samplerCube environmentMapLOD1;
+uniform samplerCube environmentMapLOD2;
+uniform samplerCube environmentMapLOD3;
+uniform samplerCube illuminanceMap;
 
 uniform mat4 projection;
 uniform mat4 camera;
@@ -35,22 +39,16 @@ in vec2 fragTexCoord;
 
 out vec4 outputColor;
 
-vec4 directLight( vec4 LightAmb, vec4 LightDiff, vec4 LightSpec, vec4 LightDir, 
-				vec4 diffuseValue, vec4 specularValue, vec4 normalMapValue, 
-				vec4 tangentReflectedEye, float illuminanceMultiplier){
-	//tangent space
+vec4 directBRDF( vec4 LightDiff, vec4 LightSpec, vec4 LightDir, vec4 diffuseValue, vec4 specularValue, vec4 roughnessValue, vec4 tangentNormal, vec4 tangentReflectedEye){
 	vec3 tangentLightDirection = LightDir.xyz * TBNMatrix;
 
-	//ambient component
-	vec4 ambientOut = diffuseValue * LightAmb;
-	//diffuse component
- 	float diffuseMultiplier = max(0.0, dot(normalMapValue.xyz, -tangentLightDirection));
+ 	float diffuseMultiplier = max(0.0, dot(tangentNormal.xyz, -tangentLightDirection));
 	vec4 diffuseOut = diffuseValue * diffuseMultiplier * LightDiff;
-	//specular component
- 	float specularMultiplier = max(0.0, pow( dot(tangentReflectedEye.xyz, -tangentLightDirection), 3.0));
+
+ 	float specularMultiplier = max(0.0, pow( dot( tangentReflectedEye.xyz, -tangentLightDirection), 3.0 ));
 	vec4 specularOut = vec4( specularValue.rgb, 1 ) * specularMultiplier * LightSpec;
 
-	return (( ambientOut + diffuseOut + specularOut ) * illuminanceMultiplier);
+	return diffuseOut + specularOut;
 }
 
 void main() {
@@ -58,22 +56,23 @@ void main() {
 	vec4 normalValue = texture(normal, fragTexCoord);
 	vec4 specularValue = texture(specular, fragTexCoord);
 	vec4 roughnessValue = texture(roughness, fragTexCoord);
-	vec4 finalColor = vec4(0,0,0,1);
-	vec4 indirectValue = vec4(0,0,0,1);
 
+	vec4 finalColor = vec4(0,0,0,1);
+	vec4 directColor = vec4(0,0,0,1);
+	vec4 indirectColor = vec4(0,0,0,1);
 
  	if( mode == MODE_LIT ){
 
 		//Normal calculations
-	 	vec4 normalMapValue = normalValue * 2 - 1;
-	 	if( abs(normalMapValue.x) < 0.1 && abs(normalMapValue.y) < 0.1 && abs(normalMapValue.z) < 0.1 ){
-	 		normalMapValue = vec4(0,0,1,1);
+	 	vec4 tangentNormal = normalValue * 2 - 1;
+	 	if( abs(tangentNormal.x) < 0.1 && abs(tangentNormal.y) < 0.1 && abs(tangentNormal.z) < 0.1 ){
+	 		tangentNormal = vec4(0,0,1,1);
 	 	}
 
 		//eye 
 		vec4 worldEyeDirection = vec4( worldVertex - worldCamPos );
 		vec3 tangentEyeDirection = normalize( worldEyeDirection.xyz * TBNMatrix );
-		vec4 tangentReflectedEye = vec4( reflect( tangentEyeDirection, normalMapValue.xyz ), 1);
+		vec4 tangentReflectedEye = vec4( reflect( tangentEyeDirection, tangentNormal.xyz ), 1);
 	   	vec4 worldReflectedEye = vec4( tangentReflectedEye.xyz * inverseTBNMatrix , 1);
 
 		//point lights
@@ -88,15 +87,14 @@ void main() {
 			//point light source
 			vec4 worldLightDir = vec4( worldVertex - LightPos );
 			float lightDistanceSQ = worldLightDir.x*worldLightDir.x + worldLightDir.y*worldLightDir.y + worldLightDir.z*worldLightDir.z;
-			float illuminanceMultiplier = 1 / lightDistanceSQ;
+			float brightness = 1 / lightDistanceSQ;
 			worldLightDir = normalize( worldLightDir );
 
-			finalColor += directLight( 
-				LightAmb, LightDiff, LightSpec, worldLightDir,
-				diffuseValue, specularValue, normalMapValue, tangentReflectedEye, illuminanceMultiplier );
+			directColor += ( brightness * directBRDF( LightDiff, LightSpec, worldLightDir, diffuseValue, specularValue, roughnessValue, tangentNormal, tangentReflectedEye) );
+
 	   	}
 
-		//directional light
+		//directional lights
 	   	for (int i=0;i<MAX_LIGHTS;i++){
 
 			//light components
@@ -107,22 +105,15 @@ void main() {
 			
 			vec4 worldLightDir = normalize( LightPos );
 
-			finalColor += directLight( 
-				LightAmb, LightDiff, LightSpec, worldLightDir,
-				diffuseValue, specularValue, normalMapValue, tangentReflectedEye, 1 );
+			directColor += directBRDF( LightDiff, LightSpec, worldLightDir, diffuseValue, specularValue, roughnessValue, tangentNormal, tangentReflectedEye);
+			
 		}
 
 	   	//indirect lighting
-	   	//TODO: roughness - gaussian blur the cubemap
-		indirectValue += texture(environmentMap, -worldReflectedEye.xyz);
+	   	indirectColor += texture(illuminanceMap, worldReflectedEye.xyz);
 
-		//freznel effect
-		float ratio = 1.0-specularValue.a;
-		ratio = min( 1.0, ratio + 0.7*pow(1-dot(-tangentEyeDirection, normalMapValue.xyz), 3) );
 
-		//blend direct/indirect
-		finalColor = vec4(min(1.0,finalColor.r), min(1.0,finalColor.g), min(1.0,finalColor.b), 1);
-		finalColor = (1.0-ratio)*finalColor + ratio*diffuseValue*indirectValue;
+	   	finalColor = directColor + indirectColor;
 	}
 	
 	if( mode == MODE_UNLIT ){
