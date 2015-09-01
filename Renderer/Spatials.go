@@ -30,6 +30,7 @@ type Geometry struct {
     Indicies []uint32
     Verticies []float32
     Material *Material
+    CullBackface bool
 }
 
 
@@ -37,7 +38,7 @@ type Geometry struct {
 //indicies format : f1,f2,f3 (triangles)
 func CreateGeometry( indicies []uint32, verticies []float32 ) *Geometry {
 
-    return &Geometry{ Indicies : indicies, Verticies : verticies, loaded : false }
+    return &Geometry{ Indicies : indicies, Verticies : verticies, loaded : false, CullBackface : true }
 }
 
 func (geometry *Geometry) draw( renderer Renderer ) {

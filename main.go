@@ -49,8 +49,9 @@ func main(){
             skyMat.Diffuse = skycube.Mtl.Map_Kd
             skyMat.LightingMode = renderer.MODE_UNLIT
 
-            hulk,_ := assets.ImportObj("TestAssets/sphere1.obj")
-            // hulk,_ := assets.ImportObj("TestAssets/gun/rifle.obj")
+            hulk,_ := assets.ImportObj("TestAssets/plank.obj")
+            // hulk,_ := assets.ImportObj("TestAssets/sphere1.obj")
+            // hulk,_ := assets.ImportObj("TestAssets/goldgun/rifle.obj")
             hulkMat := renderer.CreateMaterial()
             hulkMat.Diffuse = hulk.Mtl.Map_Kd
             hulkMat.Normal = hulk.Mtl.Map_Disp
@@ -67,6 +68,7 @@ func main(){
             //setup scenegraph
             geom := renderer.CreateGeometry( skycube.Indicies, skycube.Vertices )
             geom.Material = skyMat
+            geom.CullBackface = false
             skyNode := renderer.CreateNode()
             skyNode.Add(geom)
             sceneGraph.Add(skyNode)
@@ -97,7 +99,7 @@ func main(){
         	boxNode.Transform = &renderer.GlTransform{ mgl32.Translate3D(0 , 0, 0).Mul4(mgl32.HomogRotate3DY(1.57))  }
             boxNode2.Transform = &renderer.GlTransform{ mgl32.Translate3D(1, 2, i) }
         	//look at the box
-        	mainRenderer.Camera( vectorMath.Vector3{5*cosine,1*sine,5*sine}, vectorMath.Vector3{0,0,0}, vectorMath.Vector3{0,1,0} )
+        	mainRenderer.Camera( vectorMath.Vector3{15*cosine,1*sine,15*sine}, vectorMath.Vector3{0,0,0}, vectorMath.Vector3{0,1,0} )
 
             mainRenderer.CreateLight( 5,5,5, 100,100,100, 100,100,100, false, vectorMath.Vector3{1, 2, (float64)(i)}, 1 )
         },

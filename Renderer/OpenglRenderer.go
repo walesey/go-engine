@@ -164,7 +164,11 @@ func (glRenderer *OpenglRenderer) Start() {
 	// Configure global settings
 	gl.Enable(gl.DEPTH_TEST)
 	gl.Enable(gl.TEXTURE_CUBE_MAP_SEAMLESS)
+	gl.Enable(gl.BLEND)
+	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	gl.DepthFunc(gl.LESS)
+	gl.Enable(gl.CULL_FACE)
+	gl.CullFace(gl.BACK)
 	gl.ClearColor(0.0, 0.0, 0.0, 1.0)
 
 	//setup Lights
@@ -369,6 +373,13 @@ func (glRenderer *OpenglRenderer) DrawGeometry( geometry *Geometry ) {
 
 	gl.BindBuffer(gl.ARRAY_BUFFER, geometry.vboId)
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, geometry.iboId)
+
+	//set back face culling
+	if geometry.CullBackface {
+		gl.Enable(gl.CULL_FACE)
+	} else {
+		gl.Disable(gl.CULL_FACE)
+	}
 	
 	//set lighting mode
 	lightsUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("mode\x00"))
