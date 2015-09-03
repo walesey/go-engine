@@ -10,7 +10,6 @@ import (
 	"image/draw"
 
 	"github.com/Walesey/goEngine/vectorMath"
-	"github.com/Walesey/goEngine/assets"
 	"github.com/disintegration/imaging"
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
@@ -37,7 +36,7 @@ type Renderer interface {
 	DrawGeometry( geometry *Geometry )
 	CreateLight( ar,ag,ab, dr,dg,db, sr,sg,sb float32, directional bool, position vectorMath.Vector3, i int )
 	DestroyLight( i int )
-	ReflectionMap( cm assets.CubeMapData )
+	ReflectionMap( cm CubeMap )
 }
 
 type Transform interface {
@@ -299,7 +298,7 @@ func (glRenderer *OpenglRenderer) newTexture( img image.Image, textureUnit uint3
 	return texId
 }
 
-func (glRenderer *OpenglRenderer) ReflectionMap( cm assets.CubeMapData ) {
+func (glRenderer *OpenglRenderer) ReflectionMap( cm CubeMap ) {
 	cm.Resize(512)
 	glRenderer.envMapId = glRenderer.newCubeMap( cm.Right, cm.Left, cm.Top, cm.Bottom, cm.Back, cm.Front, gl.TEXTURE4)
 	cm.Resize(64)
