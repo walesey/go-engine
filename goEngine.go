@@ -2,7 +2,6 @@ package main
 
 import (
 	"runtime"
-    "image"
 	"math"
     "fmt"
     "os"
@@ -58,7 +57,7 @@ func material( c *cli.Context ){
     normalMap := assets.ImportImage(c.Args()[3])
     specMap := assets.ImportImage(c.Args()[4])
     roughnessMap := assets.ImportImage(c.Args()[5])
-    mat := createMaterial(diffuseMap, normalMap, specMap, roughnessMap)
+    mat := assets.CreateMaterial(diffuseMap, normalMap, specMap, roughnessMap)
     assetLib,_ := assets.LoadAssetLibrary(c.Args()[0])
     assetLib.AddMaterial( c.Args()[1], mat )
     assetLib.SaveToFile( c.Args()[0] )
@@ -70,30 +69,11 @@ func geometry( c *cli.Context ){
         fmt.Println("Usage: goEngine geometry <assetFile> <name> <objFile> ")
         return
     }
-    geometry := createGeometry(c.Args()[2])
+    geometry := assets.ImportObj(c.Args()[2])
     assetLib,_ := assets.LoadAssetLibrary(c.Args()[0])
     assetLib.AddGeometry( c.Args()[1], geometry )
     assetLib.AddMaterial( fmt.Sprint(c.Args()[1], "Mat"), geometry.Material )
     assetLib.SaveToFile( c.Args()[0] )
-}
-
-// load obj file and return Geometry
-func createGeometry( filePath string ) *renderer.Geometry{
-    objData,_ := assets.ImportObj(filePath)
-    mat := createMaterial(objData.Mtl.Map_Kd, objData.Mtl.Map_Disp, objData.Mtl.Map_Spec, objData.Mtl.Map_Roughness)
-    geom := renderer.CreateGeometry( objData.Indicies, objData.Vertices )
-    geom.Material = mat
-    return geom
-}
-
-// Create material object from image files
-func createMaterial( diffuse, normal, specular, roughness image.Image ) *renderer.Material{
-    mat := renderer.CreateMaterial()
-    mat.Diffuse = diffuse
-    mat.Normal = normal
-    mat.Specular = specular
-    mat.Roughness = roughness
-    return mat
 }
 
 //
@@ -121,8 +101,8 @@ func demo( c *cli.Context ){
     skyNode.Add(geom)
     skyNode.Transform = &renderer.GlTransform{ mgl32.Scale3D(5000, 5000, 5000).Mul4(mgl32.HomogRotate3DY(1.57)) }
 
-    geom = assetLib.GetGeometry("sphere")
-    geom.Material = assetLib.GetMaterial("sphereMat")
+    geom = assetLib.GetGeometry("gun")
+    geom.Material = assetLib.GetMaterial("gunMat")
     boxNode := renderer.CreateNode()
     boxNode.Add(geom)
 
@@ -133,7 +113,7 @@ func demo( c *cli.Context ){
 
     i := (float32)(-45.0)
 
-    glRenderer.Init == func(){
+    glRenderer.Init = func(){
         //setup reflection map
         cubeMap := renderer.CreateCubemap(assets.ImportImage("TestAssets/Files/skybox/cubemap.png"));
         glRenderer.ReflectionMap( *cubeMap )
