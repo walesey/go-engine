@@ -34,17 +34,50 @@ func main(){
         },
         {
             Name:  "material",
-            Usage: "import textures from file and save to a .asset file",
+            Usage: "Import textures from file and save to a .asset file",
             Action: material,
         },
         {
             Name:  "geometry",
-            Usage: "import obj geometry file and save to a .asset file",
+            Usage: "Import obj geometry file and save to a .asset file",
             Action: geometry,
+        },
+        {
+            Name:  "list",
+            Usage: "List all assets in a .asset file",
+            Action: list,
+        },
+        {
+            Name:  "remove",
+            Usage: "Remove an asset from a .asset file",
+            Action: remove,
         },
     }
 
     app.Run(os.Args)
+}
+
+//CLI remove asset from file
+func remove( c *cli.Context ){
+    if len(c.Args()) != 2 {
+        fmt.Println("Usage: goEngine material <assetFile> <name> ")
+        return
+    }
+    assetLib,_ := assets.LoadAssetLibrary(c.Args()[0])
+    delete(assetLib.Assets, c.Args()[1])
+    assetLib.SaveToFile( c.Args()[0] )
+}
+
+//CLI list assets from file
+func list( c *cli.Context ){
+    if len(c.Args()) != 1 {
+        fmt.Println("Usage: goEngine material <assetFile> ")
+        return
+    }
+    assetLib,_ := assets.LoadAssetLibrary(c.Args()[0])
+    for name := range assetLib.Assets {
+        fmt.Println( name, ": ", assetLib.Assets[name].Type )
+    }
 }
 
 //CLI material creator
