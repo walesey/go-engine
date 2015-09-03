@@ -3,6 +3,8 @@ package assets
 import(
 	"io/ioutil"
 	"encoding/json"
+    "compress/gzip"
+    "bytes"
 
 	"github.com/Walesey/goEngine/renderer"
 )
@@ -22,12 +24,22 @@ func CreateAssetLibrary() *AssetLibrary{
 }
 
 func LoadAssetLibrary(fileName string) (*AssetLibrary, error){
-    data, err := ioutil.ReadFile(fileName)
+    compressedData, err := ioutil.ReadFile(fileName)
     if err != nil {
     	return CreateAssetLibrary(), err
     }
+    buf := bytes.NewBuffer(compressedData)
+    r, err := gzip.NewReader(buf)
+    if err != nil {
+		return CreateAssetLibrary(), err
+	}
+    data, err := ioutil.ReadAll(r)
+    if err != nil {
+		return CreateAssetLibrary(), err
+	}
+    defer r.Close()
     var aLib AssetLibrary
-    err = json.Unmarshal([]byte(data), &aLib)
+    err = json.Unmarshal(data, &aLib)
 	if err != nil {
 		return CreateAssetLibrary(), err
 	}
@@ -41,7 +53,11 @@ func (al *AssetLibrary) SaveToFile(fileName string){
 	if err != nil {
 		panic(err)
 	}
-    err = ioutil.WriteFile(fileName, data, 0777)
+    var compressedData bytes.Buffer
+	w := gzip.NewWriter(&compressedData)
+	w.Write([]byte(data))
+	w.Close()
+    err = ioutil.WriteFile(fileName, compressedData.Bytes(), 0777)
     if err != nil {
         panic(err)
     }
