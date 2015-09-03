@@ -1,4 +1,4 @@
-package assetEncoding
+package assets
 
 import(
 	"io/ioutil"

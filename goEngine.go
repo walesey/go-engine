@@ -9,7 +9,6 @@ import (
 
 	"github.com/Walesey/goEngine/vectorMath"
     "github.com/Walesey/goEngine/assets"
-    "github.com/Walesey/goEngine/assetEncoding"
 	"github.com/Walesey/goEngine/renderer"
 
     "github.com/codegangsta/cli"
@@ -60,7 +59,7 @@ func material( c *cli.Context ){
     specMap := assets.ImportImage(c.Args()[4])
     roughnessMap := assets.ImportImage(c.Args()[5])
     mat := createMaterial(diffuseMap, normalMap, specMap, roughnessMap)
-    assetLib,_ := assetEncoding.LoadAssetLibrary(c.Args()[0])
+    assetLib,_ := assets.LoadAssetLibrary(c.Args()[0])
     assetLib.AddMaterial( c.Args()[1], mat )
     assetLib.SaveToFile( c.Args()[0] )
 }
@@ -72,7 +71,7 @@ func geometry( c *cli.Context ){
         return
     }
     geometry := createGeometry(c.Args()[2])
-    assetLib,_ := assetEncoding.LoadAssetLibrary(c.Args()[0])
+    assetLib,_ := assets.LoadAssetLibrary(c.Args()[0])
     assetLib.AddGeometry( c.Args()[1], geometry )
     assetLib.AddMaterial( fmt.Sprint(c.Args()[1], "Mat"), geometry.Material )
     assetLib.SaveToFile( c.Args()[0] )
@@ -102,74 +101,66 @@ func demo( c *cli.Context ){
     fps := renderer.CreateFPSMeter(1.0)
     fps.FpsCap = 60
 
-    var sceneGraph renderer.SceneGraph
-    var mainRenderer renderer.Renderer
+    glRenderer := &renderer.OpenglRenderer{
+        WindowTitle : "GoEngine",
+        WindowWidth : 900,
+        WindowHeight : 700,
+    }
 
-    var boxNode *renderer.Node
-    var boxNode2 *renderer.Node
-
-    assetLib,err := assetEncoding.LoadAssetLibrary("TestAssets/demo.asset")
+    assetLib,err := assets.LoadAssetLibrary("TestAssets/demo.asset")
     if err != nil {
         panic(err)
     }
 
+    //setup scenegraph
+    geom := assetLib.GetGeometry("skybox")
+    geom.Material = assetLib.GetMaterial("skyboxMat")
+    geom.Material.LightingMode = renderer.MODE_UNLIT
+    geom.CullBackface = false
+    skyNode := renderer.CreateNode()
+    skyNode.Add(geom)
+    skyNode.Transform = &renderer.GlTransform{ mgl32.Scale3D(5000, 5000, 5000).Mul4(mgl32.HomogRotate3DY(1.57)) }
+
+    geom = assetLib.GetGeometry("sphere")
+    geom.Material = assetLib.GetMaterial("sphereMat")
+    boxNode := renderer.CreateNode()
+    boxNode.Add(geom)
+
+    geom = assetLib.GetGeometry("sphere")
+    geom.Material = assetLib.GetMaterial("sphereMat")
+    boxNode2 := renderer.CreateNode()
+    boxNode2.Add(geom)
+
     i := (float32)(-45.0)
 
-	mainRenderer = &renderer.OpenglRenderer{
-        WindowTitle : "Go Engine",
-        WindowWidth : 1700,
-        WindowHeight : 950,
+    glRenderer.Init == func(){
+        //setup reflection map
+        cubeMap := renderer.CreateCubemap(assets.ImportImage("TestAssets/Files/skybox/cubemap.png"));
+        glRenderer.ReflectionMap( *cubeMap )
+    }
 
-        Init : func(){
-    		sceneGraph = renderer.CreateSceneGraph(mainRenderer)
+    glRenderer.Update = func(){
+        fps.UpdateFPSMeter()
+        i = i + 0.08
+        if i > 180 {
+            i = -45
+        }
+        sine := math.Sin((float64)(i/26))
+        cosine := math.Cos((float64)(i/26))
 
-            //setup reflection map
-            cubeMap := renderer.CreateCubemap(assets.ImportImage("TestAssets/skybox/cubemap.png"));
-            mainRenderer.ReflectionMap( *cubeMap )
+        boxNode.Transform = &renderer.GlTransform{ mgl32.Translate3D(0 , 0, 0).Mul4(mgl32.HomogRotate3DY(1.57))  }
+        boxNode2.Transform = &renderer.GlTransform{ mgl32.Translate3D(1, 2, i) }
+        //look at the box
+        glRenderer.Camera( vectorMath.Vector3{5*cosine,1*sine,5*sine}, vectorMath.Vector3{0,0,0}, vectorMath.Vector3{0,1,0} )
 
-            //setup scenegraph
-            geom := assetLib.GetGeometry("skybox")
-            geom.Material = assetLib.GetMaterial("skyboxMat")
-            geom.Material.LightingMode = renderer.MODE_UNLIT
-            geom.CullBackface = false
-            skyNode := renderer.CreateNode()
-            skyNode.Add(geom)
-            sceneGraph.Add(skyNode)
-            skyNode.Transform = &renderer.GlTransform{ mgl32.Scale3D(5000, 5000, 5000).Mul4(mgl32.HomogRotate3DY(1.57)) }
+        glRenderer.CreateLight( 5,5,5, 100,100,100, 100,100,100, false, vectorMath.Vector3{1, 2, (float64)(i)}, 1 )
+    }
 
-			geom = assetLib.GetGeometry("sphere")
-            geom.Material = assetLib.GetMaterial("sphereMat")
-			boxNode = renderer.CreateNode()
-			boxNode.Add(geom)
-        	sceneGraph.Add(boxNode)
+    glRenderer.Render = func(){
+        skyNode.Draw(glRenderer)
+        boxNode.Draw(glRenderer)
+        boxNode2.Draw(glRenderer)
+    }
 
-            geom = assetLib.GetGeometry("sphere")
-            geom.Material = assetLib.GetMaterial("sphereMat")
-			boxNode2 = renderer.CreateNode()
-			boxNode2.Add(geom)
-        	sceneGraph.Add(boxNode2)
-        },
-
-        Update : func(){
-            fps.UpdateFPSMeter()
-        	i = i + 0.08
-        	if i > 180 {
-        		i = -45
-        	}
-        	sine := math.Sin((float64)(i/26))
-        	cosine := math.Cos((float64)(i/26))
-
-        	boxNode.Transform = &renderer.GlTransform{ mgl32.Translate3D(0 , 0, 0).Mul4(mgl32.HomogRotate3DY(1.57))  }
-            boxNode2.Transform = &renderer.GlTransform{ mgl32.Translate3D(1, 2, i) }
-        	//look at the box
-        	mainRenderer.Camera( vectorMath.Vector3{5*cosine,1*sine,5*sine}, vectorMath.Vector3{0,0,0}, vectorMath.Vector3{0,1,0} )
-
-            mainRenderer.CreateLight( 5,5,5, 100,100,100, 100,100,100, false, vectorMath.Vector3{1, 2, (float64)(i)}, 1 )
-        },
-
-        Render : func(){
-        	sceneGraph.RenderScene()
-        }}
-
-    mainRenderer.Start()
+    glRenderer.Start()
 }
