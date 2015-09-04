@@ -11,7 +11,6 @@ import (
 	"github.com/Walesey/goEngine/renderer"
 
     "github.com/codegangsta/cli"
-	"github.com/go-gl/mathgl/mgl32"
 )
 
 func init() {
@@ -132,10 +131,14 @@ func demo( c *cli.Context ){
     geom.CullBackface = false
     skyNode := renderer.CreateNode()
     skyNode.Add(geom)
-    skyNode.Transform = &renderer.GlTransform{ mgl32.Scale3D(5000, 5000, 5000).Mul4(mgl32.HomogRotate3DY(1.57)) }
+    skyNode.Rotation( 1.57, vectorMath.Vector3{0,1,0} )
+    skyNode.Scale( vectorMath.Vector3{5000, 5000, 5000} )
 
-    geom = assetLib.GetGeometry("gun")
-    geom.Material = assetLib.GetMaterial("gunMat")
+    // geom = renderer.CreateBox(1,1)
+    // geom = assetLib.GetGeometry("sphere")
+    // geom.Material = assetLib.GetMaterial("sphereMat")
+    geom = assets.ImportObj("TestAssets/Files/gun/rifle.obj")
+    geom.CullBackface = false
     boxNode := renderer.CreateNode()
     boxNode.Add(geom)
 
@@ -144,7 +147,7 @@ func demo( c *cli.Context ){
     boxNode2 := renderer.CreateNode()
     boxNode2.Add(geom)
 
-    i := (float32)(-45.0)
+    i := -45.0
 
     glRenderer.Init = func(){
         //setup reflection map
@@ -161,8 +164,8 @@ func demo( c *cli.Context ){
         sine := math.Sin((float64)(i/26))
         cosine := math.Cos((float64)(i/26))
 
-        boxNode.Transform = &renderer.GlTransform{ mgl32.Translate3D(0 , 0, 0).Mul4(mgl32.HomogRotate3DY(1.57))  }
-        boxNode2.Transform = &renderer.GlTransform{ mgl32.Translate3D(1, 2, i) }
+        boxNode.Rotation( 1.57, vectorMath.Vector3{0,1,0} )
+        boxNode2.Translation( vectorMath.Vector3{1, 2, i} )
         //look at the box
         glRenderer.Camera( vectorMath.Vector3{5*cosine,1*sine,5*sine}, vectorMath.Vector3{0,0,0}, vectorMath.Vector3{0,1,0} )
 

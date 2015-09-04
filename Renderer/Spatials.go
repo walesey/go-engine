@@ -1,9 +1,12 @@
 package renderer
 
-import "image"
+import(
+    "github.com/Walesey/goEngine/vectorMath"
+    "image"
+) 
 
 const (
-    MODE_UNLIT int32 = 0 + iota
+    MODE_UNLIT int32 = iota
     MODE_LIT
 )
 
@@ -36,7 +39,6 @@ type Geometry struct {
 //vericies format : x,y,z,   nx,ny,nz,tx,ty,tz,btx,bty,btz,   u,v
 //indicies format : f1,f2,f3 (triangles)
 func CreateGeometry( indicies []uint32, verticies []float32 ) *Geometry {
-
     return &Geometry{ Indicies : indicies, Verticies : verticies, Material: CreateMaterial(), loaded : false, CullBackface : true }
 }
 
@@ -61,12 +63,21 @@ func (geometry *Geometry) load( renderer Renderer ) {
 type Node struct {
     children []Spatial
     Transform Transform
+    scale *vectorMath.Vector3
+    translation *vectorMath.Vector3
+    orientation *vectorMath.Quaternion 
 }
 
 func CreateNode() *Node{
     //create slice to store children
     children := make([]Spatial, 0, 0)
-    return &Node{ children: children }
+    return &Node{ 
+        children: children, 
+        Transform: CreateTransform(), 
+        scale: &vectorMath.Vector3{1,1,1},
+        translation: &vectorMath.Vector3{0,0,0},
+        orientation: vectorMath.IdentityQuaternion(),
+    }
 }
 
 func (node *Node) Draw( renderer Renderer ) {
@@ -93,4 +104,39 @@ func (node *Node) Remove( spatial Spatial ) {
             break
         }
     }
+}
+
+func (node *Node) Scale( scale vectorMath.Vector3 ) {
+    node.scale.Set( scale )
+    node.Transform.From( *node.scale, *node.translation, *node.orientation )
+}
+
+func (node *Node) Translation( translation vectorMath.Vector3 ) {
+    node.translation.Set( translation )
+    node.Transform.From( *node.scale, *node.translation, *node.orientation )
+}
+
+func (node *Node) Orientation( orientation vectorMath.Quaternion  ) {
+    node.orientation.Set( orientation )
+    node.Transform.From( *node.scale, *node.translation, *node.orientation )
+}
+
+func (node *Node) Rotation( angle float64, axis vectorMath.Vector3 ) {
+    node.orientation.AngleAxis( angle, axis )
+    node.Transform.From( *node.scale, *node.translation, *node.orientation )
+}
+
+
+//Primitives
+func CreateBox( height, width float32 ) *Geometry {
+    verticies := []float32{
+        -width/2,0,height/2,  0,1,0, 1,0,-1, -1,0,-1, 0,0, 
+        width/2,0,height/2,   0,1,0, 1,0,-1, -1,0,-1, 1,0,
+        width/2,0,-height/2,  0,1,0, 1,0,-1, -1,0,-1, 1,1,
+        width/2,0,-height/2,  0,1,0, 1,0,-1, -1,0,-1, 1,1, 
+        -width/2,0,-height/2, 0,1,0, 1,0,-1, -1,0,-1, 0,1,
+        -width/2,0,height/2,  0,1,0, 1,0,-1, -1,0,-1, 0,0,
+    }
+    indicies := []uint32{0,1,2,3,4,5}
+    return CreateGeometry(indicies, verticies)
 }
