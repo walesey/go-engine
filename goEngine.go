@@ -33,13 +33,18 @@ func main(){
         },
         {
             Name:  "material",
-            Usage: "Import textures from file and save to a .asset file",
-            Action: material,
+            Usage: "Import material from file and save to a .asset file",
+            Action: materialImport,
+        },
+        {
+            Name:  "image",
+            Usage: "Import texture from file and save to a .asset file",
+            Action: imageImport,
         },
         {
             Name:  "geometry",
             Usage: "Import obj geometry file and save to a .asset file",
-            Action: geometry,
+            Action: geometryImport,
         },
         {
             Name:  "list",
@@ -80,7 +85,7 @@ func list( c *cli.Context ){
 }
 
 //CLI material creator
-func material( c *cli.Context ){
+func materialImport( c *cli.Context ){
     if len(c.Args()) != 6 {
         fmt.Println("Usage: goEngine material <assetFile> <name> <albedoFile> <normalFile> <specFile> <roughnessFile> ")
         return
@@ -96,7 +101,7 @@ func material( c *cli.Context ){
 }
 
 //CLI geometry creator
-func geometry( c *cli.Context ){
+func geometryImport( c *cli.Context ){
     if len(c.Args()) != 3 {
         fmt.Println("Usage: goEngine geometry <assetFile> <name> <objFile> ")
         return
@@ -105,6 +110,18 @@ func geometry( c *cli.Context ){
     assetLib,_ := assets.LoadAssetLibrary(c.Args()[0])
     assetLib.AddGeometry( c.Args()[1], geometry )
     assetLib.AddMaterial( fmt.Sprint(c.Args()[1], "Mat"), geometry.Material )
+    assetLib.SaveToFile( c.Args()[0] )
+}
+
+//CLI image creator
+func imageImport( c *cli.Context ){
+    if len(c.Args()) != 3 {
+        fmt.Println("Usage: goEngine image <assetFile> <name> <imageFile>")
+        return
+    }
+    imageAsset := assets.ImportImage(c.Args()[2])
+    assetLib,_ := assets.LoadAssetLibrary(c.Args()[0])
+    assetLib.AddImage( c.Args()[1], imageAsset )
     assetLib.SaveToFile( c.Args()[0] )
 }
 
@@ -134,10 +151,9 @@ func demo( c *cli.Context ){
     skyNode.Rotation( 1.57, vectorMath.Vector3{0,1,0} )
     skyNode.Scale( vectorMath.Vector3{5000, 5000, 5000} )
 
-    // geom = renderer.CreateBox(1,1)
-    // geom = assetLib.GetGeometry("sphere")
-    // geom.Material = assetLib.GetMaterial("sphereMat")
-    geom = assets.ImportObj("TestAssets/Files/gun/rifle.obj")
+    geom = renderer.CreateBox(1,1)
+    geom = assetLib.GetGeometry("sphere")
+    geom.Material = assetLib.GetMaterial("sphereMat")
     geom.CullBackface = false
     boxNode := renderer.CreateNode()
     boxNode.Add(geom)
@@ -151,7 +167,7 @@ func demo( c *cli.Context ){
 
     glRenderer.Init = func(){
         //setup reflection map
-        cubeMap := renderer.CreateCubemap(assets.ImportImage("TestAssets/Files/skybox/cubemap.png"));
+        cubeMap := renderer.CreateCubemap( assetLib.GetMaterial("skyboxMat").Diffuse );
         glRenderer.ReflectionMap( *cubeMap )
     }
 
