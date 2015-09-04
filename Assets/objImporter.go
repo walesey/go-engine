@@ -9,11 +9,12 @@ import (
 	"image"
 
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/Walesey/goEngine/renderer"
 )
 
 //vericies format : x,y,z,   nx,ny,nz,tx,ty,tz,btx,bty,btz,   u,v
 //Indicies format : f1,f2,f3 (triangles)
-type ObjData struct {
+type objData struct {
 	Name string
 	Indicies []uint32
 	Vertices []float32
@@ -28,17 +29,17 @@ type mtlData struct {
 }
 
 //returns corresponding index (0,1,2...)
-func (obj *ObjData) pushVert( x,y,z,nx,ny,nz,tx,ty,tz,btx,bty,btz,u,v float32 ) uint32 {
+func (obj *objData) pushVert( x,y,z,nx,ny,nz,tx,ty,tz,btx,bty,btz,u,v float32 ) uint32 {
 	obj.Vertices = append(obj.Vertices, x,y,z,nx,ny,nz,tx,ty,tz,btx,bty,btz,u,v )
 	return (uint32)((len(obj.Vertices) / 14) - 1)
 }
 
-func (obj *ObjData) pushIndex( indicies ...uint32 ) {
+func (obj *objData) pushIndex( indicies ...uint32 ) {
 	obj.Indicies = append(obj.Indicies, indicies... )
 }
 
 //parses a single triangle vertex, returning the newly generated index
-func (obj *ObjData) processFaceVertex( token string, vertexList, uvList, normalList []float32 ) uint32 {
+func (obj *objData) processFaceVertex( token string, vertexList, uvList, normalList []float32 ) uint32 {
 	face := strings.Split(token, "/")
 	var index int32
 
@@ -92,7 +93,7 @@ func (obj *ObjData) processFaceVertex( token string, vertexList, uvList, normalL
 }
 
 //Processes a polygonal face by splitting it into triangles
-func (obj *ObjData) processFace( line string, vertexList, uvList, normalList []float32 ){
+func (obj *objData) processFace( line string, vertexList, uvList, normalList []float32 ){
 	tokens := strings.Fields(line)
 	if tokens[0] == "f" {
 		tokens = append(tokens[:0], tokens[1:]...)
@@ -119,9 +120,9 @@ func (obj *ObjData) processFace( line string, vertexList, uvList, normalList []f
 }
 
 //imports an obj filePath into an ObjData reference containing index and vertex buffers
-func ImportObj(filePath string) (*ObjData, error) {
+func ImportObj(filePath string) *renderer.Geometry {
 
-	obj := &ObjData{ Indicies: make([]uint32, 0, 0), Vertices: make([]float32, 0, 0) }
+	obj := &objData{ Indicies: make([]uint32, 0, 0), Vertices: make([]float32, 0, 0) }
 	vertexList := make([]float32, 0, 0)
 	uvList := make([]float32, 0, 0)
 	normalList := make([]float32, 0, 0)
@@ -134,7 +135,7 @@ func ImportObj(filePath string) (*ObjData, error) {
 	//open the file and read all lines
 	file, err := os.Open(filePath)
 	if err != nil {
-		return obj, err
+		panic(err)
 	}
 	defer file.Close()
 
@@ -155,31 +156,28 @@ func ImportObj(filePath string) (*ObjData, error) {
 			} else if dataType == "f" { // v/t/n face
 				obj.processFace( line, vertexList, uvList, normalList );
 			} else if dataType == "mtllib" {
-				mtl,err := importMTL( path, tokens[1] )
-				if err != nil {
-					return obj, err
-				}
-				obj.Mtl = mtl
+				obj.Mtl = importMTL( path, tokens[1] )
 			} else if dataType == "usemtl" { //mtl material
 				//TODO: multiple mtls
 			}
 		}
 	}
 
+	geometry := renderer.CreateGeometry( obj.Indicies, obj.Vertices )
+    geometry.Material = CreateMaterial(obj.Mtl.Map_Kd, obj.Mtl.Map_Disp, obj.Mtl.Map_Spec, obj.Mtl.Map_Roughness)
 	if err := scanner.Err(); err != nil {
-		return obj, err
+		panic(err)
 	}
-
-	return obj, nil
+	return geometry
 }
 
 //Returns mtl object data type
-func importMTL( filePath, fileName string ) (*mtlData, error){
+func importMTL( filePath, fileName string ) *mtlData{
  	mtl := &mtlData{}
 
 	file, err := os.Open(filePath + fileName)
 	if err != nil {
-		return mtl, err
+		panic(err)
 	}
 	defer file.Close()
 
@@ -206,10 +204,20 @@ func importMTL( filePath, fileName string ) (*mtlData, error){
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		return mtl, err
+		panic(err)
 	}
 
-	return mtl, nil
+	return mtl
+}
+
+// Create material object from image files
+func CreateMaterial( diffuse, normal, specular, roughness image.Image ) *renderer.Material{
+    mat := renderer.CreateMaterial()
+    mat.Diffuse = diffuse
+    mat.Normal = normal
+    mat.Specular = specular
+    mat.Roughness = roughness
+    return mat
 }
 
 //string to float32

@@ -10,7 +10,6 @@ import (
 	"image/draw"
 
 	"github.com/Walesey/goEngine/vectorMath"
-	"github.com/Walesey/goEngine/assets"
 	"github.com/disintegration/imaging"
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
@@ -37,7 +36,7 @@ type Renderer interface {
 	DrawGeometry( geometry *Geometry )
 	CreateLight( ar,ag,ab, dr,dg,db, sr,sg,sb float32, directional bool, position vectorMath.Vector3, i int )
 	DestroyLight( i int )
-	ReflectionMap( cm *assets.CubeMapData )
+	ReflectionMap( cm CubeMap )
 }
 
 type Transform interface {
@@ -163,7 +162,12 @@ func (glRenderer *OpenglRenderer) Start() {
 
 	// Configure global settings
 	gl.Enable(gl.DEPTH_TEST)
+	gl.Enable(gl.TEXTURE_CUBE_MAP_SEAMLESS)
+	gl.Enable(gl.BLEND)
+	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	gl.DepthFunc(gl.LESS)
+	gl.Enable(gl.CULL_FACE)
+	gl.CullFace(gl.BACK)
 	gl.ClearColor(0.0, 0.0, 0.0, 1.0)
 
 	//setup Lights
@@ -294,13 +298,16 @@ func (glRenderer *OpenglRenderer) newTexture( img image.Image, textureUnit uint3
 	return texId
 }
 
-func (glRenderer *OpenglRenderer) ReflectionMap( cm *assets.CubeMapData ) {
-	cm.Resize(64)
-	cm.Blur(14.5)
+func (glRenderer *OpenglRenderer) ReflectionMap( cm CubeMap ) {
+	cm.Resize(512)
 	glRenderer.envMapId = glRenderer.newCubeMap( cm.Right, cm.Left, cm.Top, cm.Bottom, cm.Back, cm.Front, gl.TEXTURE4)
+	cm.Resize(64)
 	glRenderer.envMapLOD1Id = glRenderer.newCubeMap( cm.Right, cm.Left, cm.Top, cm.Bottom, cm.Back, cm.Front, gl.TEXTURE5)
+	cm.Resize(32)
 	glRenderer.envMapLOD2Id = glRenderer.newCubeMap( cm.Right, cm.Left, cm.Top, cm.Bottom, cm.Back, cm.Front, gl.TEXTURE6)
+	cm.Resize(16)
 	glRenderer.envMapLOD3Id = glRenderer.newCubeMap( cm.Right, cm.Left, cm.Top, cm.Bottom, cm.Back, cm.Front, gl.TEXTURE7)
+	cm.Resize(8)
 	glRenderer.illuminanceMapId = glRenderer.newCubeMap( cm.Right, cm.Left, cm.Top, cm.Bottom, cm.Back, cm.Front, gl.TEXTURE8)
 }
 
@@ -365,6 +372,13 @@ func (glRenderer *OpenglRenderer) DrawGeometry( geometry *Geometry ) {
 
 	gl.BindBuffer(gl.ARRAY_BUFFER, geometry.vboId)
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, geometry.iboId)
+
+	//set back face culling
+	if geometry.CullBackface {
+		gl.Enable(gl.CULL_FACE)
+	} else {
+		gl.Disable(gl.CULL_FACE)
+	}
 	
 	//set lighting mode
 	lightsUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("mode\x00"))

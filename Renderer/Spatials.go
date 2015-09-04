@@ -8,8 +8,7 @@ const (
 )
 
 type Spatial interface {
-    load( renderer Renderer )
-    draw( renderer Renderer )
+    Draw( renderer Renderer )
 }
 
 type Material struct {
@@ -30,6 +29,7 @@ type Geometry struct {
     Indicies []uint32
     Verticies []float32
     Material *Material
+    CullBackface bool
 }
 
 
@@ -37,10 +37,11 @@ type Geometry struct {
 //indicies format : f1,f2,f3 (triangles)
 func CreateGeometry( indicies []uint32, verticies []float32 ) *Geometry {
 
-    return &Geometry{ Indicies : indicies, Verticies : verticies, loaded : false }
+    return &Geometry{ Indicies : indicies, Verticies : verticies, Material: CreateMaterial(), loaded : false, CullBackface : true }
 }
 
-func (geometry *Geometry) draw( renderer Renderer ) {
+func (geometry *Geometry) Draw( renderer Renderer ) {
+    geometry.load( renderer )
     renderer.DrawGeometry( geometry )
 }
 
@@ -68,21 +69,15 @@ func CreateNode() *Node{
     return &Node{ children: children }
 }
 
-func (node *Node) draw( renderer Renderer ) {
+func (node *Node) Draw( renderer Renderer ) {
     renderer.PushTransform()
     if node.Transform != nil{
         renderer.ApplyTransform( node.Transform )
     }
     for _,child := range node.children {
-        child.draw(renderer)
+        child.Draw(renderer)
     }
     renderer.PopTransform()
-}
-
-func (node *Node) load( renderer Renderer ) {
-    for _,child := range node.children {
-        child.load(renderer)
-    }
 }
 
 func (node *Node) Add( spatial Spatial ) {
