@@ -148,15 +148,15 @@ func demo( c *cli.Context ){
     geom.CullBackface = false
     skyNode := renderer.CreateNode()
     skyNode.Add(geom)
-    skyNode.Rotation( 1.57, vectorMath.Vector3{0,1,0} )
-    skyNode.Scale( vectorMath.Vector3{5000, 5000, 5000} )
+    skyNode.SetRotation( 1.57, vectorMath.Vector3{0,1,0} )
+    skyNode.SetScale( vectorMath.Vector3{5000, 5000, 5000} )
 
     geom = renderer.CreateBox(1,1)
-    geom = assetLib.GetGeometry("sphere")
-    geom.Material = assetLib.GetMaterial("sphereMat")
+    geom.Material.Diffuse = assetLib.GetImage("smiley")
     geom.CullBackface = false
-    boxNode := renderer.CreateNode()
-    boxNode.Add(geom)
+    geom.Material.LightingMode = renderer.MODE_UNLIT
+    spriteNode := renderer.CreateNode()
+    spriteNode.Add(geom)
 
     geom = assetLib.GetGeometry("sphere")
     geom.Material = assetLib.GetMaterial("sphereMat")
@@ -180,17 +180,21 @@ func demo( c *cli.Context ){
         sine := math.Sin((float64)(i/26))
         cosine := math.Cos((float64)(i/26))
 
-        boxNode.Rotation( 1.57, vectorMath.Vector3{0,1,0} )
-        boxNode2.Translation( vectorMath.Vector3{1, 2, i} )
+        spriteNode.SetRotation( 1.57, vectorMath.Vector3{0,1,0} )
+        boxNode2.SetTranslation( vectorMath.Vector3{1, 2, i} )
         //look at the box
-        glRenderer.Camera( vectorMath.Vector3{5*cosine,1*sine,5*sine}, vectorMath.Vector3{0,0,0}, vectorMath.Vector3{0,1,0} )
+        cameraLocation := vectorMath.Vector3{5*cosine,1*sine,5*sine}
+        glRenderer.Camera( cameraLocation, vectorMath.Vector3{0,0,0}, vectorMath.Vector3{0,1,0} )
 
         glRenderer.CreateLight( 5,5,5, 100,100,100, 100,100,100, false, vectorMath.Vector3{1, 2, (float64)(i)}, 1 )
+
+        //face the camera
+        spriteNode.SetFacing( 0, cameraLocation.Subtract(spriteNode.Translation).Normalize(), vectorMath.Vector3{0,1,0}, vectorMath.Vector3{0,0,-1} )
     }
 
     glRenderer.Render = func(){
         skyNode.Draw(glRenderer)
-        boxNode.Draw(glRenderer)
+        spriteNode.Draw(glRenderer)
         boxNode2.Draw(glRenderer)
     }
 

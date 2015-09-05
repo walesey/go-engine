@@ -1,8 +1,9 @@
 package renderer
 
 import(
-    "github.com/Walesey/goEngine/vectorMath"
     "image"
+
+    "github.com/Walesey/goEngine/vectorMath"
 ) 
 
 const (
@@ -58,14 +59,13 @@ func (geometry *Geometry) load( renderer Renderer ) {
     }
 }
 
-
 //Node
 type Node struct {
     children []Spatial
     Transform Transform
-    scale *vectorMath.Vector3
-    translation *vectorMath.Vector3
-    orientation *vectorMath.Quaternion 
+    Scale vectorMath.Vector3
+    Translation vectorMath.Vector3
+    Orientation vectorMath.Quaternion 
 }
 
 func CreateNode() *Node{
@@ -74,9 +74,9 @@ func CreateNode() *Node{
     return &Node{ 
         children: children, 
         Transform: CreateTransform(), 
-        scale: &vectorMath.Vector3{1,1,1},
-        translation: &vectorMath.Vector3{0,0,0},
-        orientation: vectorMath.IdentityQuaternion(),
+        Scale: vectorMath.Vector3{1,1,1},
+        Translation: vectorMath.Vector3{0,0,0},
+        Orientation: vectorMath.IdentityQuaternion(),
     }
 }
 
@@ -106,26 +106,37 @@ func (node *Node) Remove( spatial Spatial ) {
     }
 }
 
-func (node *Node) Scale( scale vectorMath.Vector3 ) {
-    node.scale.Set( scale )
-    node.Transform.From( *node.scale, *node.translation, *node.orientation )
+func (node *Node) SetScale( scale vectorMath.Vector3 ) {
+    node.Scale.Set( scale )
+    node.Transform.From( node.Scale, node.Translation, node.Orientation )
 }
 
-func (node *Node) Translation( translation vectorMath.Vector3 ) {
-    node.translation.Set( translation )
-    node.Transform.From( *node.scale, *node.translation, *node.orientation )
+func (node *Node) SetTranslation( translation vectorMath.Vector3 ) {
+    node.Translation.Set( translation )
+    node.Transform.From( node.Scale, node.Translation, node.Orientation )
 }
 
-func (node *Node) Orientation( orientation vectorMath.Quaternion  ) {
-    node.orientation.Set( orientation )
-    node.Transform.From( *node.scale, *node.translation, *node.orientation )
+func (node *Node) SetOrientation( orientation vectorMath.Quaternion  ) {
+    node.Orientation.Set( orientation )
+    node.Transform.From( node.Scale, node.Translation, node.Orientation )
 }
 
-func (node *Node) Rotation( angle float64, axis vectorMath.Vector3 ) {
-    node.orientation.AngleAxis( angle, axis )
-    node.Transform.From( *node.scale, *node.translation, *node.orientation )
+func (node *Node) SetRotation( angle float64, axis vectorMath.Vector3 ) {
+    node.Orientation.Set( vectorMath.AngleAxis( angle, axis ) )
+    node.Transform.From( node.Scale, node.Translation, node.Orientation )
 }
 
+//used for eg. sprites facing the direction of the camera - all vectors need to be normalized
+func (node *Node) SetFacing( rotation float64, newNormal, normal, tangent vectorMath.Vector3 ) {
+    angleCorrection := -tangent.AngleBetween( newNormal.Subtract(newNormal.Project(normal)).Normalize() )
+    if normal.Cross(tangent).Dot(newNormal) < 0 {
+        angleCorrection = -angleCorrection
+    }
+    angleQ := vectorMath.AngleAxis( rotation + angleCorrection, normal )
+    betweenVectorsQ := vectorMath.BetweenVectors( normal, newNormal ) 
+    node.Orientation.Set( betweenVectorsQ.Multiply(angleQ) )
+    node.Transform.From( node.Scale, node.Translation, node.Orientation )
+}
 
 //Primitives
 func CreateBox( height, width float32 ) *Geometry {
