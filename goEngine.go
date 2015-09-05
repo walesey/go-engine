@@ -11,7 +11,6 @@ import (
 	"github.com/Walesey/goEngine/renderer"
 
     "github.com/codegangsta/cli"
-	"github.com/go-gl/mathgl/mgl32"
 )
 
 func init() {
@@ -34,13 +33,18 @@ func main(){
         },
         {
             Name:  "material",
-            Usage: "Import textures from file and save to a .asset file",
-            Action: material,
+            Usage: "Import material from file and save to a .asset file",
+            Action: materialImport,
+        },
+        {
+            Name:  "image",
+            Usage: "Import texture from file and save to a .asset file",
+            Action: imageImport,
         },
         {
             Name:  "geometry",
             Usage: "Import obj geometry file and save to a .asset file",
-            Action: geometry,
+            Action: geometryImport,
         },
         {
             Name:  "list",
@@ -81,7 +85,7 @@ func list( c *cli.Context ){
 }
 
 //CLI material creator
-func material( c *cli.Context ){
+func materialImport( c *cli.Context ){
     if len(c.Args()) != 6 {
         fmt.Println("Usage: goEngine material <assetFile> <name> <albedoFile> <normalFile> <specFile> <roughnessFile> ")
         return
@@ -97,7 +101,7 @@ func material( c *cli.Context ){
 }
 
 //CLI geometry creator
-func geometry( c *cli.Context ){
+func geometryImport( c *cli.Context ){
     if len(c.Args()) != 3 {
         fmt.Println("Usage: goEngine geometry <assetFile> <name> <objFile> ")
         return
@@ -106,6 +110,18 @@ func geometry( c *cli.Context ){
     assetLib,_ := assets.LoadAssetLibrary(c.Args()[0])
     assetLib.AddGeometry( c.Args()[1], geometry )
     assetLib.AddMaterial( fmt.Sprint(c.Args()[1], "Mat"), geometry.Material )
+    assetLib.SaveToFile( c.Args()[0] )
+}
+
+//CLI image creator
+func imageImport( c *cli.Context ){
+    if len(c.Args()) != 3 {
+        fmt.Println("Usage: goEngine image <assetFile> <name> <imageFile>")
+        return
+    }
+    imageAsset := assets.ImportImage(c.Args()[2])
+    assetLib,_ := assets.LoadAssetLibrary(c.Args()[0])
+    assetLib.AddImage( c.Args()[1], imageAsset )
     assetLib.SaveToFile( c.Args()[0] )
 }
 
@@ -132,23 +148,26 @@ func demo( c *cli.Context ){
     geom.CullBackface = false
     skyNode := renderer.CreateNode()
     skyNode.Add(geom)
-    skyNode.Transform = &renderer.GlTransform{ mgl32.Scale3D(5000, 5000, 5000).Mul4(mgl32.HomogRotate3DY(1.57)) }
+    skyNode.SetRotation( 1.57, vectorMath.Vector3{0,1,0} )
+    skyNode.SetScale( vectorMath.Vector3{5000, 5000, 5000} )
 
-    geom = assetLib.GetGeometry("gun")
-    geom.Material = assetLib.GetMaterial("gunMat")
-    boxNode := renderer.CreateNode()
-    boxNode.Add(geom)
+    geom = renderer.CreateBox(1,1)
+    geom.Material.Diffuse = assetLib.GetImage("smiley")
+    geom.CullBackface = false
+    geom.Material.LightingMode = renderer.MODE_UNLIT
+    spriteNode := renderer.CreateNode()
+    spriteNode.Add(geom)
 
     geom = assetLib.GetGeometry("sphere")
     geom.Material = assetLib.GetMaterial("sphereMat")
     boxNode2 := renderer.CreateNode()
     boxNode2.Add(geom)
 
-    i := (float32)(-45.0)
+    i := -45.0
 
     glRenderer.Init = func(){
         //setup reflection map
-        cubeMap := renderer.CreateCubemap(assets.ImportImage("TestAssets/Files/skybox/cubemap.png"));
+        cubeMap := renderer.CreateCubemap( assetLib.GetMaterial("skyboxMat").Diffuse );
         glRenderer.ReflectionMap( *cubeMap )
     }
 
@@ -161,17 +180,21 @@ func demo( c *cli.Context ){
         sine := math.Sin((float64)(i/26))
         cosine := math.Cos((float64)(i/26))
 
-        boxNode.Transform = &renderer.GlTransform{ mgl32.Translate3D(0 , 0, 0).Mul4(mgl32.HomogRotate3DY(1.57))  }
-        boxNode2.Transform = &renderer.GlTransform{ mgl32.Translate3D(1, 2, i) }
+        spriteNode.SetRotation( 1.57, vectorMath.Vector3{0,1,0} )
+        boxNode2.SetTranslation( vectorMath.Vector3{1, 2, i} )
         //look at the box
-        glRenderer.Camera( vectorMath.Vector3{5*cosine,1*sine,5*sine}, vectorMath.Vector3{0,0,0}, vectorMath.Vector3{0,1,0} )
+        cameraLocation := vectorMath.Vector3{5*cosine,1*sine,5*sine}
+        glRenderer.Camera( cameraLocation, vectorMath.Vector3{0,0,0}, vectorMath.Vector3{0,1,0} )
 
         glRenderer.CreateLight( 5,5,5, 100,100,100, 100,100,100, false, vectorMath.Vector3{1, 2, (float64)(i)}, 1 )
+
+        //face the camera
+        spriteNode.SetFacing( 0, cameraLocation.Subtract(spriteNode.Translation).Normalize(), vectorMath.Vector3{0,1,0}, vectorMath.Vector3{0,0,-1} )
     }
 
     glRenderer.Render = func(){
         skyNode.Draw(glRenderer)
-        boxNode.Draw(glRenderer)
+        spriteNode.Draw(glRenderer)
         boxNode2.Draw(glRenderer)
     }
 

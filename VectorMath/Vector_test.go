@@ -17,6 +17,14 @@ func TestLength(t *testing.T) {
     assert.EqualValues(t, 12, lenSq, "Length")
 }
 
+func TestNormalize(t *testing.T) {
+    v := Vector3{4,2,-1}
+    v = v.Normalize()
+    assert.EqualValues(t,  0.87287156094396952506438994166248, v.X, "NormalizeX")
+    assert.EqualValues(t,  0.43643578047198476253219497083124, v.Y, "NormalizeY")
+    assert.EqualValues(t, -0.21821789023599238126609748541562, v.Z, "NormalizeZ")
+}
+
 func TestAdd(t *testing.T) {
     v := Vector3{3,8,10}
     u := Vector3{3,2,5}

@@ -5,6 +5,7 @@ import(
 	"encoding/json"
     "compress/gzip"
     "bytes"
+	"image"
 
 	"github.com/Walesey/goEngine/renderer"
 )
@@ -81,6 +82,12 @@ func (al *AssetLibrary) AddMaterial(name string, geometry *renderer.Material){
 }
 
 //
+func (al *AssetLibrary) AddImage( name string, img image.Image ) {
+	data := EncodeImage(img)
+	al.AddEncodedAsset( name, "image", data )
+}
+
+//
 func (al *AssetLibrary) GetAssetType(name string) string{
 	return al.Assets[name].Type
 }
@@ -95,4 +102,10 @@ func (al *AssetLibrary) GetGeometry(name string) *renderer.Geometry{
 func (al *AssetLibrary) GetMaterial(name string) *renderer.Material{
 	data := al.Assets[name].Data
 	return DecodeMaterial(data)
+}
+
+//
+func (al *AssetLibrary) GetImage(name string) image.Image{
+	data := al.Assets[name].Data
+	return DecodeImage(data)
 }

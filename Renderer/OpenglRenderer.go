@@ -39,23 +39,6 @@ type Renderer interface {
 	ReflectionMap( cm CubeMap )
 }
 
-type Transform interface {
-	ApplyTransform( transform Transform )
-}
-
-type GlTransform struct {
-	Mat mgl32.Mat4
-}
-
-func (glTx *GlTransform) ApplyTransform( transform Transform ) {
-	switch v := transform.(type) {
-    default:
-        fmt.Printf("unexpected type for ApplyTransform GlTransform: %T", v)
-    case *GlTransform:
-		glTx.Mat = glTx.Mat.Mul4( transform.(*GlTransform).Mat )
-    }
-}
-
 //used to combine transformations
 func (s *Stack) MultiplyAll() mgl32.Mat4 {
 	result := mgl32.Ident4()
@@ -208,10 +191,6 @@ func (glRenderer *OpenglRenderer) Camera( location, lookat, up vectorMath.Vector
 	camera := mgl32.LookAtV(convertVector(location), convertVector(lookat), convertVector(up))
 	cameraUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("camera\x00"))
 	gl.UniformMatrix4fv(cameraUniform, 1, false, &camera[0])
-}
-
-func convertVector( v vectorMath.Vector3 ) mgl32.Vec3{
-	return mgl32.Vec3{(float32)(v.X), (float32)(v.Y), (float32)(v.Z)}
 }
 
 func (glRenderer *OpenglRenderer) PushTransform(){
