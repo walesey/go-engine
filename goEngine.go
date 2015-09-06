@@ -148,6 +148,7 @@ func demo( c *cli.Context ){
     geom.Material.LightingMode = renderer.MODE_UNLIT
     geom.CullBackface = false
     skyNode := renderer.CreateNode()
+    skyNode.BucketType = renderer.BUCKET_OPAQUE
     skyNode.Add(&geom)
     skyNode.SetRotation( 1.57, vectorMath.Vector3{0,1,0} )
     skyNode.SetScale( vectorMath.Vector3{5000, 5000, 5000} )
@@ -160,16 +161,29 @@ func demo( c *cli.Context ){
     material := assets.CreateMaterial(assetLib.GetImage("fire"), nil, nil, nil)
     material.LightingMode = renderer.MODE_UNLIT
     firesprite := effects.CreateSprite( 36, 6, 6, material )
+    firespriteNode := renderer.CreateNode()
+    firespriteNode.Add(&firesprite)
 
     material = assets.CreateMaterial(assetLib.GetImage("smoke"), nil, nil, nil)
     material.LightingMode = renderer.MODE_UNLIT
     smokesprite := effects.CreateSprite( 64, 8, 8, material )
-    smokesprite.SetTranslation( vectorMath.Vector3{-2,0,0} )
+    smokespriteNode := renderer.CreateNode()
+    smokespriteNode.Add(&smokesprite)
+    smokespriteNode.SetTranslation( vectorMath.Vector3{-2,0,0} )
 
     material = assets.CreateMaterial(assetLib.GetImage("explosion"), nil, nil, nil)
     material.LightingMode = renderer.MODE_UNLIT
     explosionsprite := effects.CreateSprite( 36, 6, 6, material )
-    explosionsprite.SetTranslation( vectorMath.Vector3{2,0,0} )
+    explosionspriteNode := renderer.CreateNode()
+    explosionspriteNode.Add(&explosionsprite)
+    explosionspriteNode.SetTranslation( vectorMath.Vector3{2,0,0} )
+
+    sceneGraph := renderer.CreateSceneGraph()
+    sceneGraph.Add(&skyNode)
+    sceneGraph.Add(&boxNode2)
+    sceneGraph.Add(&firespriteNode)
+    sceneGraph.Add(&smokespriteNode)
+    sceneGraph.Add(&explosionspriteNode)
 
     i := -45.0
 
@@ -181,7 +195,7 @@ func demo( c *cli.Context ){
 
     glRenderer.Update = func(){
         fps.UpdateFPSMeter()
-        i = i + 0.18
+        i = i + 0.11
         if i > 180 {
             i = -45
         }
@@ -194,14 +208,15 @@ func demo( c *cli.Context ){
         glRenderer.Camera( cameraLocation, vectorMath.Vector3{0,0,0}, vectorMath.Vector3{0,1,0} )
 
         glRenderer.CreateLight( 5,5,5, 100,100,100, 100,100,100, false, vectorMath.Vector3{1, 2, (float64)(i)}, 1 )
+
+        //face the camera
+        firespriteNode.SetFacing( 3.14, glRenderer.CameraLocation().Subtract(smokespriteNode.Translation).Normalize(), vectorMath.Vector3{0,1,0}, vectorMath.Vector3{0,0,-1} )
+        smokespriteNode.SetFacing( 3.14, glRenderer.CameraLocation().Subtract(smokespriteNode.Translation).Normalize(), vectorMath.Vector3{0,1,0}, vectorMath.Vector3{0,0,-1} )
+        explosionspriteNode.SetFacing( 3.14, glRenderer.CameraLocation().Subtract(smokespriteNode.Translation).Normalize(), vectorMath.Vector3{0,1,0}, vectorMath.Vector3{0,0,-1} )
     }
 
     glRenderer.Render = func(){
-        skyNode.Draw(glRenderer)
-        boxNode2.Draw(glRenderer)
-        firesprite.Draw(glRenderer)
-        smokesprite.Draw(glRenderer)
-        explosionsprite.Draw(glRenderer)
+        sceneGraph.RenderScene(glRenderer)
     }
 
     glRenderer.Start()

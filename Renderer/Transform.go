@@ -10,6 +10,7 @@ import (
 type Transform interface {
 	ApplyTransform( transform Transform )
 	From( scale, translation vectorMath.Vector3, orientation vectorMath.Quaternion )
+	TransformCoordinate( v vectorMath.Vector3 ) vectorMath.Vector3
 }
 
 type GlTransform struct {
@@ -35,14 +36,20 @@ func (glTx *GlTransform) From( scale, translation vectorMath.Vector3, orientatio
 	quat := convertQuaternion(orientation)
 	tx := convertVector(translation)
 	s := convertVector(scale)
-	glTx.Mat = mgl32.Translate3D(  tx[0], tx[1], tx[2] ).Mul4( mgl32.Scale3D( s[0], s[1], s[2] ) ).Mul4( quat.Mat4() )
+	glTx.Mat = mgl32.Translate3D( tx[0], tx[1], tx[2] ).Mul4( mgl32.Scale3D( s[0], s[1], s[2] ) ).Mul4( quat.Mat4() )
+}
+
+//
+func (glTx *GlTransform) TransformCoordinate( v vectorMath.Vector3 ) vectorMath.Vector3 {
+	result := mgl32.TransformCoordinate(convertVector(v), glTx.Mat)
+	return vectorMath.Vector3{ float64(result[0]), float64(result[1]), float64(result[2]) }
 }
 
 //
 func convertVector( v vectorMath.Vector3 ) mgl32.Vec3{
-	return mgl32.Vec3{(float32)(v.X), (float32)(v.Y), (float32)(v.Z)}
+	return mgl32.Vec3{float32(v.X), float32(v.Y), float32(v.Z)}
 }
 
 func convertQuaternion( q vectorMath.Quaternion ) mgl32.Quat{
-	return mgl32.Quat{ W:(float32)(q.W), V:mgl32.Vec3{(float32)(q.X), (float32)(q.Y), (float32)(q.Z)}}
+	return mgl32.Quat{ W:float32(q.W), V:mgl32.Vec3{float32(q.X), float32(q.Y), float32(q.Z)}}
 }

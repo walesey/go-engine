@@ -56,7 +56,7 @@ type OpenglRenderer struct {
 	Init, Update, Render func()
 	WindowWidth, WindowHeight int
 	WindowTitle string
-	matStack *Stack
+	matStack Stack
 	program, envMapId, envMapLOD1Id, envMapLOD2Id, envMapLOD3Id, illuminanceMapId uint32
 	modelUniform int32
 	lights []float32
@@ -114,6 +114,7 @@ func (glRenderer *OpenglRenderer) Start() {
 	//create mat stack for push pop stack 
 	matStack := CreateStack()
 	glRenderer.matStack = matStack
+	glRenderer.PushTransform()
 	model := mgl32.Ident4()
 
 	//set shader uniforms

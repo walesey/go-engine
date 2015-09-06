@@ -11,6 +11,12 @@ const (
     MODE_LIT
 )
 
+const (
+    BUCKET_TRANSPARENT int32 = iota
+    BUCKET_OPAQUE
+    BUCKET_ORTHO
+)
+
 type Spatial interface {
     Draw( renderer Renderer )
 }
@@ -53,7 +59,14 @@ type Geometry struct {
 //vericies format : x,y,z,   nx,ny,nz,tx,ty,tz,btx,bty,btz,   u,v
 //indicies format : f1,f2,f3 (triangles)
 func CreateGeometry( indicies []uint32, verticies []float32 ) Geometry {
-    return Geometry{ Indicies : indicies, Verticies : verticies, Material: CreateMaterial(), loaded : false, CullBackface : true, Flipbook: Flipbook{0, 0, 1.0, 1.0} }
+    return Geometry{ 
+        Indicies : indicies, 
+        Verticies : verticies, 
+        Material: CreateMaterial(), 
+        loaded : false, 
+        CullBackface : true, 
+        Flipbook: Flipbook{0, 0, 1.0, 1.0},
+    }
 }
 
 func (geometry *Geometry) Draw( renderer Renderer ) {
@@ -79,6 +92,7 @@ type Node struct {
     Scale vectorMath.Vector3
     Translation vectorMath.Vector3
     Orientation vectorMath.Quaternion 
+    BucketType int32
 }
 
 func CreateNode() Node{
@@ -86,18 +100,17 @@ func CreateNode() Node{
     children := make([]Spatial, 0, 0)
     return Node{
         children: children,
-        Transform: CreateTransform(), 
+        Transform: CreateTransform(),
         Scale: vectorMath.Vector3{1,1,1},
         Translation: vectorMath.Vector3{0,0,0},
         Orientation: vectorMath.IdentityQuaternion(),
+        BucketType: BUCKET_TRANSPARENT,
     }
 }
 
 func (node *Node) Draw( renderer Renderer ) {
     renderer.PushTransform()
-    if node.Transform != nil{
-        renderer.ApplyTransform( node.Transform )
-    }
+    renderer.ApplyTransform( node.Transform )
     for _,child := range node.children {
         child.Draw(renderer)
     }
