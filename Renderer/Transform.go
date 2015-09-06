@@ -35,7 +35,7 @@ func (glTx *GlTransform) From( scale, translation vectorMath.Vector3, orientatio
 	quat := convertQuaternion(orientation)
 	tx := convertVector(translation)
 	s := convertVector(scale)
-	glTx.Mat = mgl32.Scale3D( s[0], s[1], s[2] ).Mul4( quat.Mat4() ).Mul4( mgl32.Translate3D(  tx[0], tx[1], tx[2] ) )
+	glTx.Mat = mgl32.Translate3D(  tx[0], tx[1], tx[2] ).Mul4( mgl32.Scale3D( s[0], s[1], s[2] ) ).Mul4( quat.Mat4() )
 }
 
 //

@@ -23,21 +23,9 @@ func AngleAxis( angle float64, axis Vector3 ) Quaternion {
 func BetweenVectors( start, finish Vector3 ) Quaternion {
 	start = start.Normalize()
 	finish = finish.Normalize()
-	axis := start.Cross(finish)
-	angle := math.Acos( start.Dot(finish) )
+	axis := finish.Cross(start).Normalize()
+	angle := start.AngleBetween(finish)
 	return AngleAxis(angle, axis)
-}
-
-func (q *Quaternion) Set( value Quaternion ) Quaternion {
-    return q.SetValue(value.X, value.Y, value.Z, value.W)
-}
-
-func (q *Quaternion) SetValue(X,Y,Z,W float64) Quaternion {
-    q.X = X
-    q.Y = Y
-    q.Z = Z
-    q.W = W
-	return *q
 }
 
 func (q Quaternion) Multiply( other Quaternion ) Quaternion {	

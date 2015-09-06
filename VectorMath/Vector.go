@@ -11,21 +11,6 @@ type Vector interface {
     LengthSquared() float64
 }
 
-func CreateVector3() *Vector3{
-    return &Vector3{0,0,0}
-}
-
-func (v *Vector3) Set(value Vector3) Vector3 {
-    return v.SetValue(value.X, value.Y, value.Z)
-}
-
-func (v *Vector3) SetValue(X,Y,Z float64) Vector3 {
-    v.X = X
-    v.Y = Y
-    v.Z = Z
-    return *v
-}
-
 func (v Vector3) LengthSquared() float64 {
     return ( v.X * v.X ) + ( v.Y * v.Y ) + ( v.Z * v.Z );
 }

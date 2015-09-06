@@ -1,21 +1,22 @@
 package main
 
 import (
-	"runtime"
-	"math"
+    "runtime"
+    "math"
     "fmt"
     "os"
 
-	"github.com/Walesey/goEngine/vectorMath"
+    "github.com/Walesey/goEngine/vectorMath"
     "github.com/Walesey/goEngine/assets"
-	"github.com/Walesey/goEngine/renderer"
+    "github.com/Walesey/goEngine/effects"
+    "github.com/Walesey/goEngine/renderer"
 
     "github.com/codegangsta/cli"
 )
 
 func init() {
-	// GLFW event handling must run on the main OS thread
-	runtime.LockOSThread()
+    // GLFW event handling must run on the main OS thread
+    runtime.LockOSThread()
     // Use all cpu cores
     runtime.GOMAXPROCS(runtime.NumCPU())
 }
@@ -147,21 +148,28 @@ func demo( c *cli.Context ){
     geom.Material.LightingMode = renderer.MODE_UNLIT
     geom.CullBackface = false
     skyNode := renderer.CreateNode()
-    skyNode.Add(geom)
+    skyNode.Add(&geom)
     skyNode.SetRotation( 1.57, vectorMath.Vector3{0,1,0} )
     skyNode.SetScale( vectorMath.Vector3{5000, 5000, 5000} )
 
-    geom = renderer.CreateBox(1,1)
-    geom.Material.Diffuse = assetLib.GetImage("smiley")
-    geom.CullBackface = false
-    geom.Material.LightingMode = renderer.MODE_UNLIT
-    spriteNode := renderer.CreateNode()
-    spriteNode.Add(geom)
-
-    geom = assetLib.GetGeometry("sphere")
-    geom.Material = assetLib.GetMaterial("sphereMat")
+    geomsphere := assetLib.GetGeometry("sphere")
+    geomsphere.Material = assetLib.GetMaterial("sphereMat")
     boxNode2 := renderer.CreateNode()
-    boxNode2.Add(geom)
+    boxNode2.Add(&geomsphere)
+
+    material := assets.CreateMaterial(assetLib.GetImage("fire"), nil, nil, nil)
+    material.LightingMode = renderer.MODE_UNLIT
+    firesprite := effects.CreateSprite( 36, 6, 6, material )
+
+    material = assets.CreateMaterial(assetLib.GetImage("smoke"), nil, nil, nil)
+    material.LightingMode = renderer.MODE_UNLIT
+    smokesprite := effects.CreateSprite( 64, 8, 8, material )
+    smokesprite.SetTranslation( vectorMath.Vector3{-2,0,0} )
+
+    material = assets.CreateMaterial(assetLib.GetImage("explosion"), nil, nil, nil)
+    material.LightingMode = renderer.MODE_UNLIT
+    explosionsprite := effects.CreateSprite( 36, 6, 6, material )
+    explosionsprite.SetTranslation( vectorMath.Vector3{2,0,0} )
 
     i := -45.0
 
@@ -173,29 +181,27 @@ func demo( c *cli.Context ){
 
     glRenderer.Update = func(){
         fps.UpdateFPSMeter()
-        i = i + 0.08
+        i = i + 0.18
         if i > 180 {
             i = -45
         }
         sine := math.Sin((float64)(i/26))
         cosine := math.Cos((float64)(i/26))
 
-        spriteNode.SetRotation( 1.57, vectorMath.Vector3{0,1,0} )
         boxNode2.SetTranslation( vectorMath.Vector3{1, 2, i} )
         //look at the box
-        cameraLocation := vectorMath.Vector3{5*cosine,1*sine,5*sine}
+        cameraLocation := vectorMath.Vector3{5*cosine,3*sine,5*sine}
         glRenderer.Camera( cameraLocation, vectorMath.Vector3{0,0,0}, vectorMath.Vector3{0,1,0} )
 
         glRenderer.CreateLight( 5,5,5, 100,100,100, 100,100,100, false, vectorMath.Vector3{1, 2, (float64)(i)}, 1 )
-
-        //face the camera
-        spriteNode.SetFacing( 0, cameraLocation.Subtract(spriteNode.Translation).Normalize(), vectorMath.Vector3{0,1,0}, vectorMath.Vector3{0,0,-1} )
     }
 
     glRenderer.Render = func(){
         skyNode.Draw(glRenderer)
-        spriteNode.Draw(glRenderer)
         boxNode2.Draw(glRenderer)
+        firesprite.Draw(glRenderer)
+        smokesprite.Draw(glRenderer)
+        explosionsprite.Draw(glRenderer)
     }
 
     glRenderer.Start()
