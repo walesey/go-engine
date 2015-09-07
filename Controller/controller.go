@@ -23,8 +23,8 @@ func (c *Controller) KeyCallback(window *glfw.Window, key glfw.Key, scancode int
 	}
 }
 
-func (c *Controller) Poll() {
-	c.Window.PollEvents()
+func Poll() {
+	glfw.PollEvents()
 }
 
 func NewController(window *glfw.Window) *Controller {
