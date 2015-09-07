@@ -85,6 +85,10 @@ func (v Vector3) Cross( other Vector3 ) Vector3 {
     }
 }
 
+func (v Vector3) Lerp( dest Vector3, amount float64 ) Vector3 {
+    return v.MultiplyScalar(1.0-amount).Add( dest.MultiplyScalar(amount) )
+}
+
 func (v Vector3) Dot( other Vector3 ) float64 {
     return (v.X * other.X) + (v.Y * other.Y) + (v.Z * other.Z)
 }

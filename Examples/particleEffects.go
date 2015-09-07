@@ -2,6 +2,7 @@ package examples
 
 import (
     "math"
+	"image/color"
 
     "github.com/Walesey/goEngine/vectorMath"
     "github.com/Walesey/goEngine/assets"
@@ -29,8 +30,10 @@ func Particles( c *cli.Context ){
     }
 
     //setup scenegraph
+
     geom := assetLib.GetGeometry("skybox")
-    geom.Material = assetLib.GetMaterial("skyboxMat")
+    skyboxMat := assetLib.GetMaterial("skyboxMat")
+    geom.Material = &skyboxMat
     geom.Material.LightingMode = renderer.MODE_UNLIT
     geom.CullBackface = false
     skyNode := renderer.CreateNode()
@@ -40,26 +43,46 @@ func Particles( c *cli.Context ){
     skyNode.SetScale( vectorMath.Vector3{5000, 5000, 5000} )
 
     geomsphere := assetLib.GetGeometry("sphere")
-    geomsphere.Material = assetLib.GetMaterial("sphereMat")
+    sphereMat := assetLib.GetMaterial("sphereMat")
+    geomsphere.Material = &sphereMat
     boxNode2 := renderer.CreateNode()
     boxNode2.Add(&geomsphere)
 
-    material := assets.CreateMaterial(assetLib.GetImage("fire"), nil, nil, nil)
-    material.LightingMode = renderer.MODE_UNLIT
-    firesprite := effects.CreateSprite( 36, 6, 6, material )
+    fireMat := assets.CreateMaterial(assetLib.GetImage("fire"), nil, nil, nil)
+    fireMat.LightingMode = renderer.MODE_UNLIT
+    firesprite := effects.CreateSprite( 36, 6, 6, &fireMat )
     firespriteNode := renderer.CreateNode()
     firespriteNode.Add(&firesprite)
 
-    material = assets.CreateMaterial(assetLib.GetImage("smoke"), nil, nil, nil)
-    material.LightingMode = renderer.MODE_UNLIT
-    smokesprite := effects.CreateSprite( 64, 8, 8, material )
-    smokespriteNode := renderer.CreateNode()
-    smokespriteNode.Add(&smokesprite)
-    smokespriteNode.SetTranslation( vectorMath.Vector3{-2,0,0} )
+    smokeMat := assets.CreateMaterial(assetLib.GetImage("smoke"), nil, nil, nil)
+    smokeMat.LightingMode = renderer.MODE_UNLIT
+    smokesprite := effects.CreateSprite( 64, 8, 8, &smokeMat )
+    //smoke particle effect
+    smokeParticles := effects.CreateParticleSystem( effects.ParticleSettings{
+    	MaxParticles: 100,
+		ParticleEmitRate: 10,
+		Sprite: smokesprite,
+		FaceCamera: true,
+		MaxLife: 5.0,
+		MinLife: 7.0,
+		StartSize: vectorMath.Vector3{0.4, 0.4, 0.4},
+		EndSize: vectorMath.Vector3{2.4, 2.4, 2.4},
+		StartColor: color.NRGBA{254, 254, 254, 254},
+		EndColor: color.NRGBA{254, 254, 254, 0},
+		MinTranslation: vectorMath.Vector3{-0.2, -0.2, -0.2},
+		MaxTranslation: vectorMath.Vector3{0.2, 0.2, 0.2},
+		MaxStartVelocity: vectorMath.Vector3{-0.2, 0.3, 0.2},
+		MinStartVelocity: vectorMath.Vector3{-0.2, 0.5, 0.2},
+		Acceleration: vectorMath.Vector3{0.0, 0.0, 0.0},
+		MaxAngularVelocity: vectorMath.IdentityQuaternion(),
+		MinAngularVelocity: vectorMath.IdentityQuaternion(),
+		MaxRotationVelocity: 0.0,
+		MinRotationVelocity: 0.0,
+    })
 
-    material = assets.CreateMaterial(assetLib.GetImage("explosion"), nil, nil, nil)
-    material.LightingMode = renderer.MODE_UNLIT
-    explosionsprite := effects.CreateSprite( 36, 6, 6, material )
+    explosionMat := assets.CreateMaterial(assetLib.GetImage("explosion"), nil, nil, nil)
+    explosionMat.LightingMode = renderer.MODE_UNLIT
+    explosionsprite := effects.CreateSprite( 36, 6, 6, &explosionMat )
     explosionspriteNode := renderer.CreateNode()
     explosionspriteNode.Add(&explosionsprite)
     explosionspriteNode.SetTranslation( vectorMath.Vector3{2,0,0} )
@@ -68,7 +91,7 @@ func Particles( c *cli.Context ){
     sceneGraph.Add(&skyNode)
     sceneGraph.Add(&boxNode2)
     sceneGraph.Add(&firespriteNode)
-    sceneGraph.Add(&smokespriteNode)
+    sceneGraph.Add(&smokeParticles.Node)
     sceneGraph.Add(&explosionspriteNode)
 
     i := -45.0
@@ -96,9 +119,12 @@ func Particles( c *cli.Context ){
         glRenderer.CreateLight( 5,5,5, 100,100,100, 100,100,100, false, vectorMath.Vector3{1, 2, (float64)(i)}, 1 )
 
         //face the camera
-        firespriteNode.SetFacing( 3.14, glRenderer.CameraLocation().Subtract(smokespriteNode.Translation).Normalize(), vectorMath.Vector3{0,1,0}, vectorMath.Vector3{0,0,-1} )
-        smokespriteNode.SetFacing( 3.14, glRenderer.CameraLocation().Subtract(smokespriteNode.Translation).Normalize(), vectorMath.Vector3{0,1,0}, vectorMath.Vector3{0,0,-1} )
-        explosionspriteNode.SetFacing( 3.14, glRenderer.CameraLocation().Subtract(smokespriteNode.Translation).Normalize(), vectorMath.Vector3{0,1,0}, vectorMath.Vector3{0,0,-1} )
+        firespriteNode.SetFacing( 3.14, glRenderer.CameraLocation().Subtract(firespriteNode.Translation).Normalize(), vectorMath.Vector3{0,1,0}, vectorMath.Vector3{0,0,-1} )
+        explosionspriteNode.SetFacing( 3.14, glRenderer.CameraLocation().Subtract(explosionspriteNode.Translation).Normalize(), vectorMath.Vector3{0,1,0}, vectorMath.Vector3{0,0,-1} )
+
+        firesprite.NextFrame()
+        explosionsprite.NextFrame()
+        smokeParticles.Update(0.018, glRenderer)
     }
 
     glRenderer.Render = func(){

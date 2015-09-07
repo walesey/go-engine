@@ -51,7 +51,7 @@ type Geometry struct {
     loaded bool
     Indicies []uint32
     Verticies []float32
-    Material Material
+    Material *Material
     CullBackface bool
     Flipbook Flipbook
 }
@@ -59,10 +59,11 @@ type Geometry struct {
 //vericies format : x,y,z,   nx,ny,nz,tx,ty,tz,btx,bty,btz,   u,v
 //indicies format : f1,f2,f3 (triangles)
 func CreateGeometry( indicies []uint32, verticies []float32 ) Geometry {
+    mat := CreateMaterial()
     return Geometry{ 
         Indicies : indicies, 
         Verticies : verticies, 
-        Material: CreateMaterial(), 
+        Material: &mat, 
         loaded : false, 
         CullBackface : true, 
         Flipbook: Flipbook{0, 0, 1.0, 1.0},
@@ -80,7 +81,7 @@ func (geometry *Geometry) load( renderer Renderer ) {
         geometry.loaded = true
     }
     if !geometry.Material.loaded {
-        renderer.CreateMaterial( &geometry.Material )
+        renderer.CreateMaterial( geometry.Material )
         geometry.Material.loaded = true
     }
 }

@@ -107,7 +107,7 @@ func geometryImport( c *cli.Context ){
     geometry := assets.ImportObj(c.Args()[2])
     assetLib,_ := assets.LoadAssetLibrary(c.Args()[0])
     assetLib.AddGeometry( c.Args()[1], geometry )
-    assetLib.AddMaterial( fmt.Sprint(c.Args()[1], "Mat"), geometry.Material )
+    assetLib.AddMaterial( fmt.Sprint(c.Args()[1], "Mat"), *geometry.Material )
     assetLib.SaveToFile( c.Args()[0] )
 }
 

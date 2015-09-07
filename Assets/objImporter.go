@@ -164,7 +164,8 @@ func ImportObj(filePath string) renderer.Geometry {
 	}
 
 	geometry := renderer.CreateGeometry( obj.Indicies, obj.Vertices )
-    geometry.Material = CreateMaterial(obj.Mtl.Map_Kd, obj.Mtl.Map_Disp, obj.Mtl.Map_Spec, obj.Mtl.Map_Roughness)
+	material := CreateMaterial(obj.Mtl.Map_Kd, obj.Mtl.Map_Disp, obj.Mtl.Map_Spec, obj.Mtl.Map_Roughness)
+    geometry.Material = &material
 	if err := scanner.Err(); err != nil {
 		panic(err)
 	}
