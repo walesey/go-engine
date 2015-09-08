@@ -14,10 +14,10 @@ func otherTestAction() {
 }
 
 func TestMain(m *testing.M) {
-	var c = Controller{make(map[glfw.Key]func()), nil}
-	c.BindAction(testAction, glfw.KeyW)
-	c.BindAction(otherTestAction, glfw.KeyE)
+	var c = BasicMovementController{nil, make(map[KeyAction]func()), nil}
+	c.BindAction(testAction, glfw.KeyW, glfw.Press)
+	c.BindAction(otherTestAction, glfw.KeyE, glfw.Release)
 	fmt.Println("About to trigger actions")
-	c.TriggerAction(glfw.KeyW)
-	c.TriggerAction(glfw.KeyE)
+	c.TriggerAction(glfw.KeyW, glfw.Press)
+	c.TriggerAction(glfw.KeyE, glfw.Release)
 }
