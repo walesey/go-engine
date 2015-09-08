@@ -1,21 +1,19 @@
 package main
 
 import (
-	"runtime"
-	"math"
+    "runtime"
     "fmt"
     "os"
 
-	"github.com/Walesey/goEngine/vectorMath"
     "github.com/Walesey/goEngine/assets"
-	"github.com/Walesey/goEngine/renderer"
+    "github.com/Walesey/goEngine/examples"
 
     "github.com/codegangsta/cli"
 )
 
 func init() {
-	// GLFW event handling must run on the main OS thread
-	runtime.LockOSThread()
+    // GLFW event handling must run on the main OS thread
+    runtime.LockOSThread()
     // Use all cpu cores
     runtime.GOMAXPROCS(runtime.NumCPU())
 }
@@ -27,9 +25,9 @@ func main(){
     app.EnableBashCompletion = true
     app.Commands = []cli.Command{
         {
-            Name:  "demo",
-            Usage: "run a demo program",
-            Action: demo,
+            Name:  "particles",
+            Usage: "run a particle effect example",
+            Action: examples.Particles,
         },
         {
             Name:  "material",
@@ -109,7 +107,7 @@ func geometryImport( c *cli.Context ){
     geometry := assets.ImportObj(c.Args()[2])
     assetLib,_ := assets.LoadAssetLibrary(c.Args()[0])
     assetLib.AddGeometry( c.Args()[1], geometry )
-    assetLib.AddMaterial( fmt.Sprint(c.Args()[1], "Mat"), geometry.Material )
+    assetLib.AddMaterial( fmt.Sprint(c.Args()[1], "Mat"), *geometry.Material )
     assetLib.SaveToFile( c.Args()[0] )
 }
 
@@ -123,80 +121,4 @@ func imageImport( c *cli.Context ){
     assetLib,_ := assets.LoadAssetLibrary(c.Args()[0])
     assetLib.AddImage( c.Args()[1], imageAsset )
     assetLib.SaveToFile( c.Args()[0] )
-}
-
-//
-func demo( c *cli.Context ){
-    fps := renderer.CreateFPSMeter(1.0)
-    fps.FpsCap = 60
-
-    glRenderer := &renderer.OpenglRenderer{
-        WindowTitle : "GoEngine",
-        WindowWidth : 900,
-        WindowHeight : 700,
-    }
-
-    assetLib,err := assets.LoadAssetLibrary("TestAssets/demo.asset")
-    if err != nil {
-        panic(err)
-    }
-
-    //setup scenegraph
-    geom := assetLib.GetGeometry("skybox")
-    geom.Material = assetLib.GetMaterial("skyboxMat")
-    geom.Material.LightingMode = renderer.MODE_UNLIT
-    geom.CullBackface = false
-    skyNode := renderer.CreateNode()
-    skyNode.Add(geom)
-    skyNode.SetRotation( 1.57, vectorMath.Vector3{0,1,0} )
-    skyNode.SetScale( vectorMath.Vector3{5000, 5000, 5000} )
-
-    geom = renderer.CreateBox(1,1)
-    geom.Material.Diffuse = assetLib.GetImage("smiley")
-    geom.CullBackface = false
-    geom.Material.LightingMode = renderer.MODE_UNLIT
-    spriteNode := renderer.CreateNode()
-    spriteNode.Add(geom)
-
-    geom = assetLib.GetGeometry("sphere")
-    geom.Material = assetLib.GetMaterial("sphereMat")
-    boxNode2 := renderer.CreateNode()
-    boxNode2.Add(geom)
-
-    i := -45.0
-
-    glRenderer.Init = func(){
-        //setup reflection map
-        cubeMap := renderer.CreateCubemap( assetLib.GetMaterial("skyboxMat").Diffuse );
-        glRenderer.ReflectionMap( *cubeMap )
-    }
-
-    glRenderer.Update = func(){
-        fps.UpdateFPSMeter()
-        i = i + 0.08
-        if i > 180 {
-            i = -45
-        }
-        sine := math.Sin((float64)(i/26))
-        cosine := math.Cos((float64)(i/26))
-
-        spriteNode.SetRotation( 1.57, vectorMath.Vector3{0,1,0} )
-        boxNode2.SetTranslation( vectorMath.Vector3{1, 2, i} )
-        //look at the box
-        cameraLocation := vectorMath.Vector3{5*cosine,1*sine,5*sine}
-        glRenderer.Camera( cameraLocation, vectorMath.Vector3{0,0,0}, vectorMath.Vector3{0,1,0} )
-
-        glRenderer.CreateLight( 5,5,5, 100,100,100, 100,100,100, false, vectorMath.Vector3{1, 2, (float64)(i)}, 1 )
-
-        //face the camera
-        spriteNode.SetFacing( 0, cameraLocation.Subtract(spriteNode.Translation).Normalize(), vectorMath.Vector3{0,1,0}, vectorMath.Vector3{0,0,-1} )
-    }
-
-    glRenderer.Render = func(){
-        skyNode.Draw(glRenderer)
-        spriteNode.Draw(glRenderer)
-        boxNode2.Draw(glRenderer)
-    }
-
-    glRenderer.Start()
 }

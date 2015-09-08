@@ -88,6 +88,17 @@ func TestCross(t *testing.T) {
     assert.EqualValues(t, 1, v.Z, "CrossZ")
 }
 
+func TestLerp(t *testing.T) {
+    v := Vector3{10,1,0}.Lerp(Vector3{-20,8,10}, 0.0);
+    assert.EqualValues(t, Vector3{10,1,0}, v, "Lerp amount 0")
+
+    v = Vector3{10,1,0}.Lerp(Vector3{-20,8,10}, 0.5);
+    assert.EqualValues(t, Vector3{-5,4.5,5}, v, "Lerp amount 0.5")
+
+    v = Vector3{10,1,0}.Lerp(Vector3{-20,8,10}, 1.0);
+    assert.EqualValues(t, Vector3{-20,8,10}, v, "Lerp amount 1")
+}
+
 func TestDot(t *testing.T) {
     v := Vector3{2,2,2}
     u := Vector3{0,1,0}

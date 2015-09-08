@@ -70,13 +70,13 @@ func (al *AssetLibrary) AddEncodedAsset(name, assetType, data string){
 }
 
 //
-func (al *AssetLibrary) AddGeometry(name string, geometry *renderer.Geometry){
+func (al *AssetLibrary) AddGeometry(name string, geometry renderer.Geometry){
 	data := EncodeGeometry(geometry)
 	al.AddEncodedAsset( name, "geometry", data )
 }
 
 //
-func (al *AssetLibrary) AddMaterial(name string, geometry *renderer.Material){
+func (al *AssetLibrary) AddMaterial(name string, geometry renderer.Material){
 	data := EncodeMaterial(geometry)
 	al.AddEncodedAsset( name, "material", data )
 }
@@ -93,13 +93,13 @@ func (al *AssetLibrary) GetAssetType(name string) string{
 }
 
 //
-func (al *AssetLibrary) GetGeometry(name string) *renderer.Geometry{
+func (al *AssetLibrary) GetGeometry(name string) renderer.Geometry{
 	data := al.Assets[name].Data
 	return DecodeGeometry(data)
 }
 
 //
-func (al *AssetLibrary) GetMaterial(name string) *renderer.Material{
+func (al *AssetLibrary) GetMaterial(name string) renderer.Material{
 	data := al.Assets[name].Data
 	return DecodeMaterial(data)
 }

@@ -29,7 +29,7 @@ type GeometryJSON struct {
 }
 
 //
-func EncodeMaterial( material *renderer.Material ) string {
+func EncodeMaterial( material renderer.Material ) string {
 	matJSON := MaterialJSON{ LightingMode: material.LightingMode }
 	if material.Diffuse != nil {
 		matJSON.Diffuse = EncodeImage( material.Diffuse )
@@ -51,7 +51,7 @@ func EncodeMaterial( material *renderer.Material ) string {
 }
 
 //
-func DecodeMaterial( input string ) *renderer.Material{
+func DecodeMaterial( input string ) renderer.Material{
 	var matJSON MaterialJSON
 	err := json.Unmarshal([]byte(input), &matJSON)
 	if err != nil {
@@ -75,7 +75,7 @@ func DecodeMaterial( input string ) *renderer.Material{
 }
 
 //
-func EncodeGeometry( geometry *renderer.Geometry ) string {
+func EncodeGeometry( geometry renderer.Geometry ) string {
 	geomJSON := GeometryJSON{ geometry.Indicies, geometry.Verticies, geometry.CullBackface }
 	data, err := json.Marshal(geomJSON)
 	if err != nil {
@@ -85,7 +85,7 @@ func EncodeGeometry( geometry *renderer.Geometry ) string {
 }
 
 //
-func DecodeGeometry( input string ) *renderer.Geometry{
+func DecodeGeometry( input string ) renderer.Geometry{
 	var geomJSON GeometryJSON
 	err := json.Unmarshal([]byte(input), &geomJSON)
 	if err != nil {
