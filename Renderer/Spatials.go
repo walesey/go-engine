@@ -2,6 +2,7 @@ package renderer
 
 import(
     "image"
+    "image/color"
 
     "github.com/Walesey/goEngine/vectorMath"
 )
@@ -54,6 +55,7 @@ type Geometry struct {
     Material *Material
     CullBackface bool
     Flipbook Flipbook
+    Color color.NRGBA
 }
 
 //vericies format : x,y,z,   nx,ny,nz,tx,ty,tz,btx,bty,btz,   u,v
@@ -67,6 +69,7 @@ func CreateGeometry( indicies []uint32, verticies []float32 ) Geometry {
         loaded : false, 
         CullBackface : true, 
         Flipbook: Flipbook{0, 0, 1.0, 1.0},
+        Color: color.NRGBA{255,255,255,255},
     }
 }
 

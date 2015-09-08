@@ -11,6 +11,7 @@
 #define MODE_LIT 1
 
 uniform int mode;
+uniform vec4 color;
 
 uniform vec4 lights[ MAX_LIGHTS * 4 ];
 uniform vec4 directionalLights[ MAX_LIGHTS * 4 ];
@@ -52,7 +53,7 @@ vec4 directBRDF( vec4 LightDiff, vec4 LightSpec, vec4 LightDir, vec4 albedoValue
 }
 
 void main() {
-	vec4 albedoValue = texture(diffuse, fragTexCoord);
+	vec4 albedoValue = texture(diffuse, fragTexCoord) * color;
 	vec4 normalValue = texture(normal, fragTexCoord);
 	vec4 specularValue = texture(specular, fragTexCoord);
 	vec4 roughnessValue = texture(roughness, fragTexCoord);

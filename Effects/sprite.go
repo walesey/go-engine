@@ -1,6 +1,7 @@
 package effects
 
 import (
+	"image/color"
 	"github.com/Walesey/goEngine/renderer"
 )
 
@@ -42,4 +43,8 @@ func (sprite *Sprite) NextFrame() {
 	if sprite.frame > sprite.totalFrames {
 		sprite.frame = 0
 	}
+}
+
+func (sprite *Sprite) SetColor(color color.NRGBA) {
+	sprite.geometry.Color = color
 }

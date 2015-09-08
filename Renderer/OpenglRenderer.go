@@ -383,6 +383,16 @@ func (glRenderer *OpenglRenderer) DrawGeometry( geometry *Geometry ) {
 	flipbookFrameSizeUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("flipbookFrameSize\x00"))
 	gl.Uniform2fv( flipbookFrameSizeUniform, 1, &flipbookFrame[0] )
 
+	//color
+	colorVector := mgl32.Vec4{ 
+		float32(geometry.Color.R) / 255.0, 
+		float32(geometry.Color.G) / 255.0, 
+		float32(geometry.Color.B) / 255.0, 
+		float32(geometry.Color.A) / 255.0,
+	}
+	colorUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("color\x00"))
+	gl.Uniform4fv( colorUniform, 1, &colorVector[0] )
+
 	//set verticies attribute
 	vertAttrib := uint32(gl.GetAttribLocation(glRenderer.program, gl.Str("vert\x00")))
 	gl.EnableVertexAttribArray(vertAttrib)

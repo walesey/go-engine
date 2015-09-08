@@ -1,14 +1,11 @@
 package effects
 
 import(
-	"image"
 	"image/color"
 	"math/rand"
 
     "github.com/Walesey/goEngine/vectorMath"
 	"github.com/Walesey/goEngine/renderer"
-
-	"github.com/disintegration/imaging"
 )
 
 type ParticleSettings struct {
@@ -124,11 +121,10 @@ func (ps *ParticleSystem) UpdateParticle( p *Particle, camera vectorMath.Vector3
 			//TODO
 			p.node.SetOrientation(p.orientation)
 		}
-		//TODO set color
-
 		p.lifeRemaining = p.lifeRemaining - dt
 		lifeRatio := p.lifeRemaining / p.life
 		p.node.SetScale(ps.settings.EndSize.Lerp(ps.settings.StartSize, lifeRatio))
+		p.sprite.SetColor( lerpColor( ps.settings.EndColor, ps.settings.StartColor, lifeRatio ) )
 		//set flipbook frame
 		p.sprite.FrameLerp(lifeRatio)
 		//is particle dead
@@ -156,16 +152,3 @@ func lerpColor( color1, color2 color.NRGBA, amount float64 ) color.NRGBA{
 	a := int(float64(color1.A)*(1.0-amount)) + int(float64(color2.A)*amount)
 	return color.NRGBA{uint8(r), uint8(g), uint8(b), uint8(a)}
 }
-
-func colorImage( img image.Image, colorRGBA color.NRGBA ) image.Image{
-	return imaging.AdjustFunc( img,
-		func(c color.NRGBA) color.NRGBA {
-			r := (int(c.R) * int(colorRGBA.R)) / 255
-			g := (int(c.G) * int(colorRGBA.G)) / 255
-			b := (int(c.B) * int(colorRGBA.B)) / 255
-			a := (int(c.A) * int(colorRGBA.A)) / 255
-			return color.NRGBA{uint8(r), uint8(g), uint8(b), uint8(a)}
-		},
-	)
-}
-
