@@ -12,10 +12,14 @@ import(
 
 type MaterialJSON struct {
     LightingMode int32 `json:"lightingMode"`
-    Diffuse []byte `json:"diffuse"`
-    Normal []byte `json:"normal"`
-    Specular []byte `json:"specular"`
-    Roughness []byte `json:"roughness"`
+    Diffuse string `json:"diffuse"`
+    Normal string `json:"normal"`
+    Specular string `json:"specular"`
+    Roughness string `json:"roughness"`
+}
+
+type ImageJson struct {
+    ImageData []byte `json:"imageData"`
 }
 
 type GeometryJSON struct {
@@ -25,13 +29,19 @@ type GeometryJSON struct {
 }
 
 //
-func EncodeMaterial( material *renderer.Material ) string {
-	matJSON := MaterialJSON{ 
-		material.LightingMode, 
-		EncodeImage( material.Diffuse ), 
-		EncodeImage( material.Normal ), 
-		EncodeImage( material.Specular ), 
-		EncodeImage( material.Roughness ), 
+func EncodeMaterial( material renderer.Material ) string {
+	matJSON := MaterialJSON{ LightingMode: material.LightingMode }
+	if material.Diffuse != nil {
+		matJSON.Diffuse = EncodeImage( material.Diffuse )
+	}
+	if material.Normal != nil {
+		matJSON.Normal = EncodeImage( material.Normal )
+	}
+	if material.Specular != nil {
+		matJSON.Specular = EncodeImage( material.Specular )
+	}
+	if material.Roughness != nil {
+		matJSON.Roughness = EncodeImage( material.Roughness )
 	}
 	data, err := json.Marshal(matJSON)
 	if err != nil {
@@ -41,23 +51,31 @@ func EncodeMaterial( material *renderer.Material ) string {
 }
 
 //
-func DecodeMaterial( input string ) *renderer.Material{
+func DecodeMaterial( input string ) renderer.Material{
 	var matJSON MaterialJSON
 	err := json.Unmarshal([]byte(input), &matJSON)
 	if err != nil {
 		panic(err)
 	}
 	mat := renderer.CreateMaterial()
-    mat.Diffuse = DecodeImage( matJSON.Diffuse )
-    mat.Normal = DecodeImage( matJSON.Normal )
-    mat.Specular = DecodeImage( matJSON.Specular )
-    mat.Roughness = DecodeImage( matJSON.Roughness )
+	if matJSON.Diffuse != "" {
+ 	   mat.Diffuse = DecodeImage( matJSON.Diffuse )
+	}
+	if matJSON.Normal != "" {
+    	mat.Normal = DecodeImage( matJSON.Normal )
+	}
+	if matJSON.Specular != "" {
+    	mat.Specular = DecodeImage( matJSON.Specular )
+	}
+	if matJSON.Roughness != "" {
+    	mat.Roughness = DecodeImage( matJSON.Roughness )
+	}
     mat.LightingMode = matJSON.LightingMode
     return mat
 }
 
 //
-func EncodeGeometry( geometry *renderer.Geometry ) string {
+func EncodeGeometry( geometry renderer.Geometry ) string {
 	geomJSON := GeometryJSON{ geometry.Indicies, geometry.Verticies, geometry.CullBackface }
 	data, err := json.Marshal(geomJSON)
 	if err != nil {
@@ -67,7 +85,7 @@ func EncodeGeometry( geometry *renderer.Geometry ) string {
 }
 
 //
-func DecodeGeometry( input string ) *renderer.Geometry{
+func DecodeGeometry( input string ) renderer.Geometry{
 	var geomJSON GeometryJSON
 	err := json.Unmarshal([]byte(input), &geomJSON)
 	if err != nil {
@@ -78,21 +96,29 @@ func DecodeGeometry( input string ) *renderer.Geometry{
 	return geometry
 }
 
-func EncodeImage(img image.Image) []byte {
-	if img == nil {
-		return []byte{}
-	}
+//
+func EncodeImage(img image.Image) string {
 	b := make([]byte, 0, 0)
 	buf := bytes.NewBuffer(b)
 	err := png.Encode(buf, img)
 	if err != nil {
 		panic(err)
 	}
-	return buf.Bytes()
+	data, err := json.Marshal(ImageJson{ buf.Bytes() })
+	if err != nil {
+		panic(err)
+	}
+	return string(data)
 }
 
-func DecodeImage(pngImg []byte) image.Image {
-	b := bytes.NewBuffer(pngImg)
+//
+func DecodeImage(pngImg string) image.Image {
+	var imageJSON ImageJson
+	err := json.Unmarshal([]byte(pngImg), &imageJSON)
+	if err != nil {
+		panic(err)
+	}
+	b := bytes.NewBuffer(imageJSON.ImageData)
 	img,err := png.Decode(b)
 	if err != nil {
 		fmt.Println(err)

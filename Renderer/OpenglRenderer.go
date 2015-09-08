@@ -26,6 +26,7 @@ type Renderer interface {
 	BackGroundColor( r,g,b,a float32 )
 	Projection( angle, aspect, near, far float32 )
 	Camera( location, lookat, up vectorMath.Vector3 )
+	CameraLocation() vectorMath.Vector3
 	PopTransform()
 	PushTransform()
 	ApplyTransform( transform Transform )
@@ -37,23 +38,6 @@ type Renderer interface {
 	CreateLight( ar,ag,ab, dr,dg,db, sr,sg,sb float32, directional bool, position vectorMath.Vector3, i int )
 	DestroyLight( i int )
 	ReflectionMap( cm CubeMap )
-}
-
-type Transform interface {
-	ApplyTransform( transform Transform )
-}
-
-type GlTransform struct {
-	Mat mgl32.Mat4
-}
-
-func (glTx *GlTransform) ApplyTransform( transform Transform ) {
-	switch v := transform.(type) {
-    default:
-        fmt.Printf("unexpected type for ApplyTransform GlTransform: %T", v)
-    case *GlTransform:
-		glTx.Mat = glTx.Mat.Mul4( transform.(*GlTransform).Mat )
-    }
 }
 
 //used to combine transformations
@@ -72,11 +56,12 @@ type OpenglRenderer struct {
 	Init, Update, Render func()
 	WindowWidth, WindowHeight int
 	WindowTitle string
-	matStack *Stack
+	matStack Stack
 	program, envMapId, envMapLOD1Id, envMapLOD2Id, envMapLOD3Id, illuminanceMapId uint32
 	modelUniform int32
 	lights []float32
 	directionalLights []float32
+	cameraLocation vectorMath.Vector3
 }
 
 func (glRenderer *OpenglRenderer) Start() {
@@ -129,6 +114,7 @@ func (glRenderer *OpenglRenderer) Start() {
 	//create mat stack for push pop stack 
 	matStack := CreateStack()
 	glRenderer.matStack = matStack
+	glRenderer.PushTransform()
 	model := mgl32.Ident4()
 
 	//set shader uniforms
@@ -208,10 +194,12 @@ func (glRenderer *OpenglRenderer) Camera( location, lookat, up vectorMath.Vector
 	camera := mgl32.LookAtV(convertVector(location), convertVector(lookat), convertVector(up))
 	cameraUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("camera\x00"))
 	gl.UniformMatrix4fv(cameraUniform, 1, false, &camera[0])
+	//store camera location
+	glRenderer.cameraLocation = location
 }
 
-func convertVector( v vectorMath.Vector3 ) mgl32.Vec3{
-	return mgl32.Vec3{(float32)(v.X), (float32)(v.Y), (float32)(v.Z)}
+func (glRenderer *OpenglRenderer) CameraLocation() vectorMath.Vector3 {
+	return glRenderer.cameraLocation
 }
 
 func (glRenderer *OpenglRenderer) PushTransform(){
@@ -384,6 +372,15 @@ func (glRenderer *OpenglRenderer) DrawGeometry( geometry *Geometry ) {
 	lightsUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("mode\x00"))
 	gl.Uniform1i( lightsUniform, geometry.Material.LightingMode )
 
+	//flipbook uniforms
+	flipbookIndexUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("flipbookIndexX\x00"))
+	gl.Uniform1i( flipbookIndexUniform, int32(geometry.Flipbook.IndexX) )
+	flipbookIndexUniform = gl.GetUniformLocation(glRenderer.program, gl.Str("flipbookIndexY\x00"))
+	gl.Uniform1i( flipbookIndexUniform, int32(geometry.Flipbook.IndexY) )
+	flipbookFrame := mgl32.Vec2{geometry.Flipbook.FrameSizeX, geometry.Flipbook.FrameSizeY}
+	flipbookFrameSizeUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("flipbookFrameSize\x00"))
+	gl.Uniform2fv( flipbookFrameSizeUniform, 1, &flipbookFrame[0] )
+
 	//set verticies attribute
 	vertAttrib := uint32(gl.GetAttribLocation(glRenderer.program, gl.Str("vert\x00")))
 	gl.EnableVertexAttribArray(vertAttrib)
@@ -404,6 +401,7 @@ func (glRenderer *OpenglRenderer) DrawGeometry( geometry *Geometry ) {
 	texCoordAttrib := uint32(gl.GetAttribLocation(glRenderer.program, gl.Str("vertTexCoord\x00")))
 	gl.EnableVertexAttribArray(texCoordAttrib)
 	gl.VertexAttribPointer(texCoordAttrib, 2, gl.FLOAT, false, 14*4, gl.PtrOffset(12*4))
+
 
 	//setup textures
 	gl.ActiveTexture(gl.TEXTURE0)

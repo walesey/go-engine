@@ -120,7 +120,7 @@ func (obj *objData) processFace( line string, vertexList, uvList, normalList []f
 }
 
 //imports an obj filePath into an ObjData reference containing index and vertex buffers
-func ImportObj(filePath string) *renderer.Geometry {
+func ImportObj(filePath string) renderer.Geometry {
 
 	obj := &objData{ Indicies: make([]uint32, 0, 0), Vertices: make([]float32, 0, 0) }
 	vertexList := make([]float32, 0, 0)
@@ -164,7 +164,8 @@ func ImportObj(filePath string) *renderer.Geometry {
 	}
 
 	geometry := renderer.CreateGeometry( obj.Indicies, obj.Vertices )
-    geometry.Material = CreateMaterial(obj.Mtl.Map_Kd, obj.Mtl.Map_Disp, obj.Mtl.Map_Spec, obj.Mtl.Map_Roughness)
+	material := CreateMaterial(obj.Mtl.Map_Kd, obj.Mtl.Map_Disp, obj.Mtl.Map_Spec, obj.Mtl.Map_Roughness)
+    geometry.Material = &material
 	if err := scanner.Err(); err != nil {
 		panic(err)
 	}
@@ -211,7 +212,7 @@ func importMTL( filePath, fileName string ) *mtlData{
 }
 
 // Create material object from image files
-func CreateMaterial( diffuse, normal, specular, roughness image.Image ) *renderer.Material{
+func CreateMaterial( diffuse, normal, specular, roughness image.Image ) renderer.Material{
     mat := renderer.CreateMaterial()
     mat.Diffuse = diffuse
     mat.Normal = normal

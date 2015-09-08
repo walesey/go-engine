@@ -12,8 +12,8 @@ type Element struct {
 	previous *Element
 }
 
-func CreateStack() *Stack{
-	return &Stack{ size: 0 }
+func CreateStack() Stack{
+	return Stack{ size: 0 }
 }
 
 // Return the stack's length

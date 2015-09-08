@@ -4,6 +4,10 @@ uniform mat4 projection;
 uniform mat4 camera;
 uniform mat4 model;
 
+uniform int flipbookIndexX;
+uniform int flipbookIndexY;
+uniform vec2 flipbookFrameSize;
+
 in vec3 vert;
 in vec3 normal;
 in vec3 tangent;
@@ -28,5 +32,5 @@ void main() {
 	//tangent space conversion - worldToTangent
 	TBNMatrix = mat3(worldTangent, worldBitangent, worldNormal);
 	inverseTBNMatrix = inverse(TBNMatrix);
-	fragTexCoord = vertTexCoord;
+	fragTexCoord = (flipbookFrameSize * vertTexCoord) + vec2( flipbookIndexX * flipbookFrameSize.x, flipbookIndexY * flipbookFrameSize.y );
 }

@@ -5,6 +5,7 @@ import(
 	"encoding/json"
     "compress/gzip"
     "bytes"
+	"image"
 
 	"github.com/Walesey/goEngine/renderer"
 )
@@ -69,15 +70,21 @@ func (al *AssetLibrary) AddEncodedAsset(name, assetType, data string){
 }
 
 //
-func (al *AssetLibrary) AddGeometry(name string, geometry *renderer.Geometry){
+func (al *AssetLibrary) AddGeometry(name string, geometry renderer.Geometry){
 	data := EncodeGeometry(geometry)
 	al.AddEncodedAsset( name, "geometry", data )
 }
 
 //
-func (al *AssetLibrary) AddMaterial(name string, geometry *renderer.Material){
+func (al *AssetLibrary) AddMaterial(name string, geometry renderer.Material){
 	data := EncodeMaterial(geometry)
 	al.AddEncodedAsset( name, "material", data )
+}
+
+//
+func (al *AssetLibrary) AddImage( name string, img image.Image ) {
+	data := EncodeImage(img)
+	al.AddEncodedAsset( name, "image", data )
 }
 
 //
@@ -86,13 +93,19 @@ func (al *AssetLibrary) GetAssetType(name string) string{
 }
 
 //
-func (al *AssetLibrary) GetGeometry(name string) *renderer.Geometry{
+func (al *AssetLibrary) GetGeometry(name string) renderer.Geometry{
 	data := al.Assets[name].Data
 	return DecodeGeometry(data)
 }
 
 //
-func (al *AssetLibrary) GetMaterial(name string) *renderer.Material{
+func (al *AssetLibrary) GetMaterial(name string) renderer.Material{
 	data := al.Assets[name].Data
 	return DecodeMaterial(data)
+}
+
+//
+func (al *AssetLibrary) GetImage(name string) image.Image{
+	data := al.Assets[name].Data
+	return DecodeImage(data)
 }

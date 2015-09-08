@@ -1,14 +1,32 @@
 package renderer
 
-import "image"
+import(
+    "image"
+
+    "github.com/Walesey/goEngine/vectorMath"
+)
 
 const (
-    MODE_UNLIT int32 = 0 + iota
+    MODE_UNLIT int32 = iota
     MODE_LIT
+)
+
+const (
+    BUCKET_TRANSPARENT int32 = iota
+    BUCKET_OPAQUE
+    BUCKET_ORTHO
 )
 
 type Spatial interface {
     Draw( renderer Renderer )
+}
+
+type GameEntity interface {
+    SetScale( scale vectorMath.Vector3 )
+    SetTranslation( translation vectorMath.Vector3 ) 
+    SetOrientation( orientation vectorMath.Quaternion  )
+    SetRotation( angle float64, axis vectorMath.Vector3 )
+    SetFacing( rotation float64, newNormal, normal, tangent vectorMath.Vector3 )
 }
 
 type Material struct {
@@ -18,8 +36,13 @@ type Material struct {
     Diffuse, Normal, Specular, Roughness image.Image
 }
 
-func CreateMaterial() *Material {
-    return &Material{ loaded : false, LightingMode : MODE_LIT }
+func CreateMaterial() Material {
+    return Material{ loaded : false, LightingMode : MODE_LIT }
+}
+
+type Flipbook struct {
+    IndexX, IndexY int
+    FrameSizeX, FrameSizeY float32
 }
 
 //Geometry
@@ -30,14 +53,21 @@ type Geometry struct {
     Verticies []float32
     Material *Material
     CullBackface bool
+    Flipbook Flipbook
 }
-
 
 //vericies format : x,y,z,   nx,ny,nz,tx,ty,tz,btx,bty,btz,   u,v
 //indicies format : f1,f2,f3 (triangles)
-func CreateGeometry( indicies []uint32, verticies []float32 ) *Geometry {
-
-    return &Geometry{ Indicies : indicies, Verticies : verticies, Material: CreateMaterial(), loaded : false, CullBackface : true }
+func CreateGeometry( indicies []uint32, verticies []float32 ) Geometry {
+    mat := CreateMaterial()
+    return Geometry{ 
+        Indicies : indicies, 
+        Verticies : verticies, 
+        Material: &mat, 
+        loaded : false, 
+        CullBackface : true, 
+        Flipbook: Flipbook{0, 0, 1.0, 1.0},
+    }
 }
 
 func (geometry *Geometry) Draw( renderer Renderer ) {
@@ -56,24 +86,32 @@ func (geometry *Geometry) load( renderer Renderer ) {
     }
 }
 
-
 //Node
 type Node struct {
     children []Spatial
     Transform Transform
+    Scale vectorMath.Vector3
+    Translation vectorMath.Vector3
+    Orientation vectorMath.Quaternion 
+    BucketType int32
 }
 
-func CreateNode() *Node{
+func CreateNode() Node{
     //create slice to store children
     children := make([]Spatial, 0, 0)
-    return &Node{ children: children }
+    return Node{
+        children: children,
+        Transform: CreateTransform(),
+        Scale: vectorMath.Vector3{1,1,1},
+        Translation: vectorMath.Vector3{0,0,0},
+        Orientation: vectorMath.IdentityQuaternion(),
+        BucketType: BUCKET_TRANSPARENT,
+    }
 }
 
 func (node *Node) Draw( renderer Renderer ) {
     renderer.PushTransform()
-    if node.Transform != nil{
-        renderer.ApplyTransform( node.Transform )
-    }
+    renderer.ApplyTransform( node.Transform )
     for _,child := range node.children {
         child.Draw(renderer)
     }
@@ -93,4 +131,50 @@ func (node *Node) Remove( spatial Spatial ) {
             break
         }
     }
+}
+
+func (node *Node) SetScale( scale vectorMath.Vector3 ) {
+    node.Scale = scale
+    node.Transform.From( node.Scale, node.Translation, node.Orientation )
+}
+
+func (node *Node) SetTranslation( translation vectorMath.Vector3 ) {
+    node.Translation = translation
+    node.Transform.From( node.Scale, node.Translation, node.Orientation )
+}
+
+func (node *Node) SetOrientation( orientation vectorMath.Quaternion  ) {
+    node.Orientation = orientation
+    node.Transform.From( node.Scale, node.Translation, node.Orientation )
+}
+
+func (node *Node) SetRotation( angle float64, axis vectorMath.Vector3 ) {
+    node.Orientation = vectorMath.AngleAxis( angle, axis )
+    node.Transform.From( node.Scale, node.Translation, node.Orientation )
+}
+
+//used for eg. sprites facing the direction of the camera - all vectors need to be normalized
+func (node *Node) SetFacing( rotation float64, newNormal, normal, tangent vectorMath.Vector3 ) {
+    angleCorrection := -tangent.AngleBetween( newNormal.Subtract(newNormal.Project(normal)).Normalize() )
+    if normal.Cross(tangent).Dot(newNormal) < 0 {
+        angleCorrection = -angleCorrection
+    }
+    angleQ := vectorMath.AngleAxis( rotation + angleCorrection, normal )
+    betweenVectorsQ := vectorMath.BetweenVectors( normal, newNormal ) 
+    node.Orientation = betweenVectorsQ.Multiply(angleQ)
+    node.Transform.From( node.Scale, node.Translation, node.Orientation )
+}
+
+//Primitives
+func CreateBox( height, width float32 ) Geometry {
+    verticies := []float32{
+        -width/2,0,height/2,  0,1,0, 1,0,-1, -1,0,-1, 0,0, 
+        width/2,0,height/2,   0,1,0, 1,0,-1, -1,0,-1, 1,0,
+        width/2,0,-height/2,  0,1,0, 1,0,-1, -1,0,-1, 1,1,
+        width/2,0,-height/2,  0,1,0, 1,0,-1, -1,0,-1, 1,1, 
+        -width/2,0,-height/2, 0,1,0, 1,0,-1, -1,0,-1, 0,1,
+        -width/2,0,height/2,  0,1,0, 1,0,-1, -1,0,-1, 0,0,
+    }
+    indicies := []uint32{0,1,2,3,4,5}
+    return CreateGeometry(indicies, verticies)
 }
