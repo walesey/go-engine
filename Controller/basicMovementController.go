@@ -6,18 +6,18 @@ import (
 
 type BasicMovementController struct {
 	actor BasicMovementActor
-	ActionMap map[KeyAction]func()
+	actionMap map[KeyAction]func()
 }
 
 func (c *BasicMovementController) BindAction(function func(), key glfw.Key, action glfw.Action) {
 	ka := KeyAction{key, action}
-	c.ActionMap[ka] = function
+	c.actionMap[ka] = function
 }
 
 func (c *BasicMovementController) TriggerAction(key glfw.Key, action glfw.Action) {
 	ka := KeyAction{key, action}
-	if c.ActionMap[ka] != nil {
-		c.ActionMap[ka]()
+	if c.actionMap[ka] != nil {
+		c.actionMap[ka]()
 	}
 }
 
