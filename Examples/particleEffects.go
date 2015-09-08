@@ -1,7 +1,6 @@
 package examples
 
 import (
-    "math"
 	"image/color"
 
     "github.com/Walesey/goEngine/vectorMath"
@@ -12,6 +11,7 @@ import (
     "github.com/Walesey/goEngine/actor"
 
     "github.com/codegangsta/cli"
+    "github.com/go-gl/glfw/v3.1/glfw"
 )
 
 
@@ -22,11 +22,9 @@ func Particles( c *cli.Context ){
 
     glRenderer := &renderer.OpenglRenderer{
         WindowTitle : "GoEngine",
-        WindowWidth : 900,
-        WindowHeight : 700,
+        WindowWidth : 1900,
+        WindowHeight : 1000,
     }
-    //input/controller manager
-    controllerManager := controller.NewControllerManager(glRenderer.Window)
 
     assetLib,err := assets.LoadAssetLibrary("TestAssets/demo.asset")
     if err != nil {
@@ -49,8 +47,9 @@ func Particles( c *cli.Context ){
     geomsphere := assetLib.GetGeometry("sphere")
     sphereMat := assetLib.GetMaterial("sphereMat")
     geomsphere.Material = &sphereMat
-    boxNode2 := renderer.CreateNode()
-    boxNode2.Add(&geomsphere)
+    sphereNode := renderer.CreateNode()
+    sphereNode.Add(&geomsphere)
+    sphereNode.SetTranslation( vectorMath.Vector3{1,1,3} )
 
     fireMat := assets.CreateMaterial(assetLib.GetImage("fire"), nil, nil, nil)
     fireMat.LightingMode = renderer.MODE_UNLIT
@@ -93,20 +92,32 @@ func Particles( c *cli.Context ){
 
     sceneGraph := renderer.CreateSceneGraph()
     sceneGraph.Add(&skyNode)
-    sceneGraph.Add(&boxNode2)
+    sceneGraph.Add(&sphereNode)
     sceneGraph.Add(&firespriteNode)
     sceneGraph.Add(&smokeParticles.Node)
     sceneGraph.Add(&explosionspriteNode)
 
     //camera
     camera := renderer.CreateCamera(glRenderer)
-    freeMoveActor := actor.CreateFreeMoveActor(entity)
-    controllerManager.addController( controller.NewBasicMovementController(freeMoveActor) )
+    freeMoveActor := actor.CreateFreeMoveActor( camera )
+    freeMoveActor.MoveSpeed = 3.0
 
     glRenderer.Init = func(){
         //setup reflection map
         cubeMap := renderer.CreateCubemap( assetLib.GetMaterial("skyboxMat").Diffuse )
         glRenderer.ReflectionMap( *cubeMap )
+
+        //input/controller manager
+        controllerManager := controller.NewControllerManager(glRenderer.Window)
+
+        //camera free move actor
+        mainController := controller.NewBasicMovementController(freeMoveActor)
+        controllerManager.AddController( mainController )
+
+        //test the portabitity of the actor / entity interfaces 
+        mainController.BindAction(func(){ freeMoveActor.Entity = camera }, glfw.KeyQ, glfw.Press)
+        mainController.BindAction(func(){ freeMoveActor.Entity = &sphereNode }, glfw.KeyW, glfw.Press)
+        mainController.BindAction(func(){ freeMoveActor.Entity = &smokeParticles }, glfw.KeyE, glfw.Press)
     }
 
     glRenderer.Update = func(){
@@ -120,6 +131,8 @@ func Particles( c *cli.Context ){
         firesprite.NextFrame()
         explosionsprite.NextFrame()
         smokeParticles.Update(0.018, glRenderer)
+
+        freeMoveActor.Update(0.018)
     }
 
     glRenderer.Render = func(){

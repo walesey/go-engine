@@ -14,7 +14,3 @@ type KeyAction struct {
 	key glfw.Key
 	action glfw.Action
 }
-
-func Poll() {
-	glfw.PollEvents()
-}

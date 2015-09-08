@@ -81,7 +81,7 @@ func (glRenderer *OpenglRenderer) Start() {
 		panic(err)
 	}
 	window.MakeContextCurrent()
-	glRenderer.Window = &window
+	glRenderer.Window = window
 
 	// Initialize Glow
 	if err := gl.Init(); err != nil {
