@@ -146,10 +146,8 @@ func (ps *ParticleSystem) SetTranslation( translation vectorMath.Vector3 ) {
 	ps.Location = translation
 }
 
-func (ps *ParticleSystem) SetScale( scale vectorMath.Vector3 ) {}
-func (ps *ParticleSystem) SetOrientation( orientation vectorMath.Quaternion  ) {}
-func (ps *ParticleSystem) SetRotation( angle float64, axis vectorMath.Vector3 ) {}
-func (ps *ParticleSystem) SetFacing( rotation float64, newNormal, normal, tangent vectorMath.Vector3 ) {}
+func (ps *ParticleSystem) SetScale( scale vectorMath.Vector3 ) {} //na
+func (ps *ParticleSystem) SetOrientation( orientation vectorMath.Quaternion  ) {} //na
 
 func lerpColor( color1, color2 color.NRGBA, amount float64 ) color.NRGBA{
 	r := int(float64(color1.R)*(1.0-amount)) + int(float64(color2.R)*amount)

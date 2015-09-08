@@ -8,6 +8,8 @@ import (
     "github.com/Walesey/goEngine/assets"
     "github.com/Walesey/goEngine/effects"
     "github.com/Walesey/goEngine/renderer"
+    "github.com/Walesey/goEngine/controller"
+    "github.com/Walesey/goEngine/actor"
 
     "github.com/codegangsta/cli"
 )
@@ -23,6 +25,8 @@ func Particles( c *cli.Context ){
         WindowWidth : 900,
         WindowHeight : 700,
     }
+    //input/controller manager
+    controllerManager := controller.NewControllerManager(glRenderer.Window)
 
     assetLib,err := assets.LoadAssetLibrary("TestAssets/demo.asset")
     if err != nil {
@@ -94,34 +98,25 @@ func Particles( c *cli.Context ){
     sceneGraph.Add(&smokeParticles.Node)
     sceneGraph.Add(&explosionspriteNode)
 
-    i := -45.0
+    //camera
+    camera := renderer.CreateCamera(glRenderer)
+    freeMoveActor := actor.CreateFreeMoveActor(entity)
+    controllerManager.addController( controller.NewBasicMovementController(freeMoveActor) )
 
     glRenderer.Init = func(){
         //setup reflection map
-        cubeMap := renderer.CreateCubemap( assetLib.GetMaterial("skyboxMat").Diffuse );
+        cubeMap := renderer.CreateCubemap( assetLib.GetMaterial("skyboxMat").Diffuse )
         glRenderer.ReflectionMap( *cubeMap )
     }
 
     glRenderer.Update = func(){
         fps.UpdateFPSMeter()
-        i = i + 0.11
-        if i > 180 {
-            i = -45
-        }
-        sine := math.Sin((float64)(i/26))
-        cosine := math.Cos((float64)(i/26))
-
-        boxNode2.SetTranslation( vectorMath.Vector3{1, 2, i} )
-        //look at the box
-        cameraLocation := vectorMath.Vector3{5*cosine,3*sine,5*sine}
-        glRenderer.Camera( cameraLocation, vectorMath.Vector3{0,0,0}, vectorMath.Vector3{0,1,0} )
-
-        glRenderer.CreateLight( 5,5,5, 100,100,100, 100,100,100, false, vectorMath.Vector3{1, 2, (float64)(i)}, 1 )
 
         //face the camera
         firespriteNode.SetFacing( 3.14, glRenderer.CameraLocation().Subtract(firespriteNode.Translation).Normalize(), vectorMath.Vector3{0,1,0}, vectorMath.Vector3{0,0,-1} )
         explosionspriteNode.SetFacing( 3.14, glRenderer.CameraLocation().Subtract(explosionspriteNode.Translation).Normalize(), vectorMath.Vector3{0,1,0}, vectorMath.Vector3{0,0,-1} )
 
+        //update things that need updating
         firesprite.NextFrame()
         explosionsprite.NextFrame()
         smokeParticles.Update(0.018, glRenderer)

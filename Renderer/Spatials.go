@@ -17,16 +17,16 @@ const (
     BUCKET_ORTHO
 )
 
+//A Spatial is something that can be Drawn by a Renderer
 type Spatial interface {
     Draw( renderer Renderer )
 }
 
-type GameEntity interface {
+//An Entity is something that can be scaled, positioned and rotated (orientation)
+type Entity interface {
     SetScale( scale vectorMath.Vector3 )
     SetTranslation( translation vectorMath.Vector3 ) 
-    SetOrientation( orientation vectorMath.Quaternion  )
-    SetRotation( angle float64, axis vectorMath.Vector3 )
-    SetFacing( rotation float64, newNormal, normal, tangent vectorMath.Vector3 )
+    SetOrientation( orientation vectorMath.Quaternion )
 }
 
 type Material struct {

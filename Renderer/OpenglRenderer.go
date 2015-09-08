@@ -56,6 +56,7 @@ type OpenglRenderer struct {
 	Init, Update, Render func()
 	WindowWidth, WindowHeight int
 	WindowTitle string
+	Window *glfw.Window
 	matStack Stack
 	program, envMapId, envMapLOD1Id, envMapLOD2Id, envMapLOD3Id, illuminanceMapId uint32
 	modelUniform int32
@@ -80,6 +81,7 @@ func (glRenderer *OpenglRenderer) Start() {
 		panic(err)
 	}
 	window.MakeContextCurrent()
+	glRenderer.Window = &window
 
 	// Initialize Glow
 	if err := gl.Init(); err != nil {
