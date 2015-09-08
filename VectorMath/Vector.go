@@ -20,6 +20,9 @@ func (v Vector3) Length() float64 {
 }
 
 func (v Vector3) Normalize() Vector3 {
+    if v.LengthSquared() > 0.99999 && v.LengthSquared() < 1.00001 {
+        return v
+    }
     return v.DivideScalar( v.Length() )
 }
 
@@ -94,5 +97,5 @@ func (v Vector3) Dot( other Vector3 ) float64 {
 }
 
 func (v Vector3) AngleBetween( other Vector3 ) float64 {
-    return math.Acos(v.Dot(other))
+    return math.Acos(v.Normalize().Dot(other.Normalize()))
 }
