@@ -7,7 +7,6 @@ import (
 type BasicMovementController struct {
 	actor BasicMovementActor
 	ActionMap map[KeyAction]func()
-	Window *glfw.Window 
 }
 
 func (c *BasicMovementController) BindAction(function func(), key glfw.Key, action glfw.Action) {
@@ -39,8 +38,7 @@ func (c *BasicMovementController) KeyCallback(window *glfw.Window, key glfw.Key,
 	}
 }
 
-func NewBasicMovementController(window *glfw.Window, actor BasicMovementActor) *BasicMovementController {
-	c := &BasicMovementController{actor, make(map[KeyAction]func()), window}
-	c.Window.SetKeyCallback(c.KeyCallback)
+func NewBasicMovementController(actor BasicMovementActor) *BasicMovementController {
+	c := &BasicMovementController{actor, make(map[KeyAction]func())}
 	return c
 }
