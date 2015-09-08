@@ -1,15 +1,20 @@
 package controller
 
-import ()
+import (
+	"github.com/go-gl/glfw/v3.1/glfw"
+)
 
-type Controller struct {
-	ActionMap map[string]func()
+type Controller interface {
+	BindAction(function func(), key glfw.Key, action glfw.Action)
+	TriggerAction(key glfw.Key, action glfw.Action)
+	KeyCallback(window *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey)
 }
 
-func (c Controller) BindAction(keyCode string, action func()) {
-	c.ActionMap[keyCode] = action
+type KeyAction struct {
+	key glfw.Key
+	action glfw.Action
 }
 
-func (c Controller) TriggerAction(keyCode string) {
-	c.ActionMap[keyCode]()
+func Poll() {
+	glfw.PollEvents()
 }
