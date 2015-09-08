@@ -62,8 +62,8 @@ func Particles( c *cli.Context ){
     smokesprite := effects.CreateSprite( 64, 8, 8, &smokeMat )
     //smoke particle effect
     smokeParticles := effects.CreateParticleSystem( effects.ParticleSettings{
-    	MaxParticles: 100,
-		ParticleEmitRate: 10,
+    	MaxParticles: 200,
+		ParticleEmitRate: 30,
 		Sprite: smokesprite,
 		FaceCamera: true,
 		MaxLife: 5.0,

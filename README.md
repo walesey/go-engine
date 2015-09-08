@@ -9,11 +9,11 @@ A Simple Rendering and scene graph library for Golang.
 * Direct lighting (ambient / diffuse / spec)
 * Multiple point light sources
 * Single directional light source
+* transparency system
+* Particle System
 
 ### Planned features:
 * PBR lighting
-* transparency system
-* Particle System
 * 2D/3D physics
 * actor/character controller system
 * fps controller
