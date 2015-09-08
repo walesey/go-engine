@@ -29,6 +29,7 @@ type Renderer interface {
 	CameraLocation() vectorMath.Vector3
 	PopTransform()
 	PushTransform()
+	EnableDepthTest( depthTest bool )
 	ApplyTransform( transform Transform )
 	CreateGeometry( geometry *Geometry )
 	DestroyGeometry( geometry *Geometry )
@@ -149,7 +150,6 @@ func (glRenderer *OpenglRenderer) Start() {
 	gl.BindVertexArray(vao)
 
 	// Configure global settings
-	gl.Enable(gl.DEPTH_TEST)
 	gl.Enable(gl.TEXTURE_CUBE_MAP_SEAMLESS)
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
@@ -220,6 +220,14 @@ func (glRenderer *OpenglRenderer) ApplyTransform( transform Transform ){
 	glRenderer.matStack.Push(tx)
 	model := glRenderer.matStack.MultiplyAll()
 	gl.UniformMatrix4fv(glRenderer.modelUniform, 1, false, &model[0])
+}
+
+func (glRenderer *OpenglRenderer) EnableDepthTest( depthTest bool ) {
+	if depthTest {
+		gl.Enable(gl.DEPTH_TEST)
+	} else {
+		gl.Disable(gl.DEPTH_TEST)
+	}
 }
 
 //

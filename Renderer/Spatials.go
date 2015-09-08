@@ -12,12 +12,6 @@ const (
     MODE_LIT
 )
 
-const (
-    BUCKET_TRANSPARENT int32 = iota
-    BUCKET_OPAQUE
-    BUCKET_ORTHO
-)
-
 //A Spatial is something that can be Drawn by a Renderer
 type Spatial interface {
     Draw( renderer Renderer )
@@ -95,8 +89,7 @@ type Node struct {
     Transform Transform
     Scale vectorMath.Vector3
     Translation vectorMath.Vector3
-    Orientation vectorMath.Quaternion 
-    BucketType int32
+    Orientation vectorMath.Quaternion
 }
 
 func CreateNode() Node{
@@ -108,7 +101,6 @@ func CreateNode() Node{
         Scale: vectorMath.Vector3{1,1,1},
         Translation: vectorMath.Vector3{0,0,0},
         Orientation: vectorMath.IdentityQuaternion(),
-        BucketType: BUCKET_TRANSPARENT,
     }
 }
 

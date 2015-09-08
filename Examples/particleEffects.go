@@ -18,7 +18,7 @@ import (
 //
 func Particles( c *cli.Context ){
     fps := renderer.CreateFPSMeter(1.0)
-    fps.FpsCap = 60
+    fps.FpsCap = 6000
 
     glRenderer := &renderer.OpenglRenderer{
         WindowTitle : "GoEngine",
@@ -39,7 +39,6 @@ func Particles( c *cli.Context ){
     geom.Material.LightingMode = renderer.MODE_UNLIT
     geom.CullBackface = false
     skyNode := renderer.CreateNode()
-    skyNode.BucketType = renderer.BUCKET_OPAQUE
     skyNode.Add(&geom)
     skyNode.SetRotation( 1.57, vectorMath.Vector3{0,1,0} )
     skyNode.SetScale( vectorMath.Vector3{5000, 5000, 5000} )
@@ -131,7 +130,7 @@ func Particles( c *cli.Context ){
     })
 
     sceneGraph := renderer.CreateSceneGraph()
-    sceneGraph.Add(&skyNode)
+    sceneGraph.AddBackGround(&skyNode)
     sceneGraph.Add(&sphereNode)
     sceneGraph.Add(&fireParticles.Node)
     sceneGraph.Add(&smokeParticles.Node)
@@ -152,7 +151,7 @@ func Particles( c *cli.Context ){
 
         //camera free move actor
         mainController := controller.NewBasicMovementController(freeMoveActor)
-        controllerManager.AddController( mainController )
+        controllerManager.AddController(mainController)
 
         //test the portabitity of the actor / entity interfaces 
         mainController.BindAction(func(){ freeMoveActor.Entity = camera }, glfw.KeyQ, glfw.Press)
