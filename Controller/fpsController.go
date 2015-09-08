@@ -6,18 +6,18 @@ import (
 
 type FPSController struct {
 	actor FPSActor
-	ActionMap map[KeyAction]func()
+	actionMap map[KeyAction]func()
 }
 
 func (c *FPSController) BindAction(function func(), key glfw.Key, action glfw.Action) {
 	ka := KeyAction{key, action}
-	c.ActionMap[ka] = function
+	c.actionMap[ka] = function
 }
 
 func (c *FPSController) TriggerAction(key glfw.Key, action glfw.Action) {
 	ka := KeyAction{key, action}
-	if c.ActionMap[ka] != nil {
-		c.ActionMap[ka]()
+	if c.actionMap[ka] != nil {
+		c.actionMap[ka]()
 	}
 }
 
@@ -36,10 +36,10 @@ func NewFPSController(actor FPSActor) *FPSController {
 	c.BindAction(actor.StartStrafingRight, glfw.KeyD, glfw.Press)
 	c.BindAction(actor.StopStrafingRight, glfw.KeyD, glfw.Release)
 	c.BindAction(actor.Jump, glfw.KeySpace, glfw.Press)
-	c.BindAction(actor.Crouch, glfw.KeyControl, glfw.Press)
-	c.BindAction(actor.StandUp, glfw.KeyControl, glfw.Release)
+	c.BindAction(actor.Crouch, glfw.KeyLeftControl, glfw.Press)
+	c.BindAction(actor.StandUp, glfw.KeyLeftControl, glfw.Release)
 	c.BindAction(actor.Prone, glfw.KeyZ, glfw.Press)
-	c.BindAction(actor.StartSprinting, glfw.KeyShift, glfw.Press)
-	c.BindAction(actor.StopSprinting, glfw.KeyShift, glfw.Release)
+	c.BindAction(actor.StartSprinting, glfw.KeyLeftShift, glfw.Press)
+	c.BindAction(actor.StopSprinting, glfw.KeyLeftShift, glfw.Release)
 	return c
 }

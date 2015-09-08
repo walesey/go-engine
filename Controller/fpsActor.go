@@ -1,4 +1,4 @@
-package main 
+package controller 
 
 type FPSActor interface {
 	StartMovingForward()
