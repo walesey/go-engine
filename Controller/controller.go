@@ -5,9 +5,9 @@ import (
 )
 
 type Controller interface {
-	BindAction()
-	TriggerAction()
-	KeyCallback()
+	BindAction(function func(), key glfw.Key, action glfw.Action)
+	TriggerAction(key glfw.Key, action glfw.Action)
+	KeyCallback(window *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey)
 }
 
 type KeyAction struct {
