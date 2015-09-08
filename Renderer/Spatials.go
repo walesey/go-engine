@@ -158,7 +158,7 @@ func (node *Node) SetRotation( angle float64, axis vectorMath.Vector3 ) {
 
 //used for eg. sprites facing the direction of the camera - all vectors need to be normalized
 func (node *Node) SetFacing( rotation float64, newNormal, normal, tangent vectorMath.Vector3 ) {
-    angleCorrection := -tangent.AngleBetween( newNormal.Subtract(newNormal.Project(normal)).Normalize() )
+    angleCorrection := -tangent.AngleBetween( newNormal.Subtract(newNormal.Project(normal)) )
     if normal.Cross(tangent).Dot(newNormal) < 0 {
         angleCorrection = -angleCorrection
     }

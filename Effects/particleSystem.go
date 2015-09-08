@@ -116,7 +116,7 @@ func (ps *ParticleSystem) UpdateParticle( p *Particle, camera vectorMath.Vector3
 		//set orientation / rotation
 		if ps.settings.FaceCamera {
 			p.rotation = p.rotation + (p.rotationVelocity * dt)
-			p.node.SetFacing( p.rotation, camera.Subtract(p.translation).Normalize(), vectorMath.Vector3{0,1,0}, vectorMath.Vector3{0,0,-1} )
+			p.node.SetFacing( p.rotation, camera.Subtract(p.translation), vectorMath.Vector3{0,1,0}, vectorMath.Vector3{0,0,-1} )
 		} else {
 			//TODO
 			p.node.SetOrientation(p.orientation)
