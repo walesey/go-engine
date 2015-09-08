@@ -46,7 +46,7 @@ func TestMain(m *testing.M) {
 	var manager = ControllerManager{controllerList}
 
 	actor := &TestBasicMovementActor{}
-	var c = &BasicMovementController{actor, make(map[KeyAction]func())}
+	var c = NewBasicMovementController(actor)
 	c.BindAction(testAction, glfw.KeyW, glfw.Press)
 	c.BindAction(otherTestAction, glfw.KeyE, glfw.Release)
 	manager.AddController(c)
@@ -64,5 +64,8 @@ func TestMain(m *testing.M) {
 	manager.KeyCallback(nil, glfw.KeyLeft, 0, glfw.Release, 0)
 	manager.KeyCallback(nil, glfw.KeyRight, 0, glfw.Press, 0)
 	manager.KeyCallback(nil, glfw.KeyRight, 0, glfw.Release, 0)
+
+	fmt.Println("Test unbound key, this should do nothing")
+	manager.KeyCallback(nil, glfw.KeyX, 0, glfw.Press, 0)
 
 }
