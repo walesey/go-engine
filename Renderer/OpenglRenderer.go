@@ -237,13 +237,13 @@ func (glRenderer *OpenglRenderer) CreateGeometry( geometry *Geometry ) {
 	var vbo uint32
 	gl.GenBuffers(1, &vbo)
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, len(geometry.Verticies)*4, gl.Ptr(geometry.Verticies), gl.STATIC_DRAW)
+	gl.BufferData(gl.ARRAY_BUFFER, len(geometry.Verticies)*4, gl.Ptr(geometry.Verticies), gl.DYNAMIC_DRAW)
 	geometry.vboId = vbo
 
 	var ibo uint32
 	gl.GenBuffers(1, &ibo)
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo)
-	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(geometry.Indicies)*4, gl.Ptr(geometry.Indicies), gl.STATIC_DRAW)
+	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(geometry.Indicies)*4, gl.Ptr(geometry.Indicies), gl.DYNAMIC_DRAW)
 	geometry.iboId = ibo
 }
 
@@ -371,6 +371,12 @@ func (glRenderer *OpenglRenderer) DrawGeometry( geometry *Geometry ) {
 	gl.BindBuffer(gl.ARRAY_BUFFER, geometry.vboId)
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, geometry.iboId)
 
+	//update buffers
+	if geometry.VboDirty {
+		gl.BufferData(gl.ARRAY_BUFFER, len(geometry.Verticies)*4, gl.Ptr(geometry.Verticies), gl.DYNAMIC_DRAW)
+		geometry.VboDirty = false
+	}
+
 	//set back face culling
 	if geometry.CullBackface {
 		gl.Enable(gl.CULL_FACE)
@@ -391,36 +397,30 @@ func (glRenderer *OpenglRenderer) DrawGeometry( geometry *Geometry ) {
 	flipbookFrameSizeUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("flipbookFrameSize\x00"))
 	gl.Uniform2fv( flipbookFrameSizeUniform, 1, &flipbookFrame[0] )
 
-	//color
-	colorVector := mgl32.Vec4{ 
-		float32(geometry.Color.R) / 255.0, 
-		float32(geometry.Color.G) / 255.0, 
-		float32(geometry.Color.B) / 255.0, 
-		float32(geometry.Color.A) / 255.0,
-	}
-	colorUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("color\x00"))
-	gl.Uniform4fv( colorUniform, 1, &colorVector[0] )
-
 	//set verticies attribute
 	vertAttrib := uint32(gl.GetAttribLocation(glRenderer.program, gl.Str("vert\x00")))
 	gl.EnableVertexAttribArray(vertAttrib)
-	gl.VertexAttribPointer(vertAttrib, 3, gl.FLOAT, false, 14*4, gl.PtrOffset(0))
+	gl.VertexAttribPointer(vertAttrib, 3, gl.FLOAT, false, 18*4, gl.PtrOffset(0))
 
 	//set normals/tangent attribute
 	normAttrib := uint32(gl.GetAttribLocation(glRenderer.program, gl.Str("normal\x00")))
 	gl.EnableVertexAttribArray(normAttrib)
-	gl.VertexAttribPointer(normAttrib, 3, gl.FLOAT, false, 14*4, gl.PtrOffset(3*4))
+	gl.VertexAttribPointer(normAttrib, 3, gl.FLOAT, false, 18*4, gl.PtrOffset(3*4))
 	tangentAttrib := uint32(gl.GetAttribLocation(glRenderer.program, gl.Str("tangent\x00")))
 	gl.EnableVertexAttribArray(tangentAttrib)
-	gl.VertexAttribPointer(tangentAttrib, 3, gl.FLOAT, false, 14*4, gl.PtrOffset(6*4))
+	gl.VertexAttribPointer(tangentAttrib, 3, gl.FLOAT, false, 18*4, gl.PtrOffset(6*4))
 	bitangentAttrib := uint32(gl.GetAttribLocation(glRenderer.program, gl.Str("bitangent\x00")))
 	gl.EnableVertexAttribArray(bitangentAttrib)
-	gl.VertexAttribPointer(bitangentAttrib, 3, gl.FLOAT, false, 14*4, gl.PtrOffset(9*4))
+	gl.VertexAttribPointer(bitangentAttrib, 3, gl.FLOAT, false, 18*4, gl.PtrOffset(9*4))
 
 	//set texture coord attribute
 	texCoordAttrib := uint32(gl.GetAttribLocation(glRenderer.program, gl.Str("vertTexCoord\x00")))
 	gl.EnableVertexAttribArray(texCoordAttrib)
-	gl.VertexAttribPointer(texCoordAttrib, 2, gl.FLOAT, false, 14*4, gl.PtrOffset(12*4))
+	gl.VertexAttribPointer(texCoordAttrib, 2, gl.FLOAT, false, 18*4, gl.PtrOffset(12*4))
+	//vertex color attribute
+	colorAttrib := uint32(gl.GetAttribLocation(glRenderer.program, gl.Str("color\x00")))
+	gl.EnableVertexAttribArray(colorAttrib)
+	gl.VertexAttribPointer(colorAttrib, 4, gl.FLOAT, false, 18*4, gl.PtrOffset(14*4))
 
 
 	//setup textures

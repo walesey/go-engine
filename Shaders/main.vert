@@ -13,6 +13,7 @@ in vec3 normal;
 in vec3 tangent;
 in vec3 bitangent;
 in vec2 vertTexCoord;
+in vec4 color;
 
 out mat3 TBNMatrix;
 out mat3 inverseTBNMatrix;
@@ -20,6 +21,7 @@ out vec4 worldCamPos;
 out vec4 worldVertex;
 out vec3 worldNormal;
 out vec2 fragTexCoord;
+out vec4 fragColor;
 
 void main() {
    	worldCamPos = inverse( projection * camera ) * vec4(0,0,0,1);
@@ -33,4 +35,5 @@ void main() {
 	TBNMatrix = mat3(worldTangent, worldBitangent, worldNormal);
 	inverseTBNMatrix = inverse(TBNMatrix);
 	fragTexCoord = (flipbookFrameSize * vertTexCoord) + vec2( flipbookIndexX * flipbookFrameSize.x, flipbookIndexY * flipbookFrameSize.y );
+	fragColor = color;
 }

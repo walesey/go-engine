@@ -25,11 +25,6 @@ func main(){
     app.EnableBashCompletion = true
     app.Commands = []cli.Command{
         {
-            Name:  "particles",
-            Usage: "run a particle effect example",
-            Action: examples.Particles,
-        },
-        {
             Name:  "material",
             Usage: "Import material from file and save to a .asset file",
             Action: materialImport,
@@ -53,6 +48,18 @@ func main(){
             Name:  "remove",
             Usage: "Remove an asset from a .asset file",
             Action: remove,
+        },
+
+        //DEMOS
+        {
+            Name:  "demo",
+            Usage: "very basic demo",
+            Action: examples.Demo,
+        },
+        {
+            Name:  "particles",
+            Usage: "run a particle effect example",
+            Action: examples.Particles,
         },
     }
 

@@ -24,7 +24,8 @@ type ParticleSettings struct {
 }
 
 type ParticleSystem struct {
-	Node renderer.Node
+	node renderer.Node
+	geometry renderer.Geometry
 	particles []Particle
 	settings ParticleSettings
 	Location vectorMath.Vector3 
@@ -45,9 +46,11 @@ type Particle struct {
 }
 
 func CreateParticleSystem( settings ParticleSettings ) ParticleSystem {
+	geometry := renderer.CreateGeometry( make([]uint32,0), make([]float32,0) )
 	ps := ParticleSystem{ 
 		settings: settings, 
-		Node: renderer.CreateNode(), 
+		node: renderer.CreateNode(), 
+		geometry: geometry,
 		particles: make([]Particle, settings.MaxParticles ),
 	}
 	ps.initParitcles()
@@ -65,8 +68,16 @@ func (ps *ParticleSystem) initParitcles() {
 			size: vectorMath.Vector3{0,0,0},
 		}
 		ps.particles[i].sprite = &sprite
-		ps.Node.Add(&ps.particles[i].node)
+		ps.node.Add(&ps.particles[i].node)
 	}
+}
+
+func (ps *ParticleSystem) Draw( renderer renderer.Renderer ) {
+	ps.node.Draw(renderer)
+}
+
+func (ps *ParticleSystem) Optimize( geometry *renderer.Geometry, transform renderer.Transform ) {
+    ps.node.Optimize(geometry, transform)
 }
 
 func (ps *ParticleSystem) Update( dt float64, renderer renderer.Renderer ){
@@ -87,25 +98,24 @@ func (ps *ParticleSystem) Update( dt float64, renderer renderer.Renderer ){
 
 func (ps *ParticleSystem) spawnParticle(){
 	//get first available inactive particle
-	index := 0
 	for i,particle := range ps.particles {
 		if !particle.active {
-			index = i
+			//spawn partice
+			ps.particles[i].active = true
+			randomNb := rand.Float64()
+			ps.particles[i].life = ps.settings.MaxLife * (1.0-randomNb) + ps.settings.MinLife * randomNb
+			ps.particles[i].lifeRemaining = ps.particles[i].life
+			ps.particles[i].translation = ps.Location.Add( ps.settings.MaxTranslation.Lerp( ps.settings.MinTranslation, rand.Float64() ) )
+			ps.particles[i].orientation = vectorMath.IdentityQuaternion()
+			ps.particles[i].rotation = 3.14
+			ps.particles[i].velocity = ps.settings.MaxStartVelocity.Lerp( ps.settings.MinStartVelocity, rand.Float64() )
+			// ps.particles[i].angularVelocity = ps.settings.MaxStartVelocity.Slerp( ps.settings.MinStartVelocity, rand.Float64() )
+			randomNb = rand.Float64()
+			ps.particles[i].rotationVelocity = ps.settings.MaxRotationVelocity * (1.0-randomNb) + ps.settings.MinRotationVelocity * randomNb
 			break
 		}
 	}
-	//spawn partice
-	ps.particles[index].active = true
-	randomNb := rand.Float64()
-	ps.particles[index].life = ps.settings.MaxLife * (1.0-randomNb) + ps.settings.MinLife * randomNb
-	ps.particles[index].lifeRemaining = ps.particles[index].life
-	ps.particles[index].translation = ps.Location.Add( ps.settings.MaxTranslation.Lerp( ps.settings.MinTranslation, rand.Float64() ) )
-	ps.particles[index].orientation = vectorMath.IdentityQuaternion()
-	ps.particles[index].rotation = 3.14
-	ps.particles[index].velocity = ps.settings.MaxStartVelocity.Lerp( ps.settings.MinStartVelocity, rand.Float64() )
-	// ps.particles[index].angularVelocity = ps.settings.MaxStartVelocity.Slerp( ps.settings.MinStartVelocity, rand.Float64() )
-	randomNb = rand.Float64()
-	ps.particles[index].rotationVelocity = ps.settings.MaxRotationVelocity * (1.0-randomNb) + ps.settings.MinRotationVelocity * randomNb
+	
 }
 
 func (ps *ParticleSystem) UpdateParticle( p *Particle, camera vectorMath.Vector3, dt float64 ){

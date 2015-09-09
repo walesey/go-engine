@@ -46,5 +46,9 @@ func (sprite *Sprite) NextFrame() {
 }
 
 func (sprite *Sprite) SetColor(color color.NRGBA) {
-	sprite.geometry.Color = color
+	sprite.geometry.SetColor( color )
+}
+
+func (sprite *Sprite) Optimize( geometry *renderer.Geometry, transform renderer.Transform ) {
+    sprite.geometry.Optimize(geometry, transform)
 }

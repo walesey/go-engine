@@ -26,7 +26,7 @@ func Particles( c *cli.Context ){
         WindowHeight : 1000,
     }
 
-    assetLib,err := assets.LoadAssetLibrary("TestAssets/demo.asset")
+    assetLib,err := assets.LoadAssetLibrary("TestAssets/particles.asset")
     if err != nil {
         panic(err)
     }
@@ -132,9 +132,9 @@ func Particles( c *cli.Context ){
     sceneGraph := renderer.CreateSceneGraph()
     sceneGraph.AddBackGround(&skyNode)
     sceneGraph.Add(&sphereNode)
-    sceneGraph.Add(&fireParticles.Node)
-    sceneGraph.Add(&smokeParticles.Node)
-    sceneGraph.Add(&explosionParticles.Node)
+    sceneGraph.Add(&fireParticles)
+    sceneGraph.Add(&smokeParticles)
+    sceneGraph.Add(&explosionParticles)
 
     //camera
     camera := renderer.CreateCamera(glRenderer)
