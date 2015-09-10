@@ -50,23 +50,16 @@ func Particles( c *cli.Context ){
     sphereNode.Add(&geomsphere)
     sphereNode.SetTranslation( vectorMath.Vector3{1,1,3} )
 
-    fireMat := assets.CreateMaterial(assetLib.GetImage("fire"), nil, nil, nil)
-    fireMat.LightingMode = renderer.MODE_UNLIT
-    firesprite := effects.CreateSprite( 36, 6, 6, &fireMat )
-
-    smokeMat := assets.CreateMaterial(assetLib.GetImage("smoke"), nil, nil, nil)
-    smokeMat.LightingMode = renderer.MODE_UNLIT
-    smokesprite := effects.CreateSprite( 64, 8, 8, &smokeMat )
-
+    //particle effects
     explosionMat := assets.CreateMaterial(assetLib.GetImage("explosion"), nil, nil, nil)
     explosionMat.LightingMode = renderer.MODE_UNLIT
-    explosionsprite := effects.CreateSprite( 36, 6, 6, &explosionMat )
-
-    //particle effects
     explosionParticles := effects.CreateParticleSystem( effects.ParticleSettings{
         MaxParticles: 4,
         ParticleEmitRate: 2,
-        Sprite: explosionsprite,
+        Material: explosionMat,
+        TotalFrames: 36,
+        FramesX: 6, 
+        FramesY: 6, 
         FaceCamera: true,
         MaxLife: 1.0,
         MinLife: 2.0,
@@ -85,10 +78,15 @@ func Particles( c *cli.Context ){
         MinRotationVelocity: 0.0,
     })
 
+    fireMat := assets.CreateMaterial(assetLib.GetImage("fire"), nil, nil, nil)
+    fireMat.LightingMode = renderer.MODE_UNLIT
     fireParticles := effects.CreateParticleSystem( effects.ParticleSettings{
         MaxParticles: 10,
         ParticleEmitRate: 2,
-        Sprite: firesprite,
+        Material: fireMat,
+        TotalFrames: 36,
+        FramesX: 6, 
+        FramesY: 6, 
         FaceCamera: true,
         MaxLife: 1.0,
         MinLife: 1.3,
@@ -107,21 +105,26 @@ func Particles( c *cli.Context ){
         MinRotationVelocity: -0.3,
     })
 
+    smokeMat := assets.CreateMaterial(assetLib.GetImage("smoke"), nil, nil, nil)
+    smokeMat.LightingMode = renderer.MODE_UNLIT
     smokeParticles := effects.CreateParticleSystem( effects.ParticleSettings{
-        MaxParticles: 70,
-        ParticleEmitRate: 10,
-        Sprite: smokesprite,
+        MaxParticles: 4000,
+        ParticleEmitRate: 1000,
+        Material: smokeMat,
+        TotalFrames: 64,
+        FramesX: 8, 
+        FramesY: 8, 
         FaceCamera: true,
-        MaxLife: 5.0,
-        MinLife: 7.0,
+        MaxLife: 0.5,
+        MinLife: 0.3,
         StartSize: vectorMath.Vector3{0.4, 0.4, 0.4},
         EndSize: vectorMath.Vector3{2.4, 2.4, 2.4},
         StartColor: color.NRGBA{254, 254, 254, 50},
         EndColor: color.NRGBA{254, 254, 254, 0},
         MinTranslation: vectorMath.Vector3{-0.2, -0.2, -0.2},
         MaxTranslation: vectorMath.Vector3{0.2, 0.2, 0.2},
-        MaxStartVelocity: vectorMath.Vector3{0.2, 0.3, 0.2},
-        MinStartVelocity: vectorMath.Vector3{-0.2, 0.5, -0.2},
+        MaxStartVelocity: vectorMath.Vector3{0.2, 13.3, 0.2},
+        MinStartVelocity: vectorMath.Vector3{-0.2, 13.5, -0.2},
         Acceleration: vectorMath.Vector3{0.0, 0.0, 0.0},
         MaxAngularVelocity: vectorMath.IdentityQuaternion(),
         MinAngularVelocity: vectorMath.IdentityQuaternion(),
@@ -163,8 +166,8 @@ func Particles( c *cli.Context ){
         fps.UpdateFPSMeter()
 
         //update things that need updating
-        explosionParticles.Update(0.018, glRenderer)    
-        fireParticles.Update(0.018, glRenderer)
+        // explosionParticles.Update(0.018, glRenderer)    
+        // fireParticles.Update(0.018, glRenderer)
         smokeParticles.Update(0.018, glRenderer)
 
         freeMoveActor.Update(0.018)

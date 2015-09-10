@@ -89,21 +89,14 @@ func (node *Node) SetRotation( angle float64, axis vectorMath.Vector3 ) {
 
 //used for eg. sprites facing the direction of the camera - all vectors need to be normalized
 func (node *Node) SetFacing( rotation float64, newNormal, normal, tangent vectorMath.Vector3 ) {
-    angleCorrection := -tangent.AngleBetween( newNormal.Subtract(newNormal.Project(normal)) )
-    if normal.Cross(tangent).Dot(newNormal) < 0 {
-        angleCorrection = -angleCorrection
-    }
-    angleQ := vectorMath.AngleAxis( rotation + angleCorrection, normal )
-    betweenVectorsQ := vectorMath.BetweenVectors( normal, newNormal ) 
-    node.Orientation = betweenVectorsQ.Multiply(angleQ)
-    node.Transform.From( node.Scale, node.Translation, node.Orientation )
+    FacingTransform( node.Transform, rotation, newNormal, normal, tangent )
 }
 
-func (node *Node) OptimizeNode( geometry *Geometry ) {
-    geometry.Verticies = make([]float32, 0)
-    geometry.Indicies = make([]uint32, 0)
-    node.Optimize(geometry, node.Transform)
+func (node *Node) OptimizeNode() Geometry {
+    geometry := CreateGeometry(make([]uint32, 0, 0), make([]float32, 0, 0))
+    node.Optimize(&geometry, node.Transform)
     geometry.VboDirty = true
+    return geometry
 }
 
 func (node *Node) Optimize( geometry *Geometry, transform Transform ) {

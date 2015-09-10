@@ -3,7 +3,7 @@ package renderer
 import(
     "image"
     "image/color"
-
+    
     "github.com/Walesey/goEngine/vectorMath"
 )
 
@@ -26,7 +26,7 @@ type Flipbook struct {
 //Geometry
 type Geometry struct {
     vboId, iboId uint32
-    loaded bool
+    loadedLen int
     VboDirty bool
     Indicies []uint32
     Verticies []float32
@@ -43,7 +43,7 @@ func CreateGeometry( indicies []uint32, verticies []float32 ) Geometry {
         Indicies : indicies, 
         Verticies : verticies, 
         Material: &mat, 
-        loaded : false, 
+        loadedLen: 0,
         CullBackface : true, 
         Flipbook: Flipbook{0, 0, 1.0, 1.0},
     }
@@ -55,14 +55,19 @@ func (geometry *Geometry) Draw( renderer Renderer ) {
 }
 
 func (geometry *Geometry) load( renderer Renderer ) {
-    if !geometry.loaded {
+    if geometry.loadedLen < len(geometry.Verticies) && len(geometry.Indicies) != 0 && len(geometry.Verticies) != 0 {
         renderer.CreateGeometry( geometry )
-        geometry.loaded = true
+        geometry.loadedLen = len(geometry.Verticies)
     }
     if !geometry.Material.loaded {
         renderer.CreateMaterial( geometry.Material )
         geometry.Material.loaded = true
     }
+}
+
+func (geometry *Geometry) ClearBuffers() {
+    geometry.Indicies = geometry.Indicies[:0]
+    geometry.Verticies = geometry.Verticies[:0]
 }
 
 func (geometry *Geometry) SetColor(color color.NRGBA) {
@@ -75,24 +80,59 @@ func (geometry *Geometry) SetColor(color color.NRGBA) {
     geometry.VboDirty = true
 }
 
+func (geometry *Geometry) Transform(transform Transform) {
+    geometry.transformRange(transform, 0)
+}
+
+func (geometry *Geometry) transformRange(transform Transform, from int) {
+    for i:=from ; i<len(geometry.Verticies) ; i=i+18 {
+        v := transform.TransformCoordinate( vectorMath.Vector3{
+            float64(geometry.Verticies[i]),
+            float64(geometry.Verticies[i+1]),
+            float64(geometry.Verticies[i+2]),
+        })
+        n := transform.TransformNormal( vectorMath.Vector3{
+            float64(geometry.Verticies[i+3]),
+            float64(geometry.Verticies[i+4]),
+            float64(geometry.Verticies[i+5]),
+        })
+        t := transform.TransformNormal( vectorMath.Vector3{
+            float64(geometry.Verticies[i+6]),
+            float64(geometry.Verticies[i+7]),
+            float64(geometry.Verticies[i+8]),
+        })
+        bt := transform.TransformNormal( vectorMath.Vector3{
+            float64(geometry.Verticies[i+9]),
+            float64(geometry.Verticies[i+10]),
+            float64(geometry.Verticies[i+11]),
+        })
+        geometry.Verticies[i] = float32(v.X)
+        geometry.Verticies[i+1] = float32(v.Y)
+        geometry.Verticies[i+2] = float32(v.Z)
+        geometry.Verticies[i+3] = float32(n.X)
+        geometry.Verticies[i+4] = float32(n.Y)
+        geometry.Verticies[i+5] = float32(n.Z)
+        geometry.Verticies[i+6] = float32(t.X)
+        geometry.Verticies[i+7] = float32(t.Y)
+        geometry.Verticies[i+8] = float32(t.Z)
+        geometry.Verticies[i+9] = float32(bt.X)
+        geometry.Verticies[i+10] = float32(bt.Y)
+        geometry.Verticies[i+11] = float32(bt.Z)
+    }
+    geometry.VboDirty = true
+}
+
+//load the verts/indicies of geometry into geom
 func (geometry *Geometry) Optimize( geom *Geometry, transform Transform ) {
     vertOffset := len(geom.Verticies)
-    indexOffset := vertOffset / 18
+    indexOffset := len(geom.Indicies)
     geom.Verticies = append(geom.Verticies, geometry.Verticies...)
-    for i:=vertOffset ; i<len(geom.Verticies) ; i=i+18 {
-        v := transform.TransformCoordinate( vectorMath.Vector3{
-            float64(geom.Verticies[i]),
-            float64(geom.Verticies[i+1]),
-            float64(geom.Verticies[i+2]),
-        })
-        geom.Verticies[i] = float32(v.X)
-        geom.Verticies[i+1] = float32(v.Y)
-        geom.Verticies[i+2] = float32(v.Z)
-    }
+    geom.Indicies = append(geom.Indicies, geometry.Indicies...)
     for i,_ := range geometry.Indicies {
-        geom.Indicies = append(geom.Indicies, geometry.Indicies[i] + uint32(indexOffset))
+        geom.Indicies[i+indexOffset] = geometry.Indicies[i] + uint32( vertOffset/18 )
     }
-    geom.Material = geometry.Material
+    geom.transformRange(transform, vertOffset)
+    geometry.VboDirty = true
 }
 
 //Primitives
