@@ -249,7 +249,8 @@ func (glRenderer *OpenglRenderer) CreateGeometry( geometry *Geometry ) {
 
 //
 func (glRenderer *OpenglRenderer) DestroyGeometry( geometry *Geometry ) {
-
+	gl.DeleteBuffers(1, &geometry.vboId)
+	gl.DeleteBuffers(1, &geometry.iboId)
 }
 
 //setup Texture
@@ -362,7 +363,10 @@ func (glRenderer *OpenglRenderer) newCubeMap( right, left, top, bottom, back, fr
 
 //
 func (glRenderer *OpenglRenderer) DestroyMaterial( material *Material ) {
-
+	gl.DeleteTextures(1, &material.diffuseId)
+	gl.DeleteTextures(1, &material.normalId)
+	gl.DeleteTextures(1, &material.specularId)
+	gl.DeleteTextures(1, &material.roughnessId)
 }
 
 //

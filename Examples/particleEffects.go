@@ -108,8 +108,8 @@ func Particles( c *cli.Context ){
     smokeMat := assets.CreateMaterial(assetLib.GetImage("smoke"), nil, nil, nil)
     smokeMat.LightingMode = renderer.MODE_UNLIT
     smokeParticles := effects.CreateParticleSystem( effects.ParticleSettings{
-        MaxParticles: 4000,
-        ParticleEmitRate: 1000,
+        MaxParticles: 400,
+        ParticleEmitRate: 100,
         Material: smokeMat,
         TotalFrames: 64,
         FramesX: 8, 
@@ -166,8 +166,8 @@ func Particles( c *cli.Context ){
         fps.UpdateFPSMeter()
 
         //update things that need updating
-        // explosionParticles.Update(0.018, glRenderer)    
-        // fireParticles.Update(0.018, glRenderer)
+        explosionParticles.Update(0.018, glRenderer)    
+        fireParticles.Update(0.018, glRenderer)
         smokeParticles.Update(0.018, glRenderer)
 
         freeMoveActor.Update(0.018)

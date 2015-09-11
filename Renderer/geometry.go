@@ -42,8 +42,8 @@ func CreateGeometry( indicies []uint32, verticies []float32 ) Geometry {
     return Geometry{ 
         Indicies : indicies, 
         Verticies : verticies, 
-        Material: &mat, 
-        loadedLen: 0,
+        Material: &mat,
+        loadedLen: -1,
         CullBackface : true, 
         Flipbook: Flipbook{0, 0, 1.0, 1.0},
     }
@@ -56,6 +56,9 @@ func (geometry *Geometry) Draw( renderer Renderer ) {
 
 func (geometry *Geometry) load( renderer Renderer ) {
     if geometry.loadedLen < len(geometry.Verticies) && len(geometry.Indicies) != 0 && len(geometry.Verticies) != 0 {
+        if geometry.loadedLen < 0 {
+            renderer.DestroyGeometry( geometry )
+        }
         renderer.CreateGeometry( geometry )
         geometry.loadedLen = len(geometry.Verticies)
     }
