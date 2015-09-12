@@ -20,6 +20,7 @@ type ParticleSettings struct {
 	Acceleration vectorMath.Vector3
 	MaxAngularVelocity, MinAngularVelocity vectorMath.Quaternion
 	MaxRotationVelocity, MinRotationVelocity float64
+	BaseGeometry renderer.Geometry
 	Material renderer.Material
 	TotalFrames, FramesX, FramesY int
 }
@@ -35,6 +36,7 @@ type ParticleSystem struct {
 
 type Particle struct {
 	active bool
+	geometry renderer.Geometry
 	life, lifeRemaining float64
 	translation vectorMath.Vector3 
 	orientation vectorMath.Quaternion
@@ -59,8 +61,13 @@ func CreateParticleSystem( settings ParticleSettings ) ParticleSystem {
 }
 
 func (ps *ParticleSystem) initParitcles() {
+	indicies := append([]uint32(nil), ps.settings.BaseGeometry.Indicies...)
+	verticies := append([]float32(nil), ps.settings.BaseGeometry.Verticies...)
 	for i:=0; i<ps.settings.MaxParticles; i=i+1 {
-		ps.particles[i] = Particle{ active: false }
+		ps.particles[i] = Particle{ 
+			active: false,
+			geometry: renderer.CreateGeometry( indicies, verticies ),
+		}
 	}
 }
 
@@ -135,17 +142,24 @@ func (ps *ParticleSystem) updateParticle( p *Particle, camera vectorMath.Vector3
 		scale = vectorMath.Vector3{0,0,0}
 	}
 	//build geometry
-	geometry := renderer.CreateBox(float32(scale.X), float32(scale.Y))
+	ps.setBaseParticle(p)
 	//set color
-	geometry.SetColor(color)
+	p.geometry.SetColor(color)
 	//face the camera
 	renderer.FacingTransform( ps.particleTransform, p.rotation, camera.Subtract(p.translation), vectorMath.Vector3{0,1,0}, vectorMath.Vector3{0,0,1} )
-	geometry.Transform( ps.particleTransform )
+	p.geometry.Transform( ps.particleTransform )
 	//rotate and move
 	ps.particleTransform.From( scale, p.translation, p.orientation )
 	//add geometry to particle system
-	geometry.Optimize( &ps.geometry, ps.particleTransform )		
+	p.geometry.Optimize( &ps.geometry, ps.particleTransform )		
 
+}
+
+//Restore the particle's geometry back to the unTranformed state
+func (ps *ParticleSystem) setBaseParticle( p *Particle ) {
+	for i,_ := range ps.settings.BaseGeometry.Verticies {
+		p.geometry.Verticies[i] = ps.settings.BaseGeometry.Verticies[i]
+	}
 }
 
 //sets the location where the particles with be emitted from

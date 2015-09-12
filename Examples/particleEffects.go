@@ -56,6 +56,7 @@ func Particles( c *cli.Context ){
     explosionParticles := effects.CreateParticleSystem( effects.ParticleSettings{
         MaxParticles: 4,
         ParticleEmitRate: 2,
+        BaseGeometry: renderer.CreateBox(float32(1), float32(1)),
         Material: explosionMat,
         TotalFrames: 36,
         FramesX: 6, 
@@ -83,6 +84,7 @@ func Particles( c *cli.Context ){
     fireParticles := effects.CreateParticleSystem( effects.ParticleSettings{
         MaxParticles: 10,
         ParticleEmitRate: 2,
+        BaseGeometry: renderer.CreateBox(float32(1), float32(1)),
         Material: fireMat,
         TotalFrames: 36,
         FramesX: 6, 
@@ -108,8 +110,9 @@ func Particles( c *cli.Context ){
     smokeMat := assets.CreateMaterial(assetLib.GetImage("smoke"), nil, nil, nil)
     smokeMat.LightingMode = renderer.MODE_UNLIT
     smokeParticles := effects.CreateParticleSystem( effects.ParticleSettings{
-        MaxParticles: 400,
-        ParticleEmitRate: 100,
+        MaxParticles: 1000,
+        ParticleEmitRate: 2000,
+        BaseGeometry: renderer.CreateBox(float32(1), float32(1)),
         Material: smokeMat,
         TotalFrames: 64,
         FramesX: 8, 

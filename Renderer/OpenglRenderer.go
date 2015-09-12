@@ -153,7 +153,7 @@ func (glRenderer *OpenglRenderer) Start() {
 	gl.Enable(gl.TEXTURE_CUBE_MAP_SEAMLESS)
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-	gl.DepthFunc(gl.LESS)
+	gl.DepthFunc(gl.LEQUAL)
 	gl.Enable(gl.CULL_FACE)
 	gl.CullFace(gl.BACK)
 	gl.ClearColor(0.0, 0.0, 0.0, 1.0)
@@ -378,6 +378,7 @@ func (glRenderer *OpenglRenderer) DrawGeometry( geometry *Geometry ) {
 	//update buffers
 	if geometry.VboDirty {
 		gl.BufferData(gl.ARRAY_BUFFER, len(geometry.Verticies)*4, gl.Ptr(geometry.Verticies), gl.DYNAMIC_DRAW)
+		gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(geometry.Indicies)*4, gl.Ptr(geometry.Indicies), gl.DYNAMIC_DRAW)
 		geometry.VboDirty = false
 	}
 

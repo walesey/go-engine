@@ -56,7 +56,7 @@ func (geometry *Geometry) Draw( renderer Renderer ) {
 
 func (geometry *Geometry) load( renderer Renderer ) {
     if geometry.loadedLen < len(geometry.Verticies) && len(geometry.Indicies) != 0 && len(geometry.Verticies) != 0 {
-        if geometry.loadedLen < 0 {
+        if geometry.loadedLen >= 0 {
             renderer.DestroyGeometry( geometry )
         }
         renderer.CreateGeometry( geometry )
