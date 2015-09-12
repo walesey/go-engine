@@ -12,7 +12,70 @@ import (
 	"github.com/Walesey/goEngine/renderer"
 )
 
-//vericies format : x,y,z,   nx,ny,nz,tx,ty,tz,btx,bty,btz,   u,v
+//imports an obj from a filePath and return a Geometry 
+func ImportObj(filePath string) renderer.Geometry {
+
+	obj := &objData{ Indicies: make([]uint32, 0, 0), Vertices: make([]float32, 0, 0) }
+	vertexList := make([]float32, 0, 0)
+	uvList := make([]float32, 0, 0)
+	normalList := make([]float32, 0, 0)
+
+	//split the file name from the file path
+	filePathTokens := strings.Split(filePath, "/")
+	fileName := filePathTokens[ len(filePathTokens)-1 ]
+	path := strings.TrimRight(filePath, fileName)
+
+	//open the file and read all lines
+	file, err := os.Open(filePath)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		tokens := strings.Fields(line)
+		if len(tokens) > 0 {
+			dataType := tokens[0]
+			if dataType == "o" { //sub mesh
+				obj.Name = tokens[1]
+			} else if dataType == "v" { //xyz vertex
+				vertexList = append(vertexList, stf(tokens[1]), stf(tokens[2]), stf(tokens[3]) )
+			} else if dataType == "vt" { //uv coord
+				uvList = append(uvList, stf(tokens[1]), stf(tokens[2]) )
+			} else if dataType == "vn" { //xyz vertex normal
+				normalList = append(normalList, stf(tokens[1]), stf(tokens[2]), stf(tokens[3]) )
+			} else if dataType == "f" { // v/t/n face
+				obj.processFace( line, vertexList, uvList, normalList );
+			} else if dataType == "mtllib" {
+				obj.Mtl = importMTL( path, tokens[1] )
+			} else if dataType == "usemtl" { //mtl material
+				//TODO: multiple mtls
+			}
+		}
+	}
+
+	geometry := renderer.CreateGeometry( obj.Indicies, obj.Vertices )
+	material := CreateMaterial(obj.Mtl.Map_Kd, obj.Mtl.Map_Disp, obj.Mtl.Map_Spec, obj.Mtl.Map_Roughness)
+    geometry.Material = &material
+	if err := scanner.Err(); err != nil {
+		panic(err)
+	}
+	return geometry
+}
+
+// Create material object from image files
+func CreateMaterial( diffuse, normal, specular, roughness image.Image ) renderer.Material{
+    mat := renderer.CreateMaterial()
+    mat.Diffuse = diffuse
+    mat.Normal = normal
+    mat.Specular = specular
+    mat.Roughness = roughness
+    return mat
+}
+
+//vericies format : x,y,z,   nx,ny,nz,tx,ty,tz,btx,bty,btz,   u,v,  r,g,b,a
 //Indicies format : f1,f2,f3 (triangles)
 type objData struct {
 	Name string
@@ -29,9 +92,9 @@ type mtlData struct {
 }
 
 //returns corresponding index (0,1,2...)
-func (obj *objData) pushVert( x,y,z,nx,ny,nz,tx,ty,tz,btx,bty,btz,u,v float32 ) uint32 {
-	obj.Vertices = append(obj.Vertices, x,y,z,nx,ny,nz,tx,ty,tz,btx,bty,btz,u,v )
-	return (uint32)((len(obj.Vertices) / 14) - 1)
+func (obj *objData) pushVert( x,y,z,nx,ny,nz,tx,ty,tz,btx,bty,btz,u,v,r,g,b,a float32 ) uint32 {
+	obj.Vertices = append(obj.Vertices, x,y,z,nx,ny,nz,tx,ty,tz,btx,bty,btz,u,v,r,g,b,a )
+	return (uint32)((len(obj.Vertices) / 18) - 1)
 }
 
 func (obj *objData) pushIndex( indicies ...uint32 ) {
@@ -89,7 +152,7 @@ func (obj *objData) processFaceVertex( token string, vertexList, uvList, normalL
 		bitanz = bitangent.Z()
 	}
 
-	return obj.pushVert( vx,vy,vz, nx,ny,nz, tanx,tany,tanz, bitanx,bitany,bitanz, vtx,vty )
+	return obj.pushVert( vx,vy,vz, nx,ny,nz, tanx,tany,tanz, bitanx,bitany,bitanz, vtx,vty, 1.0,1.0,1.0,1.0 )
 }
 
 //Processes a polygonal face by splitting it into triangles
@@ -117,59 +180,6 @@ func (obj *objData) processFace( line string, vertexList, uvList, normalList []f
 			tokens = tempTokens
 		}
 	}
-}
-
-//imports an obj filePath into an ObjData reference containing index and vertex buffers
-func ImportObj(filePath string) renderer.Geometry {
-
-	obj := &objData{ Indicies: make([]uint32, 0, 0), Vertices: make([]float32, 0, 0) }
-	vertexList := make([]float32, 0, 0)
-	uvList := make([]float32, 0, 0)
-	normalList := make([]float32, 0, 0)
-
-	//split the file name from the file path
-	filePathTokens := strings.Split(filePath, "/")
-	fileName := filePathTokens[ len(filePathTokens)-1 ]
-	path := strings.TrimRight(filePath, fileName)
-
-	//open the file and read all lines
-	file, err := os.Open(filePath)
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := scanner.Text()
-		tokens := strings.Fields(line)
-		if len(tokens) > 0 {
-			dataType := tokens[0]
-			if dataType == "o" { //sub mesh
-				obj.Name = tokens[1]
-			} else if dataType == "v" { //xyz vertex
-				vertexList = append(vertexList, stf(tokens[1]), stf(tokens[2]), stf(tokens[3]) )
-			} else if dataType == "vt" { //uv coord
-				uvList = append(uvList, stf(tokens[1]), stf(tokens[2]) )
-			} else if dataType == "vn" { //xyz vertex normal
-				normalList = append(normalList, stf(tokens[1]), stf(tokens[2]), stf(tokens[3]) )
-			} else if dataType == "f" { // v/t/n face
-				obj.processFace( line, vertexList, uvList, normalList );
-			} else if dataType == "mtllib" {
-				obj.Mtl = importMTL( path, tokens[1] )
-			} else if dataType == "usemtl" { //mtl material
-				//TODO: multiple mtls
-			}
-		}
-	}
-
-	geometry := renderer.CreateGeometry( obj.Indicies, obj.Vertices )
-	material := CreateMaterial(obj.Mtl.Map_Kd, obj.Mtl.Map_Disp, obj.Mtl.Map_Spec, obj.Mtl.Map_Roughness)
-    geometry.Material = &material
-	if err := scanner.Err(); err != nil {
-		panic(err)
-	}
-	return geometry
 }
 
 //Returns mtl object data type
@@ -211,15 +221,6 @@ func importMTL( filePath, fileName string ) *mtlData{
 	return mtl
 }
 
-// Create material object from image files
-func CreateMaterial( diffuse, normal, specular, roughness image.Image ) renderer.Material{
-    mat := renderer.CreateMaterial()
-    mat.Diffuse = diffuse
-    mat.Normal = normal
-    mat.Specular = specular
-    mat.Roughness = roughness
-    return mat
-}
 
 //string to float32
 func stf(s string) float32 {

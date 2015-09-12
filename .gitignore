@@ -1,2 +1,5 @@
 TestAssets/
 *.exe
+tags
+*~
+*.swp
