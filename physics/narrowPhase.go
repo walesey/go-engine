@@ -2,11 +2,11 @@ package physics
 
 import(
 	"fmt"
-    "github.com/Walesey/goEngine/vectorMath"
+    "github.com/walesey/go-engine/vectormath"
 )
 
 type Triangle struct {
-	point1, point2, point3 vectorMath.Vector3
+	point1, point2, point3 vectormath.Vector3
 }
 
 type ConvexHull struct {
@@ -78,7 +78,7 @@ func (triangle Triangle) Overlap( other Triangle ) bool {
 
 //Intersection of triangle and plane (given by normal/d plane equation)
 //Returns error if no intersection else returns the two points on one side of the plane followed by the point on the other side
-func (triangle Triangle) planeOverlap( normal vectorMath.Vector3, d float64 ) (vectorMath.Vector3, vectorMath.Vector3, vectorMath.Vector3, error) {
+func (triangle Triangle) planeOverlap( normal vectormath.Vector3, d float64 ) (vectormath.Vector3, vectormath.Vector3, vectormath.Vector3, error) {
 	//calculate the distance from each vertex of triangle to the plane
 	dist1 := normal.Dot(triangle.point1) + d
 	dist2 := normal.Dot(triangle.point2) + d

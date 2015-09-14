@@ -1,10 +1,10 @@
 package examples
 
 import (
-    "github.com/Walesey/goEngine/assets"
-    "github.com/Walesey/goEngine/renderer"
-    "github.com/Walesey/goEngine/controller"
-    "github.com/Walesey/goEngine/actor"
+    "github.com/walesey/go-engine/assets"
+    "github.com/walesey/go-engine/renderer"
+    "github.com/walesey/go-engine/controller"
+    "github.com/walesey/go-engine/actor"
 
     "github.com/codegangsta/cli"
 )

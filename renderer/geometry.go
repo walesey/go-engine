@@ -4,7 +4,7 @@ import (
 	"image"
 	"image/color"
 
-	"github.com/Walesey/goEngine/vectorMath"
+	"github.com/walesey/go-engine/vectormath"
 )
 
 const VertexStride = 18
@@ -63,8 +63,8 @@ func (geometry *Geometry) load(renderer Renderer) {
 	}
 }
 
-func (geometry *Geometry) Centre() vectorMath.Vector3 {
-	return vectorMath.Vector3{0, 0, 0}
+func (geometry *Geometry) Centre() vectormath.Vector3 {
+	return vectormath.Vector3{0, 0, 0}
 }
 
 func (geometry *Geometry) ClearBuffers() {
@@ -88,22 +88,22 @@ func (geometry *Geometry) Transform(transform Transform) {
 
 func (geometry *Geometry) transformRange(transform Transform, from int) {
 	for i := from; i < len(geometry.Verticies); i = i + VertexStride {
-		v := transform.TransformCoordinate(vectorMath.Vector3{
+		v := transform.TransformCoordinate(vectormath.Vector3{
 			float64(geometry.Verticies[i]),
 			float64(geometry.Verticies[i+1]),
 			float64(geometry.Verticies[i+2]),
 		})
-		n := transform.TransformNormal(vectorMath.Vector3{
+		n := transform.TransformNormal(vectormath.Vector3{
 			float64(geometry.Verticies[i+3]),
 			float64(geometry.Verticies[i+4]),
 			float64(geometry.Verticies[i+5]),
 		})
-		t := transform.TransformNormal(vectorMath.Vector3{
+		t := transform.TransformNormal(vectormath.Vector3{
 			float64(geometry.Verticies[i+6]),
 			float64(geometry.Verticies[i+7]),
 			float64(geometry.Verticies[i+8]),
 		})
-		bt := transform.TransformNormal(vectorMath.Vector3{
+		bt := transform.TransformNormal(vectormath.Vector3{
 			float64(geometry.Verticies[i+9]),
 			float64(geometry.Verticies[i+10]),
 			float64(geometry.Verticies[i+11]),

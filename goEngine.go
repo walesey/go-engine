@@ -5,8 +5,8 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/Walesey/goEngine/assets"
-	"github.com/Walesey/goEngine/examples"
+	"github.com/walesey/go-engine/assets"
+	"github.com/walesey/go-engine/examples"
 
 	"github.com/codegangsta/cli"
 )

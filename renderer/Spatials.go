@@ -1,7 +1,7 @@
 package renderer
 
 import (
-	"github.com/Walesey/goEngine/vectorMath"
+	"github.com/walesey/go-engine/vectormath"
 )
 
 const (
@@ -12,24 +12,24 @@ const (
 //A Spatial is something that can be Drawn by a Renderer
 type Spatial interface {
 	Draw(renderer Renderer)
-	Centre() vectorMath.Vector3
+	Centre() vectormath.Vector3
 	Optimize(geometry *Geometry, transform Transform)
 }
 
 //An Entity is something that can be scaled, positioned and rotated (orientation)
 type Entity interface {
-	SetScale(scale vectorMath.Vector3)
-	SetTranslation(translation vectorMath.Vector3)
-	SetOrientation(orientation vectorMath.Quaternion)
+	SetScale(scale vectormath.Vector3)
+	SetTranslation(translation vectormath.Vector3)
+	SetOrientation(orientation vectormath.Quaternion)
 }
 
 //Node
 type Node struct {
 	children    []Spatial
 	Transform   Transform
-	Scale       vectorMath.Vector3
-	Translation vectorMath.Vector3
-	Orientation vectorMath.Quaternion
+	Scale       vectormath.Vector3
+	Translation vectormath.Vector3
+	Orientation vectormath.Quaternion
 }
 
 func CreateNode() Node {
@@ -38,9 +38,9 @@ func CreateNode() Node {
 	return Node{
 		children:    children,
 		Transform:   CreateTransform(),
-		Scale:       vectorMath.Vector3{1, 1, 1},
-		Translation: vectorMath.Vector3{0, 0, 0},
-		Orientation: vectorMath.IdentityQuaternion(),
+		Scale:       vectormath.Vector3{1, 1, 1},
+		Translation: vectormath.Vector3{0, 0, 0},
+		Orientation: vectormath.IdentityQuaternion(),
 	}
 }
 
@@ -53,7 +53,7 @@ func (node *Node) Draw(renderer Renderer) {
 	renderer.PopTransform()
 }
 
-func (node *Node) Centre() vectorMath.Vector3 {
+func (node *Node) Centre() vectormath.Vector3 {
 	return node.Translation
 }
 
@@ -72,28 +72,28 @@ func (node *Node) Remove(spatial Spatial) {
 	}
 }
 
-func (node *Node) SetScale(scale vectorMath.Vector3) {
+func (node *Node) SetScale(scale vectormath.Vector3) {
 	node.Scale = scale
 	node.Transform.From(node.Scale, node.Translation, node.Orientation)
 }
 
-func (node *Node) SetTranslation(translation vectorMath.Vector3) {
+func (node *Node) SetTranslation(translation vectormath.Vector3) {
 	node.Translation = translation
 	node.Transform.From(node.Scale, node.Translation, node.Orientation)
 }
 
-func (node *Node) SetOrientation(orientation vectorMath.Quaternion) {
+func (node *Node) SetOrientation(orientation vectormath.Quaternion) {
 	node.Orientation = orientation
 	node.Transform.From(node.Scale, node.Translation, node.Orientation)
 }
 
-func (node *Node) SetRotation(angle float64, axis vectorMath.Vector3) {
-	node.Orientation = vectorMath.AngleAxis(angle, axis)
+func (node *Node) SetRotation(angle float64, axis vectormath.Vector3) {
+	node.Orientation = vectormath.AngleAxis(angle, axis)
 	node.Transform.From(node.Scale, node.Translation, node.Orientation)
 }
 
 //used for eg. sprites facing the direction of the camera - all vectors need to be normalized
-func (node *Node) SetFacing(rotation float64, newNormal, normal, tangent vectorMath.Vector3) {
+func (node *Node) SetFacing(rotation float64, newNormal, normal, tangent vectormath.Vector3) {
 	FacingTransform(node.Transform, rotation, newNormal, normal, tangent)
 }
 

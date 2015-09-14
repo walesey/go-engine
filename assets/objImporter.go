@@ -9,7 +9,7 @@ import (
 	"image"
 
 	"github.com/go-gl/mathgl/mgl32"
-	"github.com/Walesey/goEngine/renderer"
+	"github.com/walesey/go-engine/renderer"
 )
 
 //imports an obj from a filePath and return a Geometry 

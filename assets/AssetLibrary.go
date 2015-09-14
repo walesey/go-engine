@@ -7,7 +7,7 @@ import(
     "bytes"
 	"image"
 
-	"github.com/Walesey/goEngine/renderer"
+	"github.com/walesey/go-engine/renderer"
 )
 
 type Asset struct {

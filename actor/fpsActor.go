@@ -1,7 +1,7 @@
 package actor
 
 import (
-    "github.com/Walesey/goEngine/renderer"
+    "github.com/walesey/go-engine/renderer"
 )
 
 //an actor that can move around bound by physics (gravity), can jump, can walk/run

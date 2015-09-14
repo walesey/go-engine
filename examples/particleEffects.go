@@ -3,12 +3,12 @@ package examples
 import (
 	"image/color"
 
-	"github.com/Walesey/goEngine/actor"
-	"github.com/Walesey/goEngine/assets"
-	"github.com/Walesey/goEngine/controller"
-	"github.com/Walesey/goEngine/effects"
-	"github.com/Walesey/goEngine/renderer"
-	"github.com/Walesey/goEngine/vectorMath"
+	"github.com/walesey/go-engine/actor"
+	"github.com/walesey/go-engine/assets"
+	"github.com/walesey/go-engine/controller"
+	"github.com/walesey/go-engine/effects"
+	"github.com/walesey/go-engine/renderer"
+	"github.com/walesey/go-engine/vectormath"
 
 	"github.com/codegangsta/cli"
 	"github.com/go-gl/glfw/v3.1/glfw"
@@ -39,15 +39,15 @@ func Particles(c *cli.Context) {
 	geom.CullBackface = false
 	skyNode := renderer.CreateNode()
 	skyNode.Add(&geom)
-	skyNode.SetRotation(1.57, vectorMath.Vector3{0, 1, 0})
-	skyNode.SetScale(vectorMath.Vector3{5000, 5000, 5000})
+	skyNode.SetRotation(1.57, vectormath.Vector3{0, 1, 0})
+	skyNode.SetScale(vectormath.Vector3{5000, 5000, 5000})
 
 	geomsphere := assetLib.GetGeometry("sphere")
 	sphereMat := assetLib.GetMaterial("sphereMat")
 	geomsphere.Material = &sphereMat
 	sphereNode := renderer.CreateNode()
 	sphereNode.Add(&geomsphere)
-	sphereNode.SetTranslation(vectorMath.Vector3{1, 1, 3})
+	sphereNode.SetTranslation(vectormath.Vector3{1, 1, 3})
 
 	//particle effects
 	explosionMat := assets.CreateMaterial(assetLib.GetImage("explosion"), nil, nil, nil)
@@ -63,17 +63,17 @@ func Particles(c *cli.Context) {
 		FaceCamera:          true,
 		MaxLife:             1.0,
 		MinLife:             2.0,
-		StartSize:           vectorMath.Vector3{0.4, 0.4, 0.4},
-		EndSize:             vectorMath.Vector3{2.4, 2.4, 2.4},
+		StartSize:           vectormath.Vector3{0.4, 0.4, 0.4},
+		EndSize:             vectormath.Vector3{2.4, 2.4, 2.4},
 		StartColor:          color.NRGBA{254, 254, 254, 254},
 		EndColor:            color.NRGBA{254, 254, 254, 254},
-		MinTranslation:      vectorMath.Vector3{-0.1, -0.1, -0.1},
-		MaxTranslation:      vectorMath.Vector3{0.1, 0.1, 0.1},
-		MaxStartVelocity:    vectorMath.Vector3{0.2, 1.8, 0.2},
-		MinStartVelocity:    vectorMath.Vector3{-0.2, 2.5, -0.2},
-		Acceleration:        vectorMath.Vector3{0.0, 0.0, 0.0},
-		MaxAngularVelocity:  vectorMath.IdentityQuaternion(),
-		MinAngularVelocity:  vectorMath.IdentityQuaternion(),
+		MinTranslation:      vectormath.Vector3{-0.1, -0.1, -0.1},
+		MaxTranslation:      vectormath.Vector3{0.1, 0.1, 0.1},
+		MaxStartVelocity:    vectormath.Vector3{0.2, 1.8, 0.2},
+		MinStartVelocity:    vectormath.Vector3{-0.2, 2.5, -0.2},
+		Acceleration:        vectormath.Vector3{0.0, 0.0, 0.0},
+		MaxAngularVelocity:  vectormath.IdentityQuaternion(),
+		MinAngularVelocity:  vectormath.IdentityQuaternion(),
 		MaxRotationVelocity: 0.0,
 		MinRotationVelocity: 0.0,
 	})
@@ -91,17 +91,17 @@ func Particles(c *cli.Context) {
 		FaceCamera:          true,
 		MaxLife:             1.0,
 		MinLife:             1.3,
-		StartSize:           vectorMath.Vector3{1.0, 1.0, 1.0},
-		EndSize:             vectorMath.Vector3{1.7, 1.7, 1.7},
+		StartSize:           vectormath.Vector3{1.0, 1.0, 1.0},
+		EndSize:             vectormath.Vector3{1.7, 1.7, 1.7},
 		StartColor:          color.NRGBA{254, 54, 0, 200},
 		EndColor:            color.NRGBA{254, 100, 20, 50},
-		MinTranslation:      vectorMath.Vector3{-0.1, 0.1, -0.1},
-		MaxTranslation:      vectorMath.Vector3{0.1, 0.3, 0.1},
-		MaxStartVelocity:    vectorMath.Vector3{0.02, 0.02, 0.02},
-		MinStartVelocity:    vectorMath.Vector3{-0.02, -0.02, -0.02},
-		Acceleration:        vectorMath.Vector3{0.0, 0.0, 0.0},
-		MaxAngularVelocity:  vectorMath.IdentityQuaternion(),
-		MinAngularVelocity:  vectorMath.IdentityQuaternion(),
+		MinTranslation:      vectormath.Vector3{-0.1, 0.1, -0.1},
+		MaxTranslation:      vectormath.Vector3{0.1, 0.3, 0.1},
+		MaxStartVelocity:    vectormath.Vector3{0.02, 0.02, 0.02},
+		MinStartVelocity:    vectormath.Vector3{-0.02, -0.02, -0.02},
+		Acceleration:        vectormath.Vector3{0.0, 0.0, 0.0},
+		MaxAngularVelocity:  vectormath.IdentityQuaternion(),
+		MinAngularVelocity:  vectormath.IdentityQuaternion(),
 		MaxRotationVelocity: 0.3,
 		MinRotationVelocity: -0.3,
 	})
@@ -119,17 +119,17 @@ func Particles(c *cli.Context) {
 		FaceCamera:          true,
 		MaxLife:             0.5,
 		MinLife:             0.3,
-		StartSize:           vectorMath.Vector3{0.4, 0.4, 0.4},
-		EndSize:             vectorMath.Vector3{2.4, 2.4, 2.4},
+		StartSize:           vectormath.Vector3{0.4, 0.4, 0.4},
+		EndSize:             vectormath.Vector3{2.4, 2.4, 2.4},
 		StartColor:          color.NRGBA{254, 254, 254, 50},
 		EndColor:            color.NRGBA{254, 254, 254, 0},
-		MinTranslation:      vectorMath.Vector3{-0.2, -0.2, -0.2},
-		MaxTranslation:      vectorMath.Vector3{0.2, 0.2, 0.2},
-		MaxStartVelocity:    vectorMath.Vector3{0.2, 13.3, 0.2},
-		MinStartVelocity:    vectorMath.Vector3{-0.2, 13.5, -0.2},
-		Acceleration:        vectorMath.Vector3{0.0, 0.0, 0.0},
-		MaxAngularVelocity:  vectorMath.IdentityQuaternion(),
-		MinAngularVelocity:  vectorMath.IdentityQuaternion(),
+		MinTranslation:      vectormath.Vector3{-0.2, -0.2, -0.2},
+		MaxTranslation:      vectormath.Vector3{0.2, 0.2, 0.2},
+		MaxStartVelocity:    vectormath.Vector3{0.2, 13.3, 0.2},
+		MinStartVelocity:    vectormath.Vector3{-0.2, 13.5, -0.2},
+		Acceleration:        vectormath.Vector3{0.0, 0.0, 0.0},
+		MaxAngularVelocity:  vectormath.IdentityQuaternion(),
+		MinAngularVelocity:  vectormath.IdentityQuaternion(),
 		MaxRotationVelocity: 0.0,
 		MinRotationVelocity: 0.0,
 	})
@@ -137,7 +137,7 @@ func Particles(c *cli.Context) {
 	birdMat := assets.CreateMaterial(assetLib.GetImage("bird"), nil, nil, nil)
 	birdMat.LightingMode = renderer.MODE_UNLIT
 	birdSprite := effects.CreateSprite(21, 5, 5, &birdMat)
-	birdSprite.SetTranslation(vectorMath.Vector3{-2, 0, -1})
+	birdSprite.SetTranslation(vectormath.Vector3{-2, 0, -1})
 
 	sceneGraph := renderer.CreateSceneGraph()
 	sceneGraph.AddBackGround(&skyNode)

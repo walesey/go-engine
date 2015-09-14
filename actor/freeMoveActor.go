@@ -1,23 +1,23 @@
 package actor
 
 import (
-    "github.com/Walesey/goEngine/vectorMath"
-    "github.com/Walesey/goEngine/renderer"
+    "github.com/walesey/go-engine/vectormath"
+    "github.com/walesey/go-engine/renderer"
 )
 
 //an actor that can move around freely in space (up/down/left/right/forward/backward)
 type FreeMoveActor struct {
 	Entity renderer.Entity
-	location vectorMath.Vector3
-	velocity vectorMath.Vector3
-	orientation vectorMath.Quaternion
+	location vectormath.Vector3
+	velocity vectormath.Vector3
+	orientation vectormath.Quaternion
 	MoveSpeed float64
 }
 
 func CreateFreeMoveActor( entity renderer.Entity ) *FreeMoveActor {
 	return &FreeMoveActor{
 		Entity: entity,
-		orientation: vectorMath.IdentityQuaternion(),
+		orientation: vectormath.IdentityQuaternion(),
 		MoveSpeed: 1.0,
 	}
 }
@@ -29,19 +29,19 @@ func (fma *FreeMoveActor) Update( dt float64 ) {
 }
 
 func (fma *FreeMoveActor) StartMovingUp() {
-	fma.velocity.X = fma.orientation.Apply(vectorMath.Vector3{fma.MoveSpeed,0,0}).X
+	fma.velocity.X = fma.orientation.Apply(vectormath.Vector3{fma.MoveSpeed,0,0}).X
 }
 
 func (fma *FreeMoveActor) StartMovingDown() {
-	fma.velocity.X = fma.orientation.Apply(vectorMath.Vector3{-fma.MoveSpeed,0,0}).X
+	fma.velocity.X = fma.orientation.Apply(vectormath.Vector3{-fma.MoveSpeed,0,0}).X
 }
 
 func (fma *FreeMoveActor) StartMovingLeft() {
-	fma.velocity.Z = fma.orientation.Apply( vectorMath.Vector3{0,0,-fma.MoveSpeed}).Z
+	fma.velocity.Z = fma.orientation.Apply( vectormath.Vector3{0,0,-fma.MoveSpeed}).Z
 }
 
 func (fma *FreeMoveActor) StartMovingRight() {
-	fma.velocity.Z = fma.orientation.Apply( vectorMath.Vector3{0,0,fma.MoveSpeed}).Z
+	fma.velocity.Z = fma.orientation.Apply( vectormath.Vector3{0,0,fma.MoveSpeed}).Z
 }
 
 func (fma *FreeMoveActor) StopMovingUp() {

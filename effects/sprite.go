@@ -1,8 +1,8 @@
 package effects
 
 import (
-	"github.com/Walesey/goEngine/renderer"
-	"github.com/Walesey/goEngine/vectorMath"
+	"github.com/walesey/go-engine/renderer"
+	"github.com/walesey/go-engine/vectormath"
 	"image/color"
 )
 
@@ -10,7 +10,7 @@ type Sprite struct {
 	node                                 renderer.Node
 	geometry                             *renderer.Geometry
 	transform                            renderer.Transform
-	location, scale                      vectorMath.Vector3
+	location, scale                      vectormath.Vector3
 	Rotation                             float64
 	FaceCamera                           bool
 	frame, totalFrames, framesX, framesY int
@@ -19,8 +19,8 @@ type Sprite struct {
 func CreateSprite(totalFrames, framesX, framesY int, material *renderer.Material) Sprite {
 	sprite := Sprite{
 		transform:   renderer.CreateTransform(),
-		location:    vectorMath.Vector3{0, 0, 0},
-		scale:       vectorMath.Vector3{1, 1, 1},
+		location:    vectormath.Vector3{0, 0, 0},
+		scale:       vectormath.Vector3{1, 1, 1},
 		frame:       0,
 		FaceCamera:  true,
 		totalFrames: totalFrames,
@@ -48,14 +48,14 @@ func BoxFlipbook(geometry *renderer.Geometry, frame, framesX, framesY int) {
 
 func (sprite *Sprite) Draw(r renderer.Renderer) {
 	if sprite.FaceCamera {
-		renderer.FacingTransform(sprite.transform, sprite.Rotation, r.CameraLocation().Subtract(sprite.location), vectorMath.Vector3{0, 1, 0}, vectorMath.Vector3{0, 0, 1})
-		sprite.node.Transform.From(sprite.scale, sprite.location, vectorMath.IdentityQuaternion())
+		renderer.FacingTransform(sprite.transform, sprite.Rotation, r.CameraLocation().Subtract(sprite.location), vectormath.Vector3{0, 1, 0}, vectormath.Vector3{0, 0, 1})
+		sprite.node.Transform.From(sprite.scale, sprite.location, vectormath.IdentityQuaternion())
 		sprite.node.Transform.ApplyTransform(sprite.transform)
 	}
 	sprite.node.Draw(r)
 }
 
-func (sprite *Sprite) Centre() vectorMath.Vector3 {
+func (sprite *Sprite) Centre() vectormath.Vector3 {
 	return sprite.location
 }
 
@@ -75,16 +75,16 @@ func (sprite *Sprite) Optimize(geometry *renderer.Geometry, transform renderer.T
 	sprite.geometry.Optimize(geometry, transform)
 }
 
-func (sprite *Sprite) SetTranslation(translation vectorMath.Vector3) {
+func (sprite *Sprite) SetTranslation(translation vectormath.Vector3) {
 	sprite.location = translation
 	sprite.node.SetTranslation(translation)
 }
 
-func (sprite *Sprite) SetScale(scale vectorMath.Vector3) {
+func (sprite *Sprite) SetScale(scale vectormath.Vector3) {
 	sprite.scale = scale
 	sprite.node.SetScale(scale)
 }
 
-func (sprite *Sprite) SetOrientation(orientation vectorMath.Quaternion) {
+func (sprite *Sprite) SetOrientation(orientation vectormath.Quaternion) {
 	sprite.node.SetOrientation(orientation)
 }

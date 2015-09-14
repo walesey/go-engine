@@ -7,7 +7,7 @@ import(
 	"image/png"
 	"encoding/json"
 
-	"github.com/Walesey/goEngine/renderer"
+	"github.com/walesey/go-engine/renderer"
 )
 
 type MaterialJSON struct {

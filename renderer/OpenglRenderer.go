@@ -9,7 +9,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/Walesey/goEngine/vectorMath"
+	"github.com/walesey/go-engine/vectormath"
 	"github.com/disintegration/imaging"
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
@@ -25,8 +25,8 @@ type Renderer interface {
 	Start()
 	BackGroundColor(r, g, b, a float32)
 	Projection(angle, aspect, near, far float32)
-	Camera(location, lookat, up vectorMath.Vector3)
-	CameraLocation() vectorMath.Vector3
+	Camera(location, lookat, up vectormath.Vector3)
+	CameraLocation() vectormath.Vector3
 	PopTransform()
 	PushTransform()
 	EnableDepthTest(depthTest bool)
@@ -36,7 +36,7 @@ type Renderer interface {
 	CreateMaterial(material *Material)
 	DestroyMaterial(material *Material)
 	DrawGeometry(geometry *Geometry)
-	CreateLight(ar, ag, ab, dr, dg, db, sr, sg, sb float32, directional bool, position vectorMath.Vector3, i int)
+	CreateLight(ar, ag, ab, dr, dg, db, sr, sg, sb float32, directional bool, position vectormath.Vector3, i int)
 	DestroyLight(i int)
 	ReflectionMap(cm CubeMap)
 }
@@ -63,7 +63,7 @@ type OpenglRenderer struct {
 	modelUniform                                                                  int32
 	lights                                                                        []float32
 	directionalLights                                                             []float32
-	cameraLocation                                                                vectorMath.Vector3
+	cameraLocation                                                                vectormath.Vector3
 }
 
 func (glRenderer *OpenglRenderer) Start() {
@@ -112,7 +112,7 @@ func (glRenderer *OpenglRenderer) Start() {
 
 	//set default camera
 	glRenderer.Projection(45.0, float32(glRenderer.WindowWidth)/float32(glRenderer.WindowHeight), 0.1, 10000.0)
-	glRenderer.Camera(vectorMath.Vector3{3, 3, 3}, vectorMath.Vector3{0, 0, 0}, vectorMath.Vector3{0, 1, 0})
+	glRenderer.Camera(vectormath.Vector3{3, 3, 3}, vectormath.Vector3{0, 0, 0}, vectormath.Vector3{0, 1, 0})
 
 	//create mat stack for push pop stack
 	matStack := CreateStack()
@@ -161,7 +161,7 @@ func (glRenderer *OpenglRenderer) Start() {
 	//setup Lights
 	glRenderer.lights = make([]float32, MAX_LIGHTS*16, MAX_LIGHTS*16)
 	glRenderer.directionalLights = make([]float32, MAX_LIGHTS*16, MAX_LIGHTS*16)
-	glRenderer.CreateLight(0.1, 0.1, 0.1, 1, 1, 1, 1, 1, 1, true, vectorMath.Vector3{0, -1, 0}, 0)
+	glRenderer.CreateLight(0.1, 0.1, 0.1, 1, 1, 1, 1, 1, 1, true, vectormath.Vector3{0, -1, 0}, 0)
 
 	glRenderer.Init()
 
@@ -192,7 +192,7 @@ func (glRenderer *OpenglRenderer) Projection(angle, aspect, near, far float32) {
 	gl.UniformMatrix4fv(projectionUniform, 1, false, &projection[0])
 }
 
-func (glRenderer *OpenglRenderer) Camera(location, lookat, up vectorMath.Vector3) {
+func (glRenderer *OpenglRenderer) Camera(location, lookat, up vectormath.Vector3) {
 	camera := mgl32.LookAtV(convertVector(location), convertVector(lookat), convertVector(up))
 	cameraUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("camera\x00"))
 	gl.UniformMatrix4fv(cameraUniform, 1, false, &camera[0])
@@ -200,7 +200,7 @@ func (glRenderer *OpenglRenderer) Camera(location, lookat, up vectorMath.Vector3
 	glRenderer.cameraLocation = location
 }
 
-func (glRenderer *OpenglRenderer) CameraLocation() vectorMath.Vector3 {
+func (glRenderer *OpenglRenderer) CameraLocation() vectormath.Vector3 {
 	return glRenderer.cameraLocation
 }
 
@@ -442,7 +442,7 @@ func (glRenderer *OpenglRenderer) DrawGeometry(geometry *Geometry) {
 }
 
 // ambient, diffuse and specular light values ( i is the light index )
-func (glRenderer *OpenglRenderer) CreateLight(ar, ag, ab, dr, dg, db, sr, sg, sb float32, directional bool, position vectorMath.Vector3, i int) {
+func (glRenderer *OpenglRenderer) CreateLight(ar, ag, ab, dr, dg, db, sr, sg, sb float32, directional bool, position vectormath.Vector3, i int) {
 	lights := &glRenderer.lights
 	if directional {
 		lights = &glRenderer.directionalLights
