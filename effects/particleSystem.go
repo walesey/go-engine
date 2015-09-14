@@ -111,7 +111,6 @@ func (ps *ParticleSystem) spawnParticle() {
 			ps.particles[i].lifeRemaining = ps.particles[i].life
 			ps.particles[i].translation = ps.Location.Add(randomVector(ps.settings.MinTranslation, ps.settings.MaxTranslation))
 			ps.particles[i].orientation = vectormath.IdentityQuaternion()
-			ps.particles[i].rotation = 3.14
 			ps.particles[i].velocity = randomVector(ps.settings.MinStartVelocity, ps.settings.MaxStartVelocity)
 			// ps.particles[i].angularVelocity = ps.settings.MaxStartVelocity.Slerp( ps.settings.MinStartVelocity, rand.Float64() )
 			randomNb = rand.Float64()
@@ -141,7 +140,7 @@ func (ps *ParticleSystem) updateParticle(p *Particle, camera vectormath.Vector3,
 	lifeRatio := p.lifeRemaining / p.life
 	scale := ps.settings.EndSize.Lerp(ps.settings.StartSize, lifeRatio)
 	color := lerpColor(ps.settings.EndColor, ps.settings.StartColor, lifeRatio)
-	frame := int(lifeRatio*float64(ps.settings.TotalFrames)) - 1
+	frame := int((1.0 - lifeRatio) * float64(ps.settings.TotalFrames))
 	if !p.active {
 		scale = vectormath.Vector3{0, 0, 0}
 	}

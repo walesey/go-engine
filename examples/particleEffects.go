@@ -109,24 +109,24 @@ func Particles(c *cli.Context) {
 	smokeMat := assets.CreateMaterial(assetLib.GetImage("smoke"), nil, nil, nil)
 	smokeMat.LightingMode = renderer.MODE_UNLIT
 	smokeParticles := effects.CreateParticleSystem(effects.ParticleSettings{
-		MaxParticles:        300,
-		ParticleEmitRate:    600,
+		MaxParticles:        100,
+		ParticleEmitRate:    35,
 		BaseGeometry:        renderer.CreateBox(float32(1), float32(1)),
 		Material:            smokeMat,
 		TotalFrames:         64,
 		FramesX:             8,
 		FramesY:             8,
 		FaceCamera:          true,
-		MaxLife:             0.5,
-		MinLife:             0.3,
+		MaxLife:             2.5,
+		MinLife:             2.3,
 		StartSize:           vectormath.Vector3{0.4, 0.4, 0.4},
 		EndSize:             vectormath.Vector3{2.4, 2.4, 2.4},
 		StartColor:          color.NRGBA{254, 254, 254, 50},
 		EndColor:            color.NRGBA{254, 254, 254, 0},
 		MinTranslation:      vectormath.Vector3{-0.2, -0.2, -0.2},
 		MaxTranslation:      vectormath.Vector3{0.2, 0.2, 0.2},
-		MaxStartVelocity:    vectormath.Vector3{0.2, 13.3, 0.2},
-		MinStartVelocity:    vectormath.Vector3{-0.2, 13.5, -0.2},
+		MaxStartVelocity:    vectormath.Vector3{0.2, 3.3, 0.2},
+		MinStartVelocity:    vectormath.Vector3{-0.2, 3.5, -0.2},
 		Acceleration:        vectormath.Vector3{0.0, 0.0, 0.0},
 		MaxAngularVelocity:  vectormath.IdentityQuaternion(),
 		MinAngularVelocity:  vectormath.IdentityQuaternion(),
@@ -136,7 +136,7 @@ func Particles(c *cli.Context) {
 
 	birdMat := assets.CreateMaterial(assetLib.GetImage("bird"), nil, nil, nil)
 	birdMat.LightingMode = renderer.MODE_UNLIT
-	birdSprite := effects.CreateSprite(21, 5, 5, &birdMat)
+	birdSprite := effects.CreateSprite(22, 5, 5, &birdMat)
 	birdSprite.SetTranslation(vectormath.Vector3{-2, 0, -1})
 
 	sceneGraph := renderer.CreateSceneGraph()
