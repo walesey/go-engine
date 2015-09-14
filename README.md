@@ -2,6 +2,8 @@
 
 A Simple Rendering and scene graph library for Golang.
 
+![Build Status](https://travis-ci.org/Walesey/goEngine.svg)
+
 ### Current features:
 * openGL renderer.
 * scenegraph translation system 
