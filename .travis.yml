@@ -1,3 +1,10 @@
 language: go
 go:
+    - 1.4
+    - 1.4.2
     - tip
+notifications:
+    email:
+        recipients:
+            - joshua.wales@gmail.com
+        on_failure: always
