@@ -157,6 +157,9 @@ func Particles(c *cli.Context) {
 		cubeMap := renderer.CreateCubemap(assetLib.GetMaterial("skyboxMat").Diffuse)
 		glRenderer.ReflectionMap(*cubeMap)
 
+		//post effects
+		glRenderer.CreatePostEffect("shaders/bloom")
+
 		//input/controller manager
 		controllerManager := controller.NewControllerManager(glRenderer.Window)
 
