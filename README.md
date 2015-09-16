@@ -2,7 +2,7 @@
 
 A Simple Rendering and scene graph library for Golang.
 
-![Build Status](https://travis-ci.org/walesey/go-engine.svg?branch=master)
+[![Build Status](https://travis-ci.org/walesey/go-engine.svg?branch=master)](https://travis-ci.org/walesey/go-engine)
 
 ### Features
 * OpenGL renderer.
