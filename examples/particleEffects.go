@@ -158,7 +158,9 @@ func Particles(c *cli.Context) {
 		glRenderer.ReflectionMap(*cubeMap)
 
 		//post effects
-		glRenderer.CreatePostEffect("shaders/bloom")
+		glRenderer.CreatePostEffect("shaders/cell/cellCoarse")
+		//glRenderer.CreatePostEffect("shaders/bloom/bloomHorizontal")
+		//glRenderer.CreatePostEffect("shaders/bloom/bloomVertical")
 
 		//input/controller manager
 		controllerManager := controller.NewControllerManager(glRenderer.Window)

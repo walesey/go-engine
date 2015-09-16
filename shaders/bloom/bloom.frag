@@ -10,6 +10,7 @@ out vec4 outputColor;
 void main() {
 	vec4 finalColor = vec4(0,0,0,1);
 
+	//TODO: move these to uniforms
 	vec2 size = vec2(1900, 1000);
 	float quality = 3.5; //lower = higher quality and less blur
 	int samples = 5;
