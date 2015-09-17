@@ -12,6 +12,7 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/go-gl/glfw/v3.1/glfw"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 //
@@ -158,9 +159,25 @@ func Particles(c *cli.Context) {
 		glRenderer.ReflectionMap(*cubeMap)
 
 		//post effects
-		glRenderer.CreatePostEffect("shaders/cell/cellCoarse")
-		//glRenderer.CreatePostEffect("shaders/bloom/bloomHorizontal")
-		//glRenderer.CreatePostEffect("shaders/bloom/bloomVertical")
+		cell := renderer.Shader{
+			Name: "shaders/cell/cellCoarse",
+		}
+		bloomHorizontal := renderer.Shader{
+			Name: "shaders/bloom/bloomHorizontal",
+			Uniforms: []renderer.Uniform{
+				renderer.Uniform{"size", mgl32.Vec2{1900, 1000}},
+				renderer.Uniform{"quality", 2.0},
+				renderer.Uniform{"samples", 15},
+			},
+		}
+		bloomVertical := renderer.Shader{
+			Name: "shaders/bloom/bloomVertical",
+			Uniforms: []renderer.Uniform{
+				renderer.Uniform{"size", mgl32.Vec2{1900, 1000}},
+				renderer.Uniform{"quality", 2.0},
+				renderer.Uniform{"samples", 15},
+			},
+		}
 
 		//input/controller manager
 		controllerManager := controller.NewControllerManager(glRenderer.Window)
@@ -174,6 +191,24 @@ func Particles(c *cli.Context) {
 		mainController.BindAction(func() { freeMoveActor.Entity = &sphereNode }, glfw.KeyW, glfw.Press)
 		mainController.BindAction(func() { freeMoveActor.Entity = &explosionParticles }, glfw.KeyE, glfw.Press)
 		mainController.BindAction(func() { freeMoveActor.Entity = &birdSprite }, glfw.KeyR, glfw.Press)
+
+		mainController.BindAction(func() { //no post effects
+			glRenderer.DestroyPostEffects(bloomVertical)
+			glRenderer.DestroyPostEffects(bloomHorizontal)
+			glRenderer.DestroyPostEffects(cell)
+		}, glfw.KeyA, glfw.Press)
+
+		mainController.BindAction(func() { //bloom effect
+			glRenderer.CreatePostEffect(bloomVertical)
+			glRenderer.CreatePostEffect(bloomHorizontal)
+			glRenderer.DestroyPostEffects(cell)
+		}, glfw.KeyS, glfw.Press)
+
+		mainController.BindAction(func() { //cell effect
+			glRenderer.DestroyPostEffects(bloomVertical)
+			glRenderer.DestroyPostEffects(bloomHorizontal)
+			glRenderer.CreatePostEffect(cell)
+		}, glfw.KeyD, glfw.Press)
 	}
 
 	glRenderer.Update = func() {

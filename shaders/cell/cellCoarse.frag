@@ -22,7 +22,7 @@ void main() {
 	vec4 finalColor = vec4(0,0,0,1);
 	vec4 source = texture(diffuse, fragTexCoord);
 	finalColor = vec4( cell(source.r), cell(source.g), cell(source.b), cell(source.a) );
-
+	
 	//final output
 	outputColor = finalColor; 
 }
