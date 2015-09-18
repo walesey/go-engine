@@ -148,7 +148,6 @@ func (glRenderer *OpenglRenderer) Start() {
 	// Configure global settings
 	gl.Enable(gl.TEXTURE_CUBE_MAP_SEAMLESS)
 	gl.Enable(gl.BLEND)
-	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	gl.DepthFunc(gl.LEQUAL)
 	gl.Enable(gl.CULL_FACE)
 	gl.CullFace(gl.BACK)
@@ -406,6 +405,15 @@ func (glRenderer *OpenglRenderer) DrawGeometry(geometry *Geometry) {
 	//set lighting mode
 	lightsUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("mode\x00"))
 	gl.Uniform1i(lightsUniform, geometry.Material.LightingMode)
+
+	//transparency mode
+	if geometry.Material.Transparency == TRANSPARENCY_NON_EMISSIVE {
+		gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+	} else if geometry.Material.Transparency == TRANSPARENCY_EMISSIVE {
+		gl.BlendFunc(gl.SRC_ALPHA, gl.ONE)
+	} else {
+		gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+	}
 
 	//set verticies attribute
 	vertAttrib := uint32(gl.GetAttribLocation(glRenderer.program, gl.Str("vert\x00")))

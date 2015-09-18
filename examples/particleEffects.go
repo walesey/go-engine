@@ -18,7 +18,7 @@ import (
 //
 func Particles(c *cli.Context) {
 	fps := renderer.CreateFPSMeter(1.0)
-	fps.FpsCap = 6000
+	fps.FpsCap = 60
 
 	glRenderer := &renderer.OpenglRenderer{
 		WindowTitle:  "GoEngine",
@@ -53,6 +53,7 @@ func Particles(c *cli.Context) {
 	//particle effects
 	explosionMat := assets.CreateMaterial(assetLib.GetImage("explosion"), nil, nil, nil)
 	explosionMat.LightingMode = renderer.MODE_UNLIT
+	explosionMat.Transparency = renderer.TRANSPARENCY_EMISSIVE
 	explosionParticles := effects.CreateParticleSystem(effects.ParticleSettings{
 		MaxParticles:        4,
 		ParticleEmitRate:    2,
@@ -81,6 +82,7 @@ func Particles(c *cli.Context) {
 
 	fireMat := assets.CreateMaterial(assetLib.GetImage("fire"), nil, nil, nil)
 	fireMat.LightingMode = renderer.MODE_UNLIT
+	fireMat.Transparency = renderer.TRANSPARENCY_EMISSIVE
 	fireParticles := effects.CreateParticleSystem(effects.ParticleSettings{
 		MaxParticles:        10,
 		ParticleEmitRate:    2,
@@ -166,16 +168,20 @@ func Particles(c *cli.Context) {
 			Name: "shaders/bloom/bloomHorizontal",
 			Uniforms: []renderer.Uniform{
 				renderer.Uniform{"size", mgl32.Vec2{1900, 1000}},
-				renderer.Uniform{"quality", 2.0},
-				renderer.Uniform{"samples", 15},
+				renderer.Uniform{"quality", 8.0},
+				renderer.Uniform{"samples", 8},
+				renderer.Uniform{"threshold", 0.99},
+				renderer.Uniform{"intensity", 0.05},
 			},
 		}
 		bloomVertical := renderer.Shader{
 			Name: "shaders/bloom/bloomVertical",
 			Uniforms: []renderer.Uniform{
 				renderer.Uniform{"size", mgl32.Vec2{1900, 1000}},
-				renderer.Uniform{"quality", 2.0},
-				renderer.Uniform{"samples", 15},
+				renderer.Uniform{"quality", 8.0},
+				renderer.Uniform{"samples", 8},
+				renderer.Uniform{"threshold", 0.99},
+				renderer.Uniform{"intensity", 0.05},
 			},
 		}
 

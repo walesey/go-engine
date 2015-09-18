@@ -4,6 +4,8 @@
 uniform sampler2D diffuse;
 
 uniform vec2 size;
+uniform float threshold;
+uniform float intensity;
 uniform float quality;
 uniform int samples;
 
@@ -20,10 +22,13 @@ void main() {
 
 	for (int x = -diff; x <= diff; x++){
 		vec2 offset = vec2(x, 0) * sizeFactor;
-		finalColor += texture(diffuse, fragTexCoord + offset);
+		vec4 fragment = texture(diffuse, fragTexCoord + offset);
+		if (fragment.r > threshold || fragment.g > threshold || fragment.b > threshold) {
+			finalColor += fragment;
+		}
 	}
 
-	finalColor = (0.5*(finalColor / samples) + 0.5*source);
+	finalColor = intensity*(finalColor / samples) + source;
 
 	//final output
 	outputColor = finalColor; 
