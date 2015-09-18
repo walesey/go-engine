@@ -9,11 +9,11 @@ import (
 	"log"
 	"strings"
 
-	"github.com/walesey/go-engine/vectormath"
 	"github.com/disintegration/imaging"
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/walesey/go-engine/vectormath"
 )
 
 const (
@@ -39,6 +39,8 @@ type Renderer interface {
 	CreateLight(ar, ag, ab, dr, dg, db, sr, sg, sb float32, directional bool, position vectormath.Vector3, i int)
 	DestroyLight(i int)
 	ReflectionMap(cm CubeMap)
+	CreatePostEffect(shader Shader)
+	DestroyPostEffects(shader Shader)
 }
 
 //used to combine transformations
@@ -54,16 +56,23 @@ func (s *Stack) MultiplyAll() mgl32.Mat4 {
 ///////////////////
 //OPEN GL Renderer
 type OpenglRenderer struct {
-	Init, Update, Render                                                          func()
-	WindowWidth, WindowHeight                                                     int
-	WindowTitle                                                                   string
-	Window                                                                        *glfw.Window
-	matStack                                                                      Stack
-	program, envMapId, envMapLOD1Id, envMapLOD2Id, envMapLOD3Id, illuminanceMapId uint32
-	modelUniform                                                                  int32
-	lights                                                                        []float32
-	directionalLights                                                             []float32
-	cameraLocation                                                                vectormath.Vector3
+	Init, Update, Render      func()
+	WindowWidth, WindowHeight int
+	WindowTitle               string
+	Window                    *glfw.Window
+	matStack                  Stack
+	program                   uint32
+	envMapId                  uint32
+	envMapLOD1Id              uint32
+	envMapLOD2Id              uint32
+	envMapLOD3Id              uint32
+	illuminanceMapId          uint32
+	modelUniform              int32
+	lights                    []float32
+	directionalLights         []float32
+	cameraLocation            vectormath.Vector3
+	postEffectVbo             uint32
+	postEffects               []postEffect
 }
 
 func (glRenderer *OpenglRenderer) Start() {
@@ -93,20 +102,7 @@ func (glRenderer *OpenglRenderer) Start() {
 	fmt.Println("OpenGL version", version)
 
 	// Configure the vertex and fragment shaders
-	bufVert, err := ioutil.ReadFile("Shaders/main.vert")
-	if err != nil {
-		panic(err)
-	}
-	vertexShader := string(bufVert) + "\x00"
-	bufFrag, err := ioutil.ReadFile("Shaders/main.frag")
-	if err != nil {
-		panic(err)
-	}
-	fragmentShader := string(bufFrag) + "\x00"
-	program, err := newProgram(vertexShader, fragmentShader)
-	if err != nil {
-		panic(err)
-	}
+	program := programFromFile("shaders/main.vert", "shaders/main.frag")
 	gl.UseProgram(program)
 	glRenderer.program = program
 
@@ -152,7 +148,6 @@ func (glRenderer *OpenglRenderer) Start() {
 	// Configure global settings
 	gl.Enable(gl.TEXTURE_CUBE_MAP_SEAMLESS)
 	gl.Enable(gl.BLEND)
-	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	gl.DepthFunc(gl.LEQUAL)
 	gl.Enable(gl.CULL_FACE)
 	gl.CullFace(gl.BACK)
@@ -163,18 +158,36 @@ func (glRenderer *OpenglRenderer) Start() {
 	glRenderer.directionalLights = make([]float32, MAX_LIGHTS*16, MAX_LIGHTS*16)
 	glRenderer.CreateLight(0.1, 0.1, 0.1, 1, 1, 1, 1, 1, 1, true, vectormath.Vector3{0, -1, 0}, 0)
 
+	glRenderer.initPostEffects()
+
 	glRenderer.Init()
 
 	//Main loop
 	for !window.ShouldClose() {
 
 		glRenderer.Update()
-		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-
-		// Render
 		gl.UseProgram(program)
+		if len(glRenderer.postEffects) == 0 {
+			gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+			glRenderer.Render()
+		} else {
 
-		glRenderer.Render()
+			//Render to the first post effect buffer
+			gl.BindFramebuffer(gl.FRAMEBUFFER, glRenderer.postEffects[0].fboId)
+			gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+			glRenderer.Render()
+			//Render Post effects
+			for i := 0; i < len(glRenderer.postEffects)-1; i = i + 1 {
+				gl.BindFramebuffer(gl.FRAMEBUFFER, glRenderer.postEffects[i+1].fboId)
+				gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+				glRenderer.renderPostEffect(glRenderer.postEffects[i])
+			}
+			//Render final post effect to the frame buffer
+			gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+			gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+			glRenderer.renderPostEffect(glRenderer.postEffects[len(glRenderer.postEffects)-1])
+		}
+		gl.UseProgram(program)
 
 		// Maintenance
 		window.SwapBuffers()
@@ -393,6 +406,15 @@ func (glRenderer *OpenglRenderer) DrawGeometry(geometry *Geometry) {
 	lightsUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("mode\x00"))
 	gl.Uniform1i(lightsUniform, geometry.Material.LightingMode)
 
+	//transparency mode
+	if geometry.Material.Transparency == TRANSPARENCY_NON_EMISSIVE {
+		gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+	} else if geometry.Material.Transparency == TRANSPARENCY_EMISSIVE {
+		gl.BlendFunc(gl.SRC_ALPHA, gl.ONE)
+	} else {
+		gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+	}
+
 	//set verticies attribute
 	vertAttrib := uint32(gl.GetAttribLocation(glRenderer.program, gl.Str("vert\x00")))
 	gl.EnableVertexAttribArray(vertAttrib)
@@ -480,6 +502,24 @@ func (glRenderer *OpenglRenderer) CreateLight(ar, ag, ab, dr, dg, db, sr, sg, sb
 
 func (glRenderer *OpenglRenderer) DestroyLight(i int) {
 
+}
+
+func programFromFile(vertFilePath, fragFilePath string) uint32 {
+	bufVert, err := ioutil.ReadFile(vertFilePath)
+	if err != nil {
+		panic(err)
+	}
+	vertexShader := string(bufVert) + "\x00"
+	bufFrag, err := ioutil.ReadFile(fragFilePath)
+	if err != nil {
+		panic(err)
+	}
+	fragmentShader := string(bufFrag) + "\x00"
+	program, err := newProgram(vertexShader, fragmentShader)
+	if err != nil {
+		panic(err)
+	}
+	return program
 }
 
 func newProgram(vertexShaderSource, fragmentShaderSource string) (uint32, error) {

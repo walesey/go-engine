@@ -12,12 +12,13 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/go-gl/glfw/v3.1/glfw"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 //
 func Particles(c *cli.Context) {
 	fps := renderer.CreateFPSMeter(1.0)
-	fps.FpsCap = 6000
+	fps.FpsCap = 60
 
 	glRenderer := &renderer.OpenglRenderer{
 		WindowTitle:  "GoEngine",
@@ -32,8 +33,8 @@ func Particles(c *cli.Context) {
 
 	//setup scenegraph
 
-	geom := assetLib.GetGeometry("skybox")
-	skyboxMat := assetLib.GetMaterial("skyboxMat")
+	geom := assetLib.GetGeometry("nightskybox")
+	skyboxMat := assetLib.GetMaterial("nightskyboxMat")
 	geom.Material = &skyboxMat
 	geom.Material.LightingMode = renderer.MODE_UNLIT
 	geom.CullBackface = false
@@ -52,6 +53,7 @@ func Particles(c *cli.Context) {
 	//particle effects
 	explosionMat := assets.CreateMaterial(assetLib.GetImage("explosion"), nil, nil, nil)
 	explosionMat.LightingMode = renderer.MODE_UNLIT
+	explosionMat.Transparency = renderer.TRANSPARENCY_EMISSIVE
 	explosionParticles := effects.CreateParticleSystem(effects.ParticleSettings{
 		MaxParticles:        4,
 		ParticleEmitRate:    2,
@@ -80,6 +82,7 @@ func Particles(c *cli.Context) {
 
 	fireMat := assets.CreateMaterial(assetLib.GetImage("fire"), nil, nil, nil)
 	fireMat.LightingMode = renderer.MODE_UNLIT
+	fireMat.Transparency = renderer.TRANSPARENCY_EMISSIVE
 	fireParticles := effects.CreateParticleSystem(effects.ParticleSettings{
 		MaxParticles:        10,
 		ParticleEmitRate:    2,
@@ -134,6 +137,35 @@ func Particles(c *cli.Context) {
 		MinRotationVelocity: 0.0,
 	})
 
+	sparkMat := assets.CreateMaterial(assetLib.GetImage("spark"), nil, nil, nil)
+	sparkMat.LightingMode = renderer.MODE_EMIT
+	sparkMat.Transparency = renderer.TRANSPARENCY_EMISSIVE
+	sparkParticles := effects.CreateParticleSystem(effects.ParticleSettings{
+		MaxParticles:        1000,
+		ParticleEmitRate:    1100,
+		BaseGeometry:        renderer.CreateBox(float32(1), float32(1)),
+		Material:            sparkMat,
+		TotalFrames:         1,
+		FramesX:             1,
+		FramesY:             1,
+		FaceCamera:          true,
+		MaxLife:             0.9,
+		MinLife:             0.7,
+		StartSize:           vectormath.Vector3{0.02, 0.02, 0.02},
+		EndSize:             vectormath.Vector3{0.02, 0.02, 0.02},
+		StartColor:          color.NRGBA{255, 5, 5, 255},
+		EndColor:            color.NRGBA{255, 5, 5, 255},
+		MinTranslation:      vectormath.Vector3{0, -0, 0},
+		MaxTranslation:      vectormath.Vector3{0, -0, 0},
+		MaxStartVelocity:    vectormath.Vector3{0.6, 0.3, 0.6},
+		MinStartVelocity:    vectormath.Vector3{-0.6, 0.5, -0.6},
+		Acceleration:        vectormath.Vector3{0.0, 0.0, 0.0},
+		MaxAngularVelocity:  vectormath.IdentityQuaternion(),
+		MinAngularVelocity:  vectormath.IdentityQuaternion(),
+		MaxRotationVelocity: 0.0,
+		MinRotationVelocity: 0.0,
+	})
+
 	birdMat := assets.CreateMaterial(assetLib.GetImage("bird"), nil, nil, nil)
 	birdMat.LightingMode = renderer.MODE_UNLIT
 	birdSprite := effects.CreateSprite(22, 5, 5, &birdMat)
@@ -146,6 +178,7 @@ func Particles(c *cli.Context) {
 	sceneGraph.Add(&smokeParticles)
 	sceneGraph.Add(&explosionParticles)
 	sceneGraph.Add(&birdSprite)
+	sceneGraph.Add(&sparkParticles)
 
 	//camera
 	camera := renderer.CreateCamera(glRenderer)
@@ -154,8 +187,33 @@ func Particles(c *cli.Context) {
 
 	glRenderer.Init = func() {
 		//setup reflection map
-		cubeMap := renderer.CreateCubemap(assetLib.GetMaterial("skyboxMat").Diffuse)
+		cubeMap := renderer.CreateCubemap(assetLib.GetMaterial("nightskyboxMat").Diffuse)
 		glRenderer.ReflectionMap(*cubeMap)
+
+		//post effects
+		cell := renderer.Shader{
+			Name: "shaders/cell/cellCoarse",
+		}
+		bloomHorizontal := renderer.Shader{
+			Name: "shaders/bloom/bloomHorizontal",
+			Uniforms: []renderer.Uniform{
+				renderer.Uniform{"size", mgl32.Vec2{1900, 1000}},
+				renderer.Uniform{"quality", 2.5},
+				renderer.Uniform{"samples", 12},
+				renderer.Uniform{"threshold", 0.995},
+				renderer.Uniform{"intensity", 1.9},
+			},
+		}
+		bloomVertical := renderer.Shader{
+			Name: "shaders/bloom/bloomVertical",
+			Uniforms: []renderer.Uniform{
+				renderer.Uniform{"size", mgl32.Vec2{1900, 1000}},
+				renderer.Uniform{"quality", 2.5},
+				renderer.Uniform{"samples", 12},
+				renderer.Uniform{"threshold", 0.995},
+				renderer.Uniform{"intensity", 1.9},
+			},
+		}
 
 		//input/controller manager
 		controllerManager := controller.NewControllerManager(glRenderer.Window)
@@ -169,15 +227,34 @@ func Particles(c *cli.Context) {
 		mainController.BindAction(func() { freeMoveActor.Entity = &sphereNode }, glfw.KeyW, glfw.Press)
 		mainController.BindAction(func() { freeMoveActor.Entity = &explosionParticles }, glfw.KeyE, glfw.Press)
 		mainController.BindAction(func() { freeMoveActor.Entity = &birdSprite }, glfw.KeyR, glfw.Press)
+
+		mainController.BindAction(func() { //no post effects
+			glRenderer.DestroyPostEffects(bloomVertical)
+			glRenderer.DestroyPostEffects(bloomHorizontal)
+			glRenderer.DestroyPostEffects(cell)
+		}, glfw.KeyA, glfw.Press)
+
+		mainController.BindAction(func() { //bloom effect
+			glRenderer.CreatePostEffect(bloomVertical)
+			glRenderer.CreatePostEffect(bloomHorizontal)
+			glRenderer.DestroyPostEffects(cell)
+		}, glfw.KeyS, glfw.Press)
+
+		mainController.BindAction(func() { //cell effect
+			glRenderer.DestroyPostEffects(bloomVertical)
+			glRenderer.DestroyPostEffects(bloomHorizontal)
+			glRenderer.CreatePostEffect(cell)
+		}, glfw.KeyD, glfw.Press)
 	}
 
 	glRenderer.Update = func() {
 		fps.UpdateFPSMeter()
 
 		//update things that need updating
-		explosionParticles.Update(0.018, glRenderer)
-		fireParticles.Update(0.018, glRenderer)
-		smokeParticles.Update(0.018, glRenderer)
+		//		explosionParticles.Update(0.018, glRenderer)
+		//		fireParticles.Update(0.018, glRenderer)
+		//		smokeParticles.Update(0.018, glRenderer)
+		sparkParticles.Update(0.018, glRenderer)
 
 		birdSprite.NextFrame()
 
