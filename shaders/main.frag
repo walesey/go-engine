@@ -9,6 +9,7 @@
 
 #define MODE_UNLIT 0
 #define MODE_LIT 1
+#define MODE_EMIT 2
 
 uniform int mode;
 
@@ -39,6 +40,13 @@ in vec2 fragTexCoord;
 in vec4 fragColor;
 
 out vec4 outputColor;
+
+vec4 vectorCap( vec4 vector, float cap ){
+	if (vector.r > cap) {vector.r = cap;}
+	if (vector.g > cap) {vector.g = cap;}
+	if (vector.b > cap) {vector.b = cap;}
+	return vector;
+}
 
 vec4 directBRDF( vec4 LightDiff, vec4 LightSpec, vec4 LightDir, vec4 albedoValue, vec4 specularValue, vec4 roughnessValue, vec4 tangentNormal, vec4 tangentReflectedEye){
 	vec3 tangentLightDirection = LightDir.xyz * TBNMatrix;
@@ -115,11 +123,11 @@ void main() {
 	   	//indirect lighting
 	   	vec4 indirectDiffuse = texture(illuminanceMap, worldReflectedEye.xyz);
 	   	vec4 indirectSpecular = vec4(0,0,0,1);
-	   	if( roughnessValue.r < 0.1 ){
+	   	if (roughnessValue.r < 0.1){
 	   		indirectSpecular = texture(environmentMap, worldReflectedEye.xyz);
-	   	} else if( roughnessValue.r < 0.3 ){
+	   	} else if (roughnessValue.r < 0.3){
 	   		indirectSpecular = texture(environmentMapLOD1, worldReflectedEye.xyz);
-	   	} else if( roughnessValue.r < 0.7 ){
+	   	} else if (roughnessValue.r < 0.7){
 	   		indirectSpecular = texture(environmentMapLOD2, worldReflectedEye.xyz);
 	   	} else {
 	   		indirectSpecular = texture(environmentMapLOD3, worldReflectedEye.xyz);
@@ -135,10 +143,17 @@ void main() {
 	   	finalColor += indirectColor;
 
 	   	finalColor.a = alphaValue + (alphaValue * reflectivity);
+		
+		finalColor = vectorCap(finalColor, 0.99);
 	}
 	
-	if( mode == MODE_UNLIT ){
+	if (mode == MODE_UNLIT){
 		finalColor = albedoValue;
+		finalColor = vectorCap(finalColor, 0.99);
+	}
+
+	if (mode == MODE_EMIT){
+		finalColor = albedoValue;	
 	}
 
 	//final output

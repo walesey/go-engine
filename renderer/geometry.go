@@ -10,6 +10,12 @@ import (
 const VertexStride = 18
 
 const (
+	MODE_UNLIT int32 = iota
+	MODE_LIT
+	MODE_EMIT
+)
+
+const (
 	TRANSPARENCY_NON_EMISSIVE int = iota
 	TRANSPARENCY_EMISSIVE
 )

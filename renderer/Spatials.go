@@ -4,11 +4,6 @@ import (
 	"github.com/walesey/go-engine/vectormath"
 )
 
-const (
-	MODE_UNLIT int32 = iota
-	MODE_LIT
-)
-
 //A Spatial is something that can be Drawn by a Renderer
 type Spatial interface {
 	Draw(renderer Renderer)

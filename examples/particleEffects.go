@@ -33,8 +33,8 @@ func Particles(c *cli.Context) {
 
 	//setup scenegraph
 
-	geom := assetLib.GetGeometry("skybox")
-	skyboxMat := assetLib.GetMaterial("skyboxMat")
+	geom := assetLib.GetGeometry("nightskybox")
+	skyboxMat := assetLib.GetMaterial("nightskyboxMat")
 	geom.Material = &skyboxMat
 	geom.Material.LightingMode = renderer.MODE_UNLIT
 	geom.CullBackface = false
@@ -138,7 +138,8 @@ func Particles(c *cli.Context) {
 	})
 
 	sparkMat := assets.CreateMaterial(assetLib.GetImage("spark"), nil, nil, nil)
-	sparkMat.LightingMode = renderer.MODE_UNLIT
+	sparkMat.LightingMode = renderer.MODE_EMIT
+	sparkMat.Transparency = renderer.TRANSPARENCY_EMISSIVE
 	sparkParticles := effects.CreateParticleSystem(effects.ParticleSettings{
 		MaxParticles:        1000,
 		ParticleEmitRate:    1100,
@@ -186,7 +187,7 @@ func Particles(c *cli.Context) {
 
 	glRenderer.Init = func() {
 		//setup reflection map
-		cubeMap := renderer.CreateCubemap(assetLib.GetMaterial("skyboxMat").Diffuse)
+		cubeMap := renderer.CreateCubemap(assetLib.GetMaterial("nightskyboxMat").Diffuse)
 		glRenderer.ReflectionMap(*cubeMap)
 
 		//post effects
@@ -197,20 +198,20 @@ func Particles(c *cli.Context) {
 			Name: "shaders/bloom/bloomHorizontal",
 			Uniforms: []renderer.Uniform{
 				renderer.Uniform{"size", mgl32.Vec2{1900, 1000}},
-				renderer.Uniform{"quality", 8.0},
-				renderer.Uniform{"samples", 8},
-				renderer.Uniform{"threshold", 0.99},
-				renderer.Uniform{"intensity", 0.05},
+				renderer.Uniform{"quality", 2.5},
+				renderer.Uniform{"samples", 12},
+				renderer.Uniform{"threshold", 0.995},
+				renderer.Uniform{"intensity", 1.9},
 			},
 		}
 		bloomVertical := renderer.Shader{
 			Name: "shaders/bloom/bloomVertical",
 			Uniforms: []renderer.Uniform{
 				renderer.Uniform{"size", mgl32.Vec2{1900, 1000}},
-				renderer.Uniform{"quality", 8.0},
-				renderer.Uniform{"samples", 8},
-				renderer.Uniform{"threshold", 0.99},
-				renderer.Uniform{"intensity", 0.05},
+				renderer.Uniform{"quality", 2.5},
+				renderer.Uniform{"samples", 12},
+				renderer.Uniform{"threshold", 0.995},
+				renderer.Uniform{"intensity", 1.9},
 			},
 		}
 
