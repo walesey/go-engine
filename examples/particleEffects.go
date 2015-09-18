@@ -134,6 +134,34 @@ func Particles(c *cli.Context) {
 		MinRotationVelocity: 0.0,
 	})
 
+	sparkMat := assets.CreateMaterial(assetLib.GetImage("spark"), nil, nil, nil)
+	sparkMat.LightingMode = renderer.MODE_UNLIT
+	sparkParticles := effects.CreateParticleSystem(effects.ParticleSettings{
+		MaxParticles:        1000,
+		ParticleEmitRate:    1100,
+		BaseGeometry:        renderer.CreateBox(float32(1), float32(1)),
+		Material:            sparkMat,
+		TotalFrames:         1,
+		FramesX:             1,
+		FramesY:             1,
+		FaceCamera:          true,
+		MaxLife:             0.9,
+		MinLife:             0.7,
+		StartSize:           vectormath.Vector3{0.02, 0.02, 0.02},
+		EndSize:             vectormath.Vector3{0.02, 0.02, 0.02},
+		StartColor:          color.NRGBA{255, 5, 5, 255},
+		EndColor:            color.NRGBA{255, 5, 5, 255},
+		MinTranslation:      vectormath.Vector3{0, -0, 0},
+		MaxTranslation:      vectormath.Vector3{0, -0, 0},
+		MaxStartVelocity:    vectormath.Vector3{0.6, 0.3, 0.6},
+		MinStartVelocity:    vectormath.Vector3{-0.6, 0.5, -0.6},
+		Acceleration:        vectormath.Vector3{0.0, 0.0, 0.0},
+		MaxAngularVelocity:  vectormath.IdentityQuaternion(),
+		MinAngularVelocity:  vectormath.IdentityQuaternion(),
+		MaxRotationVelocity: 0.0,
+		MinRotationVelocity: 0.0,
+	})
+
 	birdMat := assets.CreateMaterial(assetLib.GetImage("bird"), nil, nil, nil)
 	birdMat.LightingMode = renderer.MODE_UNLIT
 	birdSprite := effects.CreateSprite(22, 5, 5, &birdMat)
@@ -146,6 +174,7 @@ func Particles(c *cli.Context) {
 	sceneGraph.Add(&smokeParticles)
 	sceneGraph.Add(&explosionParticles)
 	sceneGraph.Add(&birdSprite)
+	sceneGraph.Add(&sparkParticles)
 
 	//camera
 	camera := renderer.CreateCamera(glRenderer)
@@ -175,9 +204,10 @@ func Particles(c *cli.Context) {
 		fps.UpdateFPSMeter()
 
 		//update things that need updating
-		explosionParticles.Update(0.018, glRenderer)
-		fireParticles.Update(0.018, glRenderer)
-		smokeParticles.Update(0.018, glRenderer)
+		//		explosionParticles.Update(0.018, glRenderer)
+		//		fireParticles.Update(0.018, glRenderer)
+		//		smokeParticles.Update(0.018, glRenderer)
+		sparkParticles.Update(0.018, glRenderer)
 
 		birdSprite.NextFrame()
 
