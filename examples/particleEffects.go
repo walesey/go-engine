@@ -33,8 +33,10 @@ func Particles(c *cli.Context) {
 
 	//setup scenegraph
 
-	geom := assetLib.GetGeometry("nightskybox")
-	skyboxMat := assetLib.GetMaterial("nightskyboxMat")
+	//geom := assetLib.GetGeometry("nightskybox")
+	//skyboxMat := assetLib.GetMaterial("nightskyboxMat")
+	geom := assetLib.GetGeometry("skybox")
+	skyboxMat := assetLib.GetMaterial("skyboxMat")
 	geom.Material = &skyboxMat
 	geom.Material.LightingMode = renderer.MODE_UNLIT
 	geom.CullBackface = false
@@ -112,8 +114,8 @@ func Particles(c *cli.Context) {
 	smokeMat := assets.CreateMaterial(assetLib.GetImage("smoke"), nil, nil, nil)
 	smokeMat.LightingMode = renderer.MODE_UNLIT
 	smokeParticles := effects.CreateParticleSystem(effects.ParticleSettings{
-		MaxParticles:        100,
-		ParticleEmitRate:    35,
+		MaxParticles:        500,
+		ParticleEmitRate:    235,
 		BaseGeometry:        renderer.CreateBox(float32(1), float32(1)),
 		Material:            smokeMat,
 		TotalFrames:         64,
@@ -128,8 +130,8 @@ func Particles(c *cli.Context) {
 		EndColor:            color.NRGBA{254, 254, 254, 0},
 		MinTranslation:      vectormath.Vector3{-0.2, -0.2, -0.2},
 		MaxTranslation:      vectormath.Vector3{0.2, 0.2, 0.2},
-		MaxStartVelocity:    vectormath.Vector3{0.2, 3.3, 0.2},
-		MinStartVelocity:    vectormath.Vector3{-0.2, 3.5, -0.2},
+		MaxStartVelocity:    vectormath.Vector3{0.2, 0.8, 0.2},
+		MinStartVelocity:    vectormath.Vector3{-0.2, 0.6, -0.2},
 		Acceleration:        vectormath.Vector3{0.0, 0.0, 0.0},
 		MaxAngularVelocity:  vectormath.IdentityQuaternion(),
 		MinAngularVelocity:  vectormath.IdentityQuaternion(),
@@ -186,8 +188,12 @@ func Particles(c *cli.Context) {
 	freeMoveActor.MoveSpeed = 3.0
 
 	glRenderer.Init = func() {
+		//Lighting
+		glRenderer.CreateLight(0.1, 0.1, 0.1, 1, 1, 1, 1, 1, 1, true, vectormath.Vector3{0, -1, 0}, 0)
+
 		//setup reflection map
-		cubeMap := renderer.CreateCubemap(assetLib.GetMaterial("nightskyboxMat").Diffuse)
+		//cubeMap := renderer.CreateCubemap(assetLib.GetMaterial("nightskyboxMat").Diffuse)
+		cubeMap := renderer.CreateCubemap(assetLib.GetMaterial("skyboxMat").Diffuse)
 		glRenderer.ReflectionMap(*cubeMap)
 
 		//post effects
@@ -253,8 +259,8 @@ func Particles(c *cli.Context) {
 		//update things that need updating
 		//		explosionParticles.Update(0.018, glRenderer)
 		//		fireParticles.Update(0.018, glRenderer)
-		//		smokeParticles.Update(0.018, glRenderer)
-		sparkParticles.Update(0.018, glRenderer)
+		smokeParticles.Update(0.018, glRenderer)
+		//		sparkParticles.Update(0.018, glRenderer)
 
 		birdSprite.NextFrame()
 

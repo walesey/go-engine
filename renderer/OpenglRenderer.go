@@ -146,6 +146,7 @@ func (glRenderer *OpenglRenderer) Start() {
 	gl.BindVertexArray(vao)
 
 	// Configure global settings
+	gl.Enable(gl.DEPTH_TEST)
 	gl.Enable(gl.TEXTURE_CUBE_MAP_SEAMLESS)
 	gl.Enable(gl.BLEND)
 	gl.DepthFunc(gl.LEQUAL)
@@ -156,7 +157,6 @@ func (glRenderer *OpenglRenderer) Start() {
 	//setup Lights
 	glRenderer.lights = make([]float32, MAX_LIGHTS*16, MAX_LIGHTS*16)
 	glRenderer.directionalLights = make([]float32, MAX_LIGHTS*16, MAX_LIGHTS*16)
-	glRenderer.CreateLight(0.1, 0.1, 0.1, 1, 1, 1, 1, 1, 1, true, vectormath.Vector3{0, -1, 0}, 0)
 
 	glRenderer.initPostEffects()
 

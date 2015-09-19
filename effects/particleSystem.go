@@ -3,6 +3,7 @@ package effects
 import (
 	"image/color"
 	"math/rand"
+	"sort"
 
 	"github.com/walesey/go-engine/renderer"
 	"github.com/walesey/go-engine/vectormath"
@@ -27,7 +28,7 @@ type ParticleSettings struct {
 
 type ParticleSystem struct {
 	geometry          renderer.Geometry
-	particles         []Particle
+	particles         particleList
 	settings          ParticleSettings
 	Location          vectormath.Vector3
 	particleTransform renderer.Transform
@@ -46,6 +47,25 @@ type Particle struct {
 	rotationVelocity    float64
 }
 
+type particleList struct {
+	particles      []Particle
+	cameraPosition vectormath.Vector3
+}
+
+func (slice particleList) Len() int {
+	return len(slice.particles)
+}
+
+func (slice particleList) Less(i, j int) bool {
+	cameraDeltai := slice.cameraPosition.Subtract(slice.particles[i].translation).LengthSquared()
+	cameraDeltaj := slice.cameraPosition.Subtract(slice.particles[j].translation).LengthSquared()
+	return cameraDeltai > cameraDeltaj
+}
+
+func (slice particleList) Swap(i, j int) {
+	slice.particles[i], slice.particles[j] = slice.particles[j], slice.particles[i]
+}
+
 func CreateParticleSystem(settings ParticleSettings) ParticleSystem {
 	geometry := renderer.CreateGeometry(make([]uint32, 0, 0), make([]float32, 0, 0))
 	geometry.Material = &settings.Material
@@ -53,7 +73,7 @@ func CreateParticleSystem(settings ParticleSettings) ParticleSystem {
 	ps := ParticleSystem{
 		settings:          settings,
 		geometry:          geometry,
-		particles:         make([]Particle, settings.MaxParticles),
+		particles:         particleList{particles: make([]Particle, settings.MaxParticles)},
 		particleTransform: renderer.CreateTransform(),
 	}
 	ps.initParitcles()
@@ -64,7 +84,7 @@ func (ps *ParticleSystem) initParitcles() {
 	indicies := append([]uint32(nil), ps.settings.BaseGeometry.Indicies...)
 	verticies := append([]float32(nil), ps.settings.BaseGeometry.Verticies...)
 	for i := 0; i < ps.settings.MaxParticles; i = i + 1 {
-		ps.particles[i] = Particle{
+		ps.particles.particles[i] = Particle{
 			active:   false,
 			geometry: renderer.CreateGeometry(indicies, verticies),
 		}
@@ -85,9 +105,12 @@ func (ps *ParticleSystem) Optimize(geometry *renderer.Geometry, transform render
 
 func (ps *ParticleSystem) Update(dt float64, renderer renderer.Renderer) {
 	ps.geometry.ClearBuffers()
-	//update all particles
-	for index, _ := range ps.particles {
-		ps.updateParticle(&ps.particles[index], renderer.CameraLocation(), dt)
+	//sort particles
+	ps.particles.cameraPosition = renderer.CameraLocation()
+	sort.Sort(ps.particles)
+	//update all particles:
+	for index, _ := range ps.particles.particles {
+		ps.updateParticle(&ps.particles.particles[index], renderer.CameraLocation(), dt)
 	}
 	//number of new particles to spawn
 	previousLife := ps.life
@@ -102,19 +125,19 @@ func (ps *ParticleSystem) Update(dt float64, renderer renderer.Renderer) {
 
 func (ps *ParticleSystem) spawnParticle() {
 	//get first available inactive particle
-	for i, particle := range ps.particles {
+	for i, particle := range ps.particles.particles {
 		if !particle.active {
 			//spawn partice
-			ps.particles[i].active = true
+			ps.particles.particles[i].active = true
 			randomNb := rand.Float64()
-			ps.particles[i].life = ps.settings.MaxLife*(1.0-randomNb) + ps.settings.MinLife*randomNb
-			ps.particles[i].lifeRemaining = ps.particles[i].life
-			ps.particles[i].translation = ps.Location.Add(randomVector(ps.settings.MinTranslation, ps.settings.MaxTranslation))
-			ps.particles[i].orientation = vectormath.IdentityQuaternion()
-			ps.particles[i].velocity = randomVector(ps.settings.MinStartVelocity, ps.settings.MaxStartVelocity)
+			ps.particles.particles[i].life = ps.settings.MaxLife*(1.0-randomNb) + ps.settings.MinLife*randomNb
+			ps.particles.particles[i].lifeRemaining = ps.particles.particles[i].life
+			ps.particles.particles[i].translation = ps.Location.Add(randomVector(ps.settings.MinTranslation, ps.settings.MaxTranslation))
+			ps.particles.particles[i].orientation = vectormath.IdentityQuaternion()
+			ps.particles.particles[i].velocity = randomVector(ps.settings.MinStartVelocity, ps.settings.MaxStartVelocity)
 			// ps.particles[i].angularVelocity = ps.settings.MaxStartVelocity.Slerp( ps.settings.MinStartVelocity, rand.Float64() )
 			randomNb = rand.Float64()
-			ps.particles[i].rotationVelocity = ps.settings.MaxRotationVelocity*(1.0-randomNb) + ps.settings.MinRotationVelocity*randomNb
+			ps.particles.particles[i].rotationVelocity = ps.settings.MaxRotationVelocity*(1.0-randomNb) + ps.settings.MinRotationVelocity*randomNb
 			break
 		}
 	}

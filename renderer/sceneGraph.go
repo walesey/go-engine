@@ -39,9 +39,9 @@ func (sceneGraph *SceneGraph) RenderScene(renderer Renderer) {
 	sceneGraph.buildBuckets(&sceneGraph.transparentNode)
 	sceneGraph.sortBuckets(renderer)
 	//render buckets
-	renderer.EnableDepthTest(true)
+	//renderer.EnableDepthTest(true)
 	sceneGraph.backgroundNode.Draw(renderer)
-	renderer.EnableDepthTest(false)
+	//renderer.EnableDepthTest(false)
 	for _, entry := range sceneGraph.transparentBucket {
 		renderEntry(entry, renderer)
 	}
