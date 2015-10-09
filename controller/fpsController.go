@@ -4,29 +4,25 @@ import (
 	"github.com/go-gl/glfw/v3.1/glfw"
 )
 
-type FPSController struct {
-	actor FPSActor
-	actionMap map[KeyAction]func()
+type FPSActor interface {
+	StartMovingForward()
+	StartMovingBackward()
+	StartStrafingLeft()
+	StartStrafingRight()
+	StopMovingForward()
+	StopMovingBackward()
+	StopStrafingLeft()
+	StopStrafingRight()
+	Jump()
+	StandUp()
+	Crouch()
+	Prone()
+	StartSprinting()
+	StopSprinting()
 }
 
-func (c *FPSController) BindAction(function func(), key glfw.Key, action glfw.Action) {
-	ka := KeyAction{key, action}
-	c.actionMap[ka] = function
-}
-
-func (c *FPSController) TriggerAction(key glfw.Key, action glfw.Action) {
-	ka := KeyAction{key, action}
-	if c.actionMap[ka] != nil {
-		c.actionMap[ka]()
-	}
-}
-
-func (c *FPSController) KeyCallback(window *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
-		c.TriggerAction(key, action)
-}
-
-func NewFPSController(actor FPSActor) *FPSController {
-	c := &FPSController{actor, make(map[KeyAction]func())}
+func NewFPSController(actor FPSActor) Controller {
+	c := NewActionMap()
 	c.BindAction(actor.StartMovingForward, glfw.KeyW, glfw.Press)
 	c.BindAction(actor.StartMovingBackward, glfw.KeyS, glfw.Press)
 	c.BindAction(actor.StopMovingForward, glfw.KeyW, glfw.Release)

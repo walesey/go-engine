@@ -114,8 +114,8 @@ func Particles(c *cli.Context) {
 	smokeMat := assets.CreateMaterial(assetLib.GetImage("smoke"), nil, nil, nil)
 	smokeMat.LightingMode = renderer.MODE_UNLIT
 	smokeParticles := effects.CreateParticleSystem(effects.ParticleSettings{
-		MaxParticles:        500,
-		ParticleEmitRate:    235,
+		MaxParticles:        100,
+		ParticleEmitRate:    35,
 		BaseGeometry:        renderer.CreateBox(float32(1), float32(1)),
 		Material:            smokeMat,
 		TotalFrames:         64,
@@ -143,8 +143,8 @@ func Particles(c *cli.Context) {
 	sparkMat.LightingMode = renderer.MODE_EMIT
 	sparkMat.Transparency = renderer.TRANSPARENCY_EMISSIVE
 	sparkParticles := effects.CreateParticleSystem(effects.ParticleSettings{
-		MaxParticles:        1000,
-		ParticleEmitRate:    1100,
+		MaxParticles:        100,
+		ParticleEmitRate:    110,
 		BaseGeometry:        renderer.CreateBox(float32(1), float32(1)),
 		Material:            sparkMat,
 		TotalFrames:         1,
@@ -228,25 +228,28 @@ func Particles(c *cli.Context) {
 		mainController := controller.NewBasicMovementController(freeMoveActor)
 		controllerManager.AddController(mainController)
 
-		//test the portabitity of the actor / entity interfaces
-		mainController.BindAction(func() { freeMoveActor.Entity = camera }, glfw.KeyQ, glfw.Press)
-		mainController.BindAction(func() { freeMoveActor.Entity = &sphereNode }, glfw.KeyW, glfw.Press)
-		mainController.BindAction(func() { freeMoveActor.Entity = &explosionParticles }, glfw.KeyE, glfw.Press)
-		mainController.BindAction(func() { freeMoveActor.Entity = &birdSprite }, glfw.KeyR, glfw.Press)
+		customController := controller.NewActionMap()
+		controllerManager.AddController(customController)
 
-		mainController.BindAction(func() { //no post effects
+		//test the portabitity of the actor / entity interfaces
+		customController.BindAction(func() { freeMoveActor.Entity = camera }, glfw.KeyQ, glfw.Press)
+		customController.BindAction(func() { freeMoveActor.Entity = &sphereNode }, glfw.KeyW, glfw.Press)
+		customController.BindAction(func() { freeMoveActor.Entity = &explosionParticles }, glfw.KeyE, glfw.Press)
+		customController.BindAction(func() { freeMoveActor.Entity = &birdSprite }, glfw.KeyR, glfw.Press)
+
+		customController.BindAction(func() { //no post effects
 			glRenderer.DestroyPostEffects(bloomVertical)
 			glRenderer.DestroyPostEffects(bloomHorizontal)
 			glRenderer.DestroyPostEffects(cell)
 		}, glfw.KeyA, glfw.Press)
 
-		mainController.BindAction(func() { //bloom effect
+		customController.BindAction(func() { //bloom effect
 			glRenderer.CreatePostEffect(bloomVertical)
 			glRenderer.CreatePostEffect(bloomHorizontal)
 			glRenderer.DestroyPostEffects(cell)
 		}, glfw.KeyS, glfw.Press)
 
-		mainController.BindAction(func() { //cell effect
+		customController.BindAction(func() { //cell effect
 			glRenderer.DestroyPostEffects(bloomVertical)
 			glRenderer.DestroyPostEffects(bloomHorizontal)
 			glRenderer.CreatePostEffect(cell)
@@ -257,10 +260,10 @@ func Particles(c *cli.Context) {
 		fps.UpdateFPSMeter()
 
 		//update things that need updating
-		//		explosionParticles.Update(0.018, glRenderer)
-		//		fireParticles.Update(0.018, glRenderer)
+		explosionParticles.Update(0.018, glRenderer)
+		fireParticles.Update(0.018, glRenderer)
 		smokeParticles.Update(0.018, glRenderer)
-		//		sparkParticles.Update(0.018, glRenderer)
+		sparkParticles.Update(0.018, glRenderer)
 
 		birdSprite.NextFrame()
 

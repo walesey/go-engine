@@ -2,61 +2,65 @@ package controller
 
 import (
 	"fmt"
-	"testing"
 	"github.com/go-gl/glfw/v3.1/glfw"
+	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 type TestBasicMovementActor struct {
-
+	moveUp, moveDown, moveLeft, moveRight bool
 }
+
 func (tbma *TestBasicMovementActor) StartMovingUp() {
-	fmt.Println("Start moving up")
+	tbma.moveUp = true
 }
 func (tbma *TestBasicMovementActor) StartMovingDown() {
-	fmt.Println("Start moving down")
+	tbma.moveDown = true
 }
 func (tbma *TestBasicMovementActor) StartMovingLeft() {
-	fmt.Println("Start moving left")
+	tbma.moveLeft = true
 }
 func (tbma *TestBasicMovementActor) StartMovingRight() {
-	fmt.Println("Start moving right")
+	tbma.moveRight = true
 }
 func (tbma *TestBasicMovementActor) StopMovingUp() {
-	fmt.Println("Stop moving up")
+	tbma.moveUp = false
 }
 func (tbma *TestBasicMovementActor) StopMovingDown() {
-	fmt.Println("Stop moving down")
+	tbma.moveDown = false
 }
 func (tbma *TestBasicMovementActor) StopMovingLeft() {
-	fmt.Println("Stop moving left")
+	tbma.moveLeft = false
 }
 func (tbma *TestBasicMovementActor) StopMovingRight() {
-	fmt.Println("Stop moving right")
+	tbma.moveRight = false
 }
 
 func TestBasicMovementController(t *testing.T) {
 	var controllerList []Controller
-	var manager = ControllerManager{controllerList}
+	manager := &ControllerManager{controllerList}
 
-	actor := &TestBasicMovementActor{}
+	actor := &TestBasicMovementActor{false, false, false, false}
 	var c = NewBasicMovementController(actor)
-	c.BindAction(testAction, glfw.KeyW, glfw.Press)
-	c.BindAction(otherTestAction, glfw.KeyE, glfw.Release)
 	manager.AddController(c)
-
-	fmt.Println("About to trigger custom actions")
-	manager.KeyCallback(nil, glfw.KeyW, 0, glfw.Press, 0)
-	manager.KeyCallback(nil, glfw.KeyE, 0, glfw.Release, 0)
 
 	fmt.Println("About to test basic movement")
 	manager.KeyCallback(nil, glfw.KeyUp, 0, glfw.Press, 0)
+	assert.True(t, actor.moveUp, "start moving up")
 	manager.KeyCallback(nil, glfw.KeyUp, 0, glfw.Release, 0)
+	assert.False(t, actor.moveUp, "stop moving up")
 	manager.KeyCallback(nil, glfw.KeyDown, 0, glfw.Press, 0)
+	assert.True(t, actor.moveDown, "start moving down")
 	manager.KeyCallback(nil, glfw.KeyDown, 0, glfw.Release, 0)
+	assert.False(t, actor.moveDown, "stop moving down")
 	manager.KeyCallback(nil, glfw.KeyLeft, 0, glfw.Press, 0)
+	assert.True(t, actor.moveLeft, "start moving left")
 	manager.KeyCallback(nil, glfw.KeyLeft, 0, glfw.Release, 0)
+	assert.False(t, actor.moveLeft, "stop moving left")
 	manager.KeyCallback(nil, glfw.KeyRight, 0, glfw.Press, 0)
+	assert.True(t, actor.moveRight, "start moving right")
 	manager.KeyCallback(nil, glfw.KeyRight, 0, glfw.Release, 0)
+	assert.False(t, actor.moveRight, "stop moving right")
 
 	fmt.Println("Test unbound key, this should do nothing")
 	manager.KeyCallback(nil, glfw.KeyX, 0, glfw.Press, 0)
