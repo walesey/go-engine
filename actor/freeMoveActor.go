@@ -1,61 +1,83 @@
 package actor
 
 import (
-    "github.com/walesey/go-engine/vectormath"
-    "github.com/walesey/go-engine/renderer"
+	"github.com/walesey/go-engine/renderer"
+	"github.com/walesey/go-engine/vectormath"
 )
 
-//an actor that can move around freely in space (up/down/left/right/forward/backward)
+//an actor that can move around freely in space
 type FreeMoveActor struct {
-	Entity renderer.Entity
-	location vectormath.Vector3
-	velocity vectormath.Vector3
-	orientation vectormath.Quaternion
-	MoveSpeed float64
+	Entity                  renderer.Entity
+	location                vectormath.Vector3
+	forwardMove, strafeMove float64
+	lookYaw, lookAngle      float64
+	MoveSpeed, LookSpeed    float64
 }
 
-func CreateFreeMoveActor( entity renderer.Entity ) *FreeMoveActor {
+func CreateFreeMoveActor(entity renderer.Entity) *FreeMoveActor {
 	return &FreeMoveActor{
-		Entity: entity,
-		orientation: vectormath.IdentityQuaternion(),
-		MoveSpeed: 1.0,
+		Entity:    entity,
+		lookAngle: 0.0,
+		lookYaw:   0.0,
+		MoveSpeed: 10.0,
+		LookSpeed: 0.001,
 	}
 }
 
-func (fma *FreeMoveActor) Update( dt float64 ) {
-	fma.location = fma.location.Add( fma.velocity.MultiplyScalar(dt) )
-    fma.Entity.SetTranslation(fma.location)
-    fma.Entity.SetOrientation(fma.orientation)
+func (actor *FreeMoveActor) Update(dt float64) {
+
+	//orientation
+	vertRot := vectormath.AngleAxis(actor.lookAngle, vectormath.Vector3{0, 1, 0})
+	axis := vertRot.Apply(vectormath.Vector3{1, 0, 0}).Cross(vectormath.Vector3{0, 1, 0})
+	horzRot := vectormath.AngleAxis(actor.lookYaw, axis)
+	orientation := horzRot.Multiply(vertRot)
+	velocity := orientation.Apply(vectormath.Vector3{actor.forwardMove, 0, actor.strafeMove})
+	actor.location = actor.location.Add(velocity.MultiplyScalar(dt))
+
+	//update entity
+	actor.Entity.SetTranslation(actor.location)
+	actor.Entity.SetOrientation(orientation)
 }
 
-func (fma *FreeMoveActor) StartMovingUp() {
-	fma.velocity.X = fma.orientation.Apply(vectormath.Vector3{fma.MoveSpeed,0,0}).X
+func (actor *FreeMoveActor) Look(dx, dy float64) {
+	actor.lookAngle = actor.lookAngle - actor.LookSpeed*dx
+	actor.lookYaw = actor.lookYaw + actor.LookSpeed*dy
+	if actor.lookYaw > 1 {
+		actor.lookYaw = 1
+	}
+	if actor.lookYaw < -1 {
+		actor.lookYaw = -1
+	}
 }
 
-func (fma *FreeMoveActor) StartMovingDown() {
-	fma.velocity.X = fma.orientation.Apply(vectormath.Vector3{-fma.MoveSpeed,0,0}).X
+func (actor *FreeMoveActor) StartMovingUp() {
+	actor.forwardMove = actor.MoveSpeed
 }
 
-func (fma *FreeMoveActor) StartMovingLeft() {
-	fma.velocity.Z = fma.orientation.Apply( vectormath.Vector3{0,0,-fma.MoveSpeed}).Z
+func (actor *FreeMoveActor) StartMovingDown() {
+	actor.forwardMove = -actor.MoveSpeed
 }
 
-func (fma *FreeMoveActor) StartMovingRight() {
-	fma.velocity.Z = fma.orientation.Apply( vectormath.Vector3{0,0,fma.MoveSpeed}).Z
+func (actor *FreeMoveActor) StartMovingLeft() {
+	actor.strafeMove = -actor.MoveSpeed
 }
 
-func (fma *FreeMoveActor) StopMovingUp() {
-	fma.velocity.X = 0
+func (actor *FreeMoveActor) StartMovingRight() {
+	actor.strafeMove = actor.MoveSpeed
 }
 
-func (fma *FreeMoveActor) StopMovingDown() {
-	fma.velocity.X = 0
+func (actor *FreeMoveActor) StopMovingUp() {
+	actor.forwardMove = 0
 }
 
-func (fma *FreeMoveActor) StopMovingLeft() {
-	fma.velocity.Z = 0
+func (actor *FreeMoveActor) StopMovingDown() {
+	actor.forwardMove = 0
 }
 
-func (fma *FreeMoveActor) StopMovingRight() {
-	fma.velocity.Z = 0
+func (actor *FreeMoveActor) StopMovingLeft() {
+	actor.strafeMove = 0
+}
+
+func (actor *FreeMoveActor) StopMovingRight() {
+	actor.strafeMove = 0
 }

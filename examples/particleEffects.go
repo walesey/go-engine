@@ -224,12 +224,20 @@ func Particles(c *cli.Context) {
 		//input/controller manager
 		controllerManager := controller.NewControllerManager(glRenderer.Window)
 
+		//lock the cursor
+		glRenderer.Window.SetInputMode(glfw.CursorMode, glfw.CursorDisabled)
+
 		//camera free move actor
 		mainController := controller.NewBasicMovementController(freeMoveActor)
 		controllerManager.AddController(mainController)
 
 		customController := controller.NewActionMap()
 		controllerManager.AddController(customController)
+
+		//close window and exit on escape
+		customController.BindAction(func() {
+			glRenderer.Window.SetShouldClose(true)
+		}, glfw.KeyEscape, glfw.Press)
 
 		//test the portabitity of the actor / entity interfaces
 		customController.BindAction(func() { freeMoveActor.Entity = camera }, glfw.KeyQ, glfw.Press)

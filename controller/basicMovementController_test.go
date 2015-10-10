@@ -8,9 +8,13 @@ import (
 )
 
 type TestBasicMovementActor struct {
+	lookx, looky                          float64
 	moveUp, moveDown, moveLeft, moveRight bool
 }
 
+func (tbma *TestBasicMovementActor) Look(dx, dy float64) {
+	tbma.lookx, tbma.looky = dx, dy
+}
 func (tbma *TestBasicMovementActor) StartMovingUp() {
 	tbma.moveUp = true
 }
@@ -40,11 +44,14 @@ func TestBasicMovementController(t *testing.T) {
 	var controllerList []Controller
 	manager := &ControllerManager{controllerList}
 
-	actor := &TestBasicMovementActor{false, false, false, false}
+	actor := &TestBasicMovementActor{0, 0, false, false, false, false}
 	var c = NewBasicMovementController(actor)
 	manager.AddController(c)
 
 	fmt.Println("About to test basic movement")
+	manager.CursorPosCallback(nil, 5, 8)
+	assert.EqualValues(t, 5, actor.lookx, "look x")
+	assert.EqualValues(t, 8, actor.looky, "look y")
 	manager.KeyCallback(nil, glfw.KeyUp, 0, glfw.Press, 0)
 	assert.True(t, actor.moveUp, "start moving up")
 	manager.KeyCallback(nil, glfw.KeyUp, 0, glfw.Release, 0)

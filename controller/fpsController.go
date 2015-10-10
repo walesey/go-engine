@@ -5,6 +5,7 @@ import (
 )
 
 type FPSActor interface {
+	Look(dx, dy float64)
 	StartMovingForward()
 	StartMovingBackward()
 	StartStrafingLeft()
@@ -23,6 +24,12 @@ type FPSActor interface {
 
 func NewFPSController(actor FPSActor) Controller {
 	c := NewActionMap()
+	x, y := 0.0, 0.0
+	doLook := func(xpos, ypos float64) {
+		actor.Look(xpos-x, ypos-y)
+		x, y = xpos, ypos
+	}
+	c.BindAxisAction(doLook)
 	c.BindAction(actor.StartMovingForward, glfw.KeyW, glfw.Press)
 	c.BindAction(actor.StartMovingBackward, glfw.KeyS, glfw.Press)
 	c.BindAction(actor.StopMovingForward, glfw.KeyW, glfw.Release)

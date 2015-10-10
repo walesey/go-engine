@@ -8,10 +8,14 @@ import (
 )
 
 type TestFPSActor struct {
+	lookx, looky                                     float64
 	moveForward, moveBackward, strafLeft, strafRight bool
 	jump, crouch, prone, sprint                      bool
 }
 
+func (tbma *TestFPSActor) Look(dx, dy float64) {
+	tbma.lookx, tbma.looky = dx, dy
+}
 func (tbma *TestFPSActor) StartMovingForward() {
 	tbma.moveForward = true
 }
@@ -59,11 +63,14 @@ func TestFPSController(t *testing.T) {
 	var controllerList []Controller
 	manager := &ControllerManager{controllerList}
 
-	actor := &TestFPSActor{false, false, false, false, false, false, false, false}
+	actor := &TestFPSActor{0, 0, false, false, false, false, false, false, false, false}
 	var c = NewFPSController(actor)
 	manager.AddController(c)
 
 	fmt.Println("About to test basic movement")
+	manager.CursorPosCallback(nil, 5, 8)
+	assert.EqualValues(t, 5, actor.lookx, "look x")
+	assert.EqualValues(t, 8, actor.looky, "look y")
 	manager.KeyCallback(nil, glfw.KeyW, 0, glfw.Press, 0)
 	assert.True(t, actor.moveForward, "start moving forward")
 	manager.KeyCallback(nil, glfw.KeyW, 0, glfw.Release, 0)
@@ -95,5 +102,4 @@ func TestFPSController(t *testing.T) {
 
 	fmt.Println("Test unbound key, this should do nothing")
 	manager.KeyCallback(nil, glfw.KeyX, 0, glfw.Press, 0)
-
 }
