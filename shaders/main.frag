@@ -48,7 +48,7 @@ vec4 vectorCap( vec4 vector, float cap ){
 	return vector;
 }
 
-vec4 directBRDF( vec4 LightDiff, vec4 LightSpec, vec4 LightDir, vec4 albedoValue, vec4 specularValue, vec4 roughnessValue, vec4 tangentNormal, vec4 tangentReflectedEye){
+vec4 directBRDF( vec4 LightDiff, vec4 LightSpec, vec4 LightDir, vec4 albedoValue, vec4 specularValue, vec4 tangentNormal, vec4 tangentReflectedEye){
 	vec3 tangentLightDirection = LightDir.xyz * TBNMatrix;
 
  	float diffuseMultiplier = max(0.0, dot(tangentNormal.xyz, -tangentLightDirection));
@@ -65,8 +65,8 @@ void main() {
 	vec4 normalValue = texture(normal, fragTexCoord);
 	vec4 specularValue = texture(specular, fragTexCoord);
 	vec4 roughnessValue = texture(roughness, fragTexCoord);
-   	float metalness = roughnessValue.g;
-   	float alphaValue = albedoValue.a;
+	float metalness = roughnessValue.g;
+	float alphaValue = albedoValue.a;
 
 	vec4 finalColor = vec4(0,0,0,1);
 	vec4 directColor = vec4(0,0,0,1);
@@ -101,7 +101,7 @@ void main() {
 			float brightness = 1 / lightDistanceSQ;
 			worldLightDir = normalize( worldLightDir );
 
-			directColor += ( brightness * directBRDF( LightDiff, LightSpec, worldLightDir, albedoValue, specularValue, roughnessValue, tangentNormal, tangentReflectedEye) );
+			directColor += ( brightness * directBRDF( LightDiff, LightSpec, worldLightDir, albedoValue, specularValue, tangentNormal, tangentReflectedEye) );
 
 	   	}
 
@@ -116,7 +116,7 @@ void main() {
 			
 			vec4 worldLightDir = normalize( LightPos );
 
-			directColor += directBRDF( LightDiff, LightSpec, worldLightDir, albedoValue, specularValue, roughnessValue, tangentNormal, tangentReflectedEye);
+			directColor += directBRDF( LightDiff, LightSpec, worldLightDir, albedoValue, specularValue, tangentNormal, tangentReflectedEye);
 			
 		}
 
@@ -134,15 +134,15 @@ void main() {
 	   	}
 
 	   	//freznel effect
-	   	float reflectivity = max(metalness, pow((1.0-dot(-tangentEyeDirection, tangentNormal.xyz)), 2));
+	   	//float reflectivity = max(metalness, pow((1.0-dot(-tangentEyeDirection, tangentNormal.xyz)), 2));
 	   	//blend indirect light types
-	   	indirectColor += (1.0-metalness) * albedoValue  * indirectDiffuse;
-	   	indirectColor += reflectivity * specularValue * indirectSpecular;
+	   	//indirectColor += (1.0-metalness) * albedoValue  * indirectDiffuse;
+	   	//indirectColor += reflectivity * specularValue * indirectSpecular;
 
-	   	finalColor += (1.0-metalness) * directColor;
+	   	//finalColor += (1.0-metalness) * directColor;
 	   	finalColor += indirectColor;
 
-	   	finalColor.a = alphaValue + (alphaValue * reflectivity);
+	   	//finalColor.a = alphaValue + (alphaValue * reflectivity);
 		
 		finalColor = vectorCap(finalColor, 0.99);
 	}
