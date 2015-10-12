@@ -1,5 +1,6 @@
 #version 330
 
+uniform vec4 worldCamPos;
 uniform mat4 projection;
 uniform mat4 camera;
 uniform mat4 model;
@@ -13,14 +14,12 @@ in vec4 color;
 
 out mat3 TBNMatrix;
 out mat3 inverseTBNMatrix;
-out vec4 worldCamPos;
 out vec4 worldVertex;
 out vec3 worldNormal;
 out vec2 fragTexCoord;
 out vec4 fragColor;
 
 void main() {
-   	worldCamPos = inverse( projection * camera ) * vec4(0,0,0,1);
 	worldVertex = model * vec4(vert, 1);
 	gl_Position = projection * camera * worldVertex;
 	mat4 modelNormal = transpose(inverse(model));

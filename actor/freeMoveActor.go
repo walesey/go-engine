@@ -8,7 +8,7 @@ import (
 //an actor that can move around freely in space
 type FreeMoveActor struct {
 	Entity                  renderer.Entity
-	location                vectormath.Vector3
+	Location                vectormath.Vector3
 	forwardMove, strafeMove float64
 	lookYaw, lookAngle      float64
 	MoveSpeed, LookSpeed    float64
@@ -32,10 +32,10 @@ func (actor *FreeMoveActor) Update(dt float64) {
 	horzRot := vectormath.AngleAxis(actor.lookYaw, axis)
 	orientation := horzRot.Multiply(vertRot)
 	velocity := orientation.Apply(vectormath.Vector3{actor.forwardMove, 0, actor.strafeMove})
-	actor.location = actor.location.Add(velocity.MultiplyScalar(dt))
+	actor.Location = actor.Location.Add(velocity.MultiplyScalar(dt))
 
 	//update entity
-	actor.Entity.SetTranslation(actor.location)
+	actor.Entity.SetTranslation(actor.Location)
 	actor.Entity.SetOrientation(orientation)
 }
 

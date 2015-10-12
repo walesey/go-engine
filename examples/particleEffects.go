@@ -50,7 +50,7 @@ func Particles(c *cli.Context) {
 	geomsphere.Material = &sphereMat
 	sphereNode := renderer.CreateNode()
 	sphereNode.Add(&geomsphere)
-	sphereNode.SetTranslation(vectormath.Vector3{1, 1, 3})
+	sphereNode.SetTranslation(vectormath.Vector3{0, 0, 0})
 
 	//particle effects
 	explosionMat := assets.CreateMaterial(assetLib.GetImage("explosion"), nil, nil, nil)
@@ -114,8 +114,8 @@ func Particles(c *cli.Context) {
 	smokeMat := assets.CreateMaterial(assetLib.GetImage("smoke"), nil, nil, nil)
 	smokeMat.LightingMode = renderer.MODE_UNLIT
 	smokeParticles := effects.CreateParticleSystem(effects.ParticleSettings{
-		MaxParticles:        100,
-		ParticleEmitRate:    35,
+		MaxParticles:        38,
+		ParticleEmitRate:    15,
 		BaseGeometry:        renderer.CreateBox(float32(1), float32(1)),
 		Material:            smokeMat,
 		TotalFrames:         64,
@@ -167,6 +167,10 @@ func Particles(c *cli.Context) {
 		MaxRotationVelocity: 0.0,
 		MinRotationVelocity: 0.0,
 	})
+	fireParticles.Location = vectormath.Vector3{2, 0, -2}
+	smokeParticles.Location = vectormath.Vector3{-2, 0, 2}
+	explosionParticles.Location = vectormath.Vector3{-2, 0, -2}
+	sparkParticles.Location = vectormath.Vector3{2, 0, 2}
 
 	birdMat := assets.CreateMaterial(assetLib.GetImage("bird"), nil, nil, nil)
 	birdMat.LightingMode = renderer.MODE_UNLIT
@@ -186,6 +190,7 @@ func Particles(c *cli.Context) {
 	camera := renderer.CreateCamera(glRenderer)
 	freeMoveActor := actor.CreateFreeMoveActor(camera)
 	freeMoveActor.MoveSpeed = 3.0
+	freeMoveActor.Location = vectormath.Vector3{-2, 0, 0}
 
 	glRenderer.Init = func() {
 		//Lighting
@@ -225,7 +230,7 @@ func Particles(c *cli.Context) {
 		controllerManager := controller.NewControllerManager(glRenderer.Window)
 
 		//lock the cursor
-		glRenderer.Window.SetInputMode(glfw.CursorMode, glfw.CursorDisabled)
+		glRenderer.LockCursor(true)
 
 		//camera free move actor
 		mainController := controller.NewBasicMovementController(freeMoveActor)

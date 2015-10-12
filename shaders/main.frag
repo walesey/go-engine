@@ -27,13 +27,13 @@ uniform samplerCube environmentMapLOD2;
 uniform samplerCube environmentMapLOD3;
 uniform samplerCube illuminanceMap;
 
+uniform vec4 worldCamPos;
 uniform mat4 projection;
 uniform mat4 camera;
 uniform mat4 model;
 
 in mat3 TBNMatrix;
 in mat3 inverseTBNMatrix;
-in vec4 worldCamPos;
 in vec4 worldVertex;
 in vec3 worldNormal;
 in vec2 fragTexCoord;
@@ -134,15 +134,15 @@ void main() {
 	   	}
 
 	   	//freznel effect
-	   	//float reflectivity = max(metalness, pow((1.0-dot(-tangentEyeDirection, tangentNormal.xyz)), 2));
+	   	float reflectivity = max(metalness, pow((1.0-dot(-tangentEyeDirection, tangentNormal.xyz)), 2));
 	   	//blend indirect light types
-	   	//indirectColor += (1.0-metalness) * albedoValue  * indirectDiffuse;
-	   	//indirectColor += reflectivity * specularValue * indirectSpecular;
+	   	indirectColor += (1.0-metalness) * albedoValue  * indirectDiffuse;
+	   	indirectColor += reflectivity * specularValue * indirectSpecular;
 
-	   	//finalColor += (1.0-metalness) * directColor;
+	   	finalColor += (1.0-metalness) * directColor;
 	   	finalColor += indirectColor;
 
-	   	//finalColor.a = alphaValue + (alphaValue * reflectivity);
+	   	finalColor.a = alphaValue + (alphaValue * reflectivity);
 		
 		finalColor = vectorCap(finalColor, 0.99);
 	}

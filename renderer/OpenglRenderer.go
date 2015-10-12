@@ -41,6 +41,7 @@ type Renderer interface {
 	ReflectionMap(cm CubeMap)
 	CreatePostEffect(shader Shader)
 	DestroyPostEffects(shader Shader)
+	LockCursor(lock bool)
 }
 
 //used to combine transformations
@@ -406,6 +407,11 @@ func (glRenderer *OpenglRenderer) DrawGeometry(geometry *Geometry) {
 	lightsUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("mode\x00"))
 	gl.Uniform1i(lightsUniform, geometry.Material.LightingMode)
 
+	//world camera position
+	cam := convertVector(glRenderer.CameraLocation())
+	worldCamPosUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("worldCamPos\x00"))
+	gl.Uniform4f(worldCamPosUniform, cam[0], cam[1], cam[2], 0)
+
 	//transparency mode
 	if geometry.Material.Transparency == TRANSPARENCY_NON_EMISSIVE {
 		gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
@@ -502,6 +508,10 @@ func (glRenderer *OpenglRenderer) CreateLight(ar, ag, ab, dr, dg, db, sr, sg, sb
 
 func (glRenderer *OpenglRenderer) DestroyLight(i int) {
 
+}
+
+func (glRenderer *OpenglRenderer) LockCursor(lock bool) {
+	glRenderer.Window.SetInputMode(glfw.CursorMode, glfw.CursorDisabled)
 }
 
 func programFromFile(vertFilePath, fragFilePath string) uint32 {
