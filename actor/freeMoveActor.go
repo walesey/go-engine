@@ -10,7 +10,7 @@ type FreeMoveActor struct {
 	Entity                  renderer.Entity
 	Location                vectormath.Vector3
 	forwardMove, strafeMove float64
-	lookYaw, lookAngle      float64
+	lookPitch, lookAngle    float64
 	MoveSpeed, LookSpeed    float64
 }
 
@@ -18,7 +18,7 @@ func CreateFreeMoveActor(entity renderer.Entity) *FreeMoveActor {
 	return &FreeMoveActor{
 		Entity:    entity,
 		lookAngle: 0.0,
-		lookYaw:   0.0,
+		lookPitch: 0.0,
 		MoveSpeed: 10.0,
 		LookSpeed: 0.001,
 	}
@@ -29,7 +29,7 @@ func (actor *FreeMoveActor) Update(dt float64) {
 	//orientation
 	vertRot := vectormath.AngleAxis(actor.lookAngle, vectormath.Vector3{0, 1, 0})
 	axis := vertRot.Apply(vectormath.Vector3{1, 0, 0}).Cross(vectormath.Vector3{0, 1, 0})
-	horzRot := vectormath.AngleAxis(actor.lookYaw, axis)
+	horzRot := vectormath.AngleAxis(actor.lookPitch, axis)
 	orientation := horzRot.Multiply(vertRot)
 	velocity := orientation.Apply(vectormath.Vector3{actor.forwardMove, 0, actor.strafeMove})
 	actor.Location = actor.Location.Add(velocity.MultiplyScalar(dt))
@@ -41,12 +41,12 @@ func (actor *FreeMoveActor) Update(dt float64) {
 
 func (actor *FreeMoveActor) Look(dx, dy float64) {
 	actor.lookAngle = actor.lookAngle - actor.LookSpeed*dx
-	actor.lookYaw = actor.lookYaw + actor.LookSpeed*dy
-	if actor.lookYaw > 1 {
-		actor.lookYaw = 1
+	actor.lookPitch = actor.lookPitch + actor.LookSpeed*dy
+	if actor.lookPitch > 1 {
+		actor.lookPitch = 1
 	}
-	if actor.lookYaw < -1 {
-		actor.lookYaw = -1
+	if actor.lookPitch < -1 {
+		actor.lookPitch = -1
 	}
 }
 
