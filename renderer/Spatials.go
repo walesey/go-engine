@@ -61,7 +61,11 @@ func (node *Node) Remove(spatial Spatial) {
 	//find the address in the slice, remove it and return
 	for index, child := range node.children {
 		if child == spatial {
-			node.children = append(node.children[:index], node.children[index+1:]...)
+			if index+1 == len(node.children) {
+				node.children = node.children[:index]
+			} else {
+				node.children = append(node.children[:index], node.children[index+1:]...)
+			}
 			break
 		}
 	}

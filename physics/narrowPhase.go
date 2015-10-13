@@ -13,7 +13,19 @@ type ConvexHull struct {
 	triangles []Triangle
 }
 
-func (ch ConvexHull) Overlap(other ConvexHull) bool {
+// Calculate the overlap of a convex hull and another collider
+func (ch *ConvexHull) Overlap(other Collider) bool {
+	switch t := other.(type) {
+	default:
+		fmt.Printf("unsupported type for other collider: %T\n", t)
+	case *ConvexHull:
+		return ch.OverlapConvexHull(other.(*ConvexHull))
+	}
+	return false
+}
+
+// Calculate the overlap of two convex hulls
+func (ch *ConvexHull) OverlapConvexHull(other *ConvexHull) bool {
 	for _, t := range ch.triangles {
 		for _, tt := range other.triangles {
 			if t.Overlap(tt) {
@@ -24,6 +36,7 @@ func (ch ConvexHull) Overlap(other ConvexHull) bool {
 	return false
 }
 
+// Calculates the overlap of two triangles
 func (triangle Triangle) Overlap(other Triangle) bool {
 	//get triangle plane equation
 	N1 := triangle.point2.Subtract(triangle.point1).Cross(triangle.point2.Subtract(triangle.point1))
