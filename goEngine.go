@@ -61,6 +61,11 @@ func main() {
 			Usage:  "run a particle effect example",
 			Action: examples.Particles,
 		},
+		{
+			Name:   "gun",
+			Usage:  "run a demo of a gun model",
+			Action: examples.GunDemo,
+		},
 	}
 
 	app.Run(os.Args)
