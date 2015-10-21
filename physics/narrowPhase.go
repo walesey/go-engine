@@ -2,15 +2,30 @@ package physics
 
 import (
 	"fmt"
-	"github.com/walesey/go-engine/vectormath"
+	vmath "github.com/walesey/go-engine/vectormath"
 )
 
 type Triangle struct {
-	point1, point2, point3 vectormath.Vector3
+	point1, point2, point3 vmath.Vector3
 }
 
 type ConvexHull struct {
-	triangles []Triangle
+	triangles   []Triangle
+	offset      *vmath.Vector3
+	orientation *vmath.Quaternion
+}
+
+// NewConvexHull
+func NewConvexHull(triangles []Triangle) *ConvexHull {
+	return &ConvexHull{
+		triangles: triangles,
+	}
+}
+
+func (ch *ConvexHull) AttachTo(obj *PhysicsObject) {
+	ch.offset = &obj.Position
+	ch.orientation = &obj.Orientation
+	obj.narrowPhase = ch
 }
 
 // Calculate the overlap of a convex hull and another collider
@@ -27,7 +42,11 @@ func (ch *ConvexHull) Overlap(other Collider) bool {
 // Calculate the overlap of two convex hulls
 func (ch *ConvexHull) OverlapConvexHull(other *ConvexHull) bool {
 	for _, t := range ch.triangles {
+		t = t.Rotate(*ch.orientation)
+		t = t.Translate(*ch.offset)
 		for _, tt := range other.triangles {
+			tt = tt.Rotate(*other.orientation)
+			tt = tt.Translate(*other.offset)
 			if t.Overlap(tt) {
 				return true
 			}
@@ -91,7 +110,7 @@ func (triangle Triangle) Overlap(other Triangle) bool {
 
 //Intersection of triangle and plane (given by normal/d plane equation)
 //Returns error if no intersection else returns the two points on one side of the plane followed by the point on the other side
-func (triangle Triangle) planeOverlap(normal vectormath.Vector3, d float64) (vectormath.Vector3, vectormath.Vector3, vectormath.Vector3, error) {
+func (triangle Triangle) planeOverlap(normal vmath.Vector3, d float64) (vmath.Vector3, vmath.Vector3, vmath.Vector3, error) {
 	//calculate the distance from each vertex of triangle to the plane
 	dist1 := normal.Dot(triangle.point1) + d
 	dist2 := normal.Dot(triangle.point2) + d
@@ -113,4 +132,22 @@ func (triangle Triangle) planeOverlap(normal vectormath.Vector3, d float64) (vec
 		return triangle.point1, triangle.point3, triangle.point2, nil
 	}
 	return triangle.point1, triangle.point2, triangle.point3, nil
+}
+
+//Rotate
+func (t Triangle) Rotate(q vmath.Quaternion) Triangle {
+	return Triangle{
+		point1: q.Apply(t.point1),
+		point2: q.Apply(t.point2),
+		point3: q.Apply(t.point3),
+	}
+}
+
+//Translate
+func (t Triangle) Translate(v vmath.Vector3) Triangle {
+	return Triangle{
+		point1: t.point1.Add(v),
+		point2: t.point2.Add(v),
+		point3: t.point3.Add(v),
+	}
 }
