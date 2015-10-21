@@ -13,6 +13,7 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/walesey/go-engine/util"
 	"github.com/walesey/go-engine/vectormath"
 )
 
@@ -45,9 +46,9 @@ type Renderer interface {
 }
 
 //used to combine transformations
-func (s *Stack) MultiplyAll() mgl32.Mat4 {
+func MultiplyAll(s util.Stack) mgl32.Mat4 {
 	result := mgl32.Ident4()
-	for i := 0; i < s.size; i++ {
+	for i := 0; i < s.Len(); i++ {
 		tx := s.Get(i).(*GlTransform)
 		result = result.Mul4(tx.Mat)
 	}
@@ -61,7 +62,7 @@ type OpenglRenderer struct {
 	WindowWidth, WindowHeight int
 	WindowTitle               string
 	Window                    *glfw.Window
-	matStack                  Stack
+	matStack                  util.Stack
 	program                   uint32
 	envMapId                  uint32
 	envMapLOD1Id              uint32
@@ -112,7 +113,7 @@ func (glRenderer *OpenglRenderer) Start() {
 	glRenderer.Camera(vectormath.Vector3{3, 3, 3}, vectormath.Vector3{0, 0, 0}, vectormath.Vector3{0, 1, 0})
 
 	//create mat stack for push pop stack
-	matStack := CreateStack()
+	matStack := util.CreateStack()
 	glRenderer.matStack = matStack
 	glRenderer.PushTransform()
 	model := mgl32.Ident4()
@@ -224,7 +225,7 @@ func (glRenderer *OpenglRenderer) PushTransform() {
 
 func (glRenderer *OpenglRenderer) PopTransform() {
 	glRenderer.matStack.Pop()
-	model := glRenderer.matStack.MultiplyAll()
+	model := MultiplyAll(glRenderer.matStack)
 	gl.UniformMatrix4fv(glRenderer.modelUniform, 1, false, &model[0])
 }
 
@@ -232,7 +233,7 @@ func (glRenderer *OpenglRenderer) ApplyTransform(transform Transform) {
 	tx := glRenderer.matStack.Pop().(*GlTransform)
 	tx.ApplyTransform(transform)
 	glRenderer.matStack.Push(tx)
-	model := glRenderer.matStack.MultiplyAll()
+	model := MultiplyAll(glRenderer.matStack)
 	gl.UniformMatrix4fv(glRenderer.modelUniform, 1, false, &model[0])
 }
 

@@ -2,10 +2,7 @@ language: go
 go:
     - 1.4.3
     - 1.5.1
-before_install:
-    - sudo apt-get update
-    - sudo apt-get install libgl1-mesa-dev xorg-dev
-    - go get -u github.com/go-gl/glfw/v3.1/glfw
+sudo: false
 notifications:
     email:
         recipients:

@@ -1,12 +1,13 @@
 package renderer
 
 import (
+	"github.com/walesey/go-engine/util"
 	"sort"
 )
 
 type SceneGraph struct {
 	backgroundNode, transparentNode, orthoNode Node
-	matStack                                   Stack
+	matStack                                   util.Stack
 	transparentBucket                          bucketEntries
 }
 
@@ -16,7 +17,7 @@ func CreateSceneGraph() SceneGraph {
 		backgroundNode:  CreateNode(),
 		transparentNode: CreateNode(),
 		orthoNode:       CreateNode(),
-		matStack:        CreateStack(),
+		matStack:        util.CreateStack(),
 	}
 	return sceneGraph
 }
@@ -77,7 +78,7 @@ func (slice bucketEntries) Swap(i, j int) {
 
 func (sceneGraph *SceneGraph) buildBuckets(node *Node) {
 	sceneGraph.matStack.Push(node.Transform)
-	tx := sceneGraph.matStack.ApplyAll()
+	tx := ApplyAll(sceneGraph.matStack)
 	for _, child := range node.children {
 		nextNode, found := child.(*Node)
 		if found {
@@ -97,9 +98,9 @@ func (sceneGraph *SceneGraph) sortBuckets(renderer Renderer) {
 }
 
 //used to combine transformations
-func (s *Stack) ApplyAll() Transform {
+func ApplyAll(s util.Stack) Transform {
 	result := CreateTransform()
-	for i := 0; i < s.size; i++ {
+	for i := 0; i < s.Len(); i++ {
 		result.ApplyTransform(s.Get(i).(Transform))
 	}
 	return result

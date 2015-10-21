@@ -1,26 +1,27 @@
 package renderer
 
 import (
-    "testing"
-    "github.com/stretchr/testify/assert"
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/stretchr/testify/assert"
+	"github.com/walesey/go-engine/util"
+	"testing"
 )
 
 func TestMatStack(t *testing.T) {
-	mstack := CreateStack()
+	mstack := util.CreateStack()
 	mstack.Push(mgl32.Ident4())
-    assert.EqualValues(t, 1, mstack.Len(), "Len MatStack should be 1")
+	assert.EqualValues(t, 1, mstack.Len(), "Len MatStack should be 1")
 	popVal := mstack.Pop()
-    assert.EqualValues(t, mgl32.Ident4(), popVal, "MatStack should return value on pop")
-    assert.EqualValues(t, 0, mstack.Len(), "Len MatStack should be 0")
+	assert.EqualValues(t, mgl32.Ident4(), popVal, "MatStack should return value on pop")
+	assert.EqualValues(t, 0, mstack.Len(), "Len MatStack should be 0")
 }
 
 func TestMatStackMultiplyAll(t *testing.T) {
-	mstack := CreateStack()
-    mstack.Push(&GlTransform{mgl32.Ident4()})
-    mstack.Push(&GlTransform{mgl32.Ident4()})
-	mulVal := mstack.MultiplyAll()
-    assert.EqualValues(t, mgl32.Ident4(), mulVal, "")
+	mstack := util.CreateStack()
+	mstack.Push(&GlTransform{mgl32.Ident4()})
+	mstack.Push(&GlTransform{mgl32.Ident4()})
+	mulVal := MultiplyAll(mstack)
+	assert.EqualValues(t, mgl32.Ident4(), mulVal, "")
 
 	v0 := mgl32.Vec4{1, 2, 3, 4}
 	v1 := mgl32.Vec4{5, 6, 7, 8}
@@ -34,10 +35,10 @@ func TestMatStackMultiplyAll(t *testing.T) {
 	v7 := mgl32.Vec4{4, 7, 15, 2}
 	m2 := mgl32.Mat4FromCols(v4, v5, v6, v7)
 
-    mstack.Push(&GlTransform{m1})
-    mstack.Push(&GlTransform{m2})
-	mulVal12 := mstack.MultiplyAll()
+	mstack.Push(&GlTransform{m1})
+	mstack.Push(&GlTransform{m2})
+	mulVal12 := MultiplyAll(mstack)
 	expected := mgl32.Ident4().Mul4(m1).Mul4(m2)
 
-    assert.EqualValues(t, expected, mulVal12, "")
+	assert.EqualValues(t, expected, mulVal12, "")
 }

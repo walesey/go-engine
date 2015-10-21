@@ -1,19 +1,19 @@
-package renderer
+package util
 
 type Stack struct {
-	top *Element
+	top    *Element
 	bottom *Element
-	size int
-} 
+	size   int
+}
 
 type Element struct {
-	value interface{}
-	next *Element
+	value    interface{}
+	next     *Element
 	previous *Element
 }
 
-func CreateStack() Stack{
-	return Stack{ size: 0 }
+func CreateStack() Stack {
+	return Stack{size: 0}
 }
 
 // Return the stack's length
@@ -22,7 +22,7 @@ func (s *Stack) Len() int {
 }
 
 // Push a new element onto the stack
-func (s *Stack) Push( value interface{} ) {
+func (s *Stack) Push(value interface{}) {
 	s.top = &Element{value: value, next: s.top}
 	if s.size == 0 {
 		s.bottom = s.top
@@ -46,12 +46,12 @@ func (s *Stack) Pop() interface{} {
 }
 
 // Get value at index
-func (s *Stack) Get( index int ) interface{} {
+func (s *Stack) Get(index int) interface{} {
 	if index >= s.size || index < 0 {
 		return nil
 	}
 	result := s.bottom
-	for i := 0 ; i < index ; i++ {
+	for i := 0; i < index; i++ {
 		result = result.previous
 	}
 	return result.value

@@ -1,31 +1,31 @@
 package renderer
 
 import (
-	"image"
 	"github.com/disintegration/imaging"
+	"image"
 )
 
 type CubeMap struct {
 	Right, Left, Top, Bottom, Back, Front image.Image
 }
 
-func CreateCubemap( baseImage image.Image ) *CubeMap {
+func CreateCubemap(baseImage image.Image) *CubeMap {
 	cubeMap := new(CubeMap)
 
-	x := baseImage.Bounds().Max.X 
+	x := baseImage.Bounds().Max.X
 	y := baseImage.Bounds().Max.Y
 
-	cubeMap.Right = imaging.Crop( baseImage, image.Rect(x/2, y/3, 3*x/4, 2*y/3) )
-	cubeMap.Left = imaging.Crop( baseImage, image.Rect(0, y/3, x/4, 2*y/3) )
-	cubeMap.Top = imaging.Crop( baseImage, image.Rect(x/4, 0, x/2, y/3) )
-	cubeMap.Bottom = imaging.Crop( baseImage, image.Rect(x/4, 2*y/3, x/2, y) )
-	cubeMap.Back = imaging.Crop( baseImage, image.Rect(3*x/4, y/3, x, 2*y/3) )
-	cubeMap.Front = imaging.Crop( baseImage, image.Rect(x/4, y/3, x/2, 2*y/3) )
+	cubeMap.Right = imaging.Crop(baseImage, image.Rect(x/2, y/3, 3*x/4, 2*y/3))
+	cubeMap.Left = imaging.Crop(baseImage, image.Rect(0, y/3, x/4, 2*y/3))
+	cubeMap.Top = imaging.Crop(baseImage, image.Rect(x/4, 0, x/2, y/3))
+	cubeMap.Bottom = imaging.Crop(baseImage, image.Rect(x/4, 2*y/3, x/2, y))
+	cubeMap.Back = imaging.Crop(baseImage, image.Rect(3*x/4, y/3, x, 2*y/3))
+	cubeMap.Front = imaging.Crop(baseImage, image.Rect(x/4, y/3, x/2, 2*y/3))
 
 	return cubeMap
 }
 
-func (cm *CubeMap) Clone() *CubeMap{
+func (cm *CubeMap) Clone() *CubeMap {
 	return &CubeMap{Right: imaging.Clone(cm.Right), Left: imaging.Clone(cm.Left), Top: imaging.Clone(cm.Top), Bottom: imaging.Clone(cm.Bottom), Back: imaging.Clone(cm.Back), Front: imaging.Clone(cm.Front)}
 }
 
