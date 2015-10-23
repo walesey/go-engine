@@ -10,6 +10,30 @@ type PhysicsObject struct {
 	broadPhase, narrowPhase      Collider
 }
 
+type PhysicsObjectPool struct {
+	pool []*PhysicsObject
+}
+
+func NewPhysicsObjectPool() *PhysicsObjectPool {
+	return &PhysicsObjectPool{
+		pool: make([]*PhysicsObject, 0, 0),
+	}
+}
+
+func (objPool PhysicsObjectPool) GetPhysicsObject() *PhysicsObject {
+	if len(objPool.pool) > 0 {
+		obj := objPool.pool[len(objPool.pool)-1]
+		objPool.pool = objPool.pool[:len(objPool.pool)-1]
+		return obj
+	}
+	newObj := NewPhysicsObject()
+	return &newObj
+}
+
+func (objPool PhysicsObjectPool) ReleasePhysicsObject(obj *PhysicsObject) {
+	objPool.pool = append(objPool.pool, obj)
+}
+
 func NewPhysicsObject() PhysicsObject {
 	return PhysicsObject{
 		Position:        vmath.Vector3{0, 0, 0},
@@ -21,11 +45,17 @@ func NewPhysicsObject() PhysicsObject {
 
 //NarrowPhaseOverlap
 func (obj PhysicsObject) NarrowPhaseOverlap(other PhysicsObject) bool {
+	if obj.narrowPhase == nil || other.narrowPhase == nil {
+		return false
+	}
 	return obj.narrowPhase.Overlap(other.narrowPhase)
 }
 
 //BroadPhaseOverlap
 func (obj PhysicsObject) BroadPhaseOverlap(other PhysicsObject) bool {
+	if obj.broadPhase == nil || other.broadPhase == nil {
+		return false
+	}
 	return obj.broadPhase.Overlap(other.broadPhase)
 }
 

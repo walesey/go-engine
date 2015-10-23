@@ -7,8 +7,9 @@ type PhysicsPair struct {
 }
 
 type PhysicsWorker struct {
-	in  chan PhysicsPair
-	out chan bool
+	in   chan PhysicsPair
+	out  chan bool
+	kill bool
 }
 
 type WorkerPool struct {
@@ -32,10 +33,16 @@ func (wp *WorkerPool) ReleaseWorker(worker *PhysicsWorker) {
 	wp.pool = append(wp.pool, worker)
 }
 
+func (wp *WorkerPool) Close() {
+	for _, worker := range wp.pool {
+		worker.Close()
+	}
+}
+
 func NewPhysicsWorker() *PhysicsWorker {
 	in := make(chan PhysicsPair)
 	out := make(chan bool)
-	worker := &PhysicsWorker{in, out}
+	worker := &PhysicsWorker{in: in, out: out}
 	go worker.run()
 	return worker
 }
@@ -44,17 +51,24 @@ func NewPhysicsWorker() *PhysicsWorker {
 func (worker *PhysicsWorker) run() {
 	for {
 		state := <-worker.in
+		if worker.kill {
+			break
+		}
 		worker.out <- state.object1.NarrowPhaseOverlap(state.object2)
 	}
 	fmt.Println("Physics Worker Died.")
 }
 
 // Write new data to be processed if worker is busy an error is returned
-func (worker *PhysicsWorker) Write(pair PhysicsPair) error {
-	select {
-	case worker.in <- pair:
-		return nil
-	default:
-		return fmt.Errorf("worker is busy")
-	}
+func (worker *PhysicsWorker) Write(pair PhysicsPair) {
+	worker.in <- pair
+}
+
+func (worker *PhysicsWorker) Read() bool {
+	return <-worker.out
+}
+
+func (worker *PhysicsWorker) Close() {
+	worker.kill = true
+	worker.Write(PhysicsPair{NewPhysicsObject(), NewPhysicsObject()})
 }

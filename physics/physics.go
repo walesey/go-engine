@@ -6,6 +6,7 @@ import (
 
 type PhysicsSpace struct {
 	objects []*PhysicsObject
+	pool    *WorkerPool
 	StepDt  float64
 }
 
@@ -13,6 +14,7 @@ func NewPhysicsSpace() *PhysicsSpace {
 	return &PhysicsSpace{
 		StepDt:  0.018,
 		objects: make([]*PhysicsObject, 0, 500),
+		pool:    NewWorkerPool(),
 	}
 }
 
