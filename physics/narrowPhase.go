@@ -6,7 +6,7 @@ import (
 )
 
 type Triangle struct {
-	point1, point2, point3 vmath.Vector3
+	Point1, Point2, Point3 vmath.Vector3
 }
 
 type ConvexHull struct {
@@ -58,16 +58,16 @@ func (ch *ConvexHull) OverlapConvexHull(other *ConvexHull) bool {
 // Calculates the overlap of two triangles
 func (triangle Triangle) Overlap(other Triangle) bool {
 	//get triangle plane equation
-	N1 := triangle.point2.Subtract(triangle.point1).Cross(triangle.point2.Subtract(triangle.point1))
-	d1 := -N1.Dot(triangle.point1)
+	N1 := triangle.Point2.Subtract(triangle.Point1).Cross(triangle.Point2.Subtract(triangle.Point1))
+	d1 := -N1.Dot(triangle.Point1)
 	p21, p22, p23, err := other.planeOverlap(N1, d1)
 	if err != nil {
 		return false
 	}
 
 	//get other plane equation
-	N2 := other.point1.Subtract(other.point2).Cross(other.point1.Subtract(other.point3))
-	d2 := -N2.Dot(other.point1)
+	N2 := other.Point1.Subtract(other.Point2).Cross(other.Point1.Subtract(other.Point3))
+	d2 := -N2.Dot(other.Point1)
 	p11, p12, p13, err := triangle.planeOverlap(N2, d2)
 	if err != nil {
 		return false
@@ -112,42 +112,42 @@ func (triangle Triangle) Overlap(other Triangle) bool {
 //Returns error if no intersection else returns the two points on one side of the plane followed by the point on the other side
 func (triangle Triangle) planeOverlap(normal vmath.Vector3, d float64) (vmath.Vector3, vmath.Vector3, vmath.Vector3, error) {
 	//calculate the distance from each vertex of triangle to the plane
-	dist1 := normal.Dot(triangle.point1) + d
-	dist2 := normal.Dot(triangle.point2) + d
-	dist3 := normal.Dot(triangle.point3) + d
+	dist1 := normal.Dot(triangle.Point1) + d
+	dist2 := normal.Dot(triangle.Point2) + d
+	dist3 := normal.Dot(triangle.Point3) + d
 
 	//triangle is completely on one side of triangle plane
 	//All dist must be != 0, all must have the same sign
 	if dist1 != 0 && dist2 != 0 && dist3 != 0 {
 		if (dist1 > 0 && dist2 > 0 && dist3 > 0) || (dist1 < 0 && dist2 < 0 && dist3 < 0) {
-			return triangle.point1, triangle.point2, triangle.point3, fmt.Errorf("No intersection")
+			return triangle.Point1, triangle.Point2, triangle.Point3, fmt.Errorf("No intersection")
 		}
 	}
 
 	//which vertex is on it's own
 	if (dist1 > 0 && dist2 < 0 && dist3 < 0) || (dist1 < 0 && dist2 > 0 && dist3 > 0) {
-		return triangle.point2, triangle.point3, triangle.point1, nil
+		return triangle.Point2, triangle.Point3, triangle.Point1, nil
 	}
 	if (dist1 > 0 && dist2 < 0 && dist3 > 0) || (dist1 < 0 && dist2 > 0 && dist3 < 0) {
-		return triangle.point1, triangle.point3, triangle.point2, nil
+		return triangle.Point1, triangle.Point3, triangle.Point2, nil
 	}
-	return triangle.point1, triangle.point2, triangle.point3, nil
+	return triangle.Point1, triangle.Point2, triangle.Point3, nil
 }
 
 //Rotate
 func (t Triangle) Rotate(q vmath.Quaternion) Triangle {
 	return Triangle{
-		point1: q.Apply(t.point1),
-		point2: q.Apply(t.point2),
-		point3: q.Apply(t.point3),
+		Point1: q.Apply(t.Point1),
+		Point2: q.Apply(t.Point2),
+		Point3: q.Apply(t.Point3),
 	}
 }
 
 //Translate
 func (t Triangle) Translate(v vmath.Vector3) Triangle {
 	return Triangle{
-		point1: t.point1.Add(v),
-		point2: t.point2.Add(v),
-		point3: t.point3.Add(v),
+		Point1: t.Point1.Add(v),
+		Point2: t.Point2.Add(v),
+		Point3: t.Point3.Add(v),
 	}
 }

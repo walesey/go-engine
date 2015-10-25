@@ -43,7 +43,7 @@ type Geometry struct {
 	CullBackface bool
 }
 
-//vericies format : x,y,z,   nx,ny,nz,tx,ty,tz,btx,bty,btz,   u,v
+//vericies format : x,y,z,   nx,ny,nz,tx,ty,tz,btx,bty,btz,   u,v,  r,g,b,a
 //indicies format : f1,f2,f3 (triangles)
 func CreateGeometry(indicies []uint32, verticies []float32) Geometry {
 	mat := CreateMaterial()

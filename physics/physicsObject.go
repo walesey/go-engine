@@ -67,3 +67,7 @@ func (obj *PhysicsObject) doStep(dt float64) {
 	axis := vmath.Vector3{obj.AngularVelocity.X, obj.AngularVelocity.Y, obj.AngularVelocity.Z}
 	obj.Orientation = vmath.AngleAxis(dt*obj.AngularVelocity.W, axis).Multiply(obj.Orientation)
 }
+
+func (obj *PhysicsObject) handleCollision(other *PhysicsObject) {
+
+}

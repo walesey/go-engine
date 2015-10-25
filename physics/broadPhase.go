@@ -7,6 +7,7 @@ import (
 
 type Collider interface {
 	Overlap(other Collider) bool
+	AttachTo(object *PhysicsObject)
 }
 
 type BoundingBox struct {
@@ -14,7 +15,7 @@ type BoundingBox struct {
 	offset *vmath.Vector3
 }
 
-func NewBoundingBox() *BoundingBox {
+func NewBoundingBox(bounds vmath.Vector3) *BoundingBox {
 	return &BoundingBox{
 		bounds: vmath.Vector3{0, 0, 0},
 	}
