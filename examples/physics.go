@@ -6,7 +6,7 @@ import (
 	"github.com/walesey/go-engine/controller"
 	"github.com/walesey/go-engine/physics"
 	"github.com/walesey/go-engine/renderer"
-	"github.com/walesey/go-engine/vectormath"
+	vmath "github.com/walesey/go-engine/vectormath"
 
 	"github.com/codegangsta/cli"
 	"github.com/go-gl/glfw/v3.1/glfw"
@@ -24,7 +24,7 @@ func PhysicsDemo(c *cli.Context) {
 		WindowHeight: 1000,
 	}
 
-	assetLib, err := assets.LoadAssetLibrary("TestAssets/gun.asset")
+	assetLib, err := assets.LoadAssetLibrary("TestAssets/physics.asset")
 	if err != nil {
 		panic(err)
 	}
@@ -40,29 +40,35 @@ func PhysicsDemo(c *cli.Context) {
 	geom.CullBackface = false
 	skyNode := renderer.CreateNode()
 	skyNode.Add(&geom)
-	skyNode.SetRotation(1.57, vectormath.Vector3{0, 1, 0})
-	skyNode.SetScale(vectormath.Vector3{5000, 5000, 5000})
+	skyNode.SetRotation(1.57, vmath.Vector3{0, 1, 0})
+	skyNode.SetScale(vmath.Vector3{5000, 5000, 5000})
 
 	sceneGraph := renderer.CreateSceneGraph()
-	sceneGraph.AddBackGround(&skyNode)
+	sceneGraph.AddBackGround(skyNode)
 
 	//physics engine
 	physicsWorld := physics.NewPhysicsSpace()
 	actorStore := actor.NewActorStore()
 	for i := 0; i < 10; i = i + 1 {
-		//
-		geomgun := assetLib.GetGeometry("gun")
-		gunMat := assetLib.GetMaterial("gunMat")
+		//make obj geometry with node
+		geomgun := assetLib.GetGeometry("monkey")
+		gunMat := assetLib.GetMaterial("monkeyMat")
 		geomgun.Material = &gunMat
 		gunNode := renderer.CreateNode()
 		gunNode.Add(&geomgun)
-		gunNode.SetTranslation(vectormath.Vector3{0, 0, 0})
-		sceneGraph.Add(&gunNode)
 
-		//
+		//create object with autgenerated colliders
 		phyObj := physics.NewPhysicsObject()
 		assets.BoundingBoxFromGeometry(geomgun).AttachTo(&phyObj)
 		assets.ConvexHullFromGeometry(geomgun).AttachTo(&phyObj)
+
+		//attach to all the things ()
+		actorStore.Add(actor.NewPhysicsActor(gunNode, &phyObj))
+		physicsWorld.Add(&phyObj)
+		sceneGraph.Add(gunNode)
+
+		//set initial position
+		phyObj.Position = vmath.Vector3{0, 5 * float64(i), float64(i) * 0.1}
 	}
 
 	//camera
@@ -70,11 +76,11 @@ func PhysicsDemo(c *cli.Context) {
 	freeMoveActor := actor.CreateFreeMoveActor(camera)
 	actorStore.Add(freeMoveActor)
 	freeMoveActor.MoveSpeed = 3.0
-	freeMoveActor.Location = vectormath.Vector3{-2, 0, 0}
+	freeMoveActor.Location = vmath.Vector3{-2, 0, 0}
 
 	glRenderer.Init = func() {
 		//lighting
-		glRenderer.CreateLight(0.1, 0.1, 0.1, 3, 3, 3, 2, 2, 2, true, vectormath.Vector3{0.3, -1, 0.2}, 0)
+		glRenderer.CreateLight(0.1, 0.1, 0.1, 3, 3, 3, 2, 2, 2, true, vmath.Vector3{0.3, -1, 0.2}, 0)
 
 		//setup reflection map
 		//cubeMap := renderer.CreateCubemap(assetLib.GetMaterial("nightskyboxMat").Diffuse)

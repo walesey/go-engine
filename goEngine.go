@@ -66,6 +66,11 @@ func main() {
 			Usage:  "run a demo of a gun model",
 			Action: examples.GunDemo,
 		},
+		{
+			Name:   "physics",
+			Usage:  "run the physics demo",
+			Action: examples.PhysicsDemo,
+		},
 	}
 
 	app.Run(os.Args)

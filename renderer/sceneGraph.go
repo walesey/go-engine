@@ -6,7 +6,7 @@ import (
 )
 
 type SceneGraph struct {
-	backgroundNode, transparentNode, orthoNode Node
+	backgroundNode, transparentNode, orthoNode *Node
 	matStack                                   util.Stack
 	transparentBucket                          bucketEntries
 }
@@ -37,7 +37,7 @@ func (sceneGraph *SceneGraph) AddOrtho(spatial Spatial) {
 func (sceneGraph *SceneGraph) RenderScene(renderer Renderer) {
 	//setup buckets
 	sceneGraph.transparentBucket = sceneGraph.transparentBucket[:0]
-	sceneGraph.buildBuckets(&sceneGraph.transparentNode)
+	sceneGraph.buildBuckets(sceneGraph.transparentNode)
 	sceneGraph.sortBuckets(renderer)
 	//render buckets
 	//renderer.EnableDepthTest(true)

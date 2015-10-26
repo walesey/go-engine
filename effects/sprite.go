@@ -7,7 +7,7 @@ import (
 )
 
 type Sprite struct {
-	node                                 renderer.Node
+	node                                 *renderer.Node
 	geometry                             *renderer.Geometry
 	transform                            renderer.Transform
 	location, scale                      vectormath.Vector3

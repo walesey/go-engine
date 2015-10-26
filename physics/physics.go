@@ -64,7 +64,7 @@ func (ps *PhysicsSpace) DoStep() {
 				if (*object1).BroadPhaseOverlap(*object2) {
 					worker := ps.workerPool.GetWorker()
 					worker.Write(PhysicsPair{*object1, *object2})
-					ps.workerQueue[queueIndex] = workerQueueItem{worker: worker, object1: object1, object2: object2}
+					ps.workerQueue = append(ps.workerQueue[:queueIndex], workerQueueItem{worker: worker, object1: object1, object2: object2})
 					queueIndex = queueIndex + 1
 				}
 			}

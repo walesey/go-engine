@@ -178,8 +178,8 @@ func Particles(c *cli.Context) {
 	birdSprite.SetTranslation(vectormath.Vector3{-2, 0, -1})
 
 	sceneGraph := renderer.CreateSceneGraph()
-	sceneGraph.AddBackGround(&skyNode)
-	sceneGraph.Add(&sphereNode)
+	sceneGraph.AddBackGround(skyNode)
+	sceneGraph.Add(sphereNode)
 	sceneGraph.Add(&fireParticles)
 	sceneGraph.Add(&smokeParticles)
 	sceneGraph.Add(&explosionParticles)
@@ -246,7 +246,7 @@ func Particles(c *cli.Context) {
 
 		//test the portabitity of the actor / entity interfaces
 		customController.BindAction(func() { freeMoveActor.Entity = camera }, glfw.KeyQ, glfw.Press)
-		customController.BindAction(func() { freeMoveActor.Entity = &sphereNode }, glfw.KeyW, glfw.Press)
+		customController.BindAction(func() { freeMoveActor.Entity = sphereNode }, glfw.KeyW, glfw.Press)
 		customController.BindAction(func() { freeMoveActor.Entity = &explosionParticles }, glfw.KeyE, glfw.Press)
 		customController.BindAction(func() { freeMoveActor.Entity = &birdSprite }, glfw.KeyR, glfw.Press)
 

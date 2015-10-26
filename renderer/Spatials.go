@@ -27,10 +27,10 @@ type Node struct {
 	Orientation vectormath.Quaternion
 }
 
-func CreateNode() Node {
+func CreateNode() *Node {
 	//create slice to store children
 	children := make([]Spatial, 0, 0)
-	return Node{
+	return &Node{
 		children:    children,
 		Transform:   CreateTransform(),
 		Scale:       vectormath.Vector3{1, 1, 1},
