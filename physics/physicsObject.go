@@ -4,9 +4,15 @@ import (
 	vmath "github.com/walesey/go-engine/vectormath"
 )
 
+var globalId int64 = 0
+
 type PhysicsObject struct {
+	id                           int64
 	Position, Velocity           vmath.Vector3
 	Orientation, AngularVelocity vmath.Quaternion
+	Mass                         float64
+	Static                       bool //disables movement
+	ForceStore                   *ForceStore
 	broadPhase, narrowPhase      Collider
 }
 
@@ -35,11 +41,15 @@ func (objPool PhysicsObjectPool) ReleasePhysicsObject(obj *PhysicsObject) {
 }
 
 func NewPhysicsObject() PhysicsObject {
+	globalId = globalId + 1
 	return PhysicsObject{
+		id:              globalId,
 		Position:        vmath.Vector3{0, 0, 0},
 		Velocity:        vmath.Vector3{0, 0, 0},
 		Orientation:     vmath.IdentityQuaternion(),
 		AngularVelocity: vmath.Quaternion{1, 0, 0, 0},
+		Mass:            1.0,
+		ForceStore:      NewForceStore(),
 	}
 }
 
@@ -60,6 +70,9 @@ func (obj PhysicsObject) BroadPhaseOverlap(other PhysicsObject) bool {
 }
 
 func (obj *PhysicsObject) doStep(dt float64) {
+	//process forces and acceleration
+	obj.ForceStore.DoStep(dt, obj)
+
 	//apply position increment
 	obj.Position = obj.Position.Add(obj.Velocity.MultiplyScalar(dt))
 
@@ -68,6 +81,7 @@ func (obj *PhysicsObject) doStep(dt float64) {
 	obj.Orientation = vmath.AngleAxis(dt*obj.AngularVelocity.W, axis).Multiply(obj.Orientation)
 }
 
+//handleCollision
 func (obj *PhysicsObject) handleCollision(other *PhysicsObject) {
 
 }

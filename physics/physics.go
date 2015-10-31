@@ -1,11 +1,17 @@
 package physics
 
+import (
+	"fmt"
+)
+
 type PhysicsSpace struct {
-	objects     []*PhysicsObject
-	workerQueue []workerQueueItem
-	workerPool  *WorkerPool
-	objectPool  *PhysicsObjectPool
-	StepDt      float64
+	objects      []*PhysicsObject
+	workerQueue  []workerQueueItem
+	workerPool   *WorkerPool
+	objectPool   *PhysicsObjectPool
+	contactCache ContactCache
+	StepDt       float64
+	GlobalForces *ForceStore
 }
 
 type workerQueueItem struct {
@@ -15,17 +21,13 @@ type workerQueueItem struct {
 
 func NewPhysicsSpace() *PhysicsSpace {
 	return &PhysicsSpace{
-		StepDt:      0.018,
-		objects:     make([]*PhysicsObject, 0, 500),
-		workerQueue: make([]workerQueueItem, 0, 500),
-		workerPool:  NewWorkerPool(),
-		objectPool:  NewPhysicsObjectPool(),
-	}
-}
-
-func (ps *PhysicsSpace) PhysicsStep() {
-	for _, object := range ps.objects {
-		object.doStep(ps.StepDt)
+		StepDt:       0.018,
+		GlobalForces: NewForceStore(),
+		objects:      make([]*PhysicsObject, 0, 500),
+		workerQueue:  make([]workerQueueItem, 0, 500),
+		workerPool:   NewWorkerPool(),
+		objectPool:   NewPhysicsObjectPool(),
+		contactCache: NewContactCache(),
 	}
 }
 
@@ -53,8 +55,11 @@ func (ps *PhysicsSpace) DoStep() {
 
 	//do standard movement step
 	for _, object := range ps.objects {
+		ps.GlobalForces.DoStep(ps.StepDt, object)
 		object.doStep(ps.StepDt)
 	}
+
+	ps.contactCache.MarkContactsAsOld()
 
 	//do broadphase overlaps and spawn narrow phase workers for each
 	queueIndex := 0
@@ -74,9 +79,17 @@ func (ps *PhysicsSpace) DoStep() {
 	//read narrow phase results from workers
 	for i := 0; i < queueIndex; i++ {
 		if ps.workerQueue[i].worker.Read() {
-			/*	obj1 := ps.workerQueue[i].object1
-				obj2 := ps.workerQueue[i].object2
-				obj1.doStep(-ps.StepDt * 0.5)
+
+			obj1 := ps.workerQueue[i].object1
+			obj2 := ps.workerQueue[i].object2
+			pair := PhysicsPair{*obj1, *obj2}
+			inContact := ps.contactCache.Contains(pair)
+			if !inContact {
+				fmt.Println("TODO: Contact EVENT")
+				ps.contactCache.Add(pair)
+			}
+
+			/*	obj1.doStep(-ps.StepDt * 0.5)
 				obj2.doStep(-ps.StepDt * 0.5)
 
 				worker := ps.workerPool.GetWorker()
@@ -90,4 +103,5 @@ func (ps *PhysicsSpace) DoStep() {
 	// recheck collisions
 	// handle each collision
 
+	ps.contactCache.CleanOldContacts()
 }

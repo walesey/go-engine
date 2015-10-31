@@ -59,6 +59,7 @@ func PhysicsDemo(c *cli.Context) {
 
 		//create object with autgenerated colliders
 		phyObj := physics.NewPhysicsObject()
+		phyObj.Mass = 100
 		assets.BoundingBoxFromGeometry(geomgun).AttachTo(&phyObj)
 		assets.ConvexHullFromGeometry(geomgun).AttachTo(&phyObj)
 
@@ -70,6 +71,9 @@ func PhysicsDemo(c *cli.Context) {
 		//set initial position
 		phyObj.Position = vmath.Vector3{0, 5 * float64(i), float64(i) * 0.1}
 	}
+
+	//gravity global force
+	physicsWorld.GlobalForces.AddForce("gravity", physics.GravityForce{vmath.Vector3{0, -10, 0}})
 
 	//camera
 	camera := renderer.CreateCamera(glRenderer)
