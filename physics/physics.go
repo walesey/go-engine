@@ -17,6 +17,7 @@ type PhysicsSpace struct {
 type workerQueueItem struct {
 	worker           *PhysicsWorker
 	object1, object2 *PhysicsObject
+	index1, index2   int
 }
 
 func NewPhysicsSpace() *PhysicsSpace {
@@ -69,7 +70,9 @@ func (ps *PhysicsSpace) DoStep() {
 				if (*object1).BroadPhaseOverlap(*object2) {
 					worker := ps.workerPool.GetWorker()
 					worker.Write(PhysicsPair{*object1, *object2})
-					ps.workerQueue = append(ps.workerQueue[:queueIndex], workerQueueItem{worker: worker, object1: object1, object2: object2})
+					ps.workerQueue = append(ps.workerQueue[:queueIndex], workerQueueItem{
+						worker: worker, object1: object1, object2: object2, index1: i, index2: j,
+					})
 					queueIndex = queueIndex + 1
 				}
 			}
@@ -79,14 +82,15 @@ func (ps *PhysicsSpace) DoStep() {
 	//read narrow phase results from workers
 	for i := 0; i < queueIndex; i++ {
 		if ps.workerQueue[i].worker.Read() {
+			item := ps.workerQueue[i]
+			obj1 := item.object1
+			obj2 := item.object2
 
-			obj1 := ps.workerQueue[i].object1
-			obj2 := ps.workerQueue[i].object2
-			pair := PhysicsPair{*obj1, *obj2}
-			inContact := ps.contactCache.Contains(pair)
+			//check contact cache
+			inContact := ps.contactCache.Contains(item.index1, item.index2)
 			if !inContact {
 				fmt.Println("TODO: Contact EVENT")
-				ps.contactCache.Add(pair)
+				ps.contactCache.Add(item.index1, item.index2)
 			}
 
 			/*	obj1.doStep(-ps.StepDt * 0.5)

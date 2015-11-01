@@ -4,10 +4,7 @@ import (
 	vmath "github.com/walesey/go-engine/vectormath"
 )
 
-var globalId int64 = 0
-
 type PhysicsObject struct {
-	id                           int64
 	Position, Velocity           vmath.Vector3
 	Orientation, AngularVelocity vmath.Quaternion
 	Mass                         float64
@@ -41,9 +38,7 @@ func (objPool PhysicsObjectPool) ReleasePhysicsObject(obj *PhysicsObject) {
 }
 
 func NewPhysicsObject() PhysicsObject {
-	globalId = globalId + 1
 	return PhysicsObject{
-		id:              globalId,
 		Position:        vmath.Vector3{0, 0, 0},
 		Velocity:        vmath.Vector3{0, 0, 0},
 		Orientation:     vmath.IdentityQuaternion(),

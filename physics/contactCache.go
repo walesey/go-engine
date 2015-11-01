@@ -1,11 +1,15 @@
 package physics
 
 type ContactCache interface {
-	Add(pair PhysicsPair)
-	Remove(pair PhysicsPair)
-	Contains(pair PhysicsPair) bool
+	Add(index1 int, index2 int)
+	Remove(index1 int, index2 int)
+	Contains(index1 int, index2 int) bool
 	MarkContactsAsOld()
 	CleanOldContacts()
+}
+
+func getHash(index1, index2 int) int {
+	return index1 | (index2 << 16)
 }
 
 type ContactCacheImpl struct {
@@ -16,7 +20,7 @@ func NewContactCache() ContactCache {
 	return &ContactCacheImpl{make(map[int64]map[int64]bool)}
 }
 
-func (cc *ContactCacheImpl) Add(pair PhysicsPair) {
+func (cc *ContactCacheImpl) Add(index1 int, index2 int) {
 	cache1, ok := cc.contacts[pair.object1.id]
 	if !ok {
 		cache1 = make(map[int64]bool)
@@ -25,11 +29,11 @@ func (cc *ContactCacheImpl) Add(pair PhysicsPair) {
 	//TODO:
 }
 
-func (cc *ContactCacheImpl) Remove(pair PhysicsPair) {
+func (cc *ContactCacheImpl) Remove(index1 int, index2 int) {
 
 }
 
-func (cc *ContactCacheImpl) Contains(pair PhysicsPair) bool {
+func (cc *ContactCacheImpl) Contains(index1 int, index2 int) bool {
 	return false
 }
 
