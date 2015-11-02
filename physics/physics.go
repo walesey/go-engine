@@ -83,8 +83,6 @@ func (ps *PhysicsSpace) DoStep() {
 	for i := 0; i < queueIndex; i++ {
 		if ps.workerQueue[i].worker.Read() {
 			item := ps.workerQueue[i]
-			obj1 := item.object1
-			obj2 := item.object2
 
 			//check contact cache
 			inContact := ps.contactCache.Contains(item.index1, item.index2)
@@ -93,8 +91,8 @@ func (ps *PhysicsSpace) DoStep() {
 				ps.contactCache.Add(item.index1, item.index2)
 			}
 
-			/*	obj1.doStep(-ps.StepDt * 0.5)
-				obj2.doStep(-ps.StepDt * 0.5)
+			/*	item.object1.doStep(-ps.StepDt * 0.5)
+				item.object2.doStep(-ps.StepDt * 0.5)
 
 				worker := ps.workerPool.GetWorker()
 				worker.Write(PhysicsPair{*object1, *object2})
