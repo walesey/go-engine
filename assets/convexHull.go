@@ -24,6 +24,21 @@ func ConvexHullFromGeometry(geometry renderer.Geometry) physics.Collider {
 	return physics.NewConvexHull(triangles)
 }
 
+// Converts a geometry directly into points (does no optimisation and assumes geometry is already convex)
+func ConvexSetFromGeometry(geometry renderer.Geometry) physics.Collider {
+	verticies := make([]vmath.Vector3, 0, len(geometry.Indicies))
+	for i := 0; i < len(geometry.Indicies); i = i + 1 {
+		index := geometry.Indicies[i]
+		v := vmath.Vector3{
+			float64(geometry.Verticies[index*18]),
+			float64(geometry.Verticies[index*18+1]),
+			float64(geometry.Verticies[index*18+2]),
+		}
+		verticies = append(verticies, v)
+	}
+	return physics.NewConvexSet(verticies)
+}
+
 func BoundingBoxFromGeometry(geometry renderer.Geometry) physics.Collider {
 	largest := vmath.Vector3{0, 0, 0}
 	largestSide := 0.0

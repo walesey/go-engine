@@ -11,21 +11,22 @@ type Triangle struct {
 
 type ConvexHull struct {
 	triangles   []Triangle
-	offset      *vmath.Vector3
-	orientation *vmath.Quaternion
+	offset      vmath.Vector3
+	orientation vmath.Quaternion
 }
 
 // NewConvexHull
-func NewConvexHull(triangles []Triangle) *ConvexHull {
+func NewConvexHull(triangles []Triangle) Collider {
 	return &ConvexHull{
-		triangles: triangles,
+		triangles:   triangles,
+		offset:      vmath.Vector3{0, 0, 0},
+		orientation: vmath.IdentityQuaternion(),
 	}
 }
 
-func (ch *ConvexHull) AttachTo(obj *PhysicsObject) {
-	ch.offset = &obj.Position
-	ch.orientation = &obj.Orientation
-	obj.narrowPhase = ch
+func (ch *ConvexHull) Offset(offset vmath.Vector3, orientation vmath.Quaternion) {
+	ch.offset = offset
+	ch.orientation = orientation
 }
 
 // Calculate the overlap of a convex hull and another collider
@@ -42,11 +43,11 @@ func (ch *ConvexHull) Overlap(other Collider) bool {
 // Calculate the overlap of two convex hulls
 func (ch *ConvexHull) OverlapConvexHull(other *ConvexHull) bool {
 	for _, t := range ch.triangles {
-		t = t.Rotate(*ch.orientation)
-		t = t.Translate(*ch.offset)
+		t = t.Rotate(ch.orientation)
+		t = t.Translate(ch.offset)
 		for _, tt := range other.triangles {
-			tt = tt.Rotate(*other.orientation)
-			tt = tt.Translate(*other.offset)
+			tt = tt.Rotate(other.orientation)
+			tt = tt.Translate(other.offset)
 			if t.Overlap(tt) {
 				return true
 			}

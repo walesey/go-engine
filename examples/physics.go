@@ -60,8 +60,8 @@ func PhysicsDemo(c *cli.Context) {
 		//create object with autgenerated colliders
 		phyObj := physics.NewPhysicsObject()
 		phyObj.Mass = 100
-		assets.BoundingBoxFromGeometry(geomgun).AttachTo(&phyObj)
-		assets.ConvexHullFromGeometry(geomgun).AttachTo(&phyObj)
+		phyObj.BroadPhase = assets.BoundingBoxFromGeometry(geomgun)
+		phyObj.NarrowPhase = assets.ConvexHullFromGeometry(geomgun)
 
 		//attach to all the things ()
 		actorStore.Add(actor.NewPhysicsActor(gunNode, &phyObj))

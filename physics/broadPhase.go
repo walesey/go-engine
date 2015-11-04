@@ -7,18 +7,23 @@ import (
 
 type Collider interface {
 	Overlap(other Collider) bool
-	AttachTo(object *PhysicsObject)
+	Offset(offset vmath.Vector3, orientation vmath.Quaternion)
 }
 
 type BoundingBox struct {
 	bounds vmath.Vector3
-	offset *vmath.Vector3
+	offset vmath.Vector3
 }
 
-func NewBoundingBox(bounds vmath.Vector3) *BoundingBox {
+func NewBoundingBox(bounds vmath.Vector3) Collider {
 	return &BoundingBox{
 		bounds: vmath.Vector3{0, 0, 0},
+		offset: vmath.Vector3{0, 0, 0},
 	}
+}
+
+func (bb *BoundingBox) Offset(offset vmath.Vector3, orientation vmath.Quaternion) {
+	bb.offset = offset
 }
 
 func (bb *BoundingBox) Overlap(other Collider) bool {
@@ -29,12 +34,6 @@ func (bb *BoundingBox) Overlap(other Collider) bool {
 		return bb.OverlapBoundingBox(other.(*BoundingBox))
 	}
 	return false
-}
-
-//AttachTo - this bounding box is now bound to the object
-func (bb *BoundingBox) AttachTo(object *PhysicsObject) {
-	object.broadPhase = bb
-	bb.offset = &object.Position
 }
 
 //OverlapBoundingBox - classic AABB overlap test

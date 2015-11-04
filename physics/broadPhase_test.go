@@ -11,21 +11,19 @@ func TestBoundingBoxWithPhysicsObject(t *testing.T) {
 	obj2 := NewPhysicsObject()
 	bb1 := NewBoundingBox(vmath.Vector3{1, 1, 1})
 	bb2 := NewBoundingBox(vmath.Vector3{1, 1, 1})
-	bb1.AttachTo(&obj1)
-	bb2.AttachTo(&obj2)
+	obj1.BroadPhase = bb1
+	obj2.BroadPhase = bb2
 	assert.True(t, obj1.BroadPhaseOverlap(obj2), "BroadPhase")
 	obj2.Position = vmath.Vector3{3, 0, 1}
 	assert.False(t, obj1.BroadPhaseOverlap(obj2), "BroadPhase")
 }
 
 func TestBoundingBox(t *testing.T) {
-	offset1 := vmath.Vector3{0, 0, 0}
-	offset2 := vmath.Vector3{0, 0, 0}
 	bb1 := NewBoundingBox(vmath.Vector3{1, 1, 1})
 	bb2 := NewBoundingBox(vmath.Vector3{1, 1, 1})
-	bb1.offset = &offset1
-	bb2.offset = &offset2
+	bb1.Offset(vmath.Vector3{0, 0, 0}, vmath.IdentityQuaternion())
+	bb2.Offset(vmath.Vector3{0, 0, 0}, vmath.IdentityQuaternion())
 	assert.True(t, bb1.Overlap(bb2), "Bounding box overlap")
-	offset2 = vmath.Vector3{0, 0, 1.1}
+	bb1.Offset(vmath.Vector3{0, 0, 1.1}, vmath.IdentityQuaternion())
 	assert.False(t, bb1.Overlap(bb2), "Bounding box not overlap")
 }

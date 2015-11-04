@@ -10,7 +10,7 @@ type PhysicsObject struct {
 	Mass                         float64
 	Static                       bool //disables movement
 	ForceStore                   *ForceStore
-	broadPhase, narrowPhase      Collider
+	BroadPhase, NarrowPhase      Collider
 }
 
 type PhysicsObjectPool struct {
@@ -50,18 +50,22 @@ func NewPhysicsObject() PhysicsObject {
 
 //NarrowPhaseOverlap
 func (obj PhysicsObject) NarrowPhaseOverlap(other PhysicsObject) bool {
-	if obj.narrowPhase == nil || other.narrowPhase == nil {
+	if obj.NarrowPhase == nil || other.NarrowPhase == nil {
 		return false
 	}
-	return obj.narrowPhase.Overlap(other.narrowPhase)
+	obj.NarrowPhase.Offset(obj.Position, obj.Orientation)
+	other.NarrowPhase.Offset(other.Position, other.Orientation)
+	return obj.NarrowPhase.Overlap(other.NarrowPhase)
 }
 
 //BroadPhaseOverlap
 func (obj PhysicsObject) BroadPhaseOverlap(other PhysicsObject) bool {
-	if obj.broadPhase == nil || other.broadPhase == nil {
+	if obj.BroadPhase == nil || other.BroadPhase == nil {
 		return false
 	}
-	return obj.broadPhase.Overlap(other.broadPhase)
+	obj.BroadPhase.Offset(obj.Position, obj.Orientation)
+	other.BroadPhase.Offset(other.Position, other.Orientation)
+	return obj.BroadPhase.Overlap(other.BroadPhase)
 }
 
 func (obj *PhysicsObject) doStep(dt float64) {

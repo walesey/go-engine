@@ -35,7 +35,7 @@ func TestConvexHull(t *testing.T) {
 	triangles1 := []Triangle{t1, t2, t3}
 	convexHull1 := NewConvexHull(triangles1)
 	obj1 := NewPhysicsObject()
-	convexHull1.AttachTo(&obj1)
+	obj1.NarrowPhase = convexHull1
 
 	t4 := Triangle{vmath.Vector3{0, 0, 0}, vmath.Vector3{0, 1, 0}, vmath.Vector3{0, 0, -1}}
 	t5 := Triangle{vmath.Vector3{0, 0, 0}, vmath.Vector3{0, 1, 0}, vmath.Vector3{-1, 0, 0}}
@@ -43,7 +43,7 @@ func TestConvexHull(t *testing.T) {
 	triangles2 := []Triangle{t4, t5, t6}
 	convexHull2 := NewConvexHull(triangles2)
 	obj2 := NewPhysicsObject()
-	convexHull2.AttachTo(&obj2)
+	obj2.NarrowPhase = convexHull2
 
 	obj2.Position = vmath.Vector3{-0.3, 0, -0.3}
 	assert.False(t, obj1.NarrowPhaseOverlap(obj2), "ConvexHull Overlap should be false")

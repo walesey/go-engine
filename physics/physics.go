@@ -91,13 +91,13 @@ func (ps *PhysicsSpace) DoStep() {
 				ps.contactCache.Add(item.index1, item.index2)
 			}
 
-			/*	item.object1.doStep(-ps.StepDt * 0.5)
-				item.object2.doStep(-ps.StepDt * 0.5)
+			item.object1.doStep(-ps.StepDt * 0.5)
+			item.object2.doStep(-ps.StepDt * 0.5)
 
-				worker := ps.workerPool.GetWorker()
-				worker.Write(PhysicsPair{*object1, *object2})
-				ps.workerQueue[queueIndex] = workerQueueItem{worker: worker, object1: object1, object2: object2}
-				queueIndex = queueIndex + 1 */
+			/*worker := ps.workerPool.GetWorker()
+			worker.Write(PhysicsPair{*object1, *object2})
+			ps.workerQueue[queueIndex] = workerQueueItem{worker: worker, object1: object1, object2: object2}
+			queueIndex = queueIndex + 1 */
 		}
 	}
 
