@@ -29,16 +29,15 @@ func (objPool PhysicsObjectPool) GetPhysicsObject() *PhysicsObject {
 		objPool.pool = objPool.pool[:len(objPool.pool)-1]
 		return obj
 	}
-	newObj := NewPhysicsObject()
-	return &newObj
+	return NewPhysicsObject()
 }
 
 func (objPool PhysicsObjectPool) ReleasePhysicsObject(obj *PhysicsObject) {
 	objPool.pool = append(objPool.pool, obj)
 }
 
-func NewPhysicsObject() PhysicsObject {
-	return PhysicsObject{
+func NewPhysicsObject() *PhysicsObject {
+	return &PhysicsObject{
 		Position:        vmath.Vector3{0, 0, 0},
 		Velocity:        vmath.Vector3{0, 0, 0},
 		Orientation:     vmath.IdentityQuaternion(),
@@ -49,7 +48,7 @@ func NewPhysicsObject() PhysicsObject {
 }
 
 //NarrowPhaseOverlap
-func (obj PhysicsObject) NarrowPhaseOverlap(other PhysicsObject) bool {
+func (obj *PhysicsObject) NarrowPhaseOverlap(other *PhysicsObject) bool {
 	if obj.NarrowPhase == nil || other.NarrowPhase == nil {
 		return false
 	}
@@ -59,7 +58,7 @@ func (obj PhysicsObject) NarrowPhaseOverlap(other PhysicsObject) bool {
 }
 
 //BroadPhaseOverlap
-func (obj PhysicsObject) BroadPhaseOverlap(other PhysicsObject) bool {
+func (obj *PhysicsObject) BroadPhaseOverlap(other *PhysicsObject) bool {
 	if obj.BroadPhase == nil || other.BroadPhase == nil {
 		return false
 	}

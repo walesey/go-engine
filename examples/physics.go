@@ -64,8 +64,8 @@ func PhysicsDemo(c *cli.Context) {
 		phyObj.NarrowPhase = assets.ConvexHullFromGeometry(geomgun)
 
 		//attach to all the things ()
-		actorStore.Add(actor.NewPhysicsActor(gunNode, &phyObj))
-		physicsWorld.Add(&phyObj)
+		actorStore.Add(actor.NewPhysicsActor(gunNode, phyObj))
+		physicsWorld.Add(phyObj)
 		sceneGraph.Add(gunNode)
 
 		//set initial position

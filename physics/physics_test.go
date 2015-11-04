@@ -27,13 +27,13 @@ func TestAddRemoveObjects(t *testing.T) {
 
 	world := NewPhysicsSpace()
 	world.StepDt = 1
-	world.Add(&object1, &object2)
+	world.Add(object1, object2)
 	world.DoStep()
 
 	assert.True(t, vectormath.Vector3{1, 0, 0}.ApproxEqual(object1.Position, 0.001), "physics object should be updated by physicsSpace")
 	assert.True(t, vectormath.Vector3{1, 0, 0}.ApproxEqual(object2.Position, 0.001), "physics object should be updated by physicsSpace")
 
-	world.Remove(&object1, &object2)
+	world.Remove(object1, object2)
 	world.DoStep()
 
 	assert.True(t, vectormath.Vector3{1, 0, 0}.ApproxEqual(object1.Position, 0.001), "physics object should not be updated by physicsSpace")

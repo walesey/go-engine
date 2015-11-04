@@ -3,7 +3,7 @@ package physics
 import "fmt"
 
 type PhysicsPair struct {
-	object1, object2 PhysicsObject
+	object1, object2 *PhysicsObject
 }
 
 type PhysicsWorker struct {
