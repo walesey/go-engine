@@ -1,4 +1,4 @@
-package physics
+package gjk
 
 import (
 	"github.com/stretchr/testify/assert"

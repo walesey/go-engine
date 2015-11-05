@@ -2,6 +2,7 @@ package assets
 
 import (
 	"github.com/walesey/go-engine/physics"
+	"github.com/walesey/go-engine/physics/gjk"
 	"github.com/walesey/go-engine/renderer"
 	vmath "github.com/walesey/go-engine/vectormath"
 	"math"
@@ -36,7 +37,7 @@ func ConvexSetFromGeometry(geometry renderer.Geometry) physics.Collider {
 		}
 		verticies = append(verticies, v)
 	}
-	return physics.NewConvexSet(verticies)
+	return gjk.NewConvexSet(verticies)
 }
 
 func BoundingBoxFromGeometry(geometry renderer.Geometry) physics.Collider {

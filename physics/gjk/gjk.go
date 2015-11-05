@@ -1,7 +1,8 @@
-package physics
+package gjk
 
 import (
 	"fmt"
+	"github.com/walesey/go-engine/physics"
 	vmath "github.com/walesey/go-engine/vectormath"
 )
 
@@ -11,11 +12,8 @@ type ConvexSet struct {
 	orientation vmath.Quaternion
 }
 
-type Simplex struct {
-}
-
 // NewConvexSet
-func NewConvexSet(verticies []vmath.Vector3) Collider {
+func NewConvexSet(verticies []vmath.Vector3) physics.Collider {
 	return &ConvexSet{
 		verticies:   verticies,
 		offset:      vmath.Vector3{0, 0, 0},
@@ -29,7 +27,7 @@ func (cs *ConvexSet) Offset(offset vmath.Vector3, orientation vmath.Quaternion) 
 }
 
 // Calculate the overlap of a convex set and another collider
-func (cs *ConvexSet) Overlap(other Collider) bool {
+func (cs *ConvexSet) Overlap(other physics.Collider) bool {
 	switch t := other.(type) {
 	default:
 		fmt.Printf("unsupported type for other collider: %T\n", t)
@@ -79,4 +77,8 @@ func (cs *ConvexSet) farthestPointInDirection(direction vmath.Vector3) vmath.Vec
 
 func (cs *ConvexSet) transformPoint(point vmath.Vector3) vmath.Vector3 {
 	return cs.orientation.Apply(point).Add(cs.offset)
+}
+
+func trippleProduct(v1, v2, v3 vmath.Vector3) vmath.Vector3 {
+	return v1.Cross(v2).Cross(v3)
 }
