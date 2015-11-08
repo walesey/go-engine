@@ -17,7 +17,7 @@ type BoundingBox struct {
 
 func NewBoundingBox(bounds vmath.Vector3) Collider {
 	return &BoundingBox{
-		bounds: vmath.Vector3{0, 0, 0},
+		bounds: bounds,
 		offset: vmath.Vector3{0, 0, 0},
 	}
 }

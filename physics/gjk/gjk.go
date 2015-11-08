@@ -10,6 +10,8 @@ type ConvexSet struct {
 	verticies   []vmath.Vector3
 	offset      vmath.Vector3
 	orientation vmath.Quaternion
+	simplex     *Simplex
+	searchDir   vmath.Vector3
 }
 
 // NewConvexSet
@@ -18,6 +20,8 @@ func NewConvexSet(verticies []vmath.Vector3) physics.Collider {
 		verticies:   verticies,
 		offset:      vmath.Vector3{0, 0, 0},
 		orientation: vmath.IdentityQuaternion(),
+		simplex:     NewSimplex(),
+		searchDir:   vmath.Vector3{0, 1, 0},
 	}
 }
 
@@ -39,7 +43,20 @@ func (cs *ConvexSet) Overlap(other physics.Collider) bool {
 
 // OverlapConvexSet Return true if the two convex sets overlap
 func (cs *ConvexSet) OverlapConvexSet(other *ConvexSet) bool {
-
+	cs.simplex.Clear()
+	d := cs.searchDir
+	cs.simplex.Add(SimplexPoint{mPoint: cs.support(other, d)})
+	d = d.MultiplyScalar(-1)
+	for true {
+		cs.simplex.Add(SimplexPoint{mPoint: cs.support(other, d)})
+		if cs.simplex.GetLast().mPoint.Dot(d) <= 0 {
+			return false
+		} else {
+			if cs.simplex.ContainsOrigin(&d) {
+				return true
+			}
+		}
+	}
 	return false
 }
 
@@ -58,7 +75,9 @@ func (cs *ConvexSet) ClosestPoints(other *ConvexSet) (p1, p2 vmath.Vector3) {
 func (cs *ConvexSet) support(other *ConvexSet, direction vmath.Vector3) vmath.Vector3 {
 	p1 := cs.farthestPointInDirection(direction)
 	p2 := other.farthestPointInDirection(direction.MultiplyScalar(-1))
-	return p1.Subtract(p2)
+	result := p1.Subtract(p2)
+	fmt.Println(result)
+	return result
 }
 
 func (cs *ConvexSet) farthestPointInDirection(direction vmath.Vector3) vmath.Vector3 {
@@ -69,7 +88,7 @@ func (cs *ConvexSet) farthestPointInDirection(direction vmath.Vector3) vmath.Vec
 		d := direction.Dot(p)
 		if d >= max || i == 0 {
 			max = d
-			farthest = point
+			farthest = p
 		}
 	}
 	return farthest
@@ -77,8 +96,4 @@ func (cs *ConvexSet) farthestPointInDirection(direction vmath.Vector3) vmath.Vec
 
 func (cs *ConvexSet) transformPoint(point vmath.Vector3) vmath.Vector3 {
 	return cs.orientation.Apply(point).Add(cs.offset)
-}
-
-func trippleProduct(v1, v2, v3 vmath.Vector3) vmath.Vector3 {
-	return v1.Cross(v2).Cross(v3)
 }

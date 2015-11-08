@@ -7,6 +7,38 @@ import (
 )
 
 func TestGJKOverlap(t *testing.T) {
+	verts := []vmath.Vector3{
+		vmath.Vector3{0, 0, 0},
+		vmath.Vector3{1, 0, 0},
+		vmath.Vector3{1, 1, 0},
+		vmath.Vector3{0, 1, 0},
+		vmath.Vector3{0, 0, 1},
+		vmath.Vector3{1, 0, 1},
+		vmath.Vector3{1, 1, 1},
+		vmath.Vector3{0, 1, 1},
+	}
+	convexSet1 := NewConvexSet(verts)
+	convexSet2 := NewConvexSet(verts)
+
+	convexSet1.Offset(vmath.Vector3{0.5, 0.5, 0.5}, vmath.IdentityQuaternion())
+	convexSet2.Offset(vmath.Vector3{0.5, 0.5, 0.5}, vmath.IdentityQuaternion())
+	assert.True(t, convexSet1.Overlap(convexSet2))
+
+	convexSet1.Offset(vmath.Vector3{0.5, 0.5, 0.5}, vmath.IdentityQuaternion())
+	convexSet2.Offset(vmath.Vector3{1.51, 1.51, 1.51}, vmath.IdentityQuaternion())
+	assert.False(t, convexSet1.Overlap(convexSet2))
+
+	convexSet1.Offset(vmath.Vector3{0.5, 0.5, 0.5}, vmath.IdentityQuaternion())
+	convexSet2.Offset(vmath.Vector3{1.41, 1.41, 1.41}, vmath.IdentityQuaternion())
+	assert.True(t, convexSet1.Overlap(convexSet2))
+
+	convexSet1.Offset(vmath.Vector3{-0.5, -0.5, -0.5}, vmath.IdentityQuaternion())
+	convexSet2.Offset(vmath.Vector3{-1.41, -1.41, -1.41}, vmath.IdentityQuaternion())
+	assert.True(t, convexSet1.Overlap(convexSet2))
+
+	convexSet1.Offset(vmath.Vector3{-0.5, -0.5, -0.5}, vmath.IdentityQuaternion())
+	convexSet2.Offset(vmath.Vector3{-1.51, -1.51, -1.51}, vmath.IdentityQuaternion())
+	assert.False(t, convexSet1.Overlap(convexSet2))
 }
 
 func TestGJKDistance(t *testing.T) {

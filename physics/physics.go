@@ -2,6 +2,7 @@ package physics
 
 import (
 	"fmt"
+	vmath "github.com/walesey/go-engine/vectormath"
 )
 
 type PhysicsSpace struct {
@@ -54,8 +55,10 @@ func (ps *PhysicsSpace) DoStep() {
 
 	//do standard movement step
 	for _, object := range ps.objects {
-		ps.GlobalForces.DoStep(ps.StepDt, object)
-		object.doStep(ps.StepDt)
+		if !object.Static {
+			ps.GlobalForces.DoStep(ps.StepDt, object)
+			object.doStep(ps.StepDt)
+		}
 	}
 
 	ps.contactCache.MarkContactsAsOld()
@@ -70,12 +73,18 @@ func (ps *PhysicsSpace) DoStep() {
 						inContact := ps.contactCache.Contains(i, j)
 						if !inContact {
 							fmt.Println("TODO: Contact EVENT")
-							ps.contactCache.Add(i, j)
 						}
+						ps.contactCache.Add(i, j)
 
 						//Collision response
-						object1.doStep(-ps.StepDt * 0.5)
-						object2.doStep(-ps.StepDt * 0.5)
+						if !object1.Static {
+							object1.doStep(-ps.StepDt * 0.5)
+							object1.Velocity = vmath.Vector3{0, 0, 0}
+						}
+						if !object2.Static {
+							object2.doStep(-ps.StepDt * 0.5)
+							object2.Velocity = vmath.Vector3{0, 0, 0}
+						}
 					}
 				}
 			}
