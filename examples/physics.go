@@ -49,7 +49,7 @@ func PhysicsDemo(c *cli.Context) {
 	//physics engine
 	physicsWorld := physics.NewPhysicsSpace()
 	actorStore := actor.NewActorStore()
-	for i := 0; i < 10; i = i + 1 {
+	for i := 0; i < 2; i = i + 1 {
 		//make obj geometry with node
 		geomgun := assetLib.GetGeometry("monkey")
 		gunMat := assetLib.GetMaterial("monkeyMat")
@@ -61,7 +61,7 @@ func PhysicsDemo(c *cli.Context) {
 		phyObj := physics.NewPhysicsObject()
 		phyObj.Mass = 100
 		phyObj.BroadPhase = assets.BoundingBoxFromGeometry(geomgun)
-		phyObj.NarrowPhase = assets.ConvexHullFromGeometry(geomgun)
+		phyObj.NarrowPhase = assets.ConvexSetFromGeometry(geomgun, 0.1)
 
 		//attach to all the things ()
 		actorStore.Add(actor.NewPhysicsActor(gunNode, phyObj))
@@ -84,7 +84,7 @@ func PhysicsDemo(c *cli.Context) {
 	phyObj := physics.NewPhysicsObject()
 	phyObj.Static = true
 	phyObj.BroadPhase = assets.BoundingBoxFromGeometry(terrain)
-	phyObj.NarrowPhase = assets.ConvexHullFromGeometry(terrain)
+	phyObj.NarrowPhase = assets.ConvexSetFromGeometry(terrain, 0.1)
 	actorStore.Add(actor.NewPhysicsActor(terrainNode, phyObj))
 	physicsWorld.Add(phyObj)
 	sceneGraph.Add(terrainNode)
