@@ -7,6 +7,7 @@ import (
 
 type Collider interface {
 	Overlap(other Collider) bool
+	PenetrationVector(other Collider) vmath.Vector3
 	Offset(offset vmath.Vector3, orientation vmath.Quaternion)
 }
 
@@ -48,6 +49,11 @@ func (bb *BoundingBox) OverlapBoundingBox(other *BoundingBox) bool {
 		return false
 	}
 	return true
+}
+
+//PenetrationVector - get the vector of penetration between the two colliders
+func (bb *BoundingBox) PenetrationVector(other Collider) vmath.Vector3 {
+	return vmath.Vector3{} // TODO
 }
 
 func OneDimensionOverlap(high1, low1, high2, low2 float64) bool {

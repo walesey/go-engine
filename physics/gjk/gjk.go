@@ -6,6 +6,8 @@ import (
 	vmath "github.com/walesey/go-engine/vectormath"
 )
 
+const epaMaxIterations = 40
+
 type ConvexSet struct {
 	verticies   []vmath.Vector3
 	offset      vmath.Vector3
@@ -41,6 +43,17 @@ func (cs *ConvexSet) Overlap(other physics.Collider) bool {
 	return false
 }
 
+//PenetrationVector - get the vector of penetration between the two colliders
+func (cs *ConvexSet) PenetrationVector(other physics.Collider) vmath.Vector3 {
+	switch t := other.(type) {
+	default:
+		fmt.Printf("unsupported type for other collider: %T\n", t)
+	case *ConvexSet:
+		return cs.CollisionInfo(other.(*ConvexSet))
+	}
+	return vmath.Vector3{0, 0, 0}
+}
+
 // OverlapConvexSet Return true if the two convex sets overlap
 func (cs *ConvexSet) OverlapConvexSet(other *ConvexSet) bool {
 	cs.simplex.Clear()
@@ -60,23 +73,39 @@ func (cs *ConvexSet) OverlapConvexSet(other *ConvexSet) bool {
 	return false
 }
 
-//CollisionInfo
-func (cs *ConvexSet) CollisionInfo(other *ConvexSet) (norm vmath.Vector3, pen float64) {
-	//TODO:
-	return vmath.Vector3{}, 0.0
-}
-
-// Get the two closest points on two convex sets
-func (cs *ConvexSet) ClosestPoints(other *ConvexSet) (p1, p2 vmath.Vector3) {
-	//TODO:
-	return vmath.Vector3{}, vmath.Vector3{}
+//CollisionInfo returns the penetration vector
+func (cs *ConvexSet) CollisionInfo(other *ConvexSet) vmath.Vector3 {
+	if cs.simplex.Len() < 4 {
+		//build new 4 point simplex
+		cs.simplex.Clear()
+		cs.simplex.Add(SimplexPoint{mPoint: cs.support(other, vmath.Vector3{1, 0, 0})})
+		cs.simplex.Add(SimplexPoint{mPoint: cs.support(other, vmath.Vector3{0, 1, 0})})
+		cs.simplex.Add(SimplexPoint{mPoint: cs.support(other, vmath.Vector3{0, 0, 1})})
+		cs.simplex.Add(SimplexPoint{mPoint: cs.support(other, vmath.Vector3{-1, -1, -1})})
+	}
+	// setup tetrahedron faces
+	cs.simplex.ClearFaces()
+	cs.simplex.AddFace(SimplexFace{p1: 0, p2: 1, p3: 2})
+	cs.simplex.AddFace(SimplexFace{p1: 0, p2: 2, p3: 3})
+	cs.simplex.AddFace(SimplexFace{p1: 0, p2: 3, p3: 1})
+	cs.simplex.AddFace(SimplexFace{p1: 1, p2: 2, p3: 3})
+	for iters := 0; iters < epaMaxIterations; iters = iters + 1 {
+		face, dist := cs.simplex.ClosestFace()
+		norm := cs.simplex.FaceNormal(face.index)
+		p := cs.support(other, norm)
+		if cs.simplex.containsPoint(p, 0.00001) {
+			return norm.Normalize().MultiplyScalar(dist)
+		} else {
+			cs.simplex.AddPointToFace(SimplexPoint{mPoint: p}, face.index)
+		}
+	}
+	return vmath.Vector3{0, 0, 0}
 }
 
 func (cs *ConvexSet) support(other *ConvexSet, direction vmath.Vector3) vmath.Vector3 {
 	p1 := cs.farthestPointInDirection(direction)
 	p2 := other.farthestPointInDirection(direction.MultiplyScalar(-1))
 	result := p1.Subtract(p2)
-	fmt.Println(result)
 	return result
 }
 

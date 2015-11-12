@@ -8,12 +8,21 @@ type SimplexPoint struct {
 	mPoint vmath.Vector3
 }
 
+type SimplexFace struct {
+	index      int
+	p1, p2, p3 int
+}
+
 type Simplex struct {
 	points []SimplexPoint
+	faces  []SimplexFace
 }
 
 func NewSimplex() *Simplex {
-	return &Simplex{make([]SimplexPoint, 0, 4)}
+	return &Simplex{
+		points: make([]SimplexPoint, 0, 4),
+		faces:  make([]SimplexFace, 0, 4),
+	}
 }
 
 func (s *Simplex) ContainsOrigin(direction *vmath.Vector3) bool {
@@ -89,10 +98,9 @@ func (s *Simplex) ContainsOrigin(direction *vmath.Vector3) bool {
 	return false
 }
 
-func (s *Simplex) Add(point SimplexPoint) {
-	if len(s.points) < 4 {
-		s.points = append(s.points, point)
-	}
+func (s *Simplex) Add(point SimplexPoint) int {
+	s.points = append(s.points, point)
+	return len(s.points) - 1
 }
 
 func (s *Simplex) Remove(index int) {
@@ -113,4 +121,76 @@ func (s *Simplex) GetLast() SimplexPoint {
 
 func (s *Simplex) Len() int {
 	return len(s.points)
+}
+
+func (s *Simplex) containsPoint(point vmath.Vector3, epsilon float64) bool {
+	for _, p := range s.points {
+		if p.mPoint.ApproxEqual(point, epsilon) {
+			return true
+		}
+	}
+	return false
+}
+
+/////////
+//Faces
+
+func (s *Simplex) ClosestFace() (SimplexFace, float64) {
+	min := 999999999999999999999999999999999.9
+	var closestFace SimplexFace
+	for _, face := range s.faces {
+		dist := vmath.PointToPlaneDist(
+			s.Get(face.p1).mPoint,
+			s.Get(face.p2).mPoint,
+			s.Get(face.p3).mPoint,
+			vmath.Vector3{0, 0, 0})
+		if dist < min {
+			min = dist
+			closestFace = face
+		}
+	}
+	return closestFace, min
+}
+
+func (s *Simplex) AddPointToFace(point SimplexPoint, faceIndex int) {
+	face := s.GetFace(faceIndex)
+	s.RemoveFace(faceIndex)
+	pIndex := s.Add(point)
+	s.AddFace(SimplexFace{p1: face.p1, p2: face.p2, p3: pIndex})
+	s.AddFace(SimplexFace{p1: face.p2, p2: face.p3, p3: pIndex})
+	s.AddFace(SimplexFace{p1: face.p3, p2: face.p1, p3: pIndex})
+}
+
+func (s *Simplex) FaceNormal(index int) vmath.Vector3 {
+	f := s.GetFace(index)
+	p1 := s.Get(f.p1).mPoint
+	p2 := s.Get(f.p2).mPoint
+	p3 := s.Get(f.p3).mPoint
+	norm := p2.Subtract(p1).Cross(p3.Subtract(p1))
+	if p1.Dot(norm) < 0 {
+		return norm.MultiplyScalar(-1)
+	}
+	return norm
+}
+
+func (s *Simplex) GetFace(index int) SimplexFace {
+	return s.faces[index]
+}
+
+func (s *Simplex) RemoveFace(index int) {
+	s.faces = append(s.faces[:index], s.faces[index+1:]...)
+	//update all indicies
+	for i, _ := range s.faces {
+		s.faces[i].index = i
+	}
+}
+
+func (s *Simplex) ClearFaces() {
+	s.faces = s.faces[:0]
+}
+
+func (s *Simplex) AddFace(face SimplexFace) {
+	s.faces = append(s.faces, face)
+	index := len(s.faces) - 1
+	s.faces[index].index = index
 }

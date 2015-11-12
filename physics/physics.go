@@ -2,7 +2,6 @@ package physics
 
 import (
 	"fmt"
-	vmath "github.com/walesey/go-engine/vectormath"
 )
 
 type PhysicsSpace struct {
@@ -77,13 +76,15 @@ func (ps *PhysicsSpace) DoStep() {
 						ps.contactCache.Add(i, j)
 
 						//Collision response
-						if !object1.Static {
-							object1.doStep(-ps.StepDt * 0.5)
-							object1.Velocity = vmath.Vector3{0, 0, 0}
-						}
-						if !object2.Static {
-							object2.doStep(-ps.StepDt * 0.5)
-							object2.Velocity = vmath.Vector3{0, 0, 0}
+						penV := object1.PenetrationVector(object2)
+						if !object1.Static && object2.Static {
+							object1.Position = object1.Position.Subtract(penV)
+						} else if object1.Static && !object2.Static {
+							object2.Position = object2.Position.Add(penV)
+						} else if !object1.Static && !object2.Static {
+							halfPen := penV.MultiplyScalar(0.5)
+							object1.Position = object1.Position.Subtract(halfPen)
+							object2.Position = object2.Position.Add(halfPen)
 						}
 					}
 				}

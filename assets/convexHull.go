@@ -1,6 +1,7 @@
 package assets
 
 import (
+	"fmt"
 	"github.com/walesey/go-engine/physics"
 	"github.com/walesey/go-engine/physics/gjk"
 	"github.com/walesey/go-engine/renderer"
@@ -30,6 +31,7 @@ func ConvexSetFromGeometry(geometry renderer.Geometry, cullThreshold float64) ph
 			verticies = append(verticies, v)
 		}
 	}
+	fmt.Println(len(verticies))
 	return gjk.NewConvexSet(verticies)
 }
 

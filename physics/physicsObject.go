@@ -67,6 +67,13 @@ func (obj *PhysicsObject) BroadPhaseOverlap(other *PhysicsObject) bool {
 	return obj.BroadPhase.Overlap(other.BroadPhase)
 }
 
+func (obj *PhysicsObject) PenetrationVector(other *PhysicsObject) vmath.Vector3 {
+	if obj.NarrowPhase == nil || other.NarrowPhase == nil {
+		return vmath.Vector3{}
+	}
+	return obj.NarrowPhase.PenetrationVector(other.NarrowPhase)
+}
+
 func (obj *PhysicsObject) doStep(dt float64) {
 	//process forces and acceleration
 	obj.ForceStore.DoStep(dt, obj)

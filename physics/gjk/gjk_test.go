@@ -41,12 +41,6 @@ func TestGJKOverlap(t *testing.T) {
 	assert.False(t, convexSet1.Overlap(convexSet2))
 }
 
-func TestGJKDistance(t *testing.T) {
-}
-
-func TestEPACollisionInfo(t *testing.T) {
-}
-
 func TestFarthestPointInDirection(t *testing.T) {
 	points := []vmath.Vector3{
 		vmath.Vector3{2, 2, 0},

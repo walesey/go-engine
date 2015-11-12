@@ -46,30 +46,32 @@ func PhysicsDemo(c *cli.Context) {
 	sceneGraph := renderer.CreateSceneGraph()
 	sceneGraph.AddBackGround(skyNode)
 
+	//geometry for physics objects
+	geomMonkey := assetLib.GetGeometry("monkey")
+	monkeyMat := assetLib.GetMaterial("monkeyMat")
+
 	//physics engine
 	physicsWorld := physics.NewPhysicsSpace()
 	actorStore := actor.NewActorStore()
-	for i := 0; i < 2; i = i + 1 {
+	for i := 0; i < 10; i = i + 1 {
 		//make obj geometry with node
-		geomgun := assetLib.GetGeometry("monkey")
-		gunMat := assetLib.GetMaterial("monkeyMat")
-		geomgun.Material = &gunMat
-		gunNode := renderer.CreateNode()
-		gunNode.Add(&geomgun)
+		geomMonkey.Material = &monkeyMat
+		monkeyNode := renderer.CreateNode()
+		monkeyNode.Add(&geomMonkey)
 
 		//create object with autgenerated colliders
 		phyObj := physics.NewPhysicsObject()
 		phyObj.Mass = 100
-		phyObj.BroadPhase = assets.BoundingBoxFromGeometry(geomgun)
-		phyObj.NarrowPhase = assets.ConvexSetFromGeometry(geomgun, 0.1)
+		phyObj.BroadPhase = assets.BoundingBoxFromGeometry(geomMonkey)
+		phyObj.NarrowPhase = assets.ConvexSetFromGeometry(geomMonkey, 0.3)
 
 		//attach to all the things ()
-		actorStore.Add(actor.NewPhysicsActor(gunNode, phyObj))
+		actorStore.Add(actor.NewPhysicsActor(monkeyNode, phyObj))
 		physicsWorld.Add(phyObj)
-		sceneGraph.Add(gunNode)
+		sceneGraph.Add(monkeyNode)
 
 		//set initial position
-		phyObj.Position = vmath.Vector3{0, 5 * float64(i), float64(i) * 0.1}
+		phyObj.Position = vmath.Vector3{0, 5 * float64(i), float64(i) * 0.5}
 
 		if i == 0 {
 			phyObj.Static = true
@@ -84,7 +86,7 @@ func PhysicsDemo(c *cli.Context) {
 	phyObj := physics.NewPhysicsObject()
 	phyObj.Static = true
 	phyObj.BroadPhase = assets.BoundingBoxFromGeometry(terrain)
-	phyObj.NarrowPhase = assets.ConvexSetFromGeometry(terrain, 0.1)
+	phyObj.NarrowPhase = assets.ConvexSetFromGeometry(terrain, 2.0)
 	actorStore.Add(actor.NewPhysicsActor(terrainNode, phyObj))
 	physicsWorld.Add(phyObj)
 	sceneGraph.Add(terrainNode)
