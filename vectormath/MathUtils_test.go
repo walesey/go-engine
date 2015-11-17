@@ -1,8 +1,9 @@
 package vectormath
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRound(t *testing.T) {
@@ -21,4 +22,8 @@ func TestApproxEqual(t *testing.T) {
 	assert.True(t, ApproxEqual(1.53121, 1.5, 0.1), "ApproxEqual")
 	assert.False(t, ApproxEqual(1.53121, 1.5, 0.01), "ApproxEqual")
 	assert.True(t, ApproxEqual(1.49121, 1.5, 0.01), "ApproxEqual")
+}
+
+func TestPointToLineDist(t *testing.T) {
+	assert.EqualValues(t, 1, PointToLineDist(Vector3{0, 0, 0}, Vector3{1, 0, 1}, Vector3{0, 1, 0}))
 }

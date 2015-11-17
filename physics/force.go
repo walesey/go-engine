@@ -25,6 +25,10 @@ type TorqueForce struct {
 	Value vmath.Quaternion
 }
 
+type PointForce struct {
+	Value, Position vmath.Vector3
+}
+
 func NewForceStore() *ForceStore {
 	return &ForceStore{make(map[string]Force)}
 }
@@ -62,4 +66,10 @@ func (force GravityForce) DoStep(dt float64, phyObj *PhysicsObject) {
 
 func (force TorqueForce) DoStep(dt float64, phyObj *PhysicsObject) {
 	//TODO:
+}
+
+func (force PointForce) DoStep(dt float64, phyObj *PhysicsObject) {
+	phyObj.Velocity = phyObj.Velocity.Add(
+		force.Value.DivideScalar(phyObj.Mass).
+			MultiplyScalar(dt))
 }

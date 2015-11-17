@@ -5,7 +5,9 @@ import (
 )
 
 type SimplexPoint struct {
-	mPoint vmath.Vector3
+	mPoint     vmath.Vector3
+	point      vmath.Vector3
+	otherPoint vmath.Vector3
 }
 
 type SimplexFace struct {

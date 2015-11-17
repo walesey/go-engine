@@ -1,12 +1,12 @@
 package assets
 
 import (
-	"fmt"
+	"math"
+
 	"github.com/walesey/go-engine/physics"
 	"github.com/walesey/go-engine/physics/gjk"
 	"github.com/walesey/go-engine/renderer"
 	vmath "github.com/walesey/go-engine/vectormath"
-	"math"
 )
 
 // Converts a geometry directly into points (does threshold culling optimisation)
@@ -31,7 +31,6 @@ func ConvexSetFromGeometry(geometry renderer.Geometry, cullThreshold float64) ph
 			verticies = append(verticies, v)
 		}
 	}
-	fmt.Println(len(verticies))
 	return gjk.NewConvexSet(verticies)
 }
 

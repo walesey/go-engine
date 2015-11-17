@@ -2,6 +2,7 @@ package physics
 
 import (
 	"fmt"
+	"math"
 )
 
 type PhysicsSpace struct {
@@ -68,6 +69,7 @@ func (ps *PhysicsSpace) DoStep() {
 			if i != j {
 				if object1.BroadPhaseOverlap(object2) {
 					if object1.NarrowPhaseOverlap(object2) {
+
 						//check contact cache
 						inContact := ps.contactCache.Contains(i, j)
 						if !inContact {
@@ -75,16 +77,48 @@ func (ps *PhysicsSpace) DoStep() {
 						}
 						ps.contactCache.Add(i, j)
 
-						//Collision response
+						//Collision info
 						penV := object1.PenetrationVector(object2)
+						norm := penV.Normalize()
+						// globalContact := object1.ContactPoint(object2)
+						//velocities
+						linearV1 := object1.Velocity.Dot(norm)
+						tangentV1 := object1.Velocity.Subtract(norm.MultiplyScalar(linearV1))
+						linearV2 := object2.Velocity.Dot(norm)
+						tangentV2 := object2.Velocity.Subtract(norm.MultiplyScalar(linearV2))
+						//radii
+						// localContact1 := globalContact.Subtract(object1.Position)
+						// localContact2 := globalContact.Subtract(object2.Position)
+						// r1 := localContact1.Length()
+						// r2 := localContact2.Length()
+
 						if !object1.Static && object2.Static {
 							object1.Position = object1.Position.Subtract(penV)
+							//linear impulse
+							dVl1 := -math.Sqrt(0.5 * linearV1 * linearV1 * object1.Friction)
+							object1.Velocity = norm.MultiplyScalar(dVl1).Add(tangentV1)
 						} else if object1.Static && !object2.Static {
 							object2.Position = object2.Position.Add(penV)
+							//linear impulse
+							dVl2 := -math.Sqrt(0.5 * linearV2 * linearV2 * object2.Friction)
+							object2.Velocity = norm.MultiplyScalar(dVl2).Add(tangentV2)
 						} else if !object1.Static && !object2.Static {
 							halfPen := penV.MultiplyScalar(0.5)
 							object1.Position = object1.Position.Subtract(halfPen)
 							object2.Position = object2.Position.Add(halfPen)
+							//linear momentum
+							linearVf := (linearV1*object1.Mass + linearV1*object2.Mass) / (object1.Mass + object2.Mass)
+							//impulse (bounce) (1/2 mv^2)
+							impulse1 := 0.5 * object1.Mass * (linearV1 - linearVf) * (linearV1 - linearVf)
+							impulse2 := 0.5 * object2.Mass * (linearV2 - linearVf) * (linearV2 - linearVf)
+							impulse := impulse1 + impulse2
+							dVl1 := -math.Sqrt(impulse * object1.Friction / object1.Mass)
+							dVl2 := math.Sqrt(impulse * object2.Friction / object2.Mass)
+							//combine and apply velocities
+							object1.Velocity = norm.MultiplyScalar(linearVf + dVl1).Add(tangentV1)
+							object2.Velocity = norm.MultiplyScalar(linearVf + dVl2).Add(tangentV2)
+
+							//angular
 						}
 					}
 				}

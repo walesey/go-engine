@@ -2,11 +2,13 @@ package physics
 
 import (
 	"fmt"
+
 	vmath "github.com/walesey/go-engine/vectormath"
 )
 
 type Collider interface {
 	Overlap(other Collider) bool
+	ContactPoint(other Collider) vmath.Vector3
 	PenetrationVector(other Collider) vmath.Vector3
 	Offset(offset vmath.Vector3, orientation vmath.Quaternion)
 }
@@ -37,6 +39,16 @@ func (bb *BoundingBox) Overlap(other Collider) bool {
 	return false
 }
 
+//PenetrationVector - get the vector of penetration between the two colliders
+func (bb *BoundingBox) PenetrationVector(other Collider) vmath.Vector3 {
+	return vmath.Vector3{} // TODO
+}
+
+//ContactPoints -
+func (bb *BoundingBox) ContactPoint(other Collider) vmath.Vector3 {
+	return vmath.Vector3{} // TODO
+}
+
 //OverlapBoundingBox - classic AABB overlap test
 func (bb *BoundingBox) OverlapBoundingBox(other *BoundingBox) bool {
 	if OneDimensionOverlap(bb.offset.X+bb.bounds.X/2, bb.offset.X-bb.bounds.X/2, other.offset.X+other.bounds.X/2, other.offset.X-other.bounds.X/2) {
@@ -49,11 +61,6 @@ func (bb *BoundingBox) OverlapBoundingBox(other *BoundingBox) bool {
 		return false
 	}
 	return true
-}
-
-//PenetrationVector - get the vector of penetration between the two colliders
-func (bb *BoundingBox) PenetrationVector(other Collider) vmath.Vector3 {
-	return vmath.Vector3{} // TODO
 }
 
 func OneDimensionOverlap(high1, low1, high2, low2 float64) bool {

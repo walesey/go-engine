@@ -1,17 +1,18 @@
 package gjk
 
 import (
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	vmath "github.com/walesey/go-engine/vectormath"
-	"testing"
 )
 
 func TestSimplex(t *testing.T) {
 	simplex := NewSimplex()
-	simplex.Add(SimplexPoint{vmath.Vector3{1, 1, 1}})
-	simplex.Add(SimplexPoint{vmath.Vector3{2, 2, 2}})
-	simplex.Add(SimplexPoint{vmath.Vector3{3, 3, 3}})
-	simplex.Add(SimplexPoint{vmath.Vector3{4, 4, 4}})
+	simplex.Add(SimplexPoint{mPoint: vmath.Vector3{1, 1, 1}})
+	simplex.Add(SimplexPoint{mPoint: vmath.Vector3{2, 2, 2}})
+	simplex.Add(SimplexPoint{mPoint: vmath.Vector3{3, 3, 3}})
+	simplex.Add(SimplexPoint{mPoint: vmath.Vector3{4, 4, 4}})
 	assert.EqualValues(t, 4, simplex.Len(), "simplex should have 4 entries")
 
 	simplex.Remove(2)
@@ -26,10 +27,10 @@ func TestSimplex(t *testing.T) {
 
 func TestSimplexFaces(t *testing.T) {
 	simplex := NewSimplex()
-	simplex.Add(SimplexPoint{vmath.Vector3{-0.1, -0.1, -0.05}})
-	simplex.Add(SimplexPoint{vmath.Vector3{1, -0.1, -0.05}})
-	simplex.Add(SimplexPoint{vmath.Vector3{-0.1, 1, -0.05}})
-	simplex.Add(SimplexPoint{vmath.Vector3{-0.1, -0.1, 1}})
+	simplex.Add(SimplexPoint{mPoint: vmath.Vector3{-0.1, -0.1, -0.05}})
+	simplex.Add(SimplexPoint{mPoint: vmath.Vector3{1, -0.1, -0.05}})
+	simplex.Add(SimplexPoint{mPoint: vmath.Vector3{-0.1, 1, -0.05}})
+	simplex.Add(SimplexPoint{mPoint: vmath.Vector3{-0.1, -0.1, 1}})
 
 	simplex.AddFace(SimplexFace{p1: 0, p2: 1, p3: 2})
 	simplex.AddFace(SimplexFace{p1: 0, p2: 2, p3: 3})
@@ -51,7 +52,7 @@ func TestSimplexFaces(t *testing.T) {
 	norm = simplex.FaceNormal(3).Normalize()
 	assert.True(t, norm.ApproxEqual(vmath.Vector3{0.6, 0.6, 0.6}, 0.2), "normal should face away from the origin")
 
-	simplex.AddPointToFace(SimplexPoint{vmath.Vector3{1, 1, 1}}, 3)
+	simplex.AddPointToFace(SimplexPoint{mPoint: vmath.Vector3{1, 1, 1}}, 3)
 	assert.EqualValues(t, 5, simplex.Len(), "simplex should have an extra point")
 	assert.EqualValues(t, 6, len(simplex.faces), "simplex should have 6 faces now")
 	for i := 0; i < len(simplex.faces); i = i + 1 {

@@ -8,7 +8,8 @@ type PhysicsObject struct {
 	Position, Velocity           vmath.Vector3
 	Orientation, AngularVelocity vmath.Quaternion
 	Mass                         float64
-	Static                       bool //disables movement
+	Friction                     float64 // (0.0 to 1.0)
+	Static                       bool    //disables movement
 	ForceStore                   *ForceStore
 	BroadPhase, NarrowPhase      Collider
 }
@@ -71,7 +72,18 @@ func (obj *PhysicsObject) PenetrationVector(other *PhysicsObject) vmath.Vector3 
 	if obj.NarrowPhase == nil || other.NarrowPhase == nil {
 		return vmath.Vector3{}
 	}
+	obj.NarrowPhase.Offset(obj.Position, obj.Orientation)
+	other.NarrowPhase.Offset(other.Position, other.Orientation)
 	return obj.NarrowPhase.PenetrationVector(other.NarrowPhase)
+}
+
+func (obj *PhysicsObject) ContactPoint(other *PhysicsObject) vmath.Vector3 {
+	if obj.NarrowPhase == nil || other.NarrowPhase == nil {
+		return vmath.Vector3{}
+	}
+	obj.NarrowPhase.Offset(obj.Position, obj.Orientation)
+	other.NarrowPhase.Offset(other.Position, other.Orientation)
+	return obj.NarrowPhase.ContactPoint(other.NarrowPhase)
 }
 
 func (obj *PhysicsObject) doStep(dt float64) {
