@@ -54,27 +54,26 @@ func PhysicsDemo(c *cli.Context) {
 	//physics engine
 	physicsWorld := physics.NewPhysicsSpace()
 	actorStore := actor.NewActorStore()
-	for i := 0; i < 10; i = i + 1 {
+	for i := 0; i < 35; i = i + 1 {
 		monkeyNode := renderer.CreateNode()
 		monkeyNode.Add(&geomMonkey)
 
 		//create object with autgenerated colliders
-		phyObj := physics.NewPhysicsObject()
+		phyObj := physicsWorld.CreateObject()
 		phyObj.Mass = 100
-		phyObj.Friction = 0.5
+		phyObj.Friction = 0.0
 		phyObj.BroadPhase = assets.BoundingBoxFromGeometry(geomMonkey)
 		phyObj.NarrowPhase = assets.ConvexSetFromGeometry(geomMonkey, 0.3)
 
 		//attach to all the things ()
 		actorStore.Add(actor.NewPhysicsActor(monkeyNode, phyObj))
-		physicsWorld.Add(phyObj)
 		sceneGraph.Add(monkeyNode)
 
 		//set initial position
 		phyObj.Position = vmath.Vector3{0, 5 * float64(i), 0}
 
 		if i == 0 {
-			phyObj.Static = true
+			// phyObj.Static = true
 		}
 	}
 
@@ -86,18 +85,17 @@ func PhysicsDemo(c *cli.Context) {
 		terrainNode := renderer.CreateNode()
 		terrainNode.Add(&terrain)
 
-		phyObj := physics.NewPhysicsObject()
-		phyObj.Friction = 0.5
+		phyObj := physicsWorld.CreateObject()
+		phyObj.Friction = 0.1
 		phyObj.Static = true
 		phyObj.BroadPhase = assets.BoundingBoxFromGeometry(terrain)
 		phyObj.NarrowPhase = assets.ConvexSetFromGeometry(terrain, 2.0)
 
 		actorStore.Add(actor.NewPhysicsActor(terrainNode, phyObj))
-		physicsWorld.Add(phyObj)
 		sceneGraph.Add(terrainNode)
 		if i == 0 {
-			phyObj.Position = vmath.Vector3{0, -15, 0}
-			phyObj.Orientation = vmath.AngleAxis(0.57, vmath.Vector3{0, 0, 1})
+			phyObj.Position = vmath.Vector3{-3, -15, 0}
+			phyObj.Orientation = vmath.AngleAxis(0.07, vmath.Vector3{0, 0, 1})
 		} else if i == 1 {
 			phyObj.Position = vmath.Vector3{15, 0, 0}
 			phyObj.Orientation = vmath.AngleAxis(0.7, vmath.Vector3{0, 0, 1})
@@ -114,14 +112,14 @@ func PhysicsDemo(c *cli.Context) {
 	}
 
 	//gravity global force
-	physicsWorld.GlobalForces.AddForce("gravity", physics.GravityForce{vmath.Vector3{0, -10, 0}})
+	physicsWorld.GlobalForces.AddForce("gravity", physics.GravityForce{vmath.Vector3{0, -1, 0}})
 
 	//camera
 	camera := renderer.CreateCamera(glRenderer)
 	freeMoveActor := actor.CreateFreeMoveActor(camera)
 	actorStore.Add(freeMoveActor)
 	freeMoveActor.MoveSpeed = 3.0
-	freeMoveActor.Location = vmath.Vector3{-10, 0, -10}
+	freeMoveActor.Location = vmath.Vector3{10, 0, -10}
 
 	glRenderer.Init = func() {
 		//lighting

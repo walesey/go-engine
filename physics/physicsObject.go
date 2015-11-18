@@ -1,8 +1,6 @@
 package physics
 
-import (
-	vmath "github.com/walesey/go-engine/vectormath"
-)
+import vmath "github.com/walesey/go-engine/vectormath"
 
 type PhysicsObject struct {
 	Position, Velocity           vmath.Vector3
@@ -30,14 +28,14 @@ func (objPool PhysicsObjectPool) GetPhysicsObject() *PhysicsObject {
 		objPool.pool = objPool.pool[:len(objPool.pool)-1]
 		return obj
 	}
-	return NewPhysicsObject()
+	return newPhysicsObject()
 }
 
 func (objPool PhysicsObjectPool) ReleasePhysicsObject(obj *PhysicsObject) {
 	objPool.pool = append(objPool.pool, obj)
 }
 
-func NewPhysicsObject() *PhysicsObject {
+func newPhysicsObject() *PhysicsObject {
 	return &PhysicsObject{
 		Position:        vmath.Vector3{0, 0, 0},
 		Velocity:        vmath.Vector3{0, 0, 0},

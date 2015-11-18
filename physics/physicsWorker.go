@@ -70,5 +70,5 @@ func (worker *PhysicsWorker) Read() bool {
 
 func (worker *PhysicsWorker) Close() {
 	worker.kill = true
-	worker.Write(PhysicsPair{NewPhysicsObject(), NewPhysicsObject()})
+	worker.Write(PhysicsPair{newPhysicsObject(), newPhysicsObject()})
 }
