@@ -1,13 +1,14 @@
 package physics
 
 import (
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/walesey/go-engine/vectormath"
-	"testing"
 )
 
 func TestPhysicsObject(t *testing.T) {
-	object := NewPhysicsObject()
+	object := newPhysicsObject()
 	object.Velocity = vectormath.Vector3{1, 2, 3}
 	object.AngularVelocity = vectormath.Quaternion{0, 1, 0, 5}
 	object.doStep(1)
@@ -17,17 +18,17 @@ func TestPhysicsObject(t *testing.T) {
 }
 
 func TestAddRemoveObjects(t *testing.T) {
-	object1 := NewPhysicsObject()
+	world := NewPhysicsSpace()
+	world.StepDt = 1
+
+	object1 := world.CreateObject()
 	object1.Velocity = vectormath.Vector3{1, 0, 0}
 	object1.Position = vectormath.Vector3{0, 0, 0}
 
-	object2 := NewPhysicsObject()
+	object2 := world.CreateObject()
 	object2.Velocity = vectormath.Vector3{1, 0, 0}
 	object2.Position = vectormath.Vector3{0, 0, 0}
 
-	world := NewPhysicsSpace()
-	world.StepDt = 1
-	world.Add(object1, object2)
 	world.DoStep()
 
 	assert.True(t, vectormath.Vector3{1, 0, 0}.ApproxEqual(object1.Position, 0.001), "physics object should be updated by physicsSpace")

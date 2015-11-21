@@ -71,6 +71,11 @@ func main() {
 			Usage:  "run the physics demo",
 			Action: examples.PhysicsDemo,
 		},
+		{
+			Name:   "collision",
+			Usage:  "run the collision demo",
+			Action: examples.Collisions,
+		},
 	}
 
 	app.Run(os.Args)

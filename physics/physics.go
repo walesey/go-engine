@@ -3,6 +3,8 @@ package physics
 import (
 	"fmt"
 	"math"
+
+	vmath "github.com/walesey/go-engine/vectormath"
 )
 
 type PhysicsSpace struct {
@@ -85,7 +87,15 @@ func (ps *PhysicsSpace) DoStep() {
 
 							//Collision info
 							penV := object1.PenetrationVector(object2)
-							norm := penV.Normalize()
+
+							//collision normal
+							var norm vmath.Vector3
+							if penV.LengthSquared() > 0 {
+								norm = penV.Normalize()
+							} else {
+								norm = object2.Position.Subtract(object1.Position).Normalize()
+							}
+
 							// globalContact := object1.ContactPoint(object2)
 							//velocities
 							linearV1 := object1.Velocity.Dot(norm)
@@ -108,7 +118,7 @@ func (ps *PhysicsSpace) DoStep() {
 								object1.Position = object1.Position.Subtract(halfPen)
 								object2.Position = object2.Position.Add(halfPen)
 								//linear momentum
-								linearVf := (linearV1*object1.Mass + linearV1*object2.Mass) / (object1.Mass + object2.Mass)
+								linearVf := (linearV1*object1.Mass + linearV2*object2.Mass) / (object1.Mass + object2.Mass)
 								//impulse (bounce) (1/2 mv^2)
 								impulse1 := 0.5 * object1.Mass * (linearV1 - linearVf) * (linearV1 - linearVf)
 								impulse2 := 0.5 * object2.Mass * (linearV2 - linearVf) * (linearV2 - linearVf)

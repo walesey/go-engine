@@ -35,7 +35,7 @@ func ConvexSetFromGeometry(geometry renderer.Geometry, cullThreshold float64) ph
 }
 
 func BoundingBoxFromGeometry(geometry renderer.Geometry) physics.Collider {
-	largest := vmath.Vector3{0, 0, 0}
+	largest := 0.0
 	for i := 0; i < len(geometry.Indicies); i = i + 1 {
 		index := geometry.Indicies[i]
 		v := vmath.Vector3{
@@ -43,16 +43,16 @@ func BoundingBoxFromGeometry(geometry renderer.Geometry) physics.Collider {
 			float64(geometry.Verticies[index*18+1]),
 			float64(geometry.Verticies[index*18+2]),
 		}
-		if math.Abs(v.X) > largest.X {
-			largest.X = math.Abs(v.X)
+		if math.Abs(v.X) > largest {
+			largest = math.Abs(v.X)
 		}
-		if math.Abs(v.Y) > largest.Y {
-			largest.Y = math.Abs(v.Y)
+		if math.Abs(v.Y) > largest {
+			largest = math.Abs(v.Y)
 		}
-		if math.Abs(v.Z) > largest.Z {
-			largest.Z = math.Abs(v.Z)
+		if math.Abs(v.Z) > largest {
+			largest = math.Abs(v.Z)
 		}
 	}
 
-	return physics.NewBoundingBox(largest.MultiplyScalar(2))
+	return physics.NewBoundingBox(vmath.Vector3{largest, largest, largest}.MultiplyScalar(2))
 }

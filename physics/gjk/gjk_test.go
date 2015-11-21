@@ -42,6 +42,29 @@ func TestGJKOverlap(t *testing.T) {
 	assert.False(t, convexSet1.Overlap(convexSet2))
 }
 
+func TestGJKOverlap_rotation(t *testing.T) {
+	verts := []vmath.Vector3{
+		vmath.Vector3{-0.1, 0, -1},
+		vmath.Vector3{0.1, 0, -1},
+		vmath.Vector3{0.1, 0.2, -1},
+		vmath.Vector3{-0.1, 0.2, -1},
+		vmath.Vector3{-0.1, 0, 1},
+		vmath.Vector3{0.1, 0, 1},
+		vmath.Vector3{0.1, 0.2, 1},
+		vmath.Vector3{-0.1, 0.2, 1},
+	}
+	convexSet1 := NewConvexSet(verts)
+	convexSet2 := NewConvexSet(verts)
+
+	convexSet1.Offset(vmath.Vector3{0, 0.3, 0}, vmath.IdentityQuaternion())
+	convexSet2.Offset(vmath.Vector3{0, 0, 0}, vmath.IdentityQuaternion())
+	assert.False(t, convexSet1.Overlap(convexSet2))
+
+	convexSet1.Offset(vmath.Vector3{0, 0.3, 0}, vmath.AngleAxis(-0.3, vmath.Vector3{1, 0, 0}))
+	convexSet2.Offset(vmath.Vector3{0, 0, 0}, vmath.IdentityQuaternion())
+	assert.True(t, convexSet1.Overlap(convexSet2))
+}
+
 func TestGJKContact(t *testing.T) {
 	verts := []vmath.Vector3{
 		vmath.Vector3{0, 0, 0},

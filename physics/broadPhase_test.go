@@ -1,14 +1,15 @@
 package physics
 
 import (
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	vmath "github.com/walesey/go-engine/vectormath"
-	"testing"
 )
 
 func TestBoundingBoxWithPhysicsObject(t *testing.T) {
-	obj1 := NewPhysicsObject()
-	obj2 := NewPhysicsObject()
+	obj1 := newPhysicsObject()
+	obj2 := newPhysicsObject()
 	bb1 := NewBoundingBox(vmath.Vector3{1, 1, 1})
 	bb2 := NewBoundingBox(vmath.Vector3{1, 1, 1})
 	obj1.BroadPhase = bb1
