@@ -88,7 +88,7 @@ func (cs *ConvexSet) OverlapConvexSet(other *ConvexSet) bool {
 	return false
 }
 
-// ContactPointsConvexSet Uses GJK and Returns the two local contact point
+// ContactPointsConvexSet Uses GJK and Returns the global contact point
 func (cs *ConvexSet) ContactPointConvexSet(other *ConvexSet) vmath.Vector3 {
 	cs.simplex.Clear()
 	d := cs.searchDir

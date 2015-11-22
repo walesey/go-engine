@@ -96,17 +96,30 @@ func (ps *PhysicsSpace) DoStep() {
 								norm = object2.Position.Subtract(object1.Position).Normalize()
 							}
 
-							// globalContact := object1.ContactPoint(object2)
+							globalContact := object1.ContactPoint(object2)
+							fmt.Println(globalContact)
 							//velocities
 							linearV1 := object1.Velocity.Dot(norm)
 							tangentV1 := object1.Velocity.Subtract(norm.MultiplyScalar(linearV1))
 							linearV2 := object2.Velocity.Dot(norm)
 							tangentV2 := object2.Velocity.Subtract(norm.MultiplyScalar(linearV2))
-							//radii
-							// localContact1 := globalContact.Subtract(object1.Position)
-							// localContact2 := globalContact.Subtract(object2.Position)
-							// r1 := localContact1.Length()
-							// r2 := localContact2.Length()
+							//radii / tangent velocity at contact due to angular velocity
+							localContact1 := globalContact.Subtract(object1.Position)
+							localContact2 := globalContact.Subtract(object2.Position)
+							r1 := localContact1.Length()
+							r2 := localContact2.Length()
+							angularV1 := object1.AngularVelocity
+							angularV2 := object2.AngularVelocity
+							angularV1axis := vmath.Vector3{angularV1.X, angularV1.Y, angularV1.Z}
+							angularV2axis := vmath.Vector3{angularV2.X, angularV2.Y, angularV2.Z}
+							contactTangentV1 := localContact1.Cross(angularV1axis)
+							contactTangentV2 := localContact2.Cross(angularV2axis)
+							if contactTangentV1.LengthSquared() > 0.00000001 {
+								contactTangentV1 = contactTangentV1.Normalize().MultiplyScalar(r1 * angularV1.W).Add(tangentV1)
+							}
+							if contactTangentV2.LengthSquared() > 0.00000001 {
+								contactTangentV2 = contactTangentV2.Normalize().MultiplyScalar(r2 * angularV2.W).Add(tangentV2)
+							}
 
 							if object2.Static {
 								object1.Position = object1.Position.Subtract(penV)
@@ -130,6 +143,19 @@ func (ps *PhysicsSpace) DoStep() {
 								object2.Velocity = norm.MultiplyScalar(linearVf + dVl2).Add(tangentV2)
 
 								//angular
+								if r1 > 0 && r2 > 0 {
+									AngMomentum1 := contactTangentV1.MultiplyScalar(r1).MultiplyScalar(object1.Mass)
+									AngMomentum2 := contactTangentV2.MultiplyScalar(r2).MultiplyScalar(object2.Mass)
+									// angular momentum
+									contactTangentVf := AngMomentum1.Add(AngMomentum2).DivideScalar(r1*object1.Mass + r2*object2.Mass)
+									// get final angular velocities
+									localTangentV1f := contactTangentVf.Subtract(tangentV1)
+									localTangentV2f := contactTangentVf.Subtract(tangentV2)
+									angularV1AxisF := localContact1.Cross(localTangentV1f)
+									angularV2AxisF := localContact2.Cross(localTangentV2f)
+									object1.AngularVelocity = vmath.Quaternion{angularV1AxisF.X, angularV1AxisF.Y, angularV1AxisF.Z, -localTangentV1f.Length() / r1}
+									object2.AngularVelocity = vmath.Quaternion{angularV2AxisF.X, angularV2AxisF.Y, angularV2AxisF.Z, localTangentV2f.Length() / r2}
+								}
 							}
 						}
 					}
