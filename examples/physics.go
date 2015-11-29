@@ -54,7 +54,7 @@ func PhysicsDemo(c *cli.Context) {
 	//physics engine
 	physicsWorld := physics.NewPhysicsSpace()
 	actorStore := actor.NewActorStore()
-	for i := 0; i < 3; i = i + 1 {
+	for i := 0; i < 30; i = i + 1 {
 		monkeyNode := renderer.CreateNode()
 		monkeyNode.Add(&geomMonkey)
 
@@ -70,11 +70,11 @@ func PhysicsDemo(c *cli.Context) {
 		sceneGraph.Add(monkeyNode)
 
 		//set initial position
-		phyObj.Position = vmath.Vector3{0.2 * float64(i), 5 * float64(i), 7.2 * float64(i)}
+		phyObj.Position = vmath.Vector3{0.2 * float64(i), 4 * float64(i), 3.2 * float64(i)}
 
 		if i == 0 {
 			// phyObj.Static = true
-			phyObj.Velocity = vmath.Vector3{0, 1.1, 0}
+			phyObj.Velocity = vmath.Vector3{0, 0.6, 0}
 		}
 	}
 
@@ -112,13 +112,13 @@ func PhysicsDemo(c *cli.Context) {
 	}
 
 	//gravity global force
-	// physicsWorld.GlobalForces.AddForce("gravity", physics.GravityForce{vmath.Vector3{0, -10, 0}})
+	// physicsWorld.GlobalForces.AddForce("gravity", &physics.GravityForce{vmath.Vector3{0, -10, 0}})
 
 	//camera
 	camera := renderer.CreateCamera(glRenderer)
 	freeMoveActor := actor.CreateFreeMoveActor(camera)
 	actorStore.Add(freeMoveActor)
-	freeMoveActor.MoveSpeed = 3.0
+	freeMoveActor.MoveSpeed = 10.0
 	freeMoveActor.Location = vmath.Vector3{10, 0, -10}
 
 	glRenderer.Init = func() {

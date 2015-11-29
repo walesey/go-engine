@@ -6,6 +6,10 @@ type Vector3 struct {
 	X, Y, Z float64
 }
 
+type Vector4 struct {
+	X, Y, Z, W float64
+}
+
 type Vector interface {
 	Length() float64
 	LengthSquared() float64
@@ -24,6 +28,14 @@ func (v Vector3) LengthSquared() float64 {
 }
 
 func (v Vector3) Length() float64 {
+	return math.Sqrt(v.LengthSquared())
+}
+
+func (v Vector4) LengthSquared() float64 {
+	return (v.X * v.X) + (v.Y * v.Y) + (v.Z * v.Z) + (v.W * v.W)
+}
+
+func (v Vector4) Length() float64 {
 	return math.Sqrt(v.LengthSquared())
 }
 

@@ -42,11 +42,11 @@ func (actor *FreeMoveActor) Update(dt float64) {
 func (actor *FreeMoveActor) Look(dx, dy float64) {
 	actor.lookAngle = actor.lookAngle - actor.LookSpeed*dx
 	actor.lookPitch = actor.lookPitch + actor.LookSpeed*dy
-	if actor.lookPitch > 1 {
-		actor.lookPitch = 1
+	if actor.lookPitch > 1.5 {
+		actor.lookPitch = 1.5
 	}
-	if actor.lookPitch < -1 {
-		actor.lookPitch = -1
+	if actor.lookPitch < -1.5 {
+		actor.lookPitch = -1.5
 	}
 }
 

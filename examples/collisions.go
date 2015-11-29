@@ -92,7 +92,7 @@ func Collisions(c *cli.Context) {
 	sceneGraph.Add(terrainNode)
 
 	//gravity global force
-	physicsWorld.GlobalForces.AddForce("gravity", physics.GravityForce{vmath.Vector3{0, -1, 0}})
+	physicsWorld.GlobalForces.AddForce("gravity", &physics.GravityForce{vmath.Vector3{0, -1, 0}})
 
 	glRenderer.Init = func() {
 		//lighting

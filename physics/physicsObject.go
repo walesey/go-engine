@@ -84,6 +84,19 @@ func (obj *PhysicsObject) ContactPoint(other *PhysicsObject) vmath.Vector3 {
 	return obj.NarrowPhase.ContactPoint(other.NarrowPhase)
 }
 
+// AngularVelocityVector Get angular velocity as a Vector3
+func (obj *PhysicsObject) AngularVelocityVector() vmath.Vector3 {
+	w := vmath.Vector3{X: obj.AngularVelocity.X, Y: obj.AngularVelocity.Y, Z: obj.AngularVelocity.Z}
+	if !vmath.ApproxEqual(w.LengthSquared(), 1.0, 0.00001) {
+		if w.LengthSquared() < 0.00001 {
+			w.X = 1
+		} else {
+			w = w.Normalize()
+		}
+	}
+	return w.MultiplyScalar(obj.AngularVelocity.W)
+}
+
 func (obj *PhysicsObject) doStep(dt float64) {
 	//process forces and acceleration
 	obj.ForceStore.DoStep(dt, obj)
