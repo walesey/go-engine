@@ -110,26 +110,44 @@ func (ps *PhysicsSpace) DoStep() {
 							contactV1 := radialV1.Add(object1.Velocity)
 							contactV2 := radialV2.Add(object2.Velocity)
 
+							mR1 := 0.4 * object1.Mass * object1.Radius
+							mR2 := 0.4 * object2.Mass * object2.Radius
+							tensor1 := vmath.Matrix3{
+								mR1, 0.0, 0.0,
+								0.0, mR1, 0.0,
+								0.0, 0.0, mR1,
+							}
+							tensor2 := vmath.Matrix3{
+								mR2, 0.0, 0.0,
+								0.0, mR2, 0.0,
+								0.0, 0.0, mR2,
+							}
+
 							if object2.Static {
+
 								object1.Position = object1.Position.Subtract(penV)
 
+								contactV := contactV1
+								relativeV := norm.Dot(contactV)
+								velocityImpulse := -relativeV
+
+								vel1 := tensor1.Inverse().Transform(localContact1.Cross(norm))
+								vel1 = vel1.Cross(localContact1)
+								impulseDenom := (1.0 / object1.Mass) + norm.Dot(vel1)
+
+								normalImpulse := velocityImpulse / impulseDenom
+								impulseVector1 := norm.MultiplyScalar(normalImpulse)
+								torqueImpulse1 := impulseVector1.Cross(localContact1)
+
+								object1.Velocity = object1.Velocity.Add(impulseVector1.DivideScalar(object1.Mass))
+								newAngularV1 := angularV1.Add(tensor1.Inverse().Transform(torqueImpulse1))
+								object1.SetAngularVelocityVector(newAngularV1)
+
 							} else {
+
 								halfPen := penV.MultiplyScalar(0.5)
 								object1.Position = object1.Position.Subtract(halfPen)
 								object2.Position = object2.Position.Add(halfPen)
-
-								mR1 := 0.4 * object1.Mass * object1.Radius
-								mR2 := 0.4 * object2.Mass * object2.Radius
-								tensor1 := vmath.Matrix3{
-									mR1, 0.0, 0.0,
-									0.0, mR1, 0.0,
-									0.0, 0.0, mR1,
-								}
-								tensor2 := vmath.Matrix3{
-									mR2, 0.0, 0.0,
-									0.0, mR2, 0.0,
-									0.0, 0.0, mR2,
-								}
 
 								contactV := contactV1.Subtract(contactV2)
 								relativeV := norm.Dot(contactV)
@@ -145,8 +163,8 @@ func (ps *PhysicsSpace) DoStep() {
 								normalImpulse := velocityImpulse / impulseDenom
 								impulseVector1 := norm.MultiplyScalar(normalImpulse)
 								impulseVector2 := impulseVector1.MultiplyScalar(-1)
-								torqueImpulse1 := localContact1.Cross(impulseVector1).MultiplyScalar(-1)
-								torqueImpulse2 := localContact2.Cross(impulseVector2).MultiplyScalar(-1)
+								torqueImpulse1 := impulseVector1.Cross(localContact1)
+								torqueImpulse2 := impulseVector2.Cross(localContact2)
 
 								object1.Velocity = object1.Velocity.Add(impulseVector1.DivideScalar(object1.Mass))
 								object2.Velocity = object2.Velocity.Add(impulseVector2.DivideScalar(object2.Mass))

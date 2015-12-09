@@ -47,8 +47,8 @@ func PhysicsDemo(c *cli.Context) {
 	sceneGraph.AddBackGround(skyNode)
 
 	//geometry for physics objects
-	geomMonkey := assetLib.GetGeometry("beam")
-	monkeyMat := assetLib.GetMaterial("beamMat")
+	geomMonkey := assetLib.GetGeometry("monkey")
+	monkeyMat := assetLib.GetMaterial("monkeyMat")
 	geomMonkey.Material = &monkeyMat
 
 	//physics engine
@@ -70,11 +70,11 @@ func PhysicsDemo(c *cli.Context) {
 		sceneGraph.Add(monkeyNode)
 
 		//set initial position
-		phyObj.Position = vmath.Vector3{0.2 * float64(i), 4 * float64(i), 1.2 * float64(i)}
+		phyObj.Position = vmath.Vector3{0.2 * float64(i), 4 * float64(i), 0.2 * float64(i)}
 
 		if i == 0 {
 			// phyObj.Static = true
-			phyObj.Velocity = vmath.Vector3{0, 2.6, 0}
+			phyObj.Velocity = vmath.Vector3{0, 5.6, 0}
 		}
 	}
 
@@ -112,7 +112,7 @@ func PhysicsDemo(c *cli.Context) {
 	}
 
 	//gravity global force
-	// physicsWorld.GlobalForces.AddForce("gravity", &physics.GravityForce{vmath.Vector3{0, -10, 0}})
+	physicsWorld.GlobalForces.AddForce("gravity", &physics.GravityForce{vmath.Vector3{0, -10, 0}})
 
 	//camera
 	camera := renderer.CreateCamera(glRenderer)
