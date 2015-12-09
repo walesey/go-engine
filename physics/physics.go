@@ -70,8 +70,6 @@ func (ps *PhysicsSpace) DoStep() {
 
 	ps.contactCache.MarkContactsAsOld()
 
-	pointForce := new(PointForce)
-
 	//do broadphase overlaps and narrow phase checks for each
 	for i, object1 := range ps.objects {
 		if !object1.Static {
@@ -100,52 +98,63 @@ func (ps *PhysicsSpace) DoStep() {
 								norm = vmath.Vector3{1, 0, 0}
 							}
 
-							// norm := object1.Position.Subtract(object2.Position)
-							// if norm.LengthSquared() < 0.0000001 {
-							// 	norm = vmath.Vector3{1, 0, 0}
-							// } else {
-							// 	norm = norm.Normalize()
-							// }
-
 							globalContact := object1.ContactPoint(object2)
-							// angular velocity
 							localContact1 := globalContact.Subtract(object1.Position)
 							localContact2 := globalContact.Subtract(object2.Position)
+
+							//velocities
 							angularV1 := object1.AngularVelocityVector()
 							angularV2 := object2.AngularVelocityVector()
+							radialV1 := localContact1.Cross(angularV1)
+							radialV2 := localContact2.Cross(angularV2)
+							contactV1 := radialV1.Add(object1.Velocity)
+							contactV2 := radialV2.Add(object2.Velocity)
 
 							if object2.Static {
 								object1.Position = object1.Position.Subtract(penV)
-								e := 0.1
-								impulse := SphericalCollisionResponse(
-									e, object1.Mass, 999999999999999999.9,
-									localContact1, localContact2, norm,
-									object1.Velocity, vmath.Vector3{0, 0, 0}, angularV1, vmath.Vector3{0, 0, 0},
-								)
-
-								pointForce.Value = norm.MultiplyScalar(-impulse)
-								pointForce.Position = localContact1
-								pointForce.DoStep(1.0, object1)
 
 							} else {
 								halfPen := penV.MultiplyScalar(0.5)
 								object1.Position = object1.Position.Subtract(halfPen)
 								object2.Position = object2.Position.Add(halfPen)
 
-								e := 0.1
-								impulse := SphericalCollisionResponse(
-									e, object1.Mass, object2.Mass,
-									localContact1, localContact2, norm,
-									object1.Velocity, object2.Velocity, angularV1, angularV2,
-								)
+								mR1 := 0.4 * object1.Mass * object1.Radius
+								mR2 := 0.4 * object2.Mass * object2.Radius
+								tensor1 := vmath.Matrix3{
+									mR1, 0.0, 0.0,
+									0.0, mR1, 0.0,
+									0.0, 0.0, mR1,
+								}
+								tensor2 := vmath.Matrix3{
+									mR2, 0.0, 0.0,
+									0.0, mR2, 0.0,
+									0.0, 0.0, mR2,
+								}
 
-								pointForce.Value = norm.MultiplyScalar(-impulse)
-								pointForce.Position = localContact1
-								pointForce.DoStep(1.0, object1)
+								contactV := contactV1.Subtract(contactV2)
+								relativeV := norm.Dot(contactV)
+								velocityImpulse := -relativeV
 
-								pointForce.Value = norm.MultiplyScalar(impulse)
-								pointForce.Position = localContact2
-								pointForce.DoStep(1.0, object2)
+								vel1 := tensor1.Inverse().Transform(localContact1.Cross(norm))
+								vel1 = vel1.Cross(localContact1)
+								impulseDenom1 := (1.0 / object1.Mass) + norm.Dot(vel1)
+								vel2 := tensor2.Inverse().Transform(localContact2.Cross(norm))
+								vel2 = vel2.Cross(localContact2)
+								impulseDenom2 := (1.0 / object2.Mass) + norm.Dot(vel2)
+								impulseDenom := impulseDenom1 + impulseDenom2
+								normalImpulse := velocityImpulse / impulseDenom
+								impulseVector1 := norm.MultiplyScalar(normalImpulse)
+								impulseVector2 := impulseVector1.MultiplyScalar(-1)
+								torqueImpulse1 := localContact1.Cross(impulseVector1).MultiplyScalar(-1)
+								torqueImpulse2 := localContact2.Cross(impulseVector2).MultiplyScalar(-1)
+
+								object1.Velocity = object1.Velocity.Add(impulseVector1.DivideScalar(object1.Mass))
+								object2.Velocity = object2.Velocity.Add(impulseVector2.DivideScalar(object2.Mass))
+
+								newAngularV1 := angularV1.Add(tensor1.Inverse().Transform(torqueImpulse1))
+								newAngularV2 := angularV2.Add(tensor2.Inverse().Transform(torqueImpulse2))
+								object1.SetAngularVelocityVector(newAngularV1)
+								object2.SetAngularVelocityVector(newAngularV2)
 							}
 						}
 					}
@@ -155,39 +164,4 @@ func (ps *PhysicsSpace) DoStep() {
 	}
 
 	ps.contactCache.CleanOldContacts()
-}
-
-// SphericalCollisionResponse - collision response assuming both bodies are spherical
-func SphericalCollisionResponse(e, ma, mb float64, ra, rb, n, vai, vbi, wai, wbi vmath.Vector3) float64 {
-	Ia := vmath.Matrix3{
-		0.4 * ma * ra.LengthSquared(), 0.0, 0.0,
-		0.0, 0.4 * ma * ra.LengthSquared(), 0.0,
-		0.0, 0.0, 0.4 * ma * ra.LengthSquared(),
-	}
-	Ib := vmath.Matrix3{
-		0.4 * mb * rb.LengthSquared(), 0.0, 0.0,
-		0.0, 0.4 * mb * rb.LengthSquared(), 0.0,
-		0.0, 0.0, 0.4 * mb * rb.LengthSquared(),
-	}
-	return CollisionResponse(e, ma, mb, Ia, Ib, ra, rb, n, vai, vbi, wai, wbi)
-}
-
-// CollisionResponse calculates the collision impulse of 2 objects
-// e coefficient of restitution which depends on the nature of the two colliding materials ( e<1.0 && e>0.0 )
-// ma/mb mass of the objects
-// Ia/Ib inertial tensor in global coordinates
-// ra/rb position of contact relative to the centre of mass
-// n normal of collision
-// vai/vbi initial velocity
-// wai/wbi initial angular velocity
-func CollisionResponse(e, ma, mb float64, Ia, Ib vmath.Matrix3, ra, rb, n, vai, vbi, wai, wbi vmath.Vector3) float64 {
-	IaInverse := Ia.Inverse()
-	IbInverse := Ib.Inverse()
-	deltaVa := ra.Cross(n).Dot(IaInverse.Transform(ra.Cross(n)))
-	deltaVb := rb.Cross(n).Dot(IbInverse.Transform(rb.Cross(n)))
-
-	impulse := (e + 1.0) * (vai.Subtract(vbi).Dot(n) + ra.Cross(n).Dot(wai) - rb.Cross(n).Dot(wbi))
-	impulse = impulse / (1.0/ma + 1.0/mb + deltaVa + deltaVb)
-
-	return impulse
 }

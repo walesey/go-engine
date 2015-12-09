@@ -5,7 +5,7 @@ import vmath "github.com/walesey/go-engine/vectormath"
 type PhysicsObject struct {
 	Position, Velocity           vmath.Vector3
 	Orientation, AngularVelocity vmath.Quaternion
-	Mass                         float64
+	Mass, Radius                 float64
 	Friction                     float64 // (0.0 to 1.0)
 	Static                       bool    //disables movement
 	ForceStore                   *ForceStore
@@ -42,6 +42,7 @@ func newPhysicsObject() *PhysicsObject {
 		Orientation:     vmath.IdentityQuaternion(),
 		AngularVelocity: vmath.Quaternion{1, 0, 0, 0},
 		Mass:            1.0,
+		Radius:          1.0,
 		ForceStore:      NewForceStore(),
 	}
 }
@@ -97,6 +98,15 @@ func (obj *PhysicsObject) AngularVelocityVector() vmath.Vector3 {
 	return w.MultiplyScalar(obj.AngularVelocity.W)
 }
 
+// SetAngularVelocityVector set angular velocity as a vector3
+func (obj *PhysicsObject) SetAngularVelocityVector(av vmath.Vector3) {
+	w := av.Length()
+	obj.AngularVelocity.W = w
+	obj.AngularVelocity.X = av.X
+	obj.AngularVelocity.Y = av.Y
+	obj.AngularVelocity.Z = av.Z
+}
+
 func (obj *PhysicsObject) doStep(dt float64) {
 	//process forces and acceleration
 	obj.ForceStore.DoStep(dt, obj)
@@ -107,9 +117,9 @@ func (obj *PhysicsObject) doStep(dt float64) {
 	//apply orientation increment
 	axis := vmath.Vector3{obj.AngularVelocity.X, obj.AngularVelocity.Y, obj.AngularVelocity.Z}
 	obj.Orientation = vmath.AngleAxis(dt*obj.AngularVelocity.W, axis).Multiply(obj.Orientation)
-}
 
-//handleCollision
-func (obj *PhysicsObject) handleCollision(other *PhysicsObject) {
-
+	// normalize orientation to prevent precision error
+	if !vmath.ApproxEqual(obj.Orientation.MagnitudeSquared(), 1.0, 0.1) {
+		obj.Orientation = obj.Orientation.Normalize()
+	}
 }

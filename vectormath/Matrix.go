@@ -20,15 +20,15 @@ func (m Matrix3) Inverse() Matrix3 {
 		return Matrix3{}
 	}
 	retMat := Matrix3{
-		m.M10*m.M22 - m.M12*m.M21,
-		m.M02*m.M21 - m.M01*m.M22,
-		m.M01*m.M12 - m.M02*m.M11,
-		m.M12*m.M20 - m.M10*m.M22,
-		m.M00*m.M22 - m.M02*m.M20,
-		m.M02*m.M10 - m.M00*m.M12,
-		m.M10*m.M21 - m.M11*m.M20,
-		m.M01*m.M20 - m.M00*m.M21,
-		m.M00*m.M11 - m.M01*m.M10,
+		M00: m.M11*m.M22 - m.M12*m.M21,
+		M01: m.M02*m.M21 - m.M01*m.M22,
+		M02: m.M01*m.M12 - m.M02*m.M11,
+		M10: m.M12*m.M20 - m.M10*m.M22,
+		M11: m.M00*m.M22 - m.M02*m.M20,
+		M12: m.M02*m.M10 - m.M00*m.M12,
+		M20: m.M10*m.M21 - m.M11*m.M20,
+		M21: m.M01*m.M20 - m.M00*m.M21,
+		M22: m.M00*m.M11 - m.M01*m.M10,
 	}
 	return retMat.MultiplyScalar(1 / det)
 }
@@ -43,9 +43,23 @@ func (m Matrix3) MultiplyScalar(scalar float64) Matrix3 {
 
 func (m Matrix3) MultiplyVector(v Vector3) Vector3 {
 	return Vector3{
-		m.M00*v.X + m.M10*v.Y + m.M20*v.Z,
-		m.M01*v.X + m.M11*v.Y + m.M21*v.Z,
-		m.M02*v.X + m.M12*v.Y + m.M22*v.Z,
+		X: m.M00*v.X + m.M10*v.Y + m.M20*v.Z,
+		Y: m.M01*v.X + m.M11*v.Y + m.M21*v.Z,
+		Z: m.M02*v.X + m.M12*v.Y + m.M22*v.Z,
+	}
+}
+
+func (m Matrix3) Multiply(other Matrix3) Matrix3 {
+	return Matrix3{
+		M00: m.M00*other.M00 + m.M10*other.M01 + m.M20*other.M02,
+		M01: m.M01*other.M00 + m.M11*other.M01 + m.M21*other.M02,
+		M02: m.M02*other.M00 + m.M12*other.M01 + m.M22*other.M02,
+		M10: m.M00*other.M10 + m.M10*other.M11 + m.M20*other.M12,
+		M11: m.M01*other.M10 + m.M11*other.M11 + m.M21*other.M12,
+		M12: m.M02*other.M10 + m.M12*other.M11 + m.M22*other.M12,
+		M20: m.M00*other.M20 + m.M10*other.M21 + m.M20*other.M22,
+		M21: m.M01*other.M20 + m.M11*other.M21 + m.M21*other.M22,
+		M22: m.M02*other.M20 + m.M12*other.M21 + m.M22*other.M22,
 	}
 }
 

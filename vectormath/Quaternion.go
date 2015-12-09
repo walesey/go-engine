@@ -37,6 +37,45 @@ func (q Quaternion) Multiply(other Quaternion) Quaternion {
 	}
 }
 
+func (q Quaternion) MagnitudeSquared() float64 {
+	return q.W*q.W + q.X*q.X + q.Y*q.Y + q.Z*q.Z
+}
+
+func (q Quaternion) Magnitude() float64 {
+	magSq := q.MagnitudeSquared()
+	if ApproxEqual(magSq, 1.0, 0.000001) {
+		return 1.0
+	}
+	return math.Sqrt(magSq)
+}
+
+func (q Quaternion) Normalize() Quaternion {
+	n := 1.0 / q.Magnitude()
+	return Quaternion{
+		q.X * n,
+		q.Y * n,
+		q.Z * n,
+		q.W * n,
+	}
+}
+
+func (q Quaternion) RotationMatrix4() Matrix4 {
+	return Matrix4{
+		1 - 2*q.Y*q.Y - 2*q.Z*q.Z, 2*q.X*q.Y + 2*q.W*q.Z, 2*q.X*q.Z - 2*q.W*q.Y, 0,
+		2*q.X*q.Y - 2*q.W*q.Z, 1 - 2*q.X*q.X - 2*q.Z*q.Z, 2*q.Y*q.Z + 2*q.W*q.X, 0,
+		2*q.X*q.Z + 2*q.W*q.Y, 2*q.Y*q.Z - 2*q.W*q.X, 1 - 2*q.X*q.X - 2*q.Y*q.Y, 0,
+		0, 0, 0, 1,
+	}
+}
+
+func (q Quaternion) RotationMatrix3() Matrix3 {
+	return Matrix3{
+		1 - 2*q.Y*q.Y - 2*q.Z*q.Z, 2*q.X*q.Y + 2*q.W*q.Z, 2*q.X*q.Z - 2*q.W*q.Y,
+		2*q.X*q.Y - 2*q.W*q.Z, 1 - 2*q.X*q.X - 2*q.Z*q.Z, 2*q.Y*q.Z + 2*q.W*q.X,
+		2*q.X*q.Z + 2*q.W*q.Y, 2*q.Y*q.Z - 2*q.W*q.X, 1 - 2*q.X*q.X - 2*q.Y*q.Y,
+	}
+}
+
 func (q Quaternion) Apply(v Vector3) Vector3 {
 	return Vector3{
 		q.W*q.W*v.X + 2*q.Y*q.W*v.Z - 2*q.Z*q.W*v.Y + q.X*q.X*v.X + 2*q.Y*q.X*v.Y + 2*q.Z*q.X*v.Z - q.Z*q.Z*v.X - q.Y*q.Y*v.X,

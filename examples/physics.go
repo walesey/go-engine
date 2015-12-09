@@ -70,11 +70,11 @@ func PhysicsDemo(c *cli.Context) {
 		sceneGraph.Add(monkeyNode)
 
 		//set initial position
-		phyObj.Position = vmath.Vector3{0.2 * float64(i), 4 * float64(i), 3.2 * float64(i)}
+		phyObj.Position = vmath.Vector3{0.2 * float64(i), 4 * float64(i), 1.2 * float64(i)}
 
 		if i == 0 {
 			// phyObj.Static = true
-			phyObj.Velocity = vmath.Vector3{0, 0.6, 0}
+			phyObj.Velocity = vmath.Vector3{0, 2.6, 0}
 		}
 	}
 
