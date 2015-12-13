@@ -1,4 +1,4 @@
-package physics
+package collision
 
 import (
 	"fmt"

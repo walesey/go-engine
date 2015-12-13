@@ -1,4 +1,4 @@
-package physics
+package dynamics
 
 import (
 	vmath "github.com/walesey/go-engine/vectormath"

@@ -1,4 +1,4 @@
-package gjk
+package collision
 
 import (
 	vmath "github.com/walesey/go-engine/vectormath"

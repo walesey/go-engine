@@ -1,9 +1,8 @@
-package gjk
+package collision
 
 import (
 	"fmt"
 
-	"github.com/walesey/go-engine/physics"
 	vmath "github.com/walesey/go-engine/vectormath"
 )
 
@@ -12,7 +11,7 @@ const gjkMaxIterations = 20
 
 // ConvexSet A set of points representing a convex geometry
 type ConvexSet struct {
-	verticies   []vmath.Vector3
+	verticies   *[]vmath.Vector3
 	offset      vmath.Vector3
 	orientation vmath.Quaternion
 	simplex     *Simplex
@@ -20,7 +19,7 @@ type ConvexSet struct {
 }
 
 // NewConvexSet create a new convex set
-func NewConvexSet(verticies []vmath.Vector3) physics.Collider {
+func NewConvexSet(verticies *[]vmath.Vector3) Collider {
 	return &ConvexSet{
 		verticies:   verticies,
 		offset:      vmath.Vector3{0, 0, 0},
@@ -37,7 +36,7 @@ func (cs *ConvexSet) Offset(offset vmath.Vector3, orientation vmath.Quaternion) 
 }
 
 // Overlap Calculate the overlap of a convex set and another collider
-func (cs *ConvexSet) Overlap(other physics.Collider) bool {
+func (cs *ConvexSet) Overlap(other Collider) bool {
 	switch t := other.(type) {
 	default:
 		fmt.Printf("unsupported type for other collider: %T\n", t)
@@ -48,7 +47,7 @@ func (cs *ConvexSet) Overlap(other physics.Collider) bool {
 }
 
 // ContactPoints - gets the global contact point for this shape and the other shape
-func (cs *ConvexSet) ContactPoint(other physics.Collider) vmath.Vector3 {
+func (cs *ConvexSet) ContactPoint(other Collider) vmath.Vector3 {
 	switch t := other.(type) {
 	default:
 		fmt.Printf("unsupported type for other collider: %T\n", t)
@@ -59,7 +58,7 @@ func (cs *ConvexSet) ContactPoint(other physics.Collider) vmath.Vector3 {
 }
 
 //PenetrationVector - get the vector of penetration between the two colliders
-func (cs *ConvexSet) PenetrationVector(other physics.Collider) vmath.Vector3 {
+func (cs *ConvexSet) PenetrationVector(other Collider) vmath.Vector3 {
 	switch t := other.(type) {
 	default:
 		fmt.Printf("unsupported type for other collider: %T\n", t)
@@ -266,7 +265,7 @@ func (cs *ConvexSet) support(other *ConvexSet, direction vmath.Vector3) SimplexP
 func (cs *ConvexSet) farthestPointInDirection(direction vmath.Vector3) vmath.Vector3 {
 	var farthest vmath.Vector3
 	max := 0.0
-	for i, point := range cs.verticies {
+	for i, point := range *cs.verticies {
 		p := cs.transformPoint(point)
 		d := direction.Dot(p)
 		if d >= max || i == 0 {

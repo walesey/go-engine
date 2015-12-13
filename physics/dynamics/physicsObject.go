@@ -1,6 +1,9 @@
-package physics
+package dynamics
 
-import vmath "github.com/walesey/go-engine/vectormath"
+import (
+	"github.com/walesey/go-engine/physics/collision"
+	vmath "github.com/walesey/go-engine/vectormath"
+)
 
 type PhysicsObject struct {
 	Position, Velocity           vmath.Vector3
@@ -9,7 +12,7 @@ type PhysicsObject struct {
 	Friction                     float64 // (0.0 to 1.0)
 	Static                       bool    //disables movement
 	ForceStore                   *ForceStore
-	BroadPhase, NarrowPhase      Collider
+	BroadPhase, NarrowPhase      collision.Collider
 }
 
 type PhysicsObjectPool struct {
@@ -107,7 +110,7 @@ func (obj *PhysicsObject) SetAngularVelocityVector(av vmath.Vector3) {
 	obj.AngularVelocity.Z = av.Z
 }
 
-func (obj *PhysicsObject) doStep(dt float64) {
+func (obj *PhysicsObject) DoStep(dt float64) {
 	//process forces and acceleration
 	obj.ForceStore.DoStep(dt, obj)
 

@@ -3,14 +3,18 @@ package assets
 import (
 	"math"
 
-	"github.com/walesey/go-engine/physics"
-	"github.com/walesey/go-engine/physics/gjk"
+	"github.com/walesey/go-engine/physics/collision"
 	"github.com/walesey/go-engine/renderer"
 	vmath "github.com/walesey/go-engine/vectormath"
 )
 
+// Converts a geometry to a ConvexSet Collider
+func ConvexSetFromGeometry(geometry renderer.Geometry, cullThreshold float64) collision.Collider {
+	return collision.NewConvexSet(PointsFromGeometry(geometry, cullThreshold))
+}
+
 // Converts a geometry directly into points (does threshold culling optimisation)
-func ConvexSetFromGeometry(geometry renderer.Geometry, cullThreshold float64) physics.Collider {
+func PointsFromGeometry(geometry renderer.Geometry, cullThreshold float64) *[]vmath.Vector3 {
 	verticies := make([]vmath.Vector3, 0, len(geometry.Indicies))
 	for i := 0; i < len(geometry.Indicies); i = i + 1 {
 		index := geometry.Indicies[i]
@@ -31,10 +35,19 @@ func ConvexSetFromGeometry(geometry renderer.Geometry, cullThreshold float64) ph
 			verticies = append(verticies, v)
 		}
 	}
-	return gjk.NewConvexSet(verticies)
+	return &verticies
 }
 
-func BoundingBoxFromGeometry(geometry renderer.Geometry) physics.Collider {
+func BoundingBoxFromGeometry(geometry renderer.Geometry) collision.Collider {
+	r := RadiusFromGeometry(geometry)
+	return BoundingBoxFromRadius(r)
+}
+
+func BoundingBoxFromRadius(radius float64) collision.Collider {
+	return collision.NewBoundingBox(vmath.Vector3{radius, radius, radius}.MultiplyScalar(2))
+}
+
+func RadiusFromGeometry(geometry renderer.Geometry) float64 {
 	largest := 0.0
 	for i := 0; i < len(geometry.Indicies); i = i + 1 {
 		index := geometry.Indicies[i]
@@ -54,5 +67,5 @@ func BoundingBoxFromGeometry(geometry renderer.Geometry) physics.Collider {
 		}
 	}
 
-	return physics.NewBoundingBox(vmath.Vector3{largest, largest, largest}.MultiplyScalar(2))
+	return largest
 }

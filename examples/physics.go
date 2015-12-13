@@ -5,6 +5,8 @@ import (
 	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/controller"
 	"github.com/walesey/go-engine/physics"
+	"github.com/walesey/go-engine/physics/collision"
+	"github.com/walesey/go-engine/physics/dynamics"
 	"github.com/walesey/go-engine/renderer"
 	vmath "github.com/walesey/go-engine/vectormath"
 
@@ -50,6 +52,8 @@ func PhysicsDemo(c *cli.Context) {
 	geomMonkey := assetLib.GetGeometry("monkey")
 	monkeyMat := assetLib.GetMaterial("monkeyMat")
 	geomMonkey.Material = &monkeyMat
+	radiusMonkey := assets.RadiusFromGeometry(geomMonkey)
+	pointsMonkey := assets.PointsFromGeometry(geomMonkey, 0.01)
 
 	//physics engine
 	physicsWorld := physics.NewPhysicsSpace()
@@ -60,10 +64,11 @@ func PhysicsDemo(c *cli.Context) {
 
 		//create object with autgenerated colliders
 		phyObj := physicsWorld.CreateObject()
+		phyObj.BroadPhase = assets.BoundingBoxFromRadius(radiusMonkey)
+		phyObj.NarrowPhase = collision.NewConvexSet(pointsMonkey)
 		phyObj.Mass = 100
+		phyObj.Radius = radiusMonkey
 		phyObj.Friction = 0.0
-		phyObj.BroadPhase = assets.BoundingBoxFromGeometry(geomMonkey)
-		phyObj.NarrowPhase = assets.ConvexSetFromGeometry(geomMonkey, 0.01)
 
 		//attach to all the things ()
 		actorStore.Add(actor.NewPhysicsActor(monkeyNode, phyObj))
@@ -112,7 +117,7 @@ func PhysicsDemo(c *cli.Context) {
 	}
 
 	//gravity global force
-	physicsWorld.GlobalForces.AddForce("gravity", &physics.GravityForce{vmath.Vector3{0, -10, 0}})
+	physicsWorld.GlobalForces.AddForce("gravity", &dynamics.GravityForce{vmath.Vector3{0, -10, 0}})
 
 	//camera
 	camera := renderer.CreateCamera(glRenderer)

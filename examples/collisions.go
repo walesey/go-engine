@@ -5,6 +5,7 @@ import (
 	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/controller"
 	"github.com/walesey/go-engine/physics"
+	"github.com/walesey/go-engine/physics/dynamics"
 	"github.com/walesey/go-engine/renderer"
 	vmath "github.com/walesey/go-engine/vectormath"
 
@@ -92,7 +93,7 @@ func Collisions(c *cli.Context) {
 	sceneGraph.Add(terrainNode)
 
 	//gravity global force
-	physicsWorld.GlobalForces.AddForce("gravity", &physics.GravityForce{vmath.Vector3{0, -1, 0}})
+	physicsWorld.GlobalForces.AddForce("gravity", &dynamics.GravityForce{vmath.Vector3{0, -1, 0}})
 
 	glRenderer.Init = func() {
 		//lighting

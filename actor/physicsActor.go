@@ -1,16 +1,16 @@
 package actor
 
 import (
-	"github.com/walesey/go-engine/physics"
+	"github.com/walesey/go-engine/physics/dynamics"
 	"github.com/walesey/go-engine/renderer"
 )
 
 type PhysicsActor struct {
 	Entity renderer.Entity
-	Object *physics.PhysicsObject
+	Object *dynamics.PhysicsObject
 }
 
-func NewPhysicsActor(Entity renderer.Entity, Object *physics.PhysicsObject) *PhysicsActor {
+func NewPhysicsActor(Entity renderer.Entity, Object *dynamics.PhysicsObject) *PhysicsActor {
 	return &PhysicsActor{
 		Entity: Entity,
 		Object: Object,

@@ -3,44 +3,36 @@ package physics
 import (
 	"fmt"
 
-	vmath "github.com/walesey/go-engine/vectormath"
+	"github.com/walesey/go-engine/physics/dynamics"
 )
 
 type PhysicsSpace struct {
-	objects      []*PhysicsObject
-	workerQueue  []workerQueueItem
-	workerPool   *WorkerPool
-	objectPool   *PhysicsObjectPool
+	objects      []*dynamics.PhysicsObject
+	objectPool   *dynamics.PhysicsObjectPool
 	contactCache ContactCache
 	StepDt       float64
-	GlobalForces *ForceStore
-}
-
-type workerQueueItem struct {
-	worker           *PhysicsWorker
-	object1, object2 *PhysicsObject
-	index1, index2   int
+	GlobalForces *dynamics.ForceStore
 }
 
 func NewPhysicsSpace() *PhysicsSpace {
 	return &PhysicsSpace{
 		StepDt:       0.018,
-		GlobalForces: NewForceStore(),
-		objects:      make([]*PhysicsObject, 0, 500),
-		objectPool:   NewPhysicsObjectPool(),
+		GlobalForces: dynamics.NewForceStore(),
+		objects:      make([]*dynamics.PhysicsObject, 0, 500),
+		objectPool:   dynamics.NewPhysicsObjectPool(),
 		contactCache: NewContactCache(),
 	}
 }
 
 // CreateObject create a new object and add it to the world
-func (ps *PhysicsSpace) CreateObject() *PhysicsObject {
+func (ps *PhysicsSpace) CreateObject() *dynamics.PhysicsObject {
 	object := ps.objectPool.GetPhysicsObject()
 	ps.objects = append(ps.objects, object)
 	return object
 }
 
 // Remove remove objects from the world
-func (ps *PhysicsSpace) Remove(objects ...*PhysicsObject) {
+func (ps *PhysicsSpace) Remove(objects ...*dynamics.PhysicsObject) {
 	//find the address in the slice
 	for _, remove := range objects {
 		for index, object := range ps.objects {
@@ -64,7 +56,7 @@ func (ps *PhysicsSpace) DoStep() {
 	for _, object := range ps.objects {
 		if !object.Static {
 			ps.GlobalForces.DoStep(ps.StepDt, object)
-			object.doStep(ps.StepDt)
+			object.DoStep(ps.StepDt)
 		}
 	}
 
@@ -88,92 +80,26 @@ func (ps *PhysicsSpace) DoStep() {
 							//Collision info
 							penV := object1.PenetrationVector(object2)
 
-							//collision normal
-							var norm vmath.Vector3
-							if penV.LengthSquared() > 0 {
-								norm = penV.Normalize()
-							} else if !object2.Position.ApproxEqual(object1.Position, 0.00001) {
-								norm = object2.Position.Subtract(object1.Position).Normalize()
+							if object2.Static {
+								object1.Position = object1.Position.Subtract(penV)
 							} else {
-								norm = vmath.Vector3{1, 0, 0}
+								halfPen := penV.MultiplyScalar(0.5)
+								object1.Position = object1.Position.Subtract(halfPen)
+								object2.Position = object2.Position.Add(halfPen)
 							}
 
 							globalContact := object1.ContactPoint(object2)
 							localContact1 := globalContact.Subtract(object1.Position)
 							localContact2 := globalContact.Subtract(object2.Position)
 
-							//velocities
-							angularV1 := object1.AngularVelocityVector()
-							angularV2 := object2.AngularVelocityVector()
-							radialV1 := localContact1.Cross(angularV1)
-							radialV2 := localContact2.Cross(angularV2)
-							contactV1 := radialV1.Add(object1.Velocity)
-							contactV2 := radialV2.Add(object2.Velocity)
-
-							mR1 := 0.4 * object1.Mass * object1.Radius
-							mR2 := 0.4 * object2.Mass * object2.Radius
-							tensor1 := vmath.Matrix3{
-								mR1, 0.0, 0.0,
-								0.0, mR1, 0.0,
-								0.0, 0.0, mR1,
+							contactConstraint := dynamics.ContactConstraint{
+								PenetrationVector: penV,
+								LocalContact1:     localContact1,
+								LocalContact2:     localContact2,
+								Object1:           object1,
+								Object2:           object2,
 							}
-							tensor2 := vmath.Matrix3{
-								mR2, 0.0, 0.0,
-								0.0, mR2, 0.0,
-								0.0, 0.0, mR2,
-							}
-
-							if object2.Static {
-
-								object1.Position = object1.Position.Subtract(penV)
-
-								contactV := contactV1
-								relativeV := norm.Dot(contactV)
-								velocityImpulse := -relativeV
-
-								vel1 := tensor1.Inverse().Transform(localContact1.Cross(norm))
-								vel1 = vel1.Cross(localContact1)
-								impulseDenom := (1.0 / object1.Mass) + norm.Dot(vel1)
-
-								normalImpulse := velocityImpulse / impulseDenom
-								impulseVector1 := norm.MultiplyScalar(normalImpulse)
-								torqueImpulse1 := impulseVector1.Cross(localContact1)
-
-								object1.Velocity = object1.Velocity.Add(impulseVector1.DivideScalar(object1.Mass))
-								newAngularV1 := angularV1.Add(tensor1.Inverse().Transform(torqueImpulse1))
-								object1.SetAngularVelocityVector(newAngularV1)
-
-							} else {
-
-								halfPen := penV.MultiplyScalar(0.5)
-								object1.Position = object1.Position.Subtract(halfPen)
-								object2.Position = object2.Position.Add(halfPen)
-
-								contactV := contactV1.Subtract(contactV2)
-								relativeV := norm.Dot(contactV)
-								velocityImpulse := -relativeV
-
-								vel1 := tensor1.Inverse().Transform(localContact1.Cross(norm))
-								vel1 = vel1.Cross(localContact1)
-								impulseDenom1 := (1.0 / object1.Mass) + norm.Dot(vel1)
-								vel2 := tensor2.Inverse().Transform(localContact2.Cross(norm))
-								vel2 = vel2.Cross(localContact2)
-								impulseDenom2 := (1.0 / object2.Mass) + norm.Dot(vel2)
-								impulseDenom := impulseDenom1 + impulseDenom2
-								normalImpulse := velocityImpulse / impulseDenom
-								impulseVector1 := norm.MultiplyScalar(normalImpulse)
-								impulseVector2 := impulseVector1.MultiplyScalar(-1)
-								torqueImpulse1 := impulseVector1.Cross(localContact1)
-								torqueImpulse2 := impulseVector2.Cross(localContact2)
-
-								object1.Velocity = object1.Velocity.Add(impulseVector1.DivideScalar(object1.Mass))
-								object2.Velocity = object2.Velocity.Add(impulseVector2.DivideScalar(object2.Mass))
-
-								newAngularV1 := angularV1.Add(tensor1.Inverse().Transform(torqueImpulse1))
-								newAngularV2 := angularV2.Add(tensor2.Inverse().Transform(torqueImpulse2))
-								object1.SetAngularVelocityVector(newAngularV1)
-								object2.SetAngularVelocityVector(newAngularV2)
-							}
+							contactConstraint.Solve()
 						}
 					}
 				}
