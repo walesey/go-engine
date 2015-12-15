@@ -46,8 +46,8 @@ func Collisions(c *cli.Context) {
 	sceneGraph.AddBackGround(skyNode)
 
 	//geometry for physics objects
-	geomMonkey := assetLib.GetGeometry("beam")
-	monkeyMat := assetLib.GetMaterial("beamMat")
+	geomMonkey := assetLib.GetGeometry("monkey")
+	monkeyMat := assetLib.GetMaterial("monkeyMat")
 	geomMonkey.Material = &monkeyMat
 
 	//physics engine
@@ -74,8 +74,8 @@ func Collisions(c *cli.Context) {
 	//set initial position
 	phyObj1.Position = vmath.Vector3{0, 5, 0}
 
-	terrain := assetLib.GetGeometry("beam")
-	terrainMat := assetLib.GetMaterial("beamMat")
+	terrain := assetLib.GetGeometry("terrain")
+	terrainMat := assetLib.GetMaterial("terrainMat")
 	terrain.Material = &terrainMat
 
 	terrainNode := renderer.CreateNode()

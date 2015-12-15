@@ -22,8 +22,8 @@ func PhysicsDemo(c *cli.Context) {
 
 	glRenderer := &renderer.OpenglRenderer{
 		WindowTitle:  "GoEngine",
-		WindowWidth:  1900,
-		WindowHeight: 1000,
+		WindowWidth:  590,
+		WindowHeight: 500,
 	}
 
 	assetLib, err := assets.LoadAssetLibrary("TestAssets/physics.asset")
@@ -58,7 +58,8 @@ func PhysicsDemo(c *cli.Context) {
 	//physics engine
 	physicsWorld := physics.NewPhysicsSpace()
 	actorStore := actor.NewActorStore()
-	for i := 0; i < 30; i = i + 1 {
+
+	spawn := func() *dynamics.PhysicsObject {
 		monkeyNode := renderer.CreateNode()
 		monkeyNode.Add(&geomMonkey)
 
@@ -74,12 +75,18 @@ func PhysicsDemo(c *cli.Context) {
 		actorStore.Add(actor.NewPhysicsActor(monkeyNode, phyObj))
 		sceneGraph.Add(monkeyNode)
 
+		return phyObj
+	}
+
+	for i := 0; i < 30; i = i + 1 {
+		phyObj := spawn()
+
 		//set initial position
 		phyObj.Position = vmath.Vector3{0.2 * float64(i), 4 * float64(i), 0.2 * float64(i)}
 
 		if i == 0 {
-			// phyObj.Static = true
-			phyObj.Velocity = vmath.Vector3{0, 5.6, 0}
+			phyObj.Static = true
+			// phyObj.Velocity = vmath.Vector3{0, 5.6, 0}
 		}
 	}
 
@@ -117,7 +124,7 @@ func PhysicsDemo(c *cli.Context) {
 	}
 
 	//gravity global force
-	physicsWorld.GlobalForces.AddForce("gravity", &dynamics.GravityForce{vmath.Vector3{0, -10, 0}})
+	physicsWorld.GlobalForces.AddForce("gravity", &dynamics.GravityForce{vmath.Vector3{0, -5, 0}})
 
 	//camera
 	camera := renderer.CreateCamera(glRenderer)
@@ -172,6 +179,13 @@ func PhysicsDemo(c *cli.Context) {
 		//custom controller
 		customController := controller.NewActionMap()
 		controllerManager.AddController(customController)
+
+		//spawn objects
+		customController.BindAction(func() {
+			phyObj := spawn()
+			phyObj.Position = camera.Translation
+			phyObj.Velocity = camera.GetDirection().MultiplyScalar(30)
+		}, glfw.KeyR, glfw.Press)
 
 		//close window and exit on escape
 		customController.BindAction(func() {

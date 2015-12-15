@@ -1,10 +1,6 @@
 package physics
 
-import (
-	"fmt"
-
-	"github.com/walesey/go-engine/physics/dynamics"
-)
+import "github.com/walesey/go-engine/physics/dynamics"
 
 type PhysicsSpace struct {
 	objects      []*dynamics.PhysicsObject
@@ -52,7 +48,6 @@ func (ps *PhysicsSpace) Remove(objects ...*dynamics.PhysicsObject) {
 // DoStep update all objects
 func (ps *PhysicsSpace) DoStep() {
 
-	//do standard movement step
 	for _, object := range ps.objects {
 		if !object.Static {
 			ps.GlobalForces.DoStep(ps.StepDt, object)
@@ -73,20 +68,15 @@ func (ps *PhysicsSpace) DoStep() {
 							//check contact cache
 							inContact := ps.contactCache.Contains(i, j)
 							if !inContact {
-								fmt.Printf("TODO: Contact EVENT %v - %v\n", i, j)
+								// fmt.Printf("TODO: Contact EVENT %v - %v\n", i, j)
 							}
 							ps.contactCache.Add(i, j)
 
 							//Collision info
 							penV := object1.PenetrationVector(object2)
 
-							if object2.Static {
-								object1.Position = object1.Position.Subtract(penV)
-							} else {
-								halfPen := penV.MultiplyScalar(0.5)
-								object1.Position = object1.Position.Subtract(halfPen)
-								object2.Position = object2.Position.Add(halfPen)
-							}
+							//position correction
+							object1.Position = object1.Position.Subtract(penV)
 
 							globalContact := object1.ContactPoint(object2)
 							localContact1 := globalContact.Subtract(object1.Position)
@@ -98,6 +88,7 @@ func (ps *PhysicsSpace) DoStep() {
 								LocalContact2:     localContact2,
 								Object1:           object1,
 								Object2:           object2,
+								InContact:         inContact,
 							}
 							contactConstraint.Solve()
 						}
