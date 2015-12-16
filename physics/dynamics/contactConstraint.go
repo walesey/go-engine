@@ -3,29 +3,13 @@ package dynamics
 import vmath "github.com/walesey/go-engine/vectormath"
 
 type ContactConstraint struct {
-	PenetrationVector            vmath.Vector3
+	Normal                       vmath.Vector3
 	LocalContact1, LocalContact2 vmath.Vector3
 	Object1, Object2             *PhysicsObject
 	InContact                    bool
 }
 
 func (cc *ContactConstraint) Solve() {
-
-	//collision normal
-	var norm vmath.Vector3
-	if cc.PenetrationVector.LengthSquared() > 0 {
-		norm = cc.PenetrationVector.Normalize()
-	} else if !cc.Object2.Position.ApproxEqual(cc.Object1.Position, 0.00001) {
-		norm = cc.Object2.Position.Subtract(cc.Object1.Position).Normalize()
-	} else {
-		norm = vmath.Vector3{1, 0, 0}
-	}
-
-	if cc.InContact && cc.Object2.Static {
-		//restrict velocity to the tangent plane between the two objects
-		normalVelocity1 := norm.MultiplyScalar(cc.Object1.Velocity.Dot(norm))
-		cc.Object1.Velocity = cc.Object1.Velocity.Subtract(normalVelocity1)
-	}
 
 	//velocities
 	angularV1 := cc.Object1.AngularVelocityVector()
@@ -39,29 +23,19 @@ func (cc *ContactConstraint) Solve() {
 		cc.Object2.Mass = 99999999999999999.9
 	}
 
-	mR1 := 0.4 * cc.Object1.Mass * cc.Object1.Radius
-	mR2 := 0.4 * cc.Object2.Mass * cc.Object2.Radius
-	tensor1 := vmath.Matrix3{
-		mR1, 0.0, 0.0,
-		0.0, mR1, 0.0,
-		0.0, 0.0, mR1,
-	}
-	tensor2 := vmath.Matrix3{
-		mR2, 0.0, 0.0,
-		0.0, mR2, 0.0,
-		0.0, 0.0, mR2,
-	}
+	tensorInv1 := cc.Object1.InertiaTensor().Inverse()
+	tensorInv2 := cc.Object2.InertiaTensor().Inverse()
 
 	contactV := contactV1.Subtract(contactV2)
-	relativeV := norm.Dot(contactV)
-	velocityImpulse := -relativeV
+	relativeV := cc.Normal.Dot(contactV)
 
-	vel1 := tensor1.Inverse().Transform(cc.LocalContact1.Cross(norm))
+	velocityImpulse := -relativeV
+	vel1 := tensorInv1.Transform(cc.LocalContact1.Cross(cc.Normal))
 	vel1 = vel1.Cross(cc.LocalContact1)
-	impulseDenom1 := (1.0 / cc.Object1.Mass) + norm.Dot(vel1)
-	vel2 := tensor2.Inverse().Transform(cc.LocalContact2.Cross(norm))
+	impulseDenom1 := (1.0 / cc.Object1.Mass) + cc.Normal.Dot(vel1)
+	vel2 := tensorInv2.Transform(cc.LocalContact2.Cross(cc.Normal))
 	vel2 = vel2.Cross(cc.LocalContact2)
-	impulseDenom2 := (1.0 / cc.Object2.Mass) + norm.Dot(vel2)
+	impulseDenom2 := (1.0 / cc.Object2.Mass) + cc.Normal.Dot(vel2)
 	impulseDenom := impulseDenom1 + impulseDenom2
 	NormalImpulse := velocityImpulse / impulseDenom
 
@@ -69,7 +43,7 @@ func (cc *ContactConstraint) Solve() {
 		NormalImpulse = 0.0
 	}
 
-	impulseVector1 := norm.MultiplyScalar(NormalImpulse)
+	impulseVector1 := cc.Normal.MultiplyScalar(NormalImpulse)
 	impulseVector2 := impulseVector1.MultiplyScalar(-1)
 	//project impulse onto the localcontact normal
 	localContactNorm1 := cc.LocalContact1.Normalize()
@@ -81,13 +55,19 @@ func (cc *ContactConstraint) Solve() {
 	torqueImpulse2 := impulseVector2.Cross(cc.LocalContact2)
 
 	cc.Object1.Velocity = cc.Object1.Velocity.Add(linearImpulse1.DivideScalar(cc.Object1.Mass))
-	newAngularV1 := angularV1.Add(tensor1.Inverse().Transform(torqueImpulse1))
+	newAngularV1 := angularV1.Add(tensorInv1.Transform(torqueImpulse1))
 	cc.Object1.SetAngularVelocityVector(newAngularV1)
 
 	if !cc.Object2.Static {
 		cc.Object2.Velocity = cc.Object2.Velocity.Add(linearImpulse2.DivideScalar(cc.Object2.Mass))
-		newAngularV2 := angularV2.Add(tensor2.Inverse().Transform(torqueImpulse2))
+		newAngularV2 := angularV2.Add(tensorInv2.Transform(torqueImpulse2))
 		cc.Object2.SetAngularVelocityVector(newAngularV2)
 	}
 
+	if cc.InContact && cc.Object2.Static {
+		//restrict velocity to the tangent plane between the two objects
+		normalVelocity1 := cc.Normal.MultiplyScalar(cc.Object1.Velocity.Dot(cc.Normal))
+		cc.Object1.Velocity = cc.Object1.Velocity.Subtract(normalVelocity1)
+		cc.Object1.Velocity = cc.Object1.Velocity.MultiplyScalar(0.8)
+	}
 }

@@ -11,6 +11,7 @@ type FPSMeter struct {
 	frames     int
 	sampleTime float64
 	FpsCap     float64
+	FrameTime  float64
 }
 
 func CreateFPSMeter(sampleTime float64) *FPSMeter {
@@ -27,8 +28,8 @@ func (fps *FPSMeter) UpdateFPSMeter() {
 		fps.frames = 0
 	}
 
-	frameTime := time.Since(fps.last)
-	sleepTime := (time.Duration)((1000.0 / fps.FpsCap) - (1000.0 * frameTime.Seconds()))
+	fps.FrameTime = time.Since(fps.last).Seconds()
+	sleepTime := (time.Duration)((1000.0 / fps.FpsCap) - (1000.0 * fps.FrameTime))
 	if sleepTime > 0 {
 		time.Sleep(sleepTime * time.Millisecond)
 	}

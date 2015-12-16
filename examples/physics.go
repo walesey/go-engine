@@ -69,7 +69,7 @@ func PhysicsDemo(c *cli.Context) {
 		phyObj.NarrowPhase = collision.NewConvexSet(pointsMonkey)
 		phyObj.Mass = 100
 		phyObj.Radius = radiusMonkey
-		phyObj.Friction = 0.0
+		phyObj.Friction = 1.0
 
 		//attach to all the things ()
 		actorStore.Add(actor.NewPhysicsActor(monkeyNode, phyObj))
@@ -78,7 +78,7 @@ func PhysicsDemo(c *cli.Context) {
 		return phyObj
 	}
 
-	for i := 0; i < 30; i = i + 1 {
+	for i := 0; i < 5; i = i + 1 {
 		phyObj := spawn()
 
 		//set initial position
@@ -99,7 +99,7 @@ func PhysicsDemo(c *cli.Context) {
 		terrainNode.Add(&terrain)
 
 		phyObj := physicsWorld.CreateObject()
-		phyObj.Friction = 0.1
+		phyObj.Friction = 1.0
 		phyObj.Static = true
 		phyObj.BroadPhase = assets.BoundingBoxFromGeometry(terrain)
 		phyObj.NarrowPhase = assets.ConvexSetFromGeometry(terrain, 2.0)
@@ -124,7 +124,7 @@ func PhysicsDemo(c *cli.Context) {
 	}
 
 	//gravity global force
-	physicsWorld.GlobalForces.AddForce("gravity", &dynamics.GravityForce{vmath.Vector3{0, -5, 0}})
+	// physicsWorld.GlobalForces.AddForce("gravity", &dynamics.GravityForce{vmath.Vector3{0, -50, 0}})
 
 	//camera
 	camera := renderer.CreateCamera(glRenderer)
@@ -135,7 +135,7 @@ func PhysicsDemo(c *cli.Context) {
 
 	glRenderer.Init = func() {
 		//lighting
-		glRenderer.CreateLight(0.1, 0.1, 0.1, 3, 3, 3, 2, 2, 2, true, vmath.Vector3{0.3, -1, 0.2}, 0)
+		glRenderer.CreateLight(0.0, 0.0, 0.0, 0.5, 0.5, 0.5, 0.7, 0.7, 0.7, true, vmath.Vector3{0.3, -1, 0.2}, 0)
 
 		//setup reflection map
 		//cubeMap := renderer.CreateCubemap(assetLib.GetMaterial("nightskyboxMat").Diffuse)
@@ -184,7 +184,11 @@ func PhysicsDemo(c *cli.Context) {
 		customController.BindAction(func() {
 			phyObj := spawn()
 			phyObj.Position = camera.Translation
-			phyObj.Velocity = camera.GetDirection().MultiplyScalar(30)
+			phyObj.Velocity = camera.GetDirection().MultiplyScalar(2)
+			phyObj.ForceStore.AddForce("test", &dynamics.PointForce{
+				Position: vmath.Vector3{0.005, 1, 0},
+				Value:    vmath.Vector3{0, 100, 0},
+			})
 		}, glfw.KeyR, glfw.Press)
 
 		//close window and exit on escape

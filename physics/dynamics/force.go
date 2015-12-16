@@ -25,6 +25,7 @@ type TorqueForce struct {
 	Value vmath.Quaternion
 }
 
+// force applied to a fixed local point on the object
 type PointForce struct {
 	Value, Position vmath.Vector3
 	positionLength  float64
@@ -70,39 +71,26 @@ func (force *TorqueForce) DoStep(dt float64, phyObj *PhysicsObject) {
 }
 
 func (force *PointForce) DoStep(dt float64, phyObj *PhysicsObject) {
-	//update position length
-	if !vmath.ApproxEqual(force.Position.LengthSquared(), force.positionLength, 0.001) {
-		force.positionLength = force.Position.Length()
-	}
-	// linear
-	positionNorm := force.Position.DivideScalar(force.positionLength)
-	linearForce := positionNorm.MultiplyScalar(force.Value.Dot(positionNorm))
-	phyObj.Velocity = phyObj.Velocity.Add(linearForce.DivideScalar(phyObj.Mass).MultiplyScalar(dt))
-	//angular
-	tangentForce := force.Value.Subtract(linearForce)
-	axis := tangentForce.Cross(force.Position)
-	if axis.LengthSquared() < 0.000001 {
-		axis = vmath.Vector3{1, 0, 0}
+	value := phyObj.Orientation.Apply(force.Value)
+	if force.Position.ApproxEqual(vmath.Vector3{0, 0, 0}, 0.00001) {
+		//linear only
+		phyObj.Velocity = phyObj.Velocity.Add(value.DivideScalar(phyObj.Mass).MultiplyScalar(dt))
 	} else {
-		axis = axis.Normalize()
-	}
-	magnitude := tangentForce.Length()
-	angularVelocity := vmath.Vector3{phyObj.AngularVelocity.X, phyObj.AngularVelocity.Y, phyObj.AngularVelocity.Z}
-	if !vmath.ApproxEqual(angularVelocity.LengthSquared(), 1, 0.00001) {
-		if vmath.ApproxEqual(angularVelocity.LengthSquared(), 0, 0.00001) {
-			angularVelocity = axis
-		} else {
-			angularVelocity = angularVelocity.Normalize()
+		//update position length
+		if !vmath.ApproxEqual(force.Position.LengthSquared(), force.positionLength, 0.001) {
+			force.positionLength = force.Position.Length()
 		}
+
+		// linear
+		position := phyObj.Orientation.Apply(force.Position)
+		positionNorm := position.DivideScalar(force.positionLength).MultiplyScalar(-1)
+		linearForce := positionNorm.MultiplyScalar(value.Dot(positionNorm))
+		phyObj.Velocity = phyObj.Velocity.Add(linearForce.DivideScalar(phyObj.Mass).MultiplyScalar(dt))
+
+		//angular
+		angV := phyObj.AngularVelocityVector()
+		torque := value.Cross(position)
+		newAngV := angV.Add(phyObj.InertiaTensor().Inverse().Transform(torque))
+		phyObj.SetAngularVelocityVector(newAngV)
 	}
-	angularVelocity.MultiplyScalar(phyObj.AngularVelocity.W)
-	angularVelocity = vmath.AngleAxis(magnitude, axis).Apply(angularVelocity)
-	phyObj.AngularVelocity.W = angularVelocity.Length()
-	//normalize
-	if !vmath.ApproxEqual(phyObj.AngularVelocity.W, 0, 0.00001) {
-		angularVelocity = angularVelocity.DivideScalar(phyObj.AngularVelocity.W)
-	}
-	phyObj.AngularVelocity.X = angularVelocity.X
-	phyObj.AngularVelocity.Y = angularVelocity.Y
-	phyObj.AngularVelocity.Z = angularVelocity.Z
 }

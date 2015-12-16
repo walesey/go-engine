@@ -10,7 +10,8 @@ type PhysicsObject struct {
 	Orientation, AngularVelocity vmath.Quaternion
 	Mass, Radius                 float64
 	Friction                     float64 // (0.0 to 1.0)
-	Static                       bool    //disables movement
+	ActiveVelocity               float64 // > 0.0
+	Static, Active               bool    //disables movement
 	ForceStore                   *ForceStore
 	BroadPhase, NarrowPhase      collision.Collider
 }
@@ -46,6 +47,8 @@ func newPhysicsObject() *PhysicsObject {
 		AngularVelocity: vmath.Quaternion{1, 0, 0, 0},
 		Mass:            1.0,
 		Radius:          1.0,
+		ActiveVelocity:  0.1,
+		Active:          true,
 		ForceStore:      NewForceStore(),
 	}
 }
@@ -110,7 +113,18 @@ func (obj *PhysicsObject) SetAngularVelocityVector(av vmath.Vector3) {
 	obj.AngularVelocity.Z = av.Z
 }
 
+// InertiaTensor returns the inertial Tensor of a sphere
+func (obj *PhysicsObject) InertiaTensor() vmath.Matrix3 {
+	mR := 0.4 * obj.Mass * obj.Radius
+	return vmath.Matrix3{
+		mR, 0.0, 0.0,
+		0.0, mR, 0.0,
+		0.0, 0.0, mR,
+	}
+}
+
 func (obj *PhysicsObject) DoStep(dt float64) {
+
 	//process forces and acceleration
 	obj.ForceStore.DoStep(dt, obj)
 
