@@ -1,5 +1,5 @@
 package dynamics
 
 type Constraint interface {
-	Solve()
+	Solve(dt float64)
 }

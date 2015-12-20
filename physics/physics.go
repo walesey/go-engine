@@ -12,6 +12,7 @@ type PhysicsSpace struct {
 	StepDt       float64
 	Iterations   int
 	GlobalForces *dynamics.ForceStore
+	OnEvent      func(Event)
 }
 
 func NewPhysicsSpace() *PhysicsSpace {
@@ -22,6 +23,7 @@ func NewPhysicsSpace() *PhysicsSpace {
 		objects:      make([]*dynamics.PhysicsObject, 0, 500),
 		objectPool:   dynamics.NewPhysicsObjectPool(),
 		contactCache: NewContactCache(),
+		OnEvent:      func(event Event) {},
 	}
 }
 
@@ -78,9 +80,6 @@ func (ps *PhysicsSpace) DoStep() {
 
 								//check contact cache
 								inContact := ps.contactCache.Contains(i, j)
-								if !inContact {
-									// fmt.Printf("TODO: Contact EVENT %v - %v\n", i, j)
-								}
 								ps.contactCache.Add(i, j)
 
 								//Collision info
@@ -92,6 +91,14 @@ func (ps *PhysicsSpace) DoStep() {
 								globalContact := object1.ContactPoint(object2)
 								localContact1 := globalContact.Subtract(object1.Position)
 								localContact2 := globalContact.Subtract(object2.Position)
+
+								//contact points should not exceed the radius of each object
+								if localContact1.LengthSquared() > object1.Radius*object1.Radius*2*2 ||
+									localContact2.LengthSquared() > object2.Radius*object2.Radius*2*2 {
+									localContact1 = localContact1.Normalize().MultiplyScalar(object1.Radius)
+									localContact2 = localContact2.Normalize().MultiplyScalar(object2.Radius)
+									globalContact = localContact1.Add(object1.Position)
+								}
 
 								//collision normal
 								var norm vmath.Vector3
@@ -112,13 +119,18 @@ func (ps *PhysicsSpace) DoStep() {
 									Object2:       object2,
 									InContact:     inContact,
 								}
-								contactConstraint.Solve()
+								contactConstraint.Solve(stepDt)
 
 								//deactivate if moving too slow
 								if inContact &&
 									object1.Velocity.LengthSquared() <= object1.ActiveVelocity*object1.ActiveVelocity &&
 									object1.AngularVelocity.W <= object1.ActiveVelocity {
 									object1.Active = true
+								}
+
+								// event handler
+								if !inContact {
+									ps.OnEvent(CollisionEvent(globalContact))
 								}
 							}
 						}

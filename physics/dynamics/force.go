@@ -21,8 +21,13 @@ type GravityForce struct {
 	Value vmath.Vector3
 }
 
+//Force due to friction proportional to velocity
+type FrictionForce struct {
+	LinearCoefficient, AngularCoefficient float64
+}
+
 type TorqueForce struct {
-	Value vmath.Quaternion
+	Value vmath.Vector3
 }
 
 // force applied to a fixed local point on the object
@@ -66,8 +71,26 @@ func (force *GravityForce) DoStep(dt float64, phyObj *PhysicsObject) {
 		force.Value.MultiplyScalar(dt))
 }
 
+func (force *FrictionForce) DoStep(dt float64, phyObj *PhysicsObject) {
+	//linear
+	forceValue := phyObj.Velocity.MultiplyScalar(-force.LinearCoefficient)
+	phyObj.Velocity = phyObj.Velocity.Add(forceValue.MultiplyScalar(dt))
+
+	//angular
+	if !vmath.ApproxEqual(phyObj.AngularVelocity.W, 0, 0.00001) {
+		angV := phyObj.AngularVelocityVector()
+		torque := angV.MultiplyScalar(-force.AngularCoefficient)
+		newAngV := angV.Add(phyObj.InertiaTensor().Inverse().Transform(torque))
+		phyObj.SetAngularVelocityVector(newAngV)
+	}
+}
+
 func (force *TorqueForce) DoStep(dt float64, phyObj *PhysicsObject) {
-	//TODO:
+	if !vmath.ApproxEqual(phyObj.AngularVelocity.W, 0, 0.00001) {
+		angV := phyObj.AngularVelocityVector()
+		newAngV := angV.Add(phyObj.InertiaTensor().Inverse().Transform(force.Value))
+		phyObj.SetAngularVelocityVector(newAngV)
+	}
 }
 
 func (force *PointForce) DoStep(dt float64, phyObj *PhysicsObject) {

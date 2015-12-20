@@ -1,8 +1,9 @@
 package renderer
 
 import (
-	"github.com/walesey/go-engine/util"
 	"sort"
+
+	"github.com/walesey/go-engine/util"
 )
 
 type SceneGraph struct {
@@ -24,6 +25,10 @@ func CreateSceneGraph() SceneGraph {
 
 func (sceneGraph *SceneGraph) Add(spatial Spatial) {
 	sceneGraph.transparentNode.Add(spatial)
+}
+
+func (sceneGraph *SceneGraph) Remove(spatial Spatial) {
+	sceneGraph.transparentNode.Remove(spatial)
 }
 
 func (sceneGraph *SceneGraph) AddBackGround(spatial Spatial) {

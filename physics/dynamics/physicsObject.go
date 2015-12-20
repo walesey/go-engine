@@ -47,7 +47,7 @@ func newPhysicsObject() *PhysicsObject {
 		AngularVelocity: vmath.Quaternion{1, 0, 0, 0},
 		Mass:            1.0,
 		Radius:          1.0,
-		ActiveVelocity:  0.1,
+		ActiveVelocity:  1.0,
 		Active:          true,
 		ForceStore:      NewForceStore(),
 	}

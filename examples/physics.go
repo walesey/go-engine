@@ -22,8 +22,8 @@ func PhysicsDemo(c *cli.Context) {
 
 	glRenderer := &renderer.OpenglRenderer{
 		WindowTitle:  "GoEngine",
-		WindowWidth:  590,
-		WindowHeight: 500,
+		WindowWidth:  990,
+		WindowHeight: 900,
 	}
 
 	assetLib, err := assets.LoadAssetLibrary("TestAssets/physics.asset")
@@ -69,7 +69,7 @@ func PhysicsDemo(c *cli.Context) {
 		phyObj.NarrowPhase = collision.NewConvexSet(pointsMonkey)
 		phyObj.Mass = 100
 		phyObj.Radius = radiusMonkey
-		phyObj.Friction = 1.0
+		phyObj.Friction = 100.0
 
 		//attach to all the things ()
 		actorStore.Add(actor.NewPhysicsActor(monkeyNode, phyObj))
@@ -78,7 +78,7 @@ func PhysicsDemo(c *cli.Context) {
 		return phyObj
 	}
 
-	for i := 0; i < 5; i = i + 1 {
+	for i := 0; i < 1; i = i + 1 {
 		phyObj := spawn()
 
 		//set initial position
@@ -99,7 +99,7 @@ func PhysicsDemo(c *cli.Context) {
 		terrainNode.Add(&terrain)
 
 		phyObj := physicsWorld.CreateObject()
-		phyObj.Friction = 1.0
+		phyObj.Friction = 300.0
 		phyObj.Static = true
 		phyObj.BroadPhase = assets.BoundingBoxFromGeometry(terrain)
 		phyObj.NarrowPhase = assets.ConvexSetFromGeometry(terrain, 2.0)
@@ -124,7 +124,22 @@ func PhysicsDemo(c *cli.Context) {
 	}
 
 	//gravity global force
-	// physicsWorld.GlobalForces.AddForce("gravity", &dynamics.GravityForce{vmath.Vector3{0, -50, 0}})
+	physicsWorld.GlobalForces.AddForce("gravity", &dynamics.GravityForce{vmath.Vector3{0, -20, 0}})
+	//air friction
+	physicsWorld.GlobalForces.AddForce("airFriction", &dynamics.FrictionForce{LinearCoefficient: 0.1, AngularCoefficient: 3})
+
+	//debug
+	// physicsWorld.OnEvent = func(event physics.Event) {
+	// 	testNode := renderer.CreateNode()
+	// 	testNode.Add(&geomMonkey)
+	// 	sceneGraph.Add(testNode)
+	// 	testNode.SetTranslation(event.Data.(map[string]interface{})["globalContact"].(vmath.Vector3))
+	// 	testNode.SetScale(vmath.Vector3{0.3, 0.3, 0.3})
+	// 	go func() {
+	// 		time.Sleep(3000 * time.Millisecond)
+	// 		sceneGraph.Remove(testNode)
+	// 	}()
+	// }
 
 	//camera
 	camera := renderer.CreateCamera(glRenderer)
@@ -184,11 +199,7 @@ func PhysicsDemo(c *cli.Context) {
 		customController.BindAction(func() {
 			phyObj := spawn()
 			phyObj.Position = camera.Translation
-			phyObj.Velocity = camera.GetDirection().MultiplyScalar(2)
-			phyObj.ForceStore.AddForce("test", &dynamics.PointForce{
-				Position: vmath.Vector3{0.005, 1, 0},
-				Value:    vmath.Vector3{0, 100, 0},
-			})
+			phyObj.Velocity = camera.GetDirection().MultiplyScalar(30)
 		}, glfw.KeyR, glfw.Press)
 
 		//close window and exit on escape

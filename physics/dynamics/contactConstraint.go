@@ -9,7 +9,30 @@ type ContactConstraint struct {
 	InContact                    bool
 }
 
-func (cc *ContactConstraint) Solve() {
+func (cc *ContactConstraint) Solve(dt float64) {
+
+	tensorInv1 := cc.Object1.InertiaTensor().Inverse()
+	tensorInv2 := cc.Object2.InertiaTensor().Inverse()
+
+	if cc.InContact && cc.Object2.Static {
+
+		//restrict velocity to the tangent plane between the two objects
+		normalVelocity1 := cc.Normal.MultiplyScalar(cc.Object1.Velocity.Dot(cc.Normal))
+		cc.Object1.Velocity = cc.Object1.Velocity.Subtract(normalVelocity1)
+
+		//Apply friction force on contact surface
+		frictionCoefficient := (cc.Object1.Friction + cc.Object2.Friction) / 2
+		frictionForce := cc.Object1.Velocity.MultiplyScalar(-frictionCoefficient)
+
+		// linear Friction
+		cc.Object1.Velocity = cc.Object1.Velocity.Add(frictionForce.DivideScalar(cc.Object1.Mass).MultiplyScalar(dt))
+
+		//angular Friction
+		angularV1 := cc.Object1.AngularVelocityVector()
+		frictionTorque := frictionForce.Cross(cc.Normal).MultiplyScalar(cc.Object1.Radius)
+		newAngV1 := angularV1.Add(tensorInv1.Transform(frictionTorque).MultiplyScalar(0.02))
+		cc.Object1.SetAngularVelocityVector(newAngV1)
+	}
 
 	//velocities
 	angularV1 := cc.Object1.AngularVelocityVector()
@@ -20,11 +43,9 @@ func (cc *ContactConstraint) Solve() {
 	contactV2 := radialV2.Add(cc.Object2.Velocity)
 
 	if cc.Object2.Static {
+		//model the static object as a really heavy object
 		cc.Object2.Mass = 99999999999999999.9
 	}
-
-	tensorInv1 := cc.Object1.InertiaTensor().Inverse()
-	tensorInv2 := cc.Object2.InertiaTensor().Inverse()
 
 	contactV := contactV1.Subtract(contactV2)
 	relativeV := cc.Normal.Dot(contactV)
@@ -62,12 +83,5 @@ func (cc *ContactConstraint) Solve() {
 		cc.Object2.Velocity = cc.Object2.Velocity.Add(linearImpulse2.DivideScalar(cc.Object2.Mass))
 		newAngularV2 := angularV2.Add(tensorInv2.Transform(torqueImpulse2))
 		cc.Object2.SetAngularVelocityVector(newAngularV2)
-	}
-
-	if cc.InContact && cc.Object2.Static {
-		//restrict velocity to the tangent plane between the two objects
-		normalVelocity1 := cc.Normal.MultiplyScalar(cc.Object1.Velocity.Dot(cc.Normal))
-		cc.Object1.Velocity = cc.Object1.Velocity.Subtract(normalVelocity1)
-		cc.Object1.Velocity = cc.Object1.Velocity.MultiplyScalar(0.8)
 	}
 }

@@ -7,7 +7,7 @@ import (
 )
 
 const epaMaxIterations = 40
-const gjkMaxIterations = 20
+const gjkMaxIterations = 40
 
 // ConvexSet A set of points representing a convex geometry
 type ConvexSet struct {
