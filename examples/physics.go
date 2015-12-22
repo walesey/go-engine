@@ -1,6 +1,8 @@
 package examples
 
 import (
+	"fmt"
+
 	"github.com/walesey/go-engine/actor"
 	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/controller"
@@ -59,17 +61,17 @@ func PhysicsDemo(c *cli.Context) {
 	physicsWorld := physics.NewPhysicsSpace()
 	actorStore := actor.NewActorStore()
 
-	spawn := func() *dynamics.PhysicsObject {
+	spawn := func() dynamics.PhysicsObject {
 		monkeyNode := renderer.CreateNode()
 		monkeyNode.Add(&geomMonkey)
 
 		//create object with autgenerated colliders
 		phyObj := physicsWorld.CreateObject()
-		phyObj.BroadPhase = assets.BoundingBoxFromRadius(radiusMonkey)
-		phyObj.NarrowPhase = collision.NewConvexSet(pointsMonkey)
-		phyObj.Mass = 100
-		phyObj.Radius = radiusMonkey
-		phyObj.Friction = 100.0
+		phyObj.SetBroadPhase(assets.BoundingBoxFromRadius(radiusMonkey))
+		phyObj.SetNarrowPhase(collision.NewConvexSet(pointsMonkey))
+		phyObj.SetMass(100)
+		phyObj.SetRadius(radiusMonkey)
+		phyObj.SetFriction(100.0)
 
 		//attach to all the things ()
 		actorStore.Add(actor.NewPhysicsActor(monkeyNode, phyObj))
@@ -82,10 +84,10 @@ func PhysicsDemo(c *cli.Context) {
 		phyObj := spawn()
 
 		//set initial position
-		phyObj.Position = vmath.Vector3{0.2 * float64(i), 4 * float64(i), 0.2 * float64(i)}
+		phyObj.SetPosition(vmath.Vector3{0.2 * float64(i), 4 * float64(i), 0.2 * float64(i)})
 
 		if i == 0 {
-			phyObj.Static = true
+			// phyObj.Static = true
 			// phyObj.Velocity = vmath.Vector3{0, 5.6, 0}
 		}
 	}
@@ -99,34 +101,32 @@ func PhysicsDemo(c *cli.Context) {
 		terrainNode.Add(&terrain)
 
 		phyObj := physicsWorld.CreateObject()
-		phyObj.Friction = 300.0
-		phyObj.Static = true
-		phyObj.BroadPhase = assets.BoundingBoxFromGeometry(terrain)
-		phyObj.NarrowPhase = assets.ConvexSetFromGeometry(terrain, 2.0)
+		phyObj.SetFriction(300.0)
+		phyObj.SetStatic(true)
+		phyObj.SetBroadPhase(assets.BoundingBoxFromGeometry(terrain))
+		phyObj.SetNarrowPhase(assets.ConvexSetFromGeometry(terrain, 2.0))
 
 		actorStore.Add(actor.NewPhysicsActor(terrainNode, phyObj))
 		sceneGraph.Add(terrainNode)
 		if i == 0 {
-			phyObj.Position = vmath.Vector3{0, -4, 0}
+			phyObj.SetPosition(vmath.Vector3{0, -4, 0})
 		} else if i == 1 {
-			phyObj.Position = vmath.Vector3{14, 0, 0}
-			phyObj.Orientation = vmath.AngleAxis(0.7, vmath.Vector3{0, 0, 1})
+			phyObj.SetPosition(vmath.Vector3{14, 0, 0})
+			phyObj.SetOrientation(vmath.AngleAxis(0.7, vmath.Vector3{0, 0, 1}))
 		} else if i == 2 {
-			phyObj.Position = vmath.Vector3{0, 0, 14}
-			phyObj.Orientation = vmath.AngleAxis(0.7, vmath.Vector3{-1, 0, 0})
+			phyObj.SetPosition(vmath.Vector3{0, 0, 14})
+			phyObj.SetOrientation(vmath.AngleAxis(0.7, vmath.Vector3{-1, 0, 0}))
 		} else if i == 3 {
-			phyObj.Position = vmath.Vector3{-14, 0, 0}
-			phyObj.Orientation = vmath.AngleAxis(0.7, vmath.Vector3{0, 0, -1})
+			phyObj.SetPosition(vmath.Vector3{-14, 0, 0})
+			phyObj.SetOrientation(vmath.AngleAxis(0.7, vmath.Vector3{0, 0, -1}))
 		} else {
-			phyObj.Position = vmath.Vector3{0, 0, -14}
-			phyObj.Orientation = vmath.AngleAxis(0.7, vmath.Vector3{1, 0, 0})
+			phyObj.SetPosition(vmath.Vector3{0, 0, -14})
+			phyObj.SetOrientation(vmath.AngleAxis(0.7, vmath.Vector3{1, 0, 0}))
 		}
 	}
 
 	//gravity global force
-	physicsWorld.GlobalForces.AddForce("gravity", &dynamics.GravityForce{vmath.Vector3{0, -20, 0}})
-	//air friction
-	physicsWorld.GlobalForces.AddForce("airFriction", &dynamics.FrictionForce{LinearCoefficient: 0.1, AngularCoefficient: 3})
+	physicsWorld.SetGravity(vmath.Vector3{0, -20, 0})
 
 	//debug
 	// physicsWorld.OnEvent = func(event physics.Event) {
@@ -198,8 +198,9 @@ func PhysicsDemo(c *cli.Context) {
 		//spawn objects
 		customController.BindAction(func() {
 			phyObj := spawn()
-			phyObj.Position = camera.Translation
-			phyObj.Velocity = camera.GetDirection().MultiplyScalar(30)
+			fmt.Println(phyObj)
+			phyObj.SetPosition(camera.Translation)
+			phyObj.SetVelocity(camera.GetDirection().MultiplyScalar(30))
 		}, glfw.KeyR, glfw.Press)
 
 		//close window and exit on escape

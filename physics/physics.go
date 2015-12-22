@@ -5,8 +5,16 @@ import (
 	vmath "github.com/walesey/go-engine/vectormath"
 )
 
-type PhysicsSpace struct {
-	objects      []*dynamics.PhysicsObject
+type PhysicsSpace interface {
+	CreateObject() dynamics.PhysicsObject
+	Remove(objects ...dynamics.PhysicsObject)
+	DoStep()
+	SetStepTime(stepDt float64)
+	SetGravity(gravity vmath.Vector3)
+}
+
+type PhysicsSpaceImpl struct {
+	objects      []*dynamics.PhysicsObjectImpl
 	objectPool   *dynamics.PhysicsObjectPool
 	contactCache ContactCache
 	StepDt       float64
@@ -15,12 +23,12 @@ type PhysicsSpace struct {
 	OnEvent      func(Event)
 }
 
-func NewPhysicsSpace() *PhysicsSpace {
-	return &PhysicsSpace{
+func NewPhysicsSpace() PhysicsSpace {
+	return &PhysicsSpaceImpl{
 		StepDt:       0.018,
 		Iterations:   1,
 		GlobalForces: dynamics.NewForceStore(),
-		objects:      make([]*dynamics.PhysicsObject, 0, 500),
+		objects:      make([]*dynamics.PhysicsObjectImpl, 0, 500),
 		objectPool:   dynamics.NewPhysicsObjectPool(),
 		contactCache: NewContactCache(),
 		OnEvent:      func(event Event) {},
@@ -28,14 +36,14 @@ func NewPhysicsSpace() *PhysicsSpace {
 }
 
 // CreateObject create a new object and add it to the world
-func (ps *PhysicsSpace) CreateObject() *dynamics.PhysicsObject {
+func (ps *PhysicsSpaceImpl) CreateObject() dynamics.PhysicsObject {
 	object := ps.objectPool.GetPhysicsObject()
 	ps.objects = append(ps.objects, object)
 	return object
 }
 
 // Remove remove objects from the world
-func (ps *PhysicsSpace) Remove(objects ...*dynamics.PhysicsObject) {
+func (ps *PhysicsSpaceImpl) Remove(objects ...dynamics.PhysicsObject) {
 	//find the address in the slice
 	for _, remove := range objects {
 		for index, object := range ps.objects {
@@ -52,8 +60,18 @@ func (ps *PhysicsSpace) Remove(objects ...*dynamics.PhysicsObject) {
 	}
 }
 
+// SetStepTime set the time interval per step
+func (ps *PhysicsSpaceImpl) SetStepTime(stepDt float64) {
+	ps.StepDt = stepDt
+}
+
+// SetGravity create a global force to simulate gravity
+func (ps *PhysicsSpaceImpl) SetGravity(gravity vmath.Vector3) {
+	ps.GlobalForces.AddForce("gravity", &dynamics.GravityForce{gravity})
+}
+
 // DoStep update all objects
-func (ps *PhysicsSpace) DoStep() {
+func (ps *PhysicsSpaceImpl) DoStep() {
 
 	for iteration := 0; iteration < ps.Iterations; iteration = iteration + 1 {
 

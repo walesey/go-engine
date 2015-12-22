@@ -7,10 +7,10 @@ import (
 
 type PhysicsActor struct {
 	Entity renderer.Entity
-	Object *dynamics.PhysicsObject
+	Object dynamics.PhysicsObject
 }
 
-func NewPhysicsActor(Entity renderer.Entity, Object *dynamics.PhysicsObject) *PhysicsActor {
+func NewPhysicsActor(Entity renderer.Entity, Object dynamics.PhysicsObject) *PhysicsActor {
 	return &PhysicsActor{
 		Entity: Entity,
 		Object: Object,
@@ -19,6 +19,6 @@ func NewPhysicsActor(Entity renderer.Entity, Object *dynamics.PhysicsObject) *Ph
 
 func (actor *PhysicsActor) Update(dt float64) {
 	//update entity
-	actor.Entity.SetTranslation(actor.Object.Position)
-	actor.Entity.SetOrientation(actor.Object.Orientation)
+	actor.Entity.SetTranslation(actor.Object.GetPosition())
+	actor.Entity.SetOrientation(actor.Object.GetOrientation())
 }

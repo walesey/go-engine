@@ -5,7 +5,6 @@ import (
 	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/controller"
 	"github.com/walesey/go-engine/physics"
-	"github.com/walesey/go-engine/physics/dynamics"
 	"github.com/walesey/go-engine/renderer"
 	vmath "github.com/walesey/go-engine/vectormath"
 
@@ -61,10 +60,10 @@ func Collisions(c *cli.Context) {
 
 	//create object with autgenerated colliders
 	phyObj1 := physicsWorld.CreateObject()
-	phyObj1.Mass = 100
-	phyObj1.Friction = 0.2
-	phyObj1.BroadPhase = assets.BoundingBoxFromGeometry(geomMonkey)
-	phyObj1.NarrowPhase = assets.ConvexSetFromGeometry(geomMonkey, 0.1)
+	phyObj1.SetMass(100)
+	phyObj1.SetFriction(0.2)
+	phyObj1.SetBroadPhase(assets.BoundingBoxFromGeometry(geomMonkey))
+	phyObj1.SetNarrowPhase(assets.ConvexSetFromGeometry(geomMonkey, 0.1))
 
 	//attach to all the things ()
 	freeMoveActor := actor.CreateFreeMoveActor(monkeyNode)
@@ -72,7 +71,7 @@ func Collisions(c *cli.Context) {
 	sceneGraph.Add(monkeyNode)
 
 	//set initial position
-	phyObj1.Position = vmath.Vector3{0, 5, 0}
+	phyObj1.SetPosition(vmath.Vector3{0, 5, 0})
 
 	terrain := assetLib.GetGeometry("terrain")
 	terrainMat := assetLib.GetMaterial("terrainMat")
@@ -82,18 +81,14 @@ func Collisions(c *cli.Context) {
 	terrainNode.Add(&terrain)
 
 	phyObj2 := physicsWorld.CreateObject()
-	phyObj2.Friction = 0.1
-	phyObj2.Static = true
-	phyObj2.BroadPhase = assets.BoundingBoxFromGeometry(terrain)
-	phyObj2.NarrowPhase = assets.ConvexSetFromGeometry(terrain, 0.1)
-	phyObj2.Position = vmath.Vector3{-10, -10, -10}
-	// phyObj2.Orientation = vmath.AngleAxis(0.2, vmath.Vector3{1, 0, 0})
+	phyObj2.SetFriction(0.1)
+	phyObj2.SetStatic(true)
+	phyObj2.SetBroadPhase(assets.BoundingBoxFromGeometry(terrain))
+	phyObj2.SetNarrowPhase(assets.ConvexSetFromGeometry(terrain, 0.1))
+	phyObj2.SetPosition(vmath.Vector3{-10, -10, -10})
 
 	actorStore.Add(actor.NewPhysicsActor(terrainNode, phyObj2))
 	sceneGraph.Add(terrainNode)
-
-	//gravity global force
-	physicsWorld.GlobalForces.AddForce("gravity", &dynamics.GravityForce{vmath.Vector3{0, -1, 0}})
 
 	glRenderer.Init = func() {
 		//lighting
@@ -143,10 +138,10 @@ func Collisions(c *cli.Context) {
 		controllerManager.AddController(customController)
 
 		customController.BindAction(func() {
-			phyObj1.Position = freeMoveActor.Location
-			phyObj1.Orientation = monkeyNode.Orientation
+			phyObj1.SetPosition(freeMoveActor.Location)
+			phyObj1.SetOrientation(monkeyNode.Orientation)
 			physicsWorld.DoStep()
-			freeMoveActor.Location = phyObj1.Position
+			freeMoveActor.Location = phyObj1.GetPosition()
 		}, glfw.KeyR, glfw.Press)
 
 		//close window and exit on escape

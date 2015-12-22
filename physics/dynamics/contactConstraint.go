@@ -5,7 +5,7 @@ import vmath "github.com/walesey/go-engine/vectormath"
 type ContactConstraint struct {
 	Normal                       vmath.Vector3
 	LocalContact1, LocalContact2 vmath.Vector3
-	Object1, Object2             *PhysicsObject
+	Object1, Object2             *PhysicsObjectImpl
 	InContact                    bool
 }
 
@@ -15,7 +15,6 @@ func (cc *ContactConstraint) Solve(dt float64) {
 	tensorInv2 := cc.Object2.InertiaTensor().Inverse()
 
 	if cc.InContact && cc.Object2.Static {
-
 		//restrict velocity to the tangent plane between the two objects
 		normalVelocity1 := cc.Normal.MultiplyScalar(cc.Object1.Velocity.Dot(cc.Normal))
 		cc.Object1.Velocity = cc.Object1.Velocity.Subtract(normalVelocity1)
@@ -28,15 +27,15 @@ func (cc *ContactConstraint) Solve(dt float64) {
 		cc.Object1.Velocity = cc.Object1.Velocity.Add(frictionForce.DivideScalar(cc.Object1.Mass).MultiplyScalar(dt))
 
 		//angular Friction
-		angularV1 := cc.Object1.AngularVelocityVector()
+		angularV1 := cc.Object1.GetAngularVelocityVector()
 		frictionTorque := frictionForce.Cross(cc.Normal).MultiplyScalar(cc.Object1.Radius)
 		newAngV1 := angularV1.Add(tensorInv1.Transform(frictionTorque).MultiplyScalar(0.02))
 		cc.Object1.SetAngularVelocityVector(newAngV1)
 	}
 
 	//velocities
-	angularV1 := cc.Object1.AngularVelocityVector()
-	angularV2 := cc.Object2.AngularVelocityVector()
+	angularV1 := cc.Object1.GetAngularVelocityVector()
+	angularV2 := cc.Object2.GetAngularVelocityVector()
 	radialV1 := cc.LocalContact1.Cross(angularV1)
 	radialV2 := cc.LocalContact2.Cross(angularV2)
 	contactV1 := radialV1.Add(cc.Object1.Velocity)
@@ -44,7 +43,7 @@ func (cc *ContactConstraint) Solve(dt float64) {
 
 	if cc.Object2.Static {
 		//model the static object as a really heavy object
-		cc.Object2.Mass = 99999999999999999.9
+		cc.Object2.Mass = 99999999999999999999.9
 	}
 
 	contactV := contactV1.Subtract(contactV2)
