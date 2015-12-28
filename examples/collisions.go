@@ -4,7 +4,7 @@ import (
 	"github.com/walesey/go-engine/actor"
 	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/controller"
-	"github.com/walesey/go-engine/physics"
+	"github.com/walesey/go-engine/physics/dynamics"
 	"github.com/walesey/go-engine/renderer"
 	vmath "github.com/walesey/go-engine/vectormath"
 
@@ -50,7 +50,7 @@ func Collisions(c *cli.Context) {
 	geomMonkey.Material = &monkeyMat
 
 	//physics engine
-	physicsWorld := physics.NewPhysicsSpace()
+	physicsWorld := dynamics.NewPhysicsSpace()
 	actorStore := actor.NewActorStore()
 	transformNode := renderer.CreateNode()
 	transformNode.Add(&geomMonkey)
@@ -61,7 +61,6 @@ func Collisions(c *cli.Context) {
 	//create object with autgenerated colliders
 	phyObj1 := physicsWorld.CreateObject()
 	phyObj1.SetMass(100)
-	phyObj1.SetFriction(0.2)
 	phyObj1.SetBroadPhase(assets.BoundingBoxFromGeometry(geomMonkey))
 	phyObj1.SetNarrowPhase(assets.ConvexSetFromGeometry(geomMonkey, 0.1))
 
@@ -81,7 +80,6 @@ func Collisions(c *cli.Context) {
 	terrainNode.Add(&terrain)
 
 	phyObj2 := physicsWorld.CreateObject()
-	phyObj2.SetFriction(0.1)
 	phyObj2.SetStatic(true)
 	phyObj2.SetBroadPhase(assets.BoundingBoxFromGeometry(terrain))
 	phyObj2.SetNarrowPhase(assets.ConvexSetFromGeometry(terrain, 0.1))
@@ -140,7 +138,7 @@ func Collisions(c *cli.Context) {
 		customController.BindAction(func() {
 			phyObj1.SetPosition(freeMoveActor.Location)
 			phyObj1.SetOrientation(monkeyNode.Orientation)
-			physicsWorld.DoStep()
+			physicsWorld.SimulateStep(0.018, 1)
 			freeMoveActor.Location = phyObj1.GetPosition()
 		}, glfw.KeyR, glfw.Press)
 

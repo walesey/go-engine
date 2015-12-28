@@ -1,4 +1,4 @@
-package physics
+package dynamics
 
 type ContactCache interface {
 	Add(index1 int, index2 int)

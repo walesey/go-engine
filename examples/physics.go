@@ -6,7 +6,6 @@ import (
 	"github.com/walesey/go-engine/actor"
 	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/controller"
-	"github.com/walesey/go-engine/physics"
 	"github.com/walesey/go-engine/physics/collision"
 	"github.com/walesey/go-engine/physics/dynamics"
 	"github.com/walesey/go-engine/renderer"
@@ -55,10 +54,11 @@ func PhysicsDemo(c *cli.Context) {
 	monkeyMat := assetLib.GetMaterial("monkeyMat")
 	geomMonkey.Material = &monkeyMat
 	radiusMonkey := assets.RadiusFromGeometry(geomMonkey)
-	pointsMonkey := assets.PointsFromGeometry(geomMonkey, 0.01)
+	pointsMonkey := assets.PointsFromGeometry(geomMonkey, 0.3)
+	fmt.Printf("pointsMonkey %v\n", len(*pointsMonkey))
 
 	//physics engine
-	physicsWorld := physics.NewPhysicsSpace()
+	physicsWorld := dynamics.NewPhysicsSpace()
 	actorStore := actor.NewActorStore()
 
 	spawn := func() dynamics.PhysicsObject {
@@ -71,7 +71,6 @@ func PhysicsDemo(c *cli.Context) {
 		phyObj.SetNarrowPhase(collision.NewConvexSet(pointsMonkey))
 		phyObj.SetMass(100)
 		phyObj.SetRadius(radiusMonkey)
-		phyObj.SetFriction(100.0)
 
 		//attach to all the things ()
 		actorStore.Add(actor.NewPhysicsActor(monkeyNode, phyObj))
@@ -101,7 +100,6 @@ func PhysicsDemo(c *cli.Context) {
 		terrainNode.Add(&terrain)
 
 		phyObj := physicsWorld.CreateObject()
-		phyObj.SetFriction(300.0)
 		phyObj.SetStatic(true)
 		phyObj.SetBroadPhase(assets.BoundingBoxFromGeometry(terrain))
 		phyObj.SetNarrowPhase(assets.ConvexSetFromGeometry(terrain, 2.0))
@@ -211,7 +209,7 @@ func PhysicsDemo(c *cli.Context) {
 
 	glRenderer.Update = func() {
 		fps.UpdateFPSMeter()
-		physicsWorld.DoStep()
+		physicsWorld.SimulateStep(0.018, 1)
 		actorStore.UpdateAll(0.018)
 	}
 
