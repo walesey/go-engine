@@ -6,6 +6,7 @@ type ContactCache interface {
 	Contains(index1 int, index2 int) bool
 	MarkContactsAsOld()
 	CleanOldContacts()
+	Clear()
 }
 
 func getHash(index1, index2 int) int {
@@ -47,5 +48,11 @@ func (cc *ContactCacheImpl) CleanOldContacts() {
 		if value {
 			delete(cc.contacts, key)
 		}
+	}
+}
+
+func (cc *ContactCacheImpl) Clear() {
+	for key, _ := range cc.contacts {
+		delete(cc.contacts, key)
 	}
 }

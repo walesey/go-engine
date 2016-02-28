@@ -10,6 +10,14 @@ type Matrix3 struct {
 	M20, M21, M22 float64
 }
 
+func IdentityMatrix3() Matrix3 {
+	return Matrix3{
+		M00: 1, M01: 0, M02: 0,
+		M10: 0, M11: 1, M12: 0,
+		M20: 0, M21: 0, M22: 1,
+	}
+}
+
 func (m Matrix3) Determinant() float64 {
 	return m.M00*m.M11*m.M22 + m.M01*m.M12*m.M20 + m.M02*m.M10*m.M21 - m.M02*m.M11*m.M20 - m.M01*m.M10*m.M22 - m.M00*m.M12*m.M21
 }

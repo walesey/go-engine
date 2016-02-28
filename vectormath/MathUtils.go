@@ -122,3 +122,11 @@ func CramerSolve4(mat Matrix4, col Vector4) (Vector4, error) {
 	}
 	return Vector4{}, fmt.Errorf("No solution")
 }
+
+// RowMat3ColumnProduct - Calculate the product of a row vec, a 3x3 mat and a 1x3 column vec
+func RowMat3ColumnProduct(mat Matrix3, row, col Vector3) float64 {
+	a := row.X*mat.M00*col.X + row.Y*mat.M10*col.X + row.Z*mat.M20*col.X
+	b := row.X*mat.M01*col.Y + row.Y*mat.M11*col.Y + row.Z*mat.M21*col.Y
+	c := row.X*mat.M02*col.Z + row.Y*mat.M12*col.Z + row.Z*mat.M22*col.Z
+	return a + b + c
+}

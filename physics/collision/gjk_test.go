@@ -18,8 +18,8 @@ func TestGJKOverlap(t *testing.T) {
 		vmath.Vector3{1, 1, 1},
 		vmath.Vector3{0, 1, 1},
 	}
-	convexSet1 := NewConvexSet(verts)
-	convexSet2 := NewConvexSet(verts)
+	convexSet1 := NewConvexSet(&verts)
+	convexSet2 := NewConvexSet(&verts)
 
 	convexSet1.Offset(vmath.Vector3{0, 0, 0}, vmath.IdentityQuaternion())
 	convexSet2.Offset(vmath.Vector3{0, 0, 0}, vmath.IdentityQuaternion())
@@ -53,8 +53,8 @@ func TestGJKOverlap_rotation(t *testing.T) {
 		vmath.Vector3{0.1, 0.2, 1},
 		vmath.Vector3{-0.1, 0.2, 1},
 	}
-	convexSet1 := NewConvexSet(verts)
-	convexSet2 := NewConvexSet(verts)
+	convexSet1 := NewConvexSet(&verts)
+	convexSet2 := NewConvexSet(&verts)
 
 	convexSet1.Offset(vmath.Vector3{0, 0.3, 0}, vmath.IdentityQuaternion())
 	convexSet2.Offset(vmath.Vector3{0, 0, 0}, vmath.IdentityQuaternion())
@@ -76,8 +76,8 @@ func TestGJKContact(t *testing.T) {
 		vmath.Vector3{1, 1, 1},
 		vmath.Vector3{0, 1, 1},
 	}
-	convexSet1 := NewConvexSet(verts)
-	convexSet2 := NewConvexSet(verts)
+	convexSet1 := NewConvexSet(&verts)
+	convexSet2 := NewConvexSet(&verts)
 
 	convexSet1.Offset(vmath.Vector3{0, 0, 0}, vmath.IdentityQuaternion())
 	convexSet2.Offset(vmath.Vector3{1.01, 1.01, 1.01}, vmath.IdentityQuaternion())
@@ -97,7 +97,7 @@ func TestFarthestPointInDirection(t *testing.T) {
 		vmath.Vector3{1, 1, 0},
 		vmath.Vector3{2, 1, 0},
 	}
-	convexSet, ok := NewConvexSet(points).(*ConvexSet)
+	convexSet, ok := NewConvexSet(&points).(*ConvexSet)
 	assert.True(t, ok, "NewConvexSet should create a *ConvexSet")
 	assert.EqualValues(t, vmath.Vector3{2, 2, 0}, convexSet.farthestPointInDirection(vmath.Vector3{1, 1, 0}), "Farthest point incorrect")
 	assert.EqualValues(t, vmath.Vector3{1, 2, 0}, convexSet.farthestPointInDirection(vmath.Vector3{-1, 1, 0}), "Farthest point incorrect")

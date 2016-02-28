@@ -80,7 +80,6 @@ func Collisions(c *cli.Context) {
 	terrainNode.Add(&terrain)
 
 	phyObj2 := physicsWorld.CreateObject()
-	phyObj2.SetStatic(true)
 	phyObj2.SetBroadPhase(assets.BoundingBoxFromGeometry(terrain))
 	phyObj2.SetNarrowPhase(assets.ConvexSetFromGeometry(terrain, 0.1))
 	phyObj2.SetPosition(vmath.Vector3{-10, -10, -10})

@@ -6,8 +6,8 @@ import (
 	vmath "github.com/walesey/go-engine/vectormath"
 )
 
-const epaMaxIterations = 40
-const gjkMaxIterations = 40
+const epaMaxIterations = 255
+const gjkMaxIterations = 128
 
 // ConvexSet A set of points representing a convex geometry
 type ConvexSet struct {
@@ -35,7 +35,7 @@ func (cs *ConvexSet) Offset(offset vmath.Vector3, orientation vmath.Quaternion) 
 	cs.orientation = orientation
 }
 
-// Overlap Calculate the overlap of a convex set and another collider
+// Overlap - Calculate the overlap of a convex set and another collider
 func (cs *ConvexSet) Overlap(other Collider) bool {
 	switch t := other.(type) {
 	default:

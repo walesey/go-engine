@@ -59,6 +59,8 @@ func PhysicsDemo(c *cli.Context) {
 
 	//physics engine
 	physicsWorld := dynamics.NewPhysicsSpace()
+	solver := dynamics.NewSequentialImpulseSolver()
+	physicsWorld.SetConstraintSolver(solver)
 	actorStore := actor.NewActorStore()
 
 	spawn := func() dynamics.PhysicsObject {
@@ -79,14 +81,14 @@ func PhysicsDemo(c *cli.Context) {
 		return phyObj
 	}
 
-	for i := 0; i < 1; i = i + 1 {
+	for i := 0; i < 10; i = i + 1 {
 		phyObj := spawn()
 
 		//set initial position
 		phyObj.SetPosition(vmath.Vector3{0.2 * float64(i), 4 * float64(i), 0.2 * float64(i)})
 
 		if i == 0 {
-			// phyObj.Static = true
+			phyObj.SetMass(0)
 			// phyObj.Velocity = vmath.Vector3{0, 5.6, 0}
 		}
 	}
@@ -100,7 +102,6 @@ func PhysicsDemo(c *cli.Context) {
 		terrainNode.Add(&terrain)
 
 		phyObj := physicsWorld.CreateObject()
-		phyObj.SetStatic(true)
 		phyObj.SetBroadPhase(assets.BoundingBoxFromGeometry(terrain))
 		phyObj.SetNarrowPhase(assets.ConvexSetFromGeometry(terrain, 2.0))
 
@@ -124,7 +125,7 @@ func PhysicsDemo(c *cli.Context) {
 	}
 
 	//gravity global force
-	physicsWorld.SetGravity(vmath.Vector3{0, -20, 0})
+	physicsWorld.SetGravity(vmath.Vector3{0, -0.2, 0})
 
 	//debug
 	// physicsWorld.OnEvent = func(event physics.Event) {

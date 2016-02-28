@@ -25,11 +25,12 @@ type PhysicsSpaceImpl struct {
 
 func NewPhysicsSpace() PhysicsSpace {
 	return &PhysicsSpaceImpl{
-		objects:      make([]*PhysicsObjectImpl, 0, 500),
-		objectPool:   NewPhysicsObjectPool(),
-		contactCache: NewContactCache(),
-		constraints:  make([]Constraint, 0, 500),
-		gravity:      vmath.Vector3{0, -10, 0},
+		objects:          make([]*PhysicsObjectImpl, 0, 500),
+		objectPool:       NewPhysicsObjectPool(),
+		contactCache:     NewContactCache(),
+		constraints:      make([]Constraint, 0, 500),
+		gravity:          vmath.Vector3{0, -10, 0},
+		constraintSolver: NewSequentialImpulseSolver(),
 	}
 }
 
@@ -40,9 +41,17 @@ func (ps *PhysicsSpaceImpl) CreateObject() PhysicsObject {
 	return object
 }
 
-// Remove remove objects from the world
+// RemoveObject Remove remove objects from the world
 func (ps *PhysicsSpaceImpl) RemoveObject(objects ...PhysicsObject) {
-	//TODO
+	for _, object := range objects {
+		for index, phyObj := range ps.objects {
+			if phyObj == object {
+				ps.objects = append(ps.objects[:index], ps.objects[index+1:]...)
+				ps.objectPool.ReleasePhysicsObject(phyObj)
+			}
+		}
+	}
+	ps.contactCache.Clear()
 }
 
 func (ps *PhysicsSpaceImpl) SetConstraintSolver(solver ConstraintSolver) {
@@ -78,7 +87,7 @@ func (ps *PhysicsSpaceImpl) clearForces() {
 	}
 }
 
-// DoStep update simulate a period of time with a number of subSteps
+// SimulateStep DoStep update simulate a period of time with a number of subSteps
 func (ps *PhysicsSpaceImpl) SimulateStep(stepTime float64, subSteps int) {
 	stepDt := stepTime / float64(subSteps)
 
@@ -95,16 +104,20 @@ func (ps *PhysicsSpaceImpl) simulateSingleStep(stepTime float64) {
 
 	//predict motion
 	for _, object := range ps.objects {
-		if !object.static && object.active {
+		if !object.IsStatic() && object.IsActive() {
+			object.ApplyGravity(ps.gravity)
 			object.DoStep(stepTime)
 		}
 	}
 
 	ps.contactCache.MarkContactsAsOld()
 
+	//TODO: find a way to reuse constraints
+	ps.constraints = ps.constraints[:0]
+
 	//do broadphase overlaps and narrow phase checks for each
 	for i, object1 := range ps.objects {
-		if !object1.static && object1.active {
+		if !object1.IsStatic() && object1.IsActive() {
 			for j, object2 := range ps.objects {
 				if i != j {
 					if object1.BroadPhaseOverlap(object2) {
@@ -115,24 +128,34 @@ func (ps *PhysicsSpaceImpl) simulateSingleStep(stepTime float64) {
 
 							//check contact cache
 							inContact := ps.contactCache.Contains(i, j)
-							ps.contactCache.Add(i, j)
+							if inContact {
 
-							//Collision info
+							} else {
+								ps.contactCache.Add(i, j)
+							}
+
 							penV := object1.PenetrationVector(object2)
-
-							//position correction
-							object1.position = object1.position.Subtract(penV)
-
 							globalContact := object1.ContactPoint(object2)
-							// localContact1 := globalContact.Subtract(object1.position)
-							// localContact2 := globalContact.Subtract(object2.position)
+							localContact1 := globalContact.Subtract(object1.position).Add(penV)
+							localContact2 := globalContact.Subtract(object2.position)
 
 							//collision normal
+							norm := vmath.Vector3{1, 0, 0}
 							if penV.LengthSquared() > 0 {
-								// norm := penV.Normalize()
-
-								//TODO: Add constraint
+								norm = penV.Normalize()
 							}
+
+							//Constraint info
+							contactConstraint := &ContactConstraint{
+								BodyIndex1:    i,
+								BodyIndex2:    j,
+								Body1:         object1,
+								Body2:         object2,
+								LocalContact1: localContact1,
+								LocalContact2: localContact2,
+								Normal:        norm,
+							}
+							ps.AddConstraint(contactConstraint)
 
 							//TODO: deactivate if moving too slow
 
@@ -146,6 +169,8 @@ func (ps *PhysicsSpaceImpl) simulateSingleStep(stepTime float64) {
 			}
 		}
 	}
+
+	ps.constraintSolver.SolveGroup(stepTime, &ps.constraints)
 
 	ps.contactCache.CleanOldContacts()
 }

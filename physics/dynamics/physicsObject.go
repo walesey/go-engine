@@ -7,6 +7,10 @@ import (
 	vmath "github.com/walesey/go-engine/vectormath"
 )
 
+func sphereInertia(radius, mass float64) vmath.Matrix3 {
+	return vmath.IdentityMatrix3().MultiplyScalar((2.0 / 5.0) * mass * radius * radius)
+}
+
 type PhysicsObject interface {
 	DoStep(timeStep float64)
 	ApplyGravity(gravity vmath.Vector3)
@@ -19,6 +23,10 @@ type PhysicsObject interface {
 	GetAngularVelocityVector() vmath.Vector3
 	GetMass() float64
 	GetRadius() float64
+	GetFriction() float64
+	GetRestitution() float64
+	InertiaTensor() vmath.Matrix3
+	IsStatic() bool
 
 	SetPosition(position vmath.Vector3)
 	SetVelocity(velocity vmath.Vector3)
@@ -26,7 +34,8 @@ type PhysicsObject interface {
 	SetAngularVelocityVector(av vmath.Vector3)
 	SetMass(mass float64)
 	SetRadius(radius float64)
-	SetStatic(static bool)
+	SetFriction(friction float64)
+	SetRestitution(restitution float64)
 	SetBroadPhase(broadphase collision.Collider)
 	SetNarrowPhase(broadphase collision.Collider)
 }
@@ -38,11 +47,13 @@ type PhysicsObjectImpl struct {
 	totalTorque        vmath.Vector3
 	orientation        vmath.Quaternion
 	angularVelocity    vmath.Quaternion
+	inertiaTensor      vmath.Matrix3
 	mass               float64
 	radius             float64
+	friction           float64
+	restitution        float64
 	activationVelocity float64 // > 0.0
 	active             bool
-	static             bool
 	linearDamping      float64
 	angularDamping     float64
 	broadPhase         collision.Collider
@@ -78,8 +89,11 @@ func newPhysicsObject() *PhysicsObjectImpl {
 		velocity:           vmath.Vector3{0, 0, 0},
 		orientation:        vmath.IdentityQuaternion(),
 		angularVelocity:    vmath.Quaternion{1, 0, 0, 0},
-		mass:               1.0,
+		inertiaTensor:      vmath.IdentityMatrix3(),
+		mass:               0.0,
 		radius:             1.0,
+		friction:           0.1,
+		restitution:        0.1,
 		activationVelocity: 0.01,
 		active:             true,
 		linearDamping:      0.01,
@@ -147,6 +161,20 @@ func (obj *PhysicsObjectImpl) SetAngularVelocityVector(av vmath.Vector3) {
 	obj.angularVelocity.Z = av.Z
 }
 
+func (obj *PhysicsObjectImpl) SetRadius(radius float64) {
+	obj.radius = radius
+	if !obj.IsStatic() {
+		obj.inertiaTensor = sphereInertia(obj.radius, obj.mass)
+	}
+}
+
+func (obj *PhysicsObjectImpl) SetMass(mass float64) {
+	obj.mass = mass
+	if !obj.IsStatic() {
+		obj.inertiaTensor = sphereInertia(obj.radius, obj.mass)
+	}
+}
+
 // InertiaTensor returns the inertial Tensor of a sphere
 func (obj *PhysicsObjectImpl) InertiaTensor() vmath.Matrix3 {
 	mR := 0.4 * obj.mass * obj.radius
@@ -157,7 +185,16 @@ func (obj *PhysicsObjectImpl) InertiaTensor() vmath.Matrix3 {
 	}
 }
 
-// Apply a force based on gravity and this object's mass
+// IsStatic object is static if it's mass is zero
+func (obj *PhysicsObjectImpl) IsStatic() bool {
+	return obj.mass <= 0.000000001
+}
+
+func (obj *PhysicsObjectImpl) IsActive() bool {
+	return obj.active
+}
+
+// ApplyGravity Apply a force based on gravity and this object's mass
 func (obj *PhysicsObjectImpl) ApplyGravity(gravity vmath.Vector3) {
 	obj.totalForce = obj.totalForce.Add(gravity.MultiplyScalar(obj.mass))
 }
@@ -179,6 +216,18 @@ func (obj *PhysicsObjectImpl) DoStep(timeStep float64) {
 	obj.velocity = obj.velocity.MultiplyScalar(math.Pow(1.0-obj.linearDamping, timeStep))
 	obj.angularVelocity.W = obj.angularVelocity.W * math.Pow(1.0-obj.angularDamping, timeStep)
 
+	//forces
+	obj.velocity = obj.velocity.Add(obj.totalForce.DivideScalar(obj.mass).MultiplyScalar(timeStep))
+	obj.totalForce = vmath.Vector3{0, 0, 0}
+
+	// torques
+	if obj.totalTorque.LengthSquared() > 0 {
+		angularV := obj.GetAngularVelocityVector()
+		angularV = angularV.Add(obj.inertiaTensor.Inverse().MultiplyVector(obj.totalTorque).MultiplyScalar(timeStep))
+		obj.SetAngularVelocityVector(angularV)
+		obj.totalTorque = vmath.Vector3{0, 0, 0}
+	}
+
 	//apply position increment
 	obj.position = obj.position.Add(obj.velocity.MultiplyScalar(timeStep))
 
@@ -197,15 +246,16 @@ func (obj *PhysicsObjectImpl) GetVelocity() vmath.Vector3       { return obj.vel
 func (obj *PhysicsObjectImpl) GetOrientation() vmath.Quaternion { return obj.orientation }
 func (obj *PhysicsObjectImpl) GetMass() float64                 { return obj.mass }
 func (obj *PhysicsObjectImpl) GetRadius() float64               { return obj.radius }
+func (obj *PhysicsObjectImpl) GetFriction() float64             { return obj.friction }
+func (obj *PhysicsObjectImpl) GetRestitution() float64          { return obj.restitution }
 
 func (obj *PhysicsObjectImpl) SetPosition(position vmath.Vector3) { obj.position = position }
 func (obj *PhysicsObjectImpl) SetVelocity(velocity vmath.Vector3) { obj.velocity = velocity }
 func (obj *PhysicsObjectImpl) SetOrientation(orientation vmath.Quaternion) {
 	obj.orientation = orientation
 }
-func (obj *PhysicsObjectImpl) SetMass(mass float64)     { obj.mass = mass }
-func (obj *PhysicsObjectImpl) SetRadius(radius float64) { obj.radius = radius }
-func (obj *PhysicsObjectImpl) SetStatic(static bool)    { obj.static = static }
+func (obj *PhysicsObjectImpl) SetFriction(friction float64)       { obj.friction = friction }
+func (obj *PhysicsObjectImpl) SetRestitution(restitution float64) { obj.restitution = restitution }
 func (obj *PhysicsObjectImpl) SetBroadPhase(broadphase collision.Collider) {
 	obj.broadPhase = broadphase
 }

@@ -7,18 +7,6 @@ import (
 	vmath "github.com/walesey/go-engine/vectormath"
 )
 
-func TestBoundingBoxWithPhysicsObject(t *testing.T) {
-	obj1 := newPhysicsObject()
-	obj2 := newPhysicsObject()
-	bb1 := NewBoundingBox(vmath.Vector3{1, 1, 1})
-	bb2 := NewBoundingBox(vmath.Vector3{1, 1, 1})
-	obj1.BroadPhase = bb1
-	obj2.BroadPhase = bb2
-	assert.True(t, obj1.BroadPhaseOverlap(obj2), "BroadPhase")
-	obj2.Position = vmath.Vector3{3, 0, 1}
-	assert.False(t, obj1.BroadPhaseOverlap(obj2), "BroadPhase")
-}
-
 func TestBoundingBox(t *testing.T) {
 	bb1 := NewBoundingBox(vmath.Vector3{1, 1, 1})
 	bb2 := NewBoundingBox(vmath.Vector3{1, 1, 1})

@@ -27,10 +27,10 @@ type ParticleSettings struct {
 }
 
 type ParticleSystem struct {
+	Location          vectormath.Vector3
 	geometry          renderer.Geometry
 	particles         particleList
 	settings          ParticleSettings
-	Location          vectormath.Vector3
 	particleTransform renderer.Transform
 	life              float64
 }
