@@ -104,6 +104,7 @@ func PhysicsDemo(c *cli.Context) {
 		phyObj := physicsWorld.CreateObject()
 		phyObj.SetBroadPhase(assets.BoundingBoxFromGeometry(terrain))
 		phyObj.SetNarrowPhase(assets.ConvexSetFromGeometry(terrain, 2.0))
+		phyObj.SetMass(0)
 
 		actorStore.Add(actor.NewPhysicsActor(terrainNode, phyObj))
 		sceneGraph.Add(terrainNode)

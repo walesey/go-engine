@@ -153,7 +153,9 @@ func (ps *PhysicsSpaceImpl) simulateSingleStep(stepTime float64) {
 								Body2:         object2,
 								LocalContact1: localContact1,
 								LocalContact2: localContact2,
+								Penetration:   penV,
 								Normal:        norm,
+								Restitution:   0.0,
 							}
 							ps.AddConstraint(contactConstraint)
 

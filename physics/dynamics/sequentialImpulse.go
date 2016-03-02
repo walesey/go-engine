@@ -1,13 +1,10 @@
 package dynamics
 
-import (
-	"fmt"
-
-	vmath "github.com/walesey/go-engine/vectormath"
-)
+import "fmt"
 
 // bias factor for baumgarte stabalization
-const biasFactor = 1.0
+const biasFactor = 0.01
+const iterations = 1
 
 // SequentialImpulseSolver - solver that uses iterative impulses to solve groups of constraints simultaniously
 type SequentialImpulseSolver struct {
@@ -21,23 +18,35 @@ func NewSequentialImpulseSolver() ConstraintSolver {
 
 //SolveGroup Solve a group of constraints simultaniously
 func (s *SequentialImpulseSolver) SolveGroup(stepTime float64, constraints *[]Constraint) {
+	// Initialize constraints
 	for _, constraint := range *constraints {
 		switch t := constraint.(type) {
 		default:
 			fmt.Printf("unsupported constraint type: %T\n", t)
 		case *ContactConstraint:
-			s.solveContactConstraint(stepTime, constraint.(*ContactConstraint))
+			s.initContactConstraint(stepTime, constraint.(*ContactConstraint))
+		}
+	}
+
+	for i := 0; i < iterations; i = i + 1 {
+		for _, constraint := range *constraints {
+			switch t := constraint.(type) {
+			default:
+				fmt.Printf("unsupported constraint type: %T\n", t)
+			case *ContactConstraint:
+				s.solveContactConstraint(stepTime, constraint.(*ContactConstraint))
+			}
 		}
 	}
 }
 
-func (s *SequentialImpulseSolver) solveContactConstraint(stepTime float64, constraint *ContactConstraint) {
+func (s *SequentialImpulseSolver) initContactConstraint(stepTime float64, constraint *ContactConstraint) {
 	m1 := constraint.Body1.GetMass()
 	m2 := constraint.Body2.GetMass()
 	r1 := constraint.LocalContact1
 	r2 := constraint.LocalContact2
-	x1 := constraint.Body1.GetPosition()
-	x2 := constraint.Body2.GetPosition()
+	// x1 := constraint.Body1.GetPosition()
+	// x2 := constraint.Body2.GetPosition()
 	v1 := constraint.Body1.GetVelocity()
 	v2 := constraint.Body2.GetVelocity()
 	w1 := constraint.Body1.GetAngularVelocityVector()
@@ -47,44 +56,41 @@ func (s *SequentialImpulseSolver) solveContactConstraint(stepTime float64, const
 	I2_inv := constraint.Body2.inertiaTensor.Inverse()
 
 	if constraint.Body1.IsStatic() {
-		m1 = 999999999999999999.9
+		m1 = 1.1
 		I1_inv = sphereInertia(m1, constraint.Body1.GetRadius()).Inverse()
 	}
 	if constraint.Body2.IsStatic() {
-		m2 = 999999999999999999.9
+		m2 = 1.0
 		I2_inv = sphereInertia(m2, constraint.Body2.GetRadius()).Inverse()
 	}
 
-	// Solve contact constraint variables
-	K := (1.0 / m1) + (1.0 / m2) + vmath.RowMat3ColumnProduct(I1_inv, r1.Cross(n), r1.Cross(n)) + vmath.RowMat3ColumnProduct(I2_inv, r2.Cross(n), r2.Cross(n))
-	J_v1 := n.MultiplyScalar(-1)
-	J_w1 := r1.Cross(n).MultiplyScalar(-1)
-	J_v2 := n
-	J_w2 := r2.Cross(n)
+	c1 := r1.Cross(n)
+	vec1 := (I1_inv.MultiplyVector(c1)).Cross(r1)
+	denom1 := (1.0 / m1) + n.Dot(vec1)
+	c2 := r2.Cross(n)
+	vec2 := (I2_inv.MultiplyVector(c2)).Cross(r2)
+	denom2 := (1.0 / m2) + n.Dot(vec2)
+	denom := 1.0 / (denom1 + denom2)
 
-	// baumgarte stabalization
-	b := x2.Add(r2).Subtract(x1).Subtract(r1).Dot(n) * (biasFactor / stepTime)
+	//Delta velocity vector at the contact point
+	radialV1 := w1.Cross(r1)
+	contactV1 := v1.Add(radialV1)
+	radialV2 := w2.Cross(r2)
+	contactV2 := v2.Add(radialV2)
+	contactDeltaV := contactV1.Subtract(contactV2)
+	contactDeltaVdotN := contactDeltaV.Dot(n)
 
-	// find lagrange Multiplier
-	lm := -K * (b + J_v1.Dot(v1) + J_w1.Dot(w1) + J_v2.Dot(v2) + J_w2.Dot(w2))
+	velocityError := contactDeltaVdotN + constraint.Penetration.Dot(n)/stepTime
 
-	// Find force and torque impulses
-	f1 := J_v1.MultiplyScalar(lm)
-	t1 := J_w1.MultiplyScalar(lm)
-	f2 := J_v2.MultiplyScalar(lm)
-	t2 := J_w2.MultiplyScalar(lm)
-
-	fmt.Printf("b: %v\n", b)
-	fmt.Printf("lm: %v\n", lm)
-	fmt.Printf("K: %v\n", K)
-	fmt.Printf("f1: %v\n", f1)
-	fmt.Printf("t1: %v\n", t1)
-	fmt.Printf("f2: %v\n", f2)
-	fmt.Printf("t2: %v\n", t2)
+	impulse := biasFactor * (constraint.Restitution - velocityError) * denom
 
 	// apply impulses
-	constraint.Body1.SetVelocity(v1.Add(f1.DivideScalar(m1)))
-	constraint.Body2.SetVelocity(v2.Add(f2.DivideScalar(m2)))
-	constraint.Body1.SetAngularVelocityVector(w1.Add(I1_inv.MultiplyVector(t1)))
-	constraint.Body2.SetAngularVelocityVector(w2.Add(I2_inv.MultiplyVector(t2)))
+	constraint.Body1.SetVelocity(v1.Add(n.MultiplyScalar(impulse / m1)))
+	constraint.Body2.SetVelocity(v2.Add(n.MultiplyScalar(-impulse / m2)))
+	constraint.Body1.SetAngularVelocityVector(w1.Add(I1_inv.MultiplyVector(n.MultiplyScalar(impulse).Cross(r1))))
+	constraint.Body2.SetAngularVelocityVector(w2.Add(I2_inv.MultiplyVector(n.MultiplyScalar(-impulse).Cross(r1))))
+}
+
+func (s *SequentialImpulseSolver) solveContactConstraint(stepTime float64, constraint *ContactConstraint) {
+
 }
