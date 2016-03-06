@@ -50,12 +50,11 @@ func PhysicsDemo(c *cli.Context) {
 	sceneGraph.AddBackGround(skyNode)
 
 	//geometry for physics objects
-	geomMonkey := assetLib.GetGeometry("monkey")
-	monkeyMat := assetLib.GetMaterial("monkeyMat")
+	geomMonkey := assetLib.GetGeometry("beam")
+	monkeyMat := assetLib.GetMaterial("beamMat")
 	geomMonkey.Material = &monkeyMat
 	radiusMonkey := assets.RadiusFromGeometry(geomMonkey)
 	pointsMonkey := assets.PointsFromGeometry(geomMonkey, 0.3)
-	fmt.Printf("pointsMonkey %v\n", len(*pointsMonkey))
 
 	//physics engine
 	physicsWorld := dynamics.NewPhysicsSpace()
@@ -85,7 +84,7 @@ func PhysicsDemo(c *cli.Context) {
 		phyObj := spawn()
 
 		//set initial position
-		phyObj.SetPosition(vmath.Vector3{0.2 * float64(i), 4 * float64(i), 0.2 * float64(i)})
+		phyObj.SetPosition(vmath.Vector3{0.2 * float64(i), 40 * float64(i), 4.2 * float64(i)})
 
 		if i == 0 {
 			phyObj.SetMass(0)

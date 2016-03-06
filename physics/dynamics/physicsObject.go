@@ -147,6 +147,7 @@ func (obj *PhysicsObjectImpl) GetAngularVelocityVector() vmath.Vector3 {
 			w.X = 1
 		} else {
 			w = w.Normalize()
+			obj.angularVelocity.X, obj.angularVelocity.Y, obj.angularVelocity.Z = w.X, w.Y, w.Z
 		}
 	}
 	return w.MultiplyScalar(obj.angularVelocity.W)

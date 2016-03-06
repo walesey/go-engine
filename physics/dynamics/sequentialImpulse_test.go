@@ -29,14 +29,14 @@ func TestInitContactConstraint(t *testing.T) {
 	contactConstraint := &ContactConstraint{
 		Body1:         object1,
 		Body2:         object2,
-		LocalContact1: vmath.Vector3{0, 0, 1.01},
-		LocalContact2: vmath.Vector3{0, 0, -1.01},
-		Normal:        vmath.Vector3{0, 0, -1},
+		LocalContact1: vmath.Vector3{0, 0, 1.0},
+		LocalContact2: vmath.Vector3{0, 0, -1.0},
+		Normal:        vmath.Vector3{0, 0, 1},
 	}
 
-	constraintSolver.initContactConstraint(1.0, contactConstraint)
+	constraintSolver.SolveGroup(1.0, &[]Constraint{contactConstraint})
 	fmt.Printf("object1.velocity: %v\n", object1.velocity)
-	assert.True(t, object1.velocity.ApproxEqual(vmath.Vector3{0, 0, -1}, 0.1))
+	assert.True(t, object1.velocity.ApproxEqual(vmath.Vector3{0, 0, 0}, 0.1))
 	fmt.Printf("object2.velocity: %v\n", object2.velocity)
-	assert.True(t, object2.velocity.ApproxEqual(vmath.Vector3{0, 0, 1}, 0.1))
+	assert.True(t, object2.velocity.ApproxEqual(vmath.Vector3{0, 0, 0}, 0.1))
 }

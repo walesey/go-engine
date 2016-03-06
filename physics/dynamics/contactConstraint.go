@@ -7,7 +7,7 @@ type ContactConstraint struct {
 	Body1, Body2                 *PhysicsObjectImpl
 	LocalContact1, LocalContact2 vmath.Vector3
 	Normal, Penetration          vmath.Vector3
-	RelativeVelocity             vmath.Vector3
 	Restitution                  float64
-	impulse                      vmath.Vector3
+	contactDeltaVdotN, targetV   float64
+	impulse                      float64
 }
