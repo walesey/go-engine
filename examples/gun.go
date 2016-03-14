@@ -10,17 +10,18 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/go-gl/glfw/v3.1/glfw"
 	"github.com/go-gl/mathgl/mgl32"
+	// "github.com/go-gl/mathgl/mgl32"
 )
 
 //
 func GunDemo(c *cli.Context) {
 	fps := renderer.CreateFPSMeter(1.0)
-	fps.FpsCap = 60
+	fps.FpsCap = 1960
 
 	glRenderer := &renderer.OpenglRenderer{
 		WindowTitle:  "GoEngine",
-		WindowWidth:  2200,
-		WindowHeight: 1100,
+		WindowWidth:  1900,
+		WindowHeight: 1000,
 	}
 
 	assetLib, err := assets.LoadAssetLibrary("TestAssets/gun.asset")

@@ -1,48 +1,52 @@
 package dynamics
 
-import vmath "github.com/walesey/go-engine/vectormath"
-
-type PhysicsSpace interface {
-	SimulateStep(stepTime float64, subSteps int)
-	CreateObject() PhysicsObject
-	RemoveObject(objects ...PhysicsObject)
-	SetConstraintSolver(solver ConstraintSolver)
-	AddConstraint(constraint Constraint)
-	RemoveConstraints(constraint ...Constraint)
-	SetGravity(gravity vmath.Vector3)
-	GetGravity() vmath.Vector3
-}
+import (
+	"github.com/walesey/go-engine/physics/physicsAPI"
+	vmath "github.com/walesey/go-engine/vectormath"
+)
 
 type PhysicsSpaceImpl struct {
 	objects          []*PhysicsObjectImpl
 	objectPool       *PhysicsObjectPool
 	contactCache     ContactCache
-	constraintSolver ConstraintSolver
-	constraints      []Constraint
+	constraintSolver physicsAPI.ConstraintSolver
+	constraints      []physicsAPI.Constraint
 	OnEvent          func(Event)
 	gravity          vmath.Vector3
 }
 
-func NewPhysicsSpace() PhysicsSpace {
+func NewPhysicsSpace() physicsAPI.PhysicsSpace {
 	return &PhysicsSpaceImpl{
 		objects:          make([]*PhysicsObjectImpl, 0, 500),
 		objectPool:       NewPhysicsObjectPool(),
 		contactCache:     NewContactCache(),
-		constraints:      make([]Constraint, 0, 500),
+		constraints:      make([]physicsAPI.Constraint, 0, 500),
 		gravity:          vmath.Vector3{0, -10, 0},
 		constraintSolver: NewSequentialImpulseSolver(),
 	}
 }
 
+func (ps *PhysicsSpaceImpl) Delete() {}
+
 // CreateObject create a new object and add it to the world
-func (ps *PhysicsSpaceImpl) CreateObject() PhysicsObject {
+func (ps *PhysicsSpaceImpl) CreateObject() physicsAPI.PhysicsObject {
 	object := ps.objectPool.GetPhysicsObject()
 	ps.objects = append(ps.objects, object)
 	return object
 }
 
-// RemoveObject Remove remove objects from the world
-func (ps *PhysicsSpaceImpl) RemoveObject(objects ...PhysicsObject) {
+// AddObject Add objects to the world
+func (ps *PhysicsSpaceImpl) AddObject(objects ...physicsAPI.PhysicsObject) {
+	for _, object := range objects {
+		pObject, ok := object.(*PhysicsObjectImpl)
+		if ok {
+			ps.objects = append(ps.objects, pObject)
+		}
+	}
+}
+
+// RemoveObject remove objects from the world
+func (ps *PhysicsSpaceImpl) RemoveObject(objects ...physicsAPI.PhysicsObject) {
 	for _, object := range objects {
 		for index, phyObj := range ps.objects {
 			if phyObj == object {
@@ -54,15 +58,15 @@ func (ps *PhysicsSpaceImpl) RemoveObject(objects ...PhysicsObject) {
 	ps.contactCache.Clear()
 }
 
-func (ps *PhysicsSpaceImpl) SetConstraintSolver(solver ConstraintSolver) {
+func (ps *PhysicsSpaceImpl) SetConstraintSolver(solver physicsAPI.ConstraintSolver) {
 	ps.constraintSolver = solver
 }
 
-func (ps *PhysicsSpaceImpl) AddConstraint(constraint Constraint) {
+func (ps *PhysicsSpaceImpl) AddConstraint(constraint physicsAPI.Constraint) {
 	ps.constraints = append(ps.constraints, constraint)
 }
 
-func (ps *PhysicsSpaceImpl) RemoveConstraints(constraint ...Constraint) {
+func (ps *PhysicsSpaceImpl) RemoveConstraints(constraint ...physicsAPI.Constraint) {
 	//TODO
 }
 

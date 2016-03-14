@@ -1,24 +1,24 @@
 package actor
 
 import (
-	"github.com/walesey/go-engine/physics/dynamics"
+	"github.com/walesey/go-engine/physics/physicsAPI"
 	"github.com/walesey/go-engine/renderer"
 )
 
 type PhysicsActor struct {
 	Entity renderer.Entity
-	Object dynamics.PhysicsObject
+	Object physicsAPI.PhysicsObject
 }
 
-func NewPhysicsActor(Entity renderer.Entity, Object dynamics.PhysicsObject) *PhysicsActor {
+func NewPhysicsActor(entity renderer.Entity, object physicsAPI.PhysicsObject) *PhysicsActor {
 	return &PhysicsActor{
-		Entity: Entity,
-		Object: Object,
+		Entity: entity,
+		Object: object,
 	}
 }
 
 func (actor *PhysicsActor) Update(dt float64) {
-	//update entity
+	//update entity\
 	actor.Entity.SetTranslation(actor.Object.GetPosition())
 	actor.Entity.SetOrientation(actor.Object.GetOrientation())
 }

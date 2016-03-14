@@ -1,6 +1,10 @@
 package dynamics
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/walesey/go-engine/physics/physicsAPI"
+)
 
 // bias factor for baumgarte stabalization
 const biasFactor = 0.2
@@ -12,12 +16,12 @@ type SequentialImpulseSolver struct {
 }
 
 // NewSequentialImpulseSolver - create a new instance of the SequentialImpulseSolver
-func NewSequentialImpulseSolver() ConstraintSolver {
+func NewSequentialImpulseSolver() physicsAPI.ConstraintSolver {
 	return &SequentialImpulseSolver{}
 }
 
 //SolveGroup Solve a group of constraints simultaniously
-func (s *SequentialImpulseSolver) SolveGroup(stepTime float64, constraints *[]Constraint) {
+func (s *SequentialImpulseSolver) SolveGroup(stepTime float64, constraints *[]physicsAPI.Constraint) {
 	// Initialize constraints
 	for _, constraint := range *constraints {
 		switch t := constraint.(type) {

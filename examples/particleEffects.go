@@ -22,8 +22,8 @@ func Particles(c *cli.Context) {
 
 	glRenderer := &renderer.OpenglRenderer{
 		WindowTitle:  "GoEngine",
-		WindowWidth:  1900,
-		WindowHeight: 1000,
+		WindowWidth:  400,
+		WindowHeight: 400,
 	}
 
 	assetLib, err := assets.LoadAssetLibrary("TestAssets/particles.asset")
@@ -33,10 +33,10 @@ func Particles(c *cli.Context) {
 
 	//setup scenegraph
 
-	//geom := assetLib.GetGeometry("nightskybox")
-	//skyboxMat := assetLib.GetMaterial("nightskyboxMat")
-	geom := assetLib.GetGeometry("skybox")
-	skyboxMat := assetLib.GetMaterial("skyboxMat")
+	geom := assetLib.GetGeometry("galaxySkybox")
+	skyboxMat := assetLib.GetMaterial("galaxySkyboxMat")
+	// geom := assetLib.GetGeometry("skybox")
+	// skyboxMat := assetLib.GetMaterial("skyboxMat")
 	geom.Material = &skyboxMat
 	geom.Material.LightingMode = renderer.MODE_UNLIT
 	geom.CullBackface = false
@@ -197,8 +197,8 @@ func Particles(c *cli.Context) {
 		glRenderer.CreateLight(0.1, 0.1, 0.1, 1, 1, 1, 1, 1, 1, true, vectormath.Vector3{0, -1, 0}, 0)
 
 		//setup reflection map
-		//cubeMap := renderer.CreateCubemap(assetLib.GetMaterial("nightskyboxMat").Diffuse)
-		cubeMap := renderer.CreateCubemap(assetLib.GetMaterial("skyboxMat").Diffuse)
+		cubeMap := renderer.CreateCubemap(assetLib.GetMaterial("galaxySkyboxMat").Diffuse)
+		// cubeMap := renderer.CreateCubemap(assetLib.GetMaterial("skyboxMat").Diffuse)
 		glRenderer.ReflectionMap(*cubeMap)
 
 		//post effects

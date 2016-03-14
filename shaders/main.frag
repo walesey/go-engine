@@ -38,6 +38,7 @@ in vec4 worldVertex;
 in vec3 worldNormal;
 in vec2 fragTexCoord;
 in vec4 fragColor;
+in vec3 tangentEyeDirection;
 
 out vec4 outputColor;
 
@@ -51,10 +52,10 @@ vec4 vectorCap( vec4 vector, float cap ){
 vec4 directBRDF( vec4 LightDiff, vec4 LightSpec, vec4 LightDir, vec4 albedoValue, vec4 specularValue, vec4 tangentNormal, vec4 tangentReflectedEye){
 	vec3 tangentLightDirection = LightDir.xyz * TBNMatrix;
 
- 	float diffuseMultiplier = max(0.0, dot(tangentNormal.xyz, -tangentLightDirection));
+	float diffuseMultiplier = max(0.0, dot(tangentNormal.xyz, -tangentLightDirection));
 	vec4 diffuseOut = albedoValue * diffuseMultiplier * LightDiff;
 
- 	float specularMultiplier = pow( max(0.0, dot( tangentReflectedEye.xyz, -tangentLightDirection)), 2.0);
+	float specularMultiplier = pow( max(0.0, dot( tangentReflectedEye.xyz, -tangentLightDirection)), 2.0);
 	vec4 specularOut = vec4( specularValue.rgb, 1 ) * specularMultiplier * LightSpec;
 
 	return diffuseOut + specularOut;
@@ -65,6 +66,7 @@ void main() {
 	vec4 normalValue = texture(normal, fragTexCoord);
 	vec4 specularValue = texture(specular, fragTexCoord);
 	vec4 roughnessValue = texture(roughness, fragTexCoord);
+	float roughnessMagnitude = roughnessValue.r;
 	float metalness = roughnessValue.g;
 	float alphaValue = albedoValue.a;
 
@@ -75,16 +77,14 @@ void main() {
  	if( mode == MODE_LIT ){
 
 		//Normal calculations
-	 	vec4 tangentNormal = normalValue * 2 - 1;
-	 	if( abs(tangentNormal.x) < 0.1 && abs(tangentNormal.y) < 0.1 && abs(tangentNormal.z) < 0.1 ){
-	 		tangentNormal = vec4(0,0,1,1);
-	 	}
+		vec4 tangentNormal = normalValue * 2 - 1;
+		if( abs(tangentNormal.x) < 0.1 && abs(tangentNormal.y) < 0.1 && abs(tangentNormal.z) < 0.1 ){
+			tangentNormal = vec4(0,0,1,1);
+		}
 
-		//eye 
-		vec4 worldEyeDirection = vec4( worldVertex - worldCamPos );
-		vec3 tangentEyeDirection = normalize( worldEyeDirection.xyz * TBNMatrix );
+		//reflected eye
 		vec4 tangentReflectedEye = vec4( reflect( tangentEyeDirection, tangentNormal.xyz ), 1);
-	   	vec4 worldReflectedEye = vec4( tangentReflectedEye.xyz * inverseTBNMatrix , 1);
+		vec4 worldReflectedEye = vec4( tangentReflectedEye.xyz * inverseTBNMatrix , 1);
 
 		//point lights
 		for (int i=0;i<MAX_LIGHTS;i++){
@@ -113,47 +113,47 @@ void main() {
 			vec4 LightAmb = directionalLights[(i*4)+LIGHT_AMBIENT];
 			vec4 LightDiff = directionalLights[(i*4)+LIGHT_DIFFUSE];
 			vec4 LightSpec = directionalLights[(i*4)+LIGHT_SPECULAR];
-			
+
 			vec4 worldLightDir = normalize( LightPos );
 
 			directColor += directBRDF( LightDiff, LightSpec, worldLightDir, albedoValue, specularValue, tangentNormal, tangentReflectedEye);
-			
+
 		}
 
-	   	//indirect lighting
-	   	vec4 indirectDiffuse = texture(illuminanceMap, worldReflectedEye.xyz);
-	   	vec4 indirectSpecular = vec4(0,0,0,1);
-	   	if (roughnessValue.r < 0.1){
-	   		indirectSpecular = texture(environmentMap, worldReflectedEye.xyz);
-	   	} else if (roughnessValue.r < 0.3){
-	   		indirectSpecular = texture(environmentMapLOD1, worldReflectedEye.xyz);
-	   	} else if (roughnessValue.r < 0.7){
-	   		indirectSpecular = texture(environmentMapLOD2, worldReflectedEye.xyz);
-	   	} else {
-	   		indirectSpecular = texture(environmentMapLOD3, worldReflectedEye.xyz);
-	   	}
+		//indirect lighting
+		vec4 indirectDiffuse = texture(illuminanceMap, worldReflectedEye.xyz);
+		vec4 indirectSpecular = vec4(0,0,0,1);
+		if (roughnessMagnitude < 0.1){
+			indirectSpecular = texture(environmentMap, worldReflectedEye.xyz);
+		} else if (roughnessMagnitude < 0.3){
+			indirectSpecular = texture(environmentMapLOD1, worldReflectedEye.xyz);
+		} else if (roughnessMagnitude < 0.7){
+			indirectSpecular = texture(environmentMapLOD2, worldReflectedEye.xyz);
+		} else {
+			indirectSpecular = texture(environmentMapLOD3, worldReflectedEye.xyz);
+		}
 
-	   	//freznel effect
-	   	float reflectivity = max(metalness, pow((1.0-dot(-tangentEyeDirection, tangentNormal.xyz)), 2));
-	   	//blend indirect light types
-	   	indirectColor += (1.0-metalness) * albedoValue  * indirectDiffuse;
-	   	indirectColor += reflectivity * specularValue * indirectSpecular;
+		//freznel effect
+		float reflectivity = max(metalness, pow((1.0-dot(-tangentEyeDirection, tangentNormal.xyz)), 2));
+		//blend indirect light types
+		indirectColor += (1.0-metalness) * albedoValue  * indirectDiffuse;
+		indirectColor += reflectivity * specularValue * indirectSpecular;
 
-	   	finalColor += (1.0-metalness) * directColor;
-	   	finalColor += indirectColor;
+		finalColor += (1.0-metalness) * directColor;
+		finalColor += indirectColor;
 
-	   	finalColor.a = alphaValue + (alphaValue * reflectivity);
-		
+		finalColor.a = alphaValue + (alphaValue * reflectivity);
+
 		finalColor = vectorCap(finalColor, 0.99);
 	}
-	
+
 	if (mode == MODE_UNLIT){
 		finalColor = albedoValue;
 		finalColor = vectorCap(finalColor, 0.99);
 	}
 
 	if (mode == MODE_EMIT){
-		finalColor = albedoValue;	
+		finalColor = albedoValue;
 	}
 
 	//final output

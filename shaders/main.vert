@@ -18,6 +18,7 @@ out vec4 worldVertex;
 out vec3 worldNormal;
 out vec2 fragTexCoord;
 out vec4 fragColor;
+out vec3 tangentEyeDirection;
 
 void main() {
 	worldVertex = model * vec4(vert, 1);
@@ -29,6 +30,8 @@ void main() {
 	//tangent space conversion - worldToTangent
 	TBNMatrix = mat3(worldTangent, worldBitangent, worldNormal);
 	inverseTBNMatrix = inverse(TBNMatrix);
+	vec4 worldEyeDirection = vec4( worldVertex - worldCamPos );
+	tangentEyeDirection = normalize( worldEyeDirection.xyz * TBNMatrix );
 	fragTexCoord = vertTexCoord;
 	fragColor = color;
 }

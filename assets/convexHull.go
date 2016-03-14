@@ -3,10 +3,20 @@ package assets
 import (
 	"math"
 
+	"github.com/luxengine/gobullet"
 	"github.com/walesey/go-engine/physics/collision"
 	"github.com/walesey/go-engine/renderer"
 	vmath "github.com/walesey/go-engine/vectormath"
 )
+
+func CollisionShapeFromGeometry(geometry renderer.Geometry, cullThreshold float64) gobullet.CollisionShape {
+	verts := PointsFromGeometry(geometry, cullThreshold)
+	convexHull := gobullet.NewConvexHullShape()
+	for _, vert := range *verts {
+		convexHull.AddVertex(float32(vert.X), float32(vert.Y), float32(vert.Z))
+	}
+	return gobullet.CollisionShape(convexHull)
+}
 
 // Converts a geometry to a ConvexSet Collider
 func ConvexSetFromGeometry(geometry renderer.Geometry, cullThreshold float64) collision.Collider {
