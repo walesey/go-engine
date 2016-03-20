@@ -15,7 +15,7 @@ type PhysicsSpaceImpl struct {
 	gravity          vmath.Vector3
 }
 
-func NewPhysicsSpace() physicsAPI.PhysicsSpace {
+func NewPhysicsSpace() *PhysicsSpaceImpl {
 	return &PhysicsSpaceImpl{
 		objects:          make([]*PhysicsObjectImpl, 0, 500),
 		objectPool:       NewPhysicsObjectPool(),
@@ -29,7 +29,7 @@ func NewPhysicsSpace() physicsAPI.PhysicsSpace {
 func (ps *PhysicsSpaceImpl) Delete() {}
 
 // CreateObject create a new object and add it to the world
-func (ps *PhysicsSpaceImpl) CreateObject() physicsAPI.PhysicsObject {
+func (ps *PhysicsSpaceImpl) CreateObject() *PhysicsObjectImpl {
 	object := ps.objectPool.GetPhysicsObject()
 	ps.objects = append(ps.objects, object)
 	return object
@@ -56,6 +56,10 @@ func (ps *PhysicsSpaceImpl) RemoveObject(objects ...physicsAPI.PhysicsObject) {
 		}
 	}
 	ps.contactCache.Clear()
+}
+
+func (ps *PhysicsSpaceImpl) AddCharacterController(characterController physicsAPI.CharacterController) {
+
 }
 
 func (ps *PhysicsSpaceImpl) SetConstraintSolver(solver physicsAPI.ConstraintSolver) {

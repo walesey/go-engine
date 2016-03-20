@@ -33,7 +33,7 @@ func (c *Camera) SetTranslation(translation vmath.Vector3) {
 }
 
 func (c *Camera) SetOrientation(orientation vmath.Quaternion) {
-	direction := orientation.Apply(vmath.Vector3{1, 0, 0})
+	direction := orientation.Apply(vmath.Vector3{1000000, 0, 0})
 	c.Lookat = c.Translation.Add(direction)
 	c.renderer.Camera(c.Translation, c.Lookat, c.Up)
 }

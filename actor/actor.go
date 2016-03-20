@@ -1,5 +1,8 @@
 package actor
 
+// Actor - An actor is a wrapper for a game Entity that defines the behaviour
+// of that entity based on controllers and game events,
+// as well as other game integration points such as physics.
 type Actor interface {
 	Update(dt float64)
 }

@@ -1,14 +1,10 @@
 package physicsAPI
 
-import (
-	"github.com/walesey/go-engine/physics/collision"
-	vmath "github.com/walesey/go-engine/vectormath"
-)
+import vmath "github.com/walesey/go-engine/vectormath"
 
 type PhysicsObject interface {
-	DoStep(timeStep float64)
-	ApplyGravity(gravity vmath.Vector3)
-	ApplyForce(force vmath.Vector3)
+	Delete()
+	ApplyForce(force, position vmath.Vector3)
 	ApplyTorque(torque vmath.Vector3)
 
 	GetPosition() vmath.Vector3
@@ -30,6 +26,4 @@ type PhysicsObject interface {
 	SetRadius(radius float64)
 	SetFriction(friction float64)
 	SetRestitution(restitution float64)
-	SetBroadPhase(broadphase collision.Collider)
-	SetNarrowPhase(broadphase collision.Collider)
 }

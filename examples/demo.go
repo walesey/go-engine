@@ -31,7 +31,7 @@ func Demo(c *cli.Context) {
 
 	//camera
 	camera := renderer.CreateCamera(glRenderer)
-	freeMoveActor := actor.CreateFreeMoveActor(camera)
+	freeMoveActor := actor.NewFreeMoveActor(camera)
 	freeMoveActor.MoveSpeed = 3.0
 
 	glRenderer.Init = func() {

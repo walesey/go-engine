@@ -33,8 +33,8 @@ func BulletDemo(c *cli.Context) {
 
 	//setup scenegraph
 
-	//geom := assetLib.GetGeometry("nightskybox")
-	//skyboxMat := assetLib.GetMaterial("nightskyboxMat")
+	// geom := assetLib.GetGeometry("nightskybox")
+	// skyboxMat := assetLib.GetMaterial("nightskyboxMat")
 	geom := assetLib.GetGeometry("skybox")
 	skyboxMat := assetLib.GetMaterial("skyboxMat")
 	geom.Material = &skyboxMat
@@ -77,11 +77,15 @@ func BulletDemo(c *cli.Context) {
 		return phyObj
 	}
 
-	for i := 0; i < 10; i = i + 1 {
-		phyObj := spawn()
+	for i := 0; i < 4; i = i + 1 {
+		for j := 0; j < 4; j = j + 1 {
+			for k := 0; k < 3; k = k + 1 {
+				phyObj := spawn()
 
-		//set initial position
-		phyObj.SetPosition(vmath.Vector3{0.2 * float64(i), 40 * float64(i), 4.2 * float64(i)})
+				//set initial position
+				phyObj.SetPosition(vmath.Vector3{3*float64(i) - 5, 3*float64(k) + 15, 3*float64(j) - 5})
+			}
+		}
 	}
 
 	terrain := assetLib.GetGeometry("largeBox")
@@ -131,13 +135,6 @@ func BulletDemo(c *cli.Context) {
 	// 	}()
 	// }
 
-	//camera
-	camera := renderer.CreateCamera(glRenderer)
-	freeMoveActor := actor.CreateFreeMoveActor(camera)
-	actorStore.Add(freeMoveActor)
-	freeMoveActor.MoveSpeed = 10.0
-	freeMoveActor.Location = vmath.Vector3{10, 0, -10}
-
 	glRenderer.Init = func() {
 		//lighting
 		glRenderer.CreateLight(0.0, 0.0, 0.0, 0.5, 0.5, 0.5, 0.7, 0.7, 0.7, true, vmath.Vector3{0.3, -1, 0.2}, 0)
@@ -177,8 +174,17 @@ func BulletDemo(c *cli.Context) {
 		//lock the cursor
 		glRenderer.LockCursor(true)
 
-		//camera free move actor
-		mainController := controller.NewBasicMovementController(freeMoveActor)
+		//camera + player
+		camera := renderer.CreateCamera(glRenderer)
+		playerCollision := gobullet.NewBoxShape(1, 3, 1)
+		playerController := bullet.NewBtCharacterController(playerCollision, 1)
+		playerController.Warp(vmath.Vector3{0, 10, 0})
+		physicsWorld.AddCharacterController(playerController)
+		fpsActor := actor.NewFPSActor(camera, playerController)
+		actorStore.Add(fpsActor)
+
+		//fps controller
+		mainController := controller.NewFPSController(fpsActor)
 		controllerManager.AddController(mainController)
 
 		//custom controller

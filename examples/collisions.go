@@ -13,7 +13,7 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-//
+// Collisions - Collisions
 func Collisions(c *cli.Context) {
 	fps := renderer.CreateFPSMeter(1.0)
 	fps.FpsCap = 60
@@ -65,7 +65,7 @@ func Collisions(c *cli.Context) {
 	phyObj1.SetNarrowPhase(assets.ConvexSetFromGeometry(geomMonkey, 0.1))
 
 	//attach to all the things ()
-	freeMoveActor := actor.CreateFreeMoveActor(monkeyNode)
+	freeMoveActor := actor.NewFreeMoveActor(monkeyNode)
 	actorStore.Add(freeMoveActor)
 	sceneGraph.Add(monkeyNode)
 

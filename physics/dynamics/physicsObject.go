@@ -72,6 +72,8 @@ func newPhysicsObject() *PhysicsObjectImpl {
 	}
 }
 
+func (obj *PhysicsObjectImpl) Delete() {}
+
 //NarrowPhaseOverlap
 func (obj *PhysicsObjectImpl) NarrowPhaseOverlap(other *PhysicsObjectImpl) bool {
 	if obj.narrowPhase == nil || other.narrowPhase == nil {
@@ -172,7 +174,7 @@ func (obj *PhysicsObjectImpl) ApplyGravity(gravity vmath.Vector3) {
 }
 
 // Apply a force on the object's centre of mass
-func (obj *PhysicsObjectImpl) ApplyForce(force vmath.Vector3) {
+func (obj *PhysicsObjectImpl) ApplyForce(force, position vmath.Vector3) {
 	obj.totalForce = obj.totalForce.Add(force)
 }
 

@@ -14,7 +14,7 @@ type FreeMoveActor struct {
 	MoveSpeed, LookSpeed    float64
 }
 
-func CreateFreeMoveActor(entity renderer.Entity) *FreeMoveActor {
+func NewFreeMoveActor(entity renderer.Entity) *FreeMoveActor {
 	return &FreeMoveActor{
 		Entity:    entity,
 		lookAngle: 0.0,

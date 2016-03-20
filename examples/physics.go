@@ -143,7 +143,7 @@ func PhysicsDemo(c *cli.Context) {
 
 	//camera
 	camera := renderer.CreateCamera(glRenderer)
-	freeMoveActor := actor.CreateFreeMoveActor(camera)
+	freeMoveActor := actor.NewFreeMoveActor(camera)
 	actorStore.Add(freeMoveActor)
 	freeMoveActor.MoveSpeed = 10.0
 	freeMoveActor.Location = vmath.Vector3{10, 0, -10}
