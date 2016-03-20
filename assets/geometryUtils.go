@@ -6,6 +6,23 @@ import (
 	vmath "github.com/walesey/go-engine/vectormath"
 )
 
+func TriangleMeshShapeFromGeometry(geometry renderer.Geometry, cullThreshold float64) gobullet.TriangleMeshShape {
+	mesh := gobullet.NewTriangleMesh(false, false)
+	for i := 0; i < len(geometry.Indicies); i = i + 3 {
+		index := geometry.Indicies[i]
+		v1 := [3]float32{geometry.Verticies[index*18], geometry.Verticies[index*18+1], geometry.Verticies[index*18+2]}
+
+		index = geometry.Indicies[i+1]
+		v2 := [3]float32{geometry.Verticies[index*18], geometry.Verticies[index*18+1], geometry.Verticies[index*18+2]}
+
+		index = geometry.Indicies[i+2]
+		v3 := [3]float32{geometry.Verticies[index*18], geometry.Verticies[index*18+1], geometry.Verticies[index*18+2]}
+
+		mesh.AddTriangle(&v1, &v2, &v3, true)
+	}
+	return mesh.NewTriangleMeshShape(true, true)
+}
+
 func CollisionShapeFromGeometry(geometry renderer.Geometry, cullThreshold float64) gobullet.CollisionShape {
 	verts := PointsFromGeometry(geometry, cullThreshold)
 	convexHull := gobullet.NewConvexHullShape()

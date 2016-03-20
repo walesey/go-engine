@@ -1,6 +1,8 @@
 package examples
 
 import (
+	"log"
+
 	"github.com/luxengine/gobullet"
 	"github.com/walesey/go-engine/actor"
 	"github.com/walesey/go-engine/assets"
@@ -88,52 +90,25 @@ func BulletDemo(c *cli.Context) {
 		}
 	}
 
-	terrain := assetLib.GetGeometry("largeBox")
-	terrainMat := assetLib.GetMaterial("largeBoxMat")
+	terrain := assetLib.GetGeometry("terrain")
+	terrainMat := assetLib.GetMaterial("terrainMat")
 	terrain.Material = &terrainMat
-	terrainCollision := assets.CollisionShapeFromGeometry(terrain, 2.0)
-
-	for i := 0; i < 5; i = i + 1 {
-		terrainNode := renderer.CreateNode()
-		terrainNode.Add(&terrain)
-
-		phyObj := bullet.NewBtRigidBody(0, terrainCollision)
-		physicsWorld.AddObject(phyObj)
-
-		actorStore.Add(actor.NewPhysicsActor(terrainNode, phyObj))
-		sceneGraph.Add(terrainNode)
-		if i == 0 {
-			phyObj.SetPosition(vmath.Vector3{0, -6, 0})
-		} else if i == 1 {
-			phyObj.SetPosition(vmath.Vector3{13, 0, 0})
-			phyObj.SetOrientation(vmath.AngleAxis(0.5, vmath.Vector3{0, 0, 1}))
-		} else if i == 2 {
-			phyObj.SetPosition(vmath.Vector3{0, 0, 13})
-			phyObj.SetOrientation(vmath.AngleAxis(0.5, vmath.Vector3{-1, 0, 0}))
-		} else if i == 3 {
-			phyObj.SetPosition(vmath.Vector3{-13, 0, 0})
-			phyObj.SetOrientation(vmath.AngleAxis(0.5, vmath.Vector3{0, 0, -1}))
-		} else {
-			phyObj.SetPosition(vmath.Vector3{0, 0, -13})
-			phyObj.SetOrientation(vmath.AngleAxis(0.5, vmath.Vector3{1, 0, 0}))
-		}
+	terrainCollision := assets.TriangleMeshShapeFromGeometry(terrain, 20.0)
+	if err != nil {
+		log.Printf("Error loading collision shape: %v\n", err)
 	}
+
+	terrainNode := renderer.CreateNode()
+	terrainNode.Add(&terrain)
+
+	phyObj := bullet.NewBtRigidBodyConcave(0, terrainCollision)
+	physicsWorld.AddObject(phyObj)
+
+	actorStore.Add(actor.NewPhysicsActor(terrainNode, phyObj))
+	sceneGraph.Add(terrainNode)
 
 	//gravity global force
 	physicsWorld.SetGravity(vmath.Vector3{0, -10, 0})
-
-	//debug
-	// physicsWorld.OnEvent = func(event physics.Event) {
-	// 	testNode := renderer.CreateNode()
-	// 	testNode.Add(&geomMonkey)
-	// 	sceneGraph.Add(testNode)
-	// 	testNode.SetTranslation(event.Data.(map[string]interface{})["globalContact"].(vmath.Vector3))
-	// 	testNode.SetScale(vmath.Vector3{0.3, 0.3, 0.3})
-	// 	go func() {
-	// 		time.Sleep(3000 * time.Millisecond)
-	// 		sceneGraph.Remove(testNode)
-	// 	}()
-	// }
 
 	glRenderer.Init = func() {
 		//lighting
@@ -177,7 +152,7 @@ func BulletDemo(c *cli.Context) {
 		//camera + player
 		camera := renderer.CreateCamera(glRenderer)
 		playerCollision := gobullet.NewBoxShape(1, 3, 1)
-		playerController := bullet.NewBtCharacterController(playerCollision, 1)
+		playerController := bullet.NewBtCharacterController(playerCollision, 5)
 		playerController.Warp(vmath.Vector3{0, 10, 0})
 		physicsWorld.AddCharacterController(playerController)
 		fpsActor := actor.NewFPSActor(camera, playerController)
