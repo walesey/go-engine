@@ -16,7 +16,6 @@ type BtCharacterController struct {
 func NewBtCharacterController(shape gobullet.CollisionShape, stepHeight float64) *BtCharacterController {
 	ghost := gobullet.NewPairCachingGhostObject()
 	ghost.SetCollisionShape(shape)
-	// ghost.SetCollisionFlags(CF_CHARACTER_OBJECT)
 	kcc := gobullet.NewKinematicCharacterController(ghost, shape, float32(stepHeight))
 	return &BtCharacterController{
 		kcc:       kcc,

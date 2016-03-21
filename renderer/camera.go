@@ -22,7 +22,7 @@ func CreateCamera(renderer Renderer) *Camera {
 }
 
 func (c *Camera) GetDirection() vmath.Vector3 {
-	return c.Lookat.Subtract(c.Translation)
+	return c.Lookat.Subtract(c.Translation).Normalize()
 }
 
 func (c *Camera) SetScale(scale vmath.Vector3) {} //na

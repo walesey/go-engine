@@ -62,10 +62,17 @@ vec4 directBRDF( vec4 LightDiff, vec4 LightSpec, vec4 LightDir, vec4 albedoValue
 }
 
 void main() {
-	vec4 albedoValue = texture(diffuse, fragTexCoord) * fragColor;
-	vec4 normalValue = texture(normal, fragTexCoord);
-	vec4 specularValue = texture(specular, fragTexCoord);
-	vec4 roughnessValue = texture(roughness, fragTexCoord);
+	//repeat textures
+	float textureX = fragTexCoord.x - int(fragTexCoord.x);
+	float textureY = fragTexCoord.y - int(fragTexCoord.y);
+	if (fragTexCoord.x < 0) {textureX = textureX + 1.0;}
+	if (fragTexCoord.y < 0) {textureY = textureY + 1.0;}
+	vec2 textCoord = vec2(textureX, textureY);
+
+	vec4 albedoValue = texture(diffuse, textCoord) * fragColor;
+	vec4 normalValue = texture(normal, textCoord);
+	vec4 specularValue = texture(specular, textCoord);
+	vec4 roughnessValue = texture(roughness, textCoord);
 	float roughnessMagnitude = roughnessValue.r;
 	float metalness = roughnessValue.g;
 	float alphaValue = albedoValue.a;

@@ -93,7 +93,7 @@ func BulletDemo(c *cli.Context) {
 	terrain := assetLib.GetGeometry("terrain")
 	terrainMat := assetLib.GetMaterial("terrainMat")
 	terrain.Material = &terrainMat
-	terrainCollision := assets.TriangleMeshShapeFromGeometry(terrain, 20.0)
+	terrainCollision := assets.TriangleMeshShapeFromGeometry(assetLib.GetGeometry("terrain_lowpoli"))
 	if err != nil {
 		log.Printf("Error loading collision shape: %v\n", err)
 	}
@@ -153,6 +153,7 @@ func BulletDemo(c *cli.Context) {
 		camera := renderer.CreateCamera(glRenderer)
 		playerCollision := gobullet.NewBoxShape(1, 3, 1)
 		playerController := bullet.NewBtCharacterController(playerCollision, 5)
+		playerController.SetJumpSpeed(50)
 		playerController.Warp(vmath.Vector3{0, 10, 0})
 		physicsWorld.AddCharacterController(playerController)
 		fpsActor := actor.NewFPSActor(camera, playerController)
@@ -169,7 +170,7 @@ func BulletDemo(c *cli.Context) {
 		//spawn objects
 		customController.BindAction(func() {
 			phyObj := spawn()
-			phyObj.SetPosition(camera.Translation)
+			phyObj.SetPosition(camera.Translation.Add(camera.GetDirection().MultiplyScalar(4)))
 			phyObj.SetVelocity(camera.GetDirection().MultiplyScalar(30))
 		}, glfw.KeyR, glfw.Press)
 
@@ -183,6 +184,10 @@ func BulletDemo(c *cli.Context) {
 		fps.UpdateFPSMeter()
 		physicsWorld.SimulateStep(6, 1)
 		actorStore.UpdateAll(0.018)
+
+		// if playerController.GetPosition().Y < -5 {
+		// 	playerController.Warp(vmath.Vector3{0, 10, 0})
+		// }
 	}
 
 	glRenderer.Render = func() {

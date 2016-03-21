@@ -14,8 +14,9 @@ type FPSActor struct {
 	Character               physicsAPI.CharacterController
 	MoveSpeed, SprintSpeed  float64
 	LookSpeed               float64
-	forwardMove, strafeMove float64
 	lookPitch, lookAngle    float64
+	forwardMove, strafeMove float64
+	walkDirection           vmath.Vector3
 }
 
 func NewFPSActor(entity renderer.Entity, character physicsAPI.CharacterController) *FPSActor {
@@ -37,11 +38,10 @@ func (actor *FPSActor) Update(dt float64) {
 	actor.Entity.SetOrientation(orientation)
 
 	// walking direction
-	direction := orientation.Apply(vmath.Vector3{actor.forwardMove, 0, actor.strafeMove})
-	if !actor.Character.OnGround() {
-		direction = vmath.Vector3{0, 0, 0}
+	if actor.Character.OnGround() {
+		actor.walkDirection = orientation.Apply(vmath.Vector3{actor.forwardMove, 0, actor.strafeMove})
 	}
-	actor.Character.SetWalkDirection(direction)
+	actor.Character.SetWalkDirection(actor.walkDirection)
 	actor.Entity.SetTranslation(actor.Character.GetPosition())
 }
 

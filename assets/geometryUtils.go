@@ -6,7 +6,7 @@ import (
 	vmath "github.com/walesey/go-engine/vectormath"
 )
 
-func TriangleMeshShapeFromGeometry(geometry renderer.Geometry, cullThreshold float64) gobullet.TriangleMeshShape {
+func TriangleMeshShapeFromGeometry(geometry renderer.Geometry) gobullet.TriangleMeshShape {
 	mesh := gobullet.NewTriangleMesh(false, false)
 	for i := 0; i < len(geometry.Indicies); i = i + 3 {
 		index := geometry.Indicies[i]
