@@ -86,8 +86,7 @@ func BulletDemo(c *cli.Context) {
 	phyObj := bullet.NewBtRigidBodyConcave(0, terrainCollision)
 	physicsWorld.AddObject(phyObj)
 
-	gameEngine.
-		AddUpdatable(actor.NewPhysicsActor(terrainNode, phyObj))
+	gameEngine.AddUpdatable(actor.NewPhysicsActor(terrainNode, phyObj))
 	gameEngine.AddSpatial(terrainNode)
 
 	gameEngine.Start(func() {
@@ -111,8 +110,7 @@ func BulletDemo(c *cli.Context) {
 		playerController.Warp(vmath.Vector3{0, 10, 0})
 		physicsWorld.AddCharacterController(playerController)
 		fpsActor := actor.NewFPSActor(camera, playerController)
-		gameEngine.
-			AddUpdatable(fpsActor)
+		gameEngine.AddUpdatable(fpsActor)
 
 		//fps controller
 		mainController := controller.NewFPSController(fpsActor)
@@ -133,5 +131,12 @@ func BulletDemo(c *cli.Context) {
 		customController.BindAction(func() {
 			glRenderer.Window.SetShouldClose(true)
 		}, glfw.KeyEscape, glfw.Press)
+
+		//events
+		gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
+			if playerController.GetPosition().Y < -5 {
+				playerController.Warp(vmath.Vector3{0, 10, 0})
+			}
+		}))
 	})
 }

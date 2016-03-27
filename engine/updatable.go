@@ -4,7 +4,18 @@ type Updatable interface {
 	Update(dt float64)
 }
 
-// ActorStore - is a collection of actors.
+type updatableImpl struct {
+	updateFunc func(dt float64)
+}
+
+func (updatable *updatableImpl) Update(dt float64) {
+	updatable.updateFunc(dt)
+}
+
+func UpdatableFunc(update func(dt float64)) Updatable {
+	return &updatableImpl{update}
+}
+
 type UpdatableStore struct {
 	updatables []Updatable
 }
