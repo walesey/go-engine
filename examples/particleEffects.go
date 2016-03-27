@@ -37,19 +37,19 @@ func Particles(c *cli.Context) {
 	skyboxMat := assetLib.GetMaterial("galaxySkyboxMat")
 	// geom := assetLib.GetGeometry("skybox")
 	// skyboxMat := assetLib.GetMaterial("skyboxMat")
-	geom.Material = &skyboxMat
+	geom.Material = skyboxMat
 	geom.Material.LightingMode = renderer.MODE_UNLIT
 	geom.CullBackface = false
 	skyNode := renderer.CreateNode()
-	skyNode.Add(&geom)
+	skyNode.Add(geom)
 	skyNode.SetRotation(1.57, vectormath.Vector3{0, 1, 0})
 	skyNode.SetScale(vectormath.Vector3{5000, 5000, 5000})
 
 	geomsphere := assetLib.GetGeometry("sphere")
 	sphereMat := assetLib.GetMaterial("sphereMat")
-	geomsphere.Material = &sphereMat
+	geomsphere.Material = sphereMat
 	sphereNode := renderer.CreateNode()
-	sphereNode.Add(&geomsphere)
+	sphereNode.Add(geomsphere)
 	sphereNode.SetTranslation(vectormath.Vector3{0, 0, 0})
 
 	//particle effects
@@ -174,17 +174,17 @@ func Particles(c *cli.Context) {
 
 	birdMat := assets.CreateMaterial(assetLib.GetImage("bird"), nil, nil, nil)
 	birdMat.LightingMode = renderer.MODE_UNLIT
-	birdSprite := effects.CreateSprite(22, 5, 5, &birdMat)
+	birdSprite := effects.CreateSprite(22, 5, 5, birdMat)
 	birdSprite.SetTranslation(vectormath.Vector3{-2, 0, -1})
 
 	sceneGraph := renderer.CreateSceneGraph()
 	sceneGraph.AddBackGround(skyNode)
 	sceneGraph.Add(sphereNode)
-	sceneGraph.Add(&fireParticles)
-	sceneGraph.Add(&smokeParticles)
-	sceneGraph.Add(&explosionParticles)
-	sceneGraph.Add(&birdSprite)
-	sceneGraph.Add(&sparkParticles)
+	sceneGraph.Add(fireParticles)
+	sceneGraph.Add(smokeParticles)
+	sceneGraph.Add(explosionParticles)
+	sceneGraph.Add(birdSprite)
+	sceneGraph.Add(sparkParticles)
 
 	//camera
 	camera := renderer.CreateCamera(glRenderer)
@@ -192,14 +192,14 @@ func Particles(c *cli.Context) {
 	freeMoveActor.MoveSpeed = 3.0
 	freeMoveActor.Location = vectormath.Vector3{-2, 0, 0}
 
-	glRenderer.Init = func() {
+	glRenderer.Init(func() {
 		//Lighting
 		glRenderer.CreateLight(0.1, 0.1, 0.1, 1, 1, 1, 1, 1, 1, true, vectormath.Vector3{0, -1, 0}, 0)
 
 		//setup reflection map
 		cubeMap := renderer.CreateCubemap(assetLib.GetMaterial("galaxySkyboxMat").Diffuse)
 		// cubeMap := renderer.CreateCubemap(assetLib.GetMaterial("skyboxMat").Diffuse)
-		glRenderer.ReflectionMap(*cubeMap)
+		glRenderer.ReflectionMap(cubeMap)
 
 		//post effects
 		cell := renderer.Shader{
@@ -247,8 +247,8 @@ func Particles(c *cli.Context) {
 		//test the portabitity of the actor / entity interfaces
 		customController.BindAction(func() { freeMoveActor.Entity = camera }, glfw.KeyQ, glfw.Press)
 		customController.BindAction(func() { freeMoveActor.Entity = sphereNode }, glfw.KeyW, glfw.Press)
-		customController.BindAction(func() { freeMoveActor.Entity = &explosionParticles }, glfw.KeyE, glfw.Press)
-		customController.BindAction(func() { freeMoveActor.Entity = &birdSprite }, glfw.KeyR, glfw.Press)
+		customController.BindAction(func() { freeMoveActor.Entity = explosionParticles }, glfw.KeyE, glfw.Press)
+		customController.BindAction(func() { freeMoveActor.Entity = birdSprite }, glfw.KeyR, glfw.Press)
 
 		customController.BindAction(func() { //no post effects
 			glRenderer.DestroyPostEffects(bloomVertical)
@@ -267,9 +267,9 @@ func Particles(c *cli.Context) {
 			glRenderer.DestroyPostEffects(bloomHorizontal)
 			glRenderer.CreatePostEffect(cell)
 		}, glfw.KeyD, glfw.Press)
-	}
+	})
 
-	glRenderer.Update = func() {
+	glRenderer.Update(func() {
 		fps.UpdateFPSMeter()
 
 		//update things that need updating
@@ -281,11 +281,11 @@ func Particles(c *cli.Context) {
 		birdSprite.NextFrame()
 
 		freeMoveActor.Update(0.018)
-	}
+	})
 
-	glRenderer.Render = func() {
+	glRenderer.Render(func() {
 		sceneGraph.RenderScene(glRenderer)
-	}
+	})
 
 	glRenderer.Start()
 }

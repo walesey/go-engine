@@ -28,8 +28,8 @@ type Material struct {
 	Diffuse, Normal, Specular, Roughness                  image.Image
 }
 
-func CreateMaterial() Material {
-	return Material{loaded: false, LightingMode: MODE_LIT}
+func CreateMaterial() *Material {
+	return &Material{loaded: false, LightingMode: MODE_LIT}
 }
 
 //Geometry
@@ -45,12 +45,12 @@ type Geometry struct {
 
 //vericies format : x,y,z,   nx,ny,nz,tx,ty,tz,btx,bty,btz,   u,v,  r,g,b,a
 //indicies format : f1,f2,f3 (triangles)
-func CreateGeometry(indicies []uint32, verticies []float32) Geometry {
+func CreateGeometry(indicies []uint32, verticies []float32) *Geometry {
 	mat := CreateMaterial()
-	return Geometry{
+	return &Geometry{
 		Indicies:     indicies,
 		Verticies:    verticies,
-		Material:     &mat,
+		Material:     mat,
 		loadedLen:    -1,
 		CullBackface: true,
 	}
@@ -158,7 +158,7 @@ func (geometry *Geometry) SetUVs(uvs ...float32) {
 }
 
 //Primitives
-func CreateBox(height, width float32) Geometry {
+func CreateBox(height, width float32) *Geometry {
 	verticies := []float32{
 		-width / 2, 0, height / 2, 0, 1, 0, 1, 0, -1, -1, 0, -1, 0, 0, 1.0, 1.0, 1.0, 1.0,
 		width / 2, 0, height / 2, 0, 1, 0, 1, 0, -1, -1, 0, -1, 1, 0, 1.0, 1.0, 1.0, 1.0,
@@ -169,4 +169,8 @@ func CreateBox(height, width float32) Geometry {
 	}
 	indicies := []uint32{0, 1, 2, 3, 4, 5}
 	return CreateGeometry(indicies, verticies)
+}
+
+func CreateSkyBox() *Geometry {
+	return CreateGeometry(cubeIndicies, skyboxVerticies)
 }

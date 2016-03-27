@@ -1,9 +1,10 @@
 package effects
 
 import (
+	"image/color"
+
 	"github.com/walesey/go-engine/renderer"
 	"github.com/walesey/go-engine/vectormath"
-	"image/color"
 )
 
 type Sprite struct {
@@ -16,7 +17,7 @@ type Sprite struct {
 	frame, totalFrames, framesX, framesY int
 }
 
-func CreateSprite(totalFrames, framesX, framesY int, material *renderer.Material) Sprite {
+func CreateSprite(totalFrames, framesX, framesY int, material *renderer.Material) *Sprite {
 	sprite := Sprite{
 		transform:   renderer.CreateTransform(),
 		location:    vectormath.Vector3{0, 0, 0},
@@ -28,12 +29,12 @@ func CreateSprite(totalFrames, framesX, framesY int, material *renderer.Material
 		framesY:     framesY,
 	}
 	geometry := renderer.CreateBox(1, 1)
-	sprite.geometry = &geometry
+	sprite.geometry = geometry
 	sprite.geometry.Material = material
 	sprite.geometry.CullBackface = false
 	sprite.node = renderer.CreateNode()
 	sprite.node.Add(sprite.geometry)
-	return sprite
+	return &sprite
 }
 
 func BoxFlipbook(geometry *renderer.Geometry, frame, framesX, framesY int) {

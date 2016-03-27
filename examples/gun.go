@@ -35,19 +35,19 @@ func GunDemo(c *cli.Context) {
 	//skyboxMat := assetLib.GetMaterial("nightskyboxMat")
 	geom := assetLib.GetGeometry("skybox")
 	skyboxMat := assetLib.GetMaterial("skyboxMat")
-	geom.Material = &skyboxMat
+	geom.Material = skyboxMat
 	geom.Material.LightingMode = renderer.MODE_UNLIT
 	geom.CullBackface = false
 	skyNode := renderer.CreateNode()
-	skyNode.Add(&geom)
+	skyNode.Add(geom)
 	skyNode.SetRotation(1.57, vectormath.Vector3{0, 1, 0})
 	skyNode.SetScale(vectormath.Vector3{5000, 5000, 5000})
 
 	geomgun := assetLib.GetGeometry("gun")
 	gunMat := assetLib.GetMaterial("gunMat")
-	geomgun.Material = &gunMat
+	geomgun.Material = gunMat
 	gunNode := renderer.CreateNode()
-	gunNode.Add(&geomgun)
+	gunNode.Add(geomgun)
 	gunNode.SetTranslation(vectormath.Vector3{0, 0, 0})
 
 	sceneGraph := renderer.CreateSceneGraph()
@@ -60,14 +60,14 @@ func GunDemo(c *cli.Context) {
 	freeMoveActor.MoveSpeed = 3.0
 	freeMoveActor.Location = vectormath.Vector3{-2, 0, 0}
 
-	glRenderer.Init = func() {
+	glRenderer.Init(func() {
 		//lighting
 		glRenderer.CreateLight(0.1, 0.1, 0.1, 3, 3, 3, 2, 2, 2, true, vectormath.Vector3{0.3, -1, 0.2}, 0)
 
 		//setup reflection map
 		//cubeMap := renderer.CreateCubemap(assetLib.GetMaterial("nightskyboxMat").Diffuse)
 		cubeMap := renderer.CreateCubemap(assetLib.GetMaterial("skyboxMat").Diffuse)
-		glRenderer.ReflectionMap(*cubeMap)
+		glRenderer.ReflectionMap(cubeMap)
 
 		//post effects
 		bloomHorizontal := renderer.Shader{
@@ -111,16 +111,16 @@ func GunDemo(c *cli.Context) {
 		customController.BindAction(func() {
 			glRenderer.Window.SetShouldClose(true)
 		}, glfw.KeyEscape, glfw.Press)
-	}
+	})
 
-	glRenderer.Update = func() {
+	glRenderer.Update(func() {
 		fps.UpdateFPSMeter()
 		freeMoveActor.Update(0.018)
-	}
+	})
 
-	glRenderer.Render = func() {
+	glRenderer.Render(func() {
 		sceneGraph.RenderScene(glRenderer)
-	}
+	})
 
 	glRenderer.Start()
 }

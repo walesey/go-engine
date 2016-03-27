@@ -6,7 +6,7 @@ import (
 	vmath "github.com/walesey/go-engine/vectormath"
 )
 
-func TriangleMeshShapeFromGeometry(geometry renderer.Geometry) gobullet.TriangleMeshShape {
+func TriangleMeshShapeFromGeometry(geometry *renderer.Geometry) gobullet.TriangleMeshShape {
 	mesh := gobullet.NewTriangleMesh(false, false)
 	for i := 0; i < len(geometry.Indicies); i = i + 3 {
 		index := geometry.Indicies[i]
@@ -23,7 +23,7 @@ func TriangleMeshShapeFromGeometry(geometry renderer.Geometry) gobullet.Triangle
 	return mesh.NewTriangleMeshShape(true, true)
 }
 
-func CollisionShapeFromGeometry(geometry renderer.Geometry, cullThreshold float64) gobullet.CollisionShape {
+func CollisionShapeFromGeometry(geometry *renderer.Geometry, cullThreshold float64) gobullet.CollisionShape {
 	verts := PointsFromGeometry(geometry, cullThreshold)
 	convexHull := gobullet.NewConvexHullShape()
 	for _, vert := range *verts {
@@ -33,7 +33,7 @@ func CollisionShapeFromGeometry(geometry renderer.Geometry, cullThreshold float6
 }
 
 // Converts a geometry directly into points (does threshold culling optimisation)
-func PointsFromGeometry(geometry renderer.Geometry, cullThreshold float64) *[]vmath.Vector3 {
+func PointsFromGeometry(geometry *renderer.Geometry, cullThreshold float64) *[]vmath.Vector3 {
 	verticies := make([]vmath.Vector3, 0, len(geometry.Indicies))
 	for i := 0; i < len(geometry.Indicies); i = i + 1 {
 		index := geometry.Indicies[i]

@@ -21,14 +21,14 @@ type ParticleSettings struct {
 	Acceleration                             vectormath.Vector3
 	MaxAngularVelocity, MinAngularVelocity   vectormath.Quaternion
 	MaxRotationVelocity, MinRotationVelocity float64
-	BaseGeometry                             renderer.Geometry
-	Material                                 renderer.Material
+	BaseGeometry                             *renderer.Geometry
+	Material                                 *renderer.Material
 	TotalFrames, FramesX, FramesY            int
 }
 
 type ParticleSystem struct {
 	Location          vectormath.Vector3
-	geometry          renderer.Geometry
+	geometry          *renderer.Geometry
 	particles         particleList
 	settings          ParticleSettings
 	particleTransform renderer.Transform
@@ -37,7 +37,7 @@ type ParticleSystem struct {
 
 type Particle struct {
 	active              bool
-	geometry            renderer.Geometry
+	geometry            *renderer.Geometry
 	life, lifeRemaining float64
 	translation         vectormath.Vector3
 	orientation         vectormath.Quaternion
@@ -66,9 +66,9 @@ func (slice particleList) Swap(i, j int) {
 	slice.particles[i], slice.particles[j] = slice.particles[j], slice.particles[i]
 }
 
-func CreateParticleSystem(settings ParticleSettings) ParticleSystem {
+func CreateParticleSystem(settings ParticleSettings) *ParticleSystem {
 	geometry := renderer.CreateGeometry(make([]uint32, 0, 0), make([]float32, 0, 0))
-	geometry.Material = &settings.Material
+	geometry.Material = settings.Material
 	geometry.CullBackface = false
 	ps := ParticleSystem{
 		settings:          settings,
@@ -77,7 +77,7 @@ func CreateParticleSystem(settings ParticleSettings) ParticleSystem {
 		particleTransform: renderer.CreateTransform(),
 	}
 	ps.initParitcles()
-	return ps
+	return &ps
 }
 
 func (ps *ParticleSystem) initParitcles() {
@@ -172,14 +172,14 @@ func (ps *ParticleSystem) updateParticle(p *Particle, camera vectormath.Vector3,
 	//set color
 	p.geometry.SetColor(color)
 	//set flipbook uv
-	BoxFlipbook(&p.geometry, frame, ps.settings.FramesX, ps.settings.FramesY)
+	BoxFlipbook(p.geometry, frame, ps.settings.FramesX, ps.settings.FramesY)
 	//face the camera
 	renderer.FacingTransform(ps.particleTransform, p.rotation, camera.Subtract(p.translation), vectormath.Vector3{0, 1, 0}, vectormath.Vector3{0, 0, 1})
 	p.geometry.Transform(ps.particleTransform)
 	//rotate and move
 	ps.particleTransform.From(scale, p.translation, p.orientation)
 	//add geometry to particle system
-	p.geometry.Optimize(&ps.geometry, ps.particleTransform)
+	p.geometry.Optimize(ps.geometry, ps.particleTransform)
 
 }
 

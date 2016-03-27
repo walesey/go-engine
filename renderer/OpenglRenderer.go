@@ -23,9 +23,12 @@ const (
 
 //Renderer API
 type Renderer interface {
+	Init(callback func())
+	Update(callback func())
+	Render(callback func())
 	Start()
 	BackGroundColor(r, g, b, a float32)
-	Projection(angle, aspect, near, far float32)
+	Projection(angle, near, far float32)
 	Camera(location, lookat, up vectormath.Vector3)
 	CameraLocation() vectormath.Vector3
 	PopTransform()
@@ -39,7 +42,7 @@ type Renderer interface {
 	DrawGeometry(geometry *Geometry)
 	CreateLight(ar, ag, ab, dr, dg, db, sr, sg, sb float32, directional bool, position vectormath.Vector3, i int)
 	DestroyLight(i int)
-	ReflectionMap(cm CubeMap)
+	ReflectionMap(cm *CubeMap)
 	CreatePostEffect(shader Shader)
 	DestroyPostEffects(shader Shader)
 	LockCursor(lock bool)
@@ -58,23 +61,35 @@ func MultiplyAll(s util.Stack) mgl32.Mat4 {
 ///////////////////
 //OPEN GL Renderer
 type OpenglRenderer struct {
-	Init, Update, Render      func()
-	WindowWidth, WindowHeight int
-	WindowTitle               string
-	Window                    *glfw.Window
-	matStack                  util.Stack
-	program                   uint32
-	envMapId                  uint32
-	envMapLOD1Id              uint32
-	envMapLOD2Id              uint32
-	envMapLOD3Id              uint32
-	illuminanceMapId          uint32
-	modelUniform              int32
-	lights                    []float32
-	directionalLights         []float32
-	cameraLocation            vectormath.Vector3
-	postEffectVbo             uint32
-	postEffects               []postEffect
+	onInit, onUpdate, onRender func()
+	WindowWidth, WindowHeight  int
+	WindowTitle                string
+	Window                     *glfw.Window
+	matStack                   util.Stack
+	program                    uint32
+	envMapId                   uint32
+	envMapLOD1Id               uint32
+	envMapLOD2Id               uint32
+	envMapLOD3Id               uint32
+	illuminanceMapId           uint32
+	modelUniform               int32
+	lights                     []float32
+	directionalLights          []float32
+	cameraLocation             vectormath.Vector3
+	postEffectVbo              uint32
+	postEffects                []postEffect
+}
+
+func (glRenderer *OpenglRenderer) Init(callback func()) {
+	glRenderer.onInit = callback
+}
+
+func (glRenderer *OpenglRenderer) Update(callback func()) {
+	glRenderer.onUpdate = callback
+}
+
+func (glRenderer *OpenglRenderer) Render(callback func()) {
+	glRenderer.onRender = callback
 }
 
 func (glRenderer *OpenglRenderer) Start() {
@@ -107,10 +122,6 @@ func (glRenderer *OpenglRenderer) Start() {
 	program := programFromFile("shaders/main.vert", "shaders/main.frag")
 	gl.UseProgram(program)
 	glRenderer.program = program
-
-	//set default camera
-	glRenderer.Projection(45.0, float32(glRenderer.WindowWidth)/float32(glRenderer.WindowHeight), 0.1, 10000.0)
-	glRenderer.Camera(vectormath.Vector3{3, 3, 3}, vectormath.Vector3{0, 0, 0}, vectormath.Vector3{0, 1, 0})
 
 	//create mat stack for push pop stack
 	matStack := util.CreateStack()
@@ -162,22 +173,22 @@ func (glRenderer *OpenglRenderer) Start() {
 
 	glRenderer.initPostEffects()
 
-	glRenderer.Init()
+	glRenderer.onInit()
 
 	//Main loop
 	for !window.ShouldClose() {
 
-		glRenderer.Update()
+		glRenderer.onUpdate()
 		gl.UseProgram(program)
 		if len(glRenderer.postEffects) == 0 {
 			gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-			glRenderer.Render()
+			glRenderer.onRender()
 		} else {
 
 			//Render to the first post effect buffer
 			gl.BindFramebuffer(gl.FRAMEBUFFER, glRenderer.postEffects[0].fboId)
 			gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-			glRenderer.Render()
+			glRenderer.onRender()
 			//Render Post effects
 			for i := 0; i < len(glRenderer.postEffects)-1; i = i + 1 {
 				gl.BindFramebuffer(gl.FRAMEBUFFER, glRenderer.postEffects[i+1].fboId)
@@ -201,8 +212,8 @@ func (glRenderer *OpenglRenderer) BackGroundColor(r, g, b, a float32) {
 	gl.ClearColor(r, g, b, a)
 }
 
-func (glRenderer *OpenglRenderer) Projection(angle, aspect, near, far float32) {
-	projection := mgl32.Perspective(mgl32.DegToRad(angle), aspect, near, far)
+func (glRenderer *OpenglRenderer) Projection(angle, near, far float32) {
+	projection := mgl32.Perspective(mgl32.DegToRad(angle), float32(glRenderer.WindowWidth)/float32(glRenderer.WindowHeight), near, far)
 	projectionUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("projection\x00"))
 	gl.UniformMatrix4fv(projectionUniform, 1, false, &projection[0])
 }
@@ -312,7 +323,7 @@ func (glRenderer *OpenglRenderer) newTexture(img image.Image, textureUnit uint32
 	return texId
 }
 
-func (glRenderer *OpenglRenderer) ReflectionMap(cm CubeMap) {
+func (glRenderer *OpenglRenderer) ReflectionMap(cm *CubeMap) {
 	cm.Resize(512)
 	glRenderer.envMapId = glRenderer.newCubeMap(cm.Right, cm.Left, cm.Top, cm.Bottom, cm.Back, cm.Front, gl.TEXTURE4)
 	cm.Resize(64)

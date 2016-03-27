@@ -25,7 +25,7 @@ func Demo(c *cli.Context) {
 	skyBox.Material.LightingMode = renderer.MODE_UNLIT
 	skyBox.CullBackface = false
 	skyNode := renderer.CreateNode()
-	skyNode.Add(&skyBox)
+	skyNode.Add(skyBox)
 	sceneGraph := renderer.CreateSceneGraph()
 	sceneGraph.AddBackGround(skyNode)
 
@@ -34,24 +34,24 @@ func Demo(c *cli.Context) {
 	freeMoveActor := actor.NewFreeMoveActor(camera)
 	freeMoveActor.MoveSpeed = 3.0
 
-	glRenderer.Init = func() {
+	glRenderer.Init(func() {
 		//input/controller manager
 		controllerManager := controller.NewControllerManager(glRenderer.Window)
 		//camera free move actor
 		mainController := controller.NewBasicMovementController(freeMoveActor)
 		controllerManager.AddController(mainController)
-	}
+	})
 
-	glRenderer.Update = func() {
+	glRenderer.Update(func() {
 		//update things that need updating
 		fps.UpdateFPSMeter()
 		freeMoveActor.Update(0.018)
-	}
+	})
 
-	glRenderer.Render = func() {
+	glRenderer.Render(func() {
 		//render the whole scene
 		sceneGraph.RenderScene(glRenderer)
-	}
+	})
 
 	//start the renderer and launch the window
 	glRenderer.Start()

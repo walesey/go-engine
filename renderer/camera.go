@@ -6,34 +6,66 @@ import (
 
 //A camera is an Entity
 type Camera struct {
-	renderer            Renderer
-	Translation, Lookat vmath.Vector3
-	Up                  vmath.Vector3
+	renderer                Renderer
+	translation, lookat, up vmath.Vector3
+	angle, near, far        float64
 }
 
 func CreateCamera(renderer Renderer) *Camera {
 	cam := Camera{
 		renderer:    renderer,
-		Translation: vmath.Vector3{1, 0, 0},
-		Lookat:      vmath.Vector3{0, 0, 0},
-		Up:          vmath.Vector3{0, 1, 0},
+		translation: vmath.Vector3{1, 0, 0},
+		lookat:      vmath.Vector3{0, 0, 0},
+		up:          vmath.Vector3{0, 1, 0},
+		angle:       45.0,
+		near:        0.1,
+		far:         999999999.0,
 	}
+
 	return &cam
+}
+func (c *Camera) update() {
+	c.renderer.Projection(float32(c.angle), float32(c.near), float32(c.far))
+	c.renderer.Camera(c.translation, c.lookat, c.up)
 }
 
 func (c *Camera) GetDirection() vmath.Vector3 {
-	return c.Lookat.Subtract(c.Translation).Normalize()
+	return c.lookat.Subtract(c.translation).Normalize()
+}
+
+func (c *Camera) GetTranslation() vmath.Vector3 {
+	return c.translation
 }
 
 func (c *Camera) SetScale(scale vmath.Vector3) {} //na
 
 func (c *Camera) SetTranslation(translation vmath.Vector3) {
-	c.Translation = translation
-	c.renderer.Camera(c.Translation, c.Lookat, c.Up)
+	c.translation = translation
+	c.update()
 }
 
 func (c *Camera) SetOrientation(orientation vmath.Quaternion) {
-	direction := orientation.Apply(vmath.Vector3{1000000, 0, 0})
-	c.Lookat = c.Translation.Add(direction)
-	c.renderer.Camera(c.Translation, c.Lookat, c.Up)
+	direction := orientation.Apply(vmath.Vector3{9999999999, 0, 0})
+	c.lookat = c.translation.Add(direction)
+	c.update()
+}
+
+func (c *Camera) SetUp(up vmath.Vector3) {
+	c.up = up
+	c.update()
+}
+
+func (c *Camera) SetAngle(angle float64) {
+	c.angle = angle
+	c.update()
+}
+
+func (c *Camera) SetNear(near float64) {
+	c.near = near
+	c.update()
+}
+
+func (c *Camera) SetFar(far float64) {
+	c.far = far
+	c.update()
 }

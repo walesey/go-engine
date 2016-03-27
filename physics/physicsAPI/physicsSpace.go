@@ -3,6 +3,7 @@ package physicsAPI
 import vmath "github.com/walesey/go-engine/vectormath"
 
 type PhysicsSpace interface {
+	Update(dt float64)
 	SimulateStep(stepTime float64, subSteps int)
 	Delete()
 	AddObject(objects ...PhysicsObject)

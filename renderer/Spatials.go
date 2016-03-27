@@ -96,9 +96,9 @@ func (node *Node) SetFacing(rotation float64, newNormal, normal, tangent vectorm
 	FacingTransform(node.Transform, rotation, newNormal, normal, tangent)
 }
 
-func (node *Node) OptimizeNode() Geometry {
+func (node *Node) OptimizeNode() *Geometry {
 	geometry := CreateGeometry(make([]uint32, 0, 0), make([]float32, 0, 0))
-	node.Optimize(&geometry, node.Transform)
+	node.Optimize(geometry, node.Transform)
 	geometry.VboDirty = true
 	return geometry
 }

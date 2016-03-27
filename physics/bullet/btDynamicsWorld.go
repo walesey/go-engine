@@ -14,6 +14,10 @@ func NewBtDynamicsWorld(sdk gobullet.PhysicSDK) physicsAPI.PhysicsSpace {
 	return &BtDynamicsWorld{sdk.CreateDynamicsWorld()}
 }
 
+func (w *BtDynamicsWorld) Update(dt float64) {
+	w.SimulateStep(dt, 1)
+}
+
 func (w *BtDynamicsWorld) SimulateStep(stepTime float64, subSteps int) {
 	stepDt := stepTime / float64(subSteps)
 	for iteration := 0; iteration < subSteps; iteration = iteration + 1 {
