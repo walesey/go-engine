@@ -7,9 +7,9 @@ import (
 )
 
 type SceneGraph struct {
-	backgroundNode, transparentNode, orthoNode *Node
-	matStack                                   util.Stack
-	transparentBucket                          bucketEntries
+	backgroundNode, transparentNode *Node
+	matStack                        util.Stack
+	transparentBucket               bucketEntries
 }
 
 //factory
@@ -17,7 +17,6 @@ func CreateSceneGraph() SceneGraph {
 	sceneGraph := SceneGraph{
 		backgroundNode:  CreateNode(),
 		transparentNode: CreateNode(),
-		orthoNode:       CreateNode(),
 		matStack:        util.CreateStack(),
 	}
 	return sceneGraph
@@ -35,10 +34,6 @@ func (sceneGraph *SceneGraph) AddBackGround(spatial Spatial) {
 	sceneGraph.backgroundNode.Add(spatial)
 }
 
-func (sceneGraph *SceneGraph) AddOrtho(spatial Spatial) {
-	sceneGraph.orthoNode.Add(spatial)
-}
-
 func (sceneGraph *SceneGraph) RenderScene(renderer Renderer) {
 	//setup buckets
 	sceneGraph.transparentBucket = sceneGraph.transparentBucket[:0]
@@ -51,7 +46,6 @@ func (sceneGraph *SceneGraph) RenderScene(renderer Renderer) {
 	for _, entry := range sceneGraph.transparentBucket {
 		renderEntry(entry, renderer)
 	}
-	sceneGraph.orthoNode.Draw(renderer)
 }
 
 func renderEntry(entry bucketEntry, renderer Renderer) {

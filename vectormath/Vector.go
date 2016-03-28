@@ -2,6 +2,10 @@ package vectormath
 
 import "math"
 
+type Vector2 struct {
+	X, Y float64
+}
+
 type Vector3 struct {
 	X, Y, Z float64
 }
@@ -21,6 +25,14 @@ func (v *Vector3) Set(value Vector3) {
 
 func (v *Vector3) SetValue(x, y, z float64) {
 	v.X, v.Y, v.Z = x, y, z
+}
+
+func (v Vector2) LengthSquared() float64 {
+	return (v.X * v.X) + (v.Y * v.Y)
+}
+
+func (v Vector2) Length() float64 {
+	return math.Sqrt(v.LengthSquared())
 }
 
 func (v Vector3) LengthSquared() float64 {

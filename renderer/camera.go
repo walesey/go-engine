@@ -9,6 +9,7 @@ type Camera struct {
 	renderer                Renderer
 	translation, lookat, up vmath.Vector3
 	angle, near, far        float64
+	ortho                   bool
 }
 
 func CreateCamera(renderer Renderer) *Camera {
@@ -24,7 +25,12 @@ func CreateCamera(renderer Renderer) *Camera {
 
 	return &cam
 }
-func (c *Camera) update() {
+
+func (c *Camera) Ortho() {
+	c.renderer.Ortho()
+}
+
+func (c *Camera) Perspective() {
 	c.renderer.Projection(float32(c.angle), float32(c.near), float32(c.far))
 	c.renderer.Camera(c.translation, c.lookat, c.up)
 }
@@ -41,31 +47,31 @@ func (c *Camera) SetScale(scale vmath.Vector3) {} //na
 
 func (c *Camera) SetTranslation(translation vmath.Vector3) {
 	c.translation = translation
-	c.update()
+	c.Perspective()
 }
 
 func (c *Camera) SetOrientation(orientation vmath.Quaternion) {
 	direction := orientation.Apply(vmath.Vector3{9999999999, 0, 0})
 	c.lookat = c.translation.Add(direction)
-	c.update()
+	c.Perspective()
 }
 
 func (c *Camera) SetUp(up vmath.Vector3) {
 	c.up = up
-	c.update()
+	c.Perspective()
 }
 
 func (c *Camera) SetAngle(angle float64) {
 	c.angle = angle
-	c.update()
+	c.Perspective()
 }
 
 func (c *Camera) SetNear(near float64) {
 	c.near = near
-	c.update()
+	c.Perspective()
 }
 
 func (c *Camera) SetFar(far float64) {
 	c.far = far
-	c.update()
+	c.Perspective()
 }

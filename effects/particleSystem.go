@@ -174,7 +174,7 @@ func (ps *ParticleSystem) updateParticle(p *Particle, camera vectormath.Vector3,
 	//set flipbook uv
 	BoxFlipbook(p.geometry, frame, ps.settings.FramesX, ps.settings.FramesY)
 	//face the camera
-	renderer.FacingTransform(ps.particleTransform, p.rotation, camera.Subtract(p.translation), vectormath.Vector3{0, 1, 0}, vectormath.Vector3{0, 0, 1})
+	renderer.FacingTransform(ps.particleTransform, p.rotation, camera.Subtract(p.translation), vectormath.Vector3{0, 0, 1}, vectormath.Vector3{-1, 0, 0})
 	p.geometry.Transform(ps.particleTransform)
 	//rotate and move
 	ps.particleTransform.From(scale, p.translation, p.orientation)

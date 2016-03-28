@@ -11,6 +11,7 @@ import (
 	"github.com/walesey/go-engine/physics/bullet"
 	"github.com/walesey/go-engine/physics/physicsAPI"
 	"github.com/walesey/go-engine/renderer"
+	"github.com/walesey/go-engine/ui"
 	vmath "github.com/walesey/go-engine/vectormath"
 
 	"github.com/codegangsta/cli"
@@ -22,8 +23,8 @@ func BulletDemo(c *cli.Context) {
 	//Setup renderer and game Engine
 	glRenderer := &renderer.OpenglRenderer{
 		WindowTitle:  "GoEngine",
-		WindowWidth:  1900,
-		WindowHeight: 1000,
+		WindowWidth:  2400,
+		WindowHeight: 1300,
 	}
 	gameEngine := engine.NewEngine(glRenderer)
 
@@ -103,7 +104,7 @@ func BulletDemo(c *cli.Context) {
 		glRenderer.LockCursor(true)
 
 		//camera + player
-		camera := renderer.CreateCamera(glRenderer)
+		camera := gameEngine.Camera()
 		playerCollision := gobullet.NewBoxShape(1, 3, 1)
 		playerController := bullet.NewBtCharacterController(playerCollision, 5)
 		playerController.SetJumpSpeed(50)
@@ -131,6 +132,8 @@ func BulletDemo(c *cli.Context) {
 		customController.BindAction(func() {
 			glRenderer.Window.SetShouldClose(true)
 		}, glfw.KeyEscape, glfw.Press)
+
+		gameEngine.AddOrtho(ui.NewWindow())
 
 		//events
 		gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {

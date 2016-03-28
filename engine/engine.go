@@ -9,17 +9,21 @@ import (
 // It sets up a basic render / Update loop and provides a nice interface for writing games.
 type Engine interface {
 	Start(Init func())
+	AddOrtho(spatials ...renderer.Spatial)
 	AddSpatial(spatial ...renderer.Spatial)
 	RemoveSpatial(spatial ...renderer.Spatial)
 	AddUpdatable(updatables ...Updatable)
 	RemoveUpdatable(updatables ...Updatable)
 	Sky(material *renderer.Material, size float64)
+	Camera() *renderer.Camera
 }
 
 type EngineImpl struct {
 	fpsMeter       *renderer.FPSMeter
 	renderer       renderer.Renderer
 	sceneGraph     renderer.SceneGraph
+	orthoNode      *renderer.Node
+	camera         *renderer.Camera
 	updatableStore *UpdatableStore
 }
 
@@ -36,7 +40,16 @@ func (engine *EngineImpl) Update() {
 }
 
 func (engine *EngineImpl) Render() {
+	engine.camera.Perspective()
 	engine.sceneGraph.RenderScene(engine.renderer)
+	engine.camera.Ortho()
+	engine.orthoNode.Draw(engine.renderer)
+}
+
+func (engine *EngineImpl) AddOrtho(spatials ...renderer.Spatial) {
+	for _, s := range spatials {
+		engine.orthoNode.Add(s)
+	}
 }
 
 func (engine *EngineImpl) AddSpatial(spatials ...renderer.Spatial) {
@@ -73,17 +86,25 @@ func (engine *EngineImpl) Sky(material *renderer.Material, size float64) {
 	engine.renderer.ReflectionMap(cubeMap)
 }
 
+func (engine *EngineImpl) Camera() *renderer.Camera {
+	return engine.camera
+}
+
 func NewEngine(r renderer.Renderer) Engine {
 	fpsMeter := renderer.CreateFPSMeter(1.0)
 	fpsMeter.FpsCap = 6000
 
 	sceneGraph := renderer.CreateSceneGraph()
+	orthoNode := renderer.CreateNode()
 	updatableStore := NewUpdatableStore()
+	camera := renderer.CreateCamera(r)
 
 	return &EngineImpl{
 		fpsMeter:       fpsMeter,
 		sceneGraph:     sceneGraph,
+		orthoNode:      orthoNode,
 		updatableStore: updatableStore,
 		renderer:       r,
+		camera:         camera,
 	}
 }

@@ -30,6 +30,7 @@ type Renderer interface {
 	BackGroundColor(r, g, b, a float32)
 	Projection(angle, near, far float32)
 	Camera(location, lookat, up vectormath.Vector3)
+	Ortho()
 	CameraLocation() vectormath.Vector3
 	PopTransform()
 	PushTransform()
@@ -218,11 +219,19 @@ func (glRenderer *OpenglRenderer) Projection(angle, near, far float32) {
 	gl.UniformMatrix4fv(projectionUniform, 1, false, &projection[0])
 }
 
+func (glRenderer *OpenglRenderer) Ortho() {
+	projection := mgl32.Ortho2D(0, float32(glRenderer.WindowWidth), float32(glRenderer.WindowHeight), 0)
+	projectionUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("projection\x00"))
+	gl.UniformMatrix4fv(projectionUniform, 1, false, &projection[0])
+	camera := mgl32.Ident4()
+	cameraUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("camera\x00"))
+	gl.UniformMatrix4fv(cameraUniform, 1, false, &camera[0])
+}
+
 func (glRenderer *OpenglRenderer) Camera(location, lookat, up vectormath.Vector3) {
 	camera := mgl32.LookAtV(convertVector(location), convertVector(lookat), convertVector(up))
 	cameraUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("camera\x00"))
 	gl.UniformMatrix4fv(cameraUniform, 1, false, &camera[0])
-	//store camera location
 	glRenderer.cameraLocation = location
 }
 
