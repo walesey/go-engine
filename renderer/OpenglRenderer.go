@@ -81,6 +81,14 @@ type OpenglRenderer struct {
 	postEffects                []postEffect
 }
 
+func NewOpenglRenderer(WindowTitle string, WindowWidth, WindowHeight int) *OpenglRenderer {
+	return &OpenglRenderer{
+		WindowTitle:  WindowTitle,
+		WindowWidth:  WindowWidth,
+		WindowHeight: WindowHeight,
+	}
+}
+
 func (glRenderer *OpenglRenderer) Init(callback func()) {
 	glRenderer.onInit = callback
 }

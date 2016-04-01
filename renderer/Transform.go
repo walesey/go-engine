@@ -2,15 +2,17 @@ package renderer
 
 import (
 	"github.com/go-gl/mathgl/mgl32"
-	"github.com/walesey/go-engine/vectormath"
+	vmath "github.com/walesey/go-engine/vectormath"
 )
 
 type Transform interface {
 	ApplyTransform(transform Transform)
 	Set(transform Transform)
-	From(scale, translation vectormath.Vector3, orientation vectormath.Quaternion)
-	TransformCoordinate(v vectormath.Vector3) vectormath.Vector3
-	TransformNormal(n vectormath.Vector3) vectormath.Vector3
+	FromMatrix(matrix vmath.Matrix3)
+	From(scale, translation vmath.Vector3, orientation vmath.Quaternion)
+	TransformCoordinate(v vmath.Vector3) vmath.Vector3
+	TransformNormal(n vmath.Vector3) vmath.Vector3
+	Facing(rotation float64, direction, normal, tangent vmath.Vector3)
 }
 
 type GlTransform struct {
@@ -22,15 +24,19 @@ func CreateTransform() Transform {
 	return glTx
 }
 
-func FacingTransform(transform Transform, rotation float64, newNormal, normal, tangent vectormath.Vector3) {
-	angleCorrection := -tangent.AngleBetween(newNormal.Subtract(newNormal.Project(normal)))
-	if normal.Cross(tangent).Dot(newNormal) < 0 {
-		angleCorrection = -angleCorrection
+func (glTx *GlTransform) Facing(rotation float64, direction, normal, tangent vmath.Vector3) {
+	var betweenVectorsQ vmath.Quaternion
+	correctionAngle := 0.0
+	if direction.Dot(normal) >= 0 {
+		betweenVectorsQ = vmath.BetweenVectors(normal, direction)
+		correctionAngle = 3.14
+	} else {
+		betweenVectorsQ = vmath.BetweenVectors(normal, direction.MultiplyScalar(-1))
+		betweenVectorsQ = betweenVectorsQ.Multiply(vmath.AngleAxis(3.14, tangent))
 	}
-	angleQ := vectormath.AngleAxis(rotation+angleCorrection, normal)
-	betweenVectorsQ := vectormath.BetweenVectors(normal, newNormal)
+	angleQ := vmath.AngleAxis(rotation+correctionAngle, normal)
 	orientation := betweenVectorsQ.Multiply(angleQ)
-	transform.From(vectormath.Vector3{1, 1, 1}, vectormath.Vector3{0, 0, 0}, orientation)
+	glTx.From(vmath.Vector3{1, 1, 1}, vmath.Vector3{0, 0, 0}, orientation)
 }
 
 func (glTx *GlTransform) ApplyTransform(transform Transform) {
@@ -47,27 +53,40 @@ func (glTx *GlTransform) Set(transform Transform) {
 	}
 }
 
-func (glTx *GlTransform) From(scale, translation vectormath.Vector3, orientation vectormath.Quaternion) {
+func (glTx *GlTransform) FromMatrix(matrix vmath.Matrix3) {
+	glTx.Mat = convertMatrix(matrix)
+}
+
+func (glTx *GlTransform) From(scale, translation vmath.Vector3, orientation vmath.Quaternion) {
 	quat := convertQuaternion(orientation)
 	tx := convertVector(translation)
 	s := convertVector(scale)
 	glTx.Mat = mgl32.Translate3D(tx[0], tx[1], tx[2]).Mul4(mgl32.Scale3D(s[0], s[1], s[2])).Mul4(quat.Mat4())
 }
 
-func (glTx *GlTransform) TransformCoordinate(v vectormath.Vector3) vectormath.Vector3 {
+func (glTx *GlTransform) TransformCoordinate(v vmath.Vector3) vmath.Vector3 {
 	result := mgl32.TransformCoordinate(convertVector(v), glTx.Mat)
-	return vectormath.Vector3{float64(result[0]), float64(result[1]), float64(result[2])}
+	return vmath.Vector3{float64(result[0]), float64(result[1]), float64(result[2])}
 }
 
-func (glTx *GlTransform) TransformNormal(n vectormath.Vector3) vectormath.Vector3 {
+func (glTx *GlTransform) TransformNormal(n vmath.Vector3) vmath.Vector3 {
 	result := mgl32.TransformCoordinate(convertVector(n), glTx.Mat.Inv().Transpose())
-	return vectormath.Vector3{float64(result[0]), float64(result[1]), float64(result[2])}
+	return vmath.Vector3{float64(result[0]), float64(result[1]), float64(result[2])}
 }
 
-func convertVector(v vectormath.Vector3) mgl32.Vec3 {
+func convertVector(v vmath.Vector3) mgl32.Vec3 {
 	return mgl32.Vec3{float32(v.X), float32(v.Y), float32(v.Z)}
 }
 
-func convertQuaternion(q vectormath.Quaternion) mgl32.Quat {
+func convertQuaternion(q vmath.Quaternion) mgl32.Quat {
 	return mgl32.Quat{W: float32(q.W), V: mgl32.Vec3{float32(q.X), float32(q.Y), float32(q.Z)}}
+}
+
+func convertMatrix(m vmath.Matrix3) mgl32.Mat4 {
+	return mgl32.Mat4{
+		float32(m.M00), float32(m.M01), float32(m.M02), 0,
+		float32(m.M10), float32(m.M11), float32(m.M12), 0,
+		float32(m.M20), float32(m.M21), float32(m.M22), 0,
+		0, 0, 0, 1,
+	}
 }

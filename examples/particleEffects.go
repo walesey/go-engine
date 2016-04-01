@@ -22,8 +22,8 @@ func Particles(c *cli.Context) {
 
 	glRenderer := &renderer.OpenglRenderer{
 		WindowTitle:  "GoEngine",
-		WindowWidth:  400,
-		WindowHeight: 400,
+		WindowWidth:  1400,
+		WindowHeight: 900,
 	}
 
 	assetLib, err := assets.LoadAssetLibrary("TestAssets/particles.asset")

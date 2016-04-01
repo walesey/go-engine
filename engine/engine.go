@@ -92,7 +92,7 @@ func (engine *EngineImpl) Camera() *renderer.Camera {
 
 func NewEngine(r renderer.Renderer) Engine {
 	fpsMeter := renderer.CreateFPSMeter(1.0)
-	fpsMeter.FpsCap = 6000
+	fpsMeter.FpsCap = 60
 
 	sceneGraph := renderer.CreateSceneGraph()
 	orthoNode := renderer.CreateNode()

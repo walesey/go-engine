@@ -21,8 +21,6 @@ func AngleAxis(angle float64, axis Vector3) Quaternion {
 }
 
 func BetweenVectors(start, finish Vector3) Quaternion {
-	start = start.Normalize()
-	finish = finish.Normalize()
 	axis := finish.Cross(start).Normalize()
 	angle := start.AngleBetween(finish)
 	return AngleAxis(angle, axis)

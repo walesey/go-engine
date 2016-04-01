@@ -58,7 +58,7 @@ func (al *AssetLibrary) SaveToFile(fileName string) {
 	w := gzip.NewWriter(&compressedData)
 	w.Write([]byte(data))
 	w.Close()
-	err = ioutil.WriteFile(fileName, []byte(data), 0777)
+	err = ioutil.WriteFile(fileName, []byte(compressedData.Bytes()), 0777)
 	if err != nil {
 		panic(err)
 	}

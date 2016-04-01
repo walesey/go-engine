@@ -91,11 +91,6 @@ func (node *Node) SetRotation(angle float64, axis vectormath.Vector3) {
 	node.Transform.From(node.Scale, node.Translation, node.Orientation)
 }
 
-//used for eg. sprites facing the direction of the camera - all vectors need to be normalized
-func (node *Node) SetFacing(rotation float64, newNormal, normal, tangent vectormath.Vector3) {
-	FacingTransform(node.Transform, rotation, newNormal, normal, tangent)
-}
-
 func (node *Node) OptimizeNode() *Geometry {
 	geometry := CreateGeometry(make([]uint32, 0, 0), make([]float32, 0, 0))
 	node.Optimize(geometry, node.Transform)

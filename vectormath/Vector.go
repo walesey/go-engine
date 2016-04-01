@@ -19,20 +19,31 @@ type Vector interface {
 	LengthSquared() float64
 }
 
-func (v *Vector3) Set(value Vector3) {
-	v.SetValue(value.X, value.Y, value.Z)
-}
-
-func (v *Vector3) SetValue(x, y, z float64) {
-	v.X, v.Y, v.Z = x, y, z
-}
-
 func (v Vector2) LengthSquared() float64 {
 	return (v.X * v.X) + (v.Y * v.Y)
 }
 
 func (v Vector2) Length() float64 {
 	return math.Sqrt(v.LengthSquared())
+}
+
+func (v Vector2) ToVector3() Vector3 {
+	return Vector3{v.X, v.Y, 0}
+}
+
+func (v Vector2) Add(other Vector2) Vector2 {
+	return Vector2{
+		v.X + other.X,
+		v.Y + other.Y,
+	}
+}
+
+func (v *Vector3) Set(value Vector3) {
+	v.SetValue(value.X, value.Y, value.Z)
+}
+
+func (v *Vector3) SetValue(x, y, z float64) {
+	v.X, v.Y, v.Z = x, y, z
 }
 
 func (v Vector3) LengthSquared() float64 {

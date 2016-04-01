@@ -158,14 +158,18 @@ func (geometry *Geometry) SetUVs(uvs ...float32) {
 }
 
 //Primitives
-func CreateBox(height, width float32) *Geometry {
+func CreateBox(width, height float32) *Geometry {
+	return CreateBoxWithOffset(width, height, -width/2, -height/2)
+}
+
+func CreateBoxWithOffset(width, height, offsetX, offsetY float32) *Geometry {
 	verticies := []float32{
-		-width / 2, height / 2, 0, 0, 1, 0, 1, 0, -1, -1, 0, -1, 0, 0, 1.0, 1.0, 1.0, 1.0,
-		width / 2, height / 2, 0, 0, 1, 0, 1, 0, -1, -1, 0, -1, 1, 0, 1.0, 1.0, 1.0, 1.0,
-		width / 2, -height / 2, 0, 0, 1, 0, 1, 0, -1, -1, 0, -1, 1, 1, 1.0, 1.0, 1.0, 1.0,
-		width / 2, -height / 2, 0, 0, 1, 0, 1, 0, -1, -1, 0, -1, 1, 1, 1.0, 1.0, 1.0, 1.0,
-		-width / 2, -height / 2, 0, 0, 1, 0, 1, 0, -1, -1, 0, -1, 0, 1, 1.0, 1.0, 1.0, 1.0,
-		-width / 2, height / 2, 0, 0, 1, 0, 1, 0, -1, -1, 0, -1, 0, 0, 1.0, 1.0, 1.0, 1.0,
+		offsetX, height + offsetY, 0, 0, 1, 0, 1, 0, -1, -1, 0, -1, 0, 0, 1.0, 1.0, 1.0, 1.0,
+		width + offsetX, height + offsetY, 0, 0, 1, 0, 1, 0, -1, -1, 0, -1, 1, 0, 1.0, 1.0, 1.0, 1.0,
+		width + offsetX, offsetY, 0, 0, 1, 0, 1, 0, -1, -1, 0, -1, 1, 1, 1.0, 1.0, 1.0, 1.0,
+		width + offsetX, offsetY, 0, 0, 1, 0, 1, 0, -1, -1, 0, -1, 1, 1, 1.0, 1.0, 1.0, 1.0,
+		offsetX, offsetY, 0, 0, 1, 0, 1, 0, -1, -1, 0, -1, 0, 1, 1.0, 1.0, 1.0, 1.0,
+		offsetX, height + offsetY, 0, 0, 1, 0, 1, 0, -1, -1, 0, -1, 0, 0, 1.0, 1.0, 1.0, 1.0,
 	}
 	indicies := []uint32{0, 1, 2, 3, 4, 5}
 	return CreateGeometry(indicies, verticies)
