@@ -84,12 +84,13 @@ func (geometry *Geometry) ClearBuffers() {
 	geometry.Verticies = geometry.Verticies[:0]
 }
 
-func (geometry *Geometry) SetColor(color color.NRGBA) {
+func (geometry *Geometry) SetColor(color color.Color) {
 	for i := 14; i < len(geometry.Verticies); i = i + VertexStride {
-		geometry.Verticies[i] = float32(color.R) / 255.0
-		geometry.Verticies[i+1] = float32(color.G) / 255.0
-		geometry.Verticies[i+2] = float32(color.B) / 255.0
-		geometry.Verticies[i+3] = float32(color.A) / 255.0
+		r, g, b, a := color.RGBA()
+		geometry.Verticies[i] = float32(r) / 255.0
+		geometry.Verticies[i+1] = float32(g) / 255.0
+		geometry.Verticies[i+2] = float32(b) / 255.0
+		geometry.Verticies[i+3] = float32(a) / 255.0
 	}
 	geometry.VboDirty = true
 }

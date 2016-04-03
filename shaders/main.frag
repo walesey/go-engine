@@ -12,6 +12,7 @@
 #define MODE_EMIT 2
 
 uniform int mode;
+uniform bool useVertexColor;
 
 uniform vec4 lights[ MAX_LIGHTS * 4 ];
 uniform vec4 directionalLights[ MAX_LIGHTS * 4 ];
@@ -70,6 +71,9 @@ void main() {
 	vec2 textCoord = vec2(textureX, textureY);
 
 	vec4 albedoValue = texture(diffuse, textCoord) * fragColor;
+	if (useVertexColor) {
+		albedoValue = fragColor;
+	}
 	vec4 normalValue = texture(normal, textCoord);
 	vec4 specularValue = texture(specular, textCoord);
 	vec4 roughnessValue = texture(roughness, textCoord);

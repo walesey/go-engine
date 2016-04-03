@@ -7,6 +7,7 @@ import (
 	"github.com/walesey/go-engine/engine"
 	"github.com/walesey/go-engine/renderer"
 	"github.com/walesey/go-engine/ui"
+	vmath "github.com/walesey/go-engine/vectormath"
 )
 
 func init() {
@@ -38,6 +39,7 @@ func main() {
 		container.AddChildren(imgElement)
 		container.HorizontalAlign = true
 		window.SetElement(container)
+		window.SetScale(vmath.Vector3{1000, 1000, 1})
 		gameEngine.AddOrtho(window)
 
 	})

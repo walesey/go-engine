@@ -2,6 +2,7 @@ package ui
 
 import (
 	"image"
+	"image/color"
 
 	"github.com/walesey/go-engine/renderer"
 	vmath "github.com/walesey/go-engine/vectormath"
@@ -43,10 +44,11 @@ func (ie *ImageElement) SetRotation(rotation float64) {
 
 func NewImageElement(img image.Image) *ImageElement {
 	box := renderer.CreateBoxWithOffset(1, 1, 0, 0)
-	mat := renderer.CreateMaterial()
-	mat.Diffuse = img
-	mat.LightingMode = renderer.MODE_UNLIT
-	box.Material = mat
+	box.SetColor(color.RGBA{255, 0, 0, 255})
+	// mat := renderer.CreateMaterial()
+	// mat.Diffuse = img
+	// mat.LightingMode = renderer.MODE_UNLIT
+	// box.Material = mat
 	node := renderer.CreateNode()
 	node.Add(box)
 	return &ImageElement{
