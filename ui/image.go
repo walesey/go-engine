@@ -2,7 +2,6 @@ package ui
 
 import (
 	"image"
-	"image/color"
 
 	"github.com/walesey/go-engine/renderer"
 	vmath "github.com/walesey/go-engine/vectormath"
@@ -11,8 +10,11 @@ import (
 type ImageElement struct {
 	width, height int
 	rotation      float64
+	offset, size  vmath.Vector2
 	node          *renderer.Node
 	img           image.Image
+	eventHandler  *EventHandler
+	hoverState    bool
 }
 
 func (ie *ImageElement) Render(offset vmath.Vector2) vmath.Vector2 {
@@ -27,6 +29,8 @@ func (ie *ImageElement) Render(offset vmath.Vector2) vmath.Vector2 {
 	size := vmath.Vector2{float64(width), float64(height)}
 	ie.node.SetScale(size.ToVector3())
 	ie.node.SetTranslation(offset.ToVector3())
+	ie.offset = offset
+	ie.size = size
 	return size
 }
 
@@ -42,20 +46,50 @@ func (ie *ImageElement) SetRotation(rotation float64) {
 	ie.rotation = rotation
 }
 
+func (ie *ImageElement) AddOnClick(handler func(button int, release bool, position vmath.Vector2)) {
+	ie.eventHandler.AddOnClick(handler)
+}
+
+func (ie *ImageElement) AddOnHover(handler func()) {
+	ie.eventHandler.AddOnHover(handler)
+}
+
+func (ie *ImageElement) AddOnUnHover(handler func()) {
+	ie.eventHandler.AddOnUnHover(handler)
+}
+
+func (ie *ImageElement) AddOnMouseMove(handler func(position vmath.Vector2)) {
+	ie.eventHandler.AddOnMouseMove(handler)
+}
+
+func (ie *ImageElement) mouseMove(position vmath.Vector2) {
+	offsetPos := position.Subtract(ie.offset)
+	if vmath.PointLiesInsideAABB(vmath.Vector2{}, ie.size, offsetPos) {
+		ie.eventHandler.onMouseMove(offsetPos)
+	}
+}
+
+func (ie *ImageElement) mouseClick(button int, release bool, position vmath.Vector2) {
+	offsetPos := position.Subtract(ie.offset)
+	if vmath.PointLiesInsideAABB(vmath.Vector2{}, ie.size, offsetPos) {
+		ie.eventHandler.onClick(button, release, offsetPos)
+	}
+}
+
 func NewImageElement(img image.Image) *ImageElement {
 	box := renderer.CreateBoxWithOffset(1, 1, 0, 0)
-	box.SetColor(color.RGBA{255, 0, 0, 255})
-	// mat := renderer.CreateMaterial()
-	// mat.Diffuse = img
-	// mat.LightingMode = renderer.MODE_UNLIT
-	// box.Material = mat
+	mat := renderer.CreateMaterial()
+	mat.Diffuse = img
+	mat.LightingMode = renderer.MODE_UNLIT
+	box.Material = mat
 	node := renderer.CreateNode()
 	node.Add(box)
 	return &ImageElement{
-		width:    img.Bounds().Size().X,
-		height:   img.Bounds().Size().Y,
-		rotation: 0,
-		node:     node,
-		img:      img,
+		width:        img.Bounds().Size().X,
+		height:       img.Bounds().Size().Y,
+		rotation:     0,
+		node:         node,
+		img:          img,
+		eventHandler: NewEventHandler(),
 	}
 }

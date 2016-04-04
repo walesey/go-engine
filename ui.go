@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"runtime"
 
 	"github.com/walesey/go-engine/assets"
+	"github.com/walesey/go-engine/controller"
 	"github.com/walesey/go-engine/engine"
 	"github.com/walesey/go-engine/renderer"
 	"github.com/walesey/go-engine/ui"
@@ -26,7 +28,6 @@ func main() {
 	alienwareImg := assetLib.GetImage("alienware")
 
 	gameEngine.Start(func() {
-		// glRenderer.BackGroundColor(1.0, 1.0, 1.0, 1.0)
 
 		window := ui.NewWindow()
 		container := ui.NewContainer()
@@ -36,11 +37,19 @@ func main() {
 		container.AddChildren(imgElement)
 		imgElement = ui.NewImageElement(alienwareImg)
 		imgElement.SetSize(300, 0)
+		imgElement.AddOnClick(func(button int, release bool, position vmath.Vector2) {
+			fmt.Println(position)
+		})
 		container.AddChildren(imgElement)
-		container.HorizontalAlign = true
 		window.SetElement(container)
-		window.SetScale(vmath.Vector3{1000, 1000, 1})
+		window.SetScale(vmath.Vector3{900, 700, 1})
 		gameEngine.AddOrtho(window)
+
+		//input/controller manager
+		controllerManager := controller.NewControllerManager(glRenderer.Window)
+
+		uiController := ui.NewUiController(window)
+		controllerManager.AddController(uiController)
 
 	})
 }

@@ -495,9 +495,11 @@ func (glRenderer *OpenglRenderer) DrawGeometry(geometry *Geometry) {
 	gl.ActiveTexture(gl.TEXTURE8)
 	gl.BindTexture(gl.TEXTURE_CUBE_MAP, glRenderer.illuminanceMapId)
 
+	useVertexColorUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("useVertexColor\x00"))
 	if geometry.Material.Diffuse == nil {
-		useVertexColorUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("useVertexColor\x00"))
-		gl.Uniform1i(useVertexColorUniform, true)
+		gl.Uniform1i(useVertexColorUniform, 1)
+	} else {
+		gl.Uniform1i(useVertexColorUniform, 0)
 	}
 
 	gl.DrawElements(gl.TRIANGLES, (int32)(len(geometry.Indicies)), gl.UNSIGNED_INT, gl.PtrOffset(0))

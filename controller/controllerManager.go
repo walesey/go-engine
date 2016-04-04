@@ -15,6 +15,13 @@ func (c *ControllerManager) KeyCallback(window *glfw.Window, key glfw.Key, scanc
 	}
 }
 
+//Mouse click callback
+func (c *ControllerManager) MouseButtonCallback(window *glfw.Window, button glfw.MouseButton, action glfw.Action, mods glfw.ModifierKey) {
+	for i := range c.controllerList {
+		c.controllerList[i].MouseButtonCallback(window, button, action, mods)
+	}
+}
+
 //Mouse movement callback
 func (c *ControllerManager) CursorPosCallback(window *glfw.Window, xpos, ypos float64) {
 	for i := range c.controllerList {
@@ -37,6 +44,7 @@ func NewControllerManager(window *glfw.Window) *ControllerManager {
 	var controllerList []Controller
 	c := &ControllerManager{controllerList}
 	window.SetKeyCallback(c.KeyCallback)
+	window.SetMouseButtonCallback(c.MouseButtonCallback)
 	window.SetCursorPosCallback(c.CursorPosCallback)
 	window.SetScrollCallback(c.ScrollCallback)
 	return c

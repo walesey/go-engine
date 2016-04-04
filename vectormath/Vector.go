@@ -38,6 +38,31 @@ func (v Vector2) Add(other Vector2) Vector2 {
 	}
 }
 
+func (v Vector2) Subtract(other Vector2) Vector2 {
+	return Vector2{
+		v.X - other.X,
+		v.Y - other.Y,
+	}
+}
+
+func (v Vector2) Multiply(other Vector2) Vector2 {
+	return Vector2{
+		v.X * other.X,
+		v.Y * other.Y,
+	}
+}
+
+func (v Vector2) MultiplyScalar(scalar float64) Vector2 {
+	return Vector2{
+		v.X * scalar,
+		v.Y * scalar,
+	}
+}
+
+func (v Vector3) ToVector2() Vector2 {
+	return Vector2{v.X, v.Y}
+}
+
 func (v *Vector3) Set(value Vector3) {
 	v.SetValue(value.X, value.Y, value.Z)
 }

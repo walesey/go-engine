@@ -61,6 +61,17 @@ func PointLiesInsideTriangle(a, b, c, point Vector3) bool {
 	return dot12 > 0 && dot13 > 0
 }
 
+//PointLiesInsideAABB - return true if the point lies within the rectan formed by points a and b
+func PointLiesInsideAABB(a, b, point Vector2) bool {
+	if (point.X > a.X && point.X > b.X) || (point.X < a.X && point.X < b.X) {
+		return false
+	}
+	if (point.Y > a.Y && point.Y > b.Y) || (point.Y < a.Y && point.Y < b.Y) {
+		return false
+	}
+	return true
+}
+
 func CramerSolve3(mat Matrix3, col Vector3) (Vector3, error) {
 	det := mat.Determinant()
 	if det != 0 {

@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"fmt"
 	"image/color"
 
 	"github.com/walesey/go-engine/renderer"
@@ -11,7 +10,9 @@ import (
 type Window struct {
 	node, elementNode, background *renderer.Node
 	element                       Element
-	size                          vmath.Vector2
+	elementScale                  float64
+	size, position                vmath.Vector2
+	mousePos                      vmath.Vector2
 }
 
 func (w *Window) Draw(renderer renderer.Renderer) {
@@ -34,6 +35,7 @@ func (w *Window) SetScale(scale vmath.Vector3) {
 
 func (w *Window) SetTranslation(translation vmath.Vector3) {
 	w.node.SetTranslation(translation)
+	w.position = translation.ToVector2()
 }
 
 func (w *Window) SetOrientation(orientation vmath.Quaternion) {
@@ -51,15 +53,27 @@ func (w *Window) SetElement(element Element) {
 
 func (w *Window) Render() {
 	size := w.element.Render(vmath.Vector2{0, 0})
-	scale := vmath.Vector3{1, 1, 1}
+	w.elementScale = 1
 	if size.X > w.size.X {
-		scale.X = w.size.X / size.X
+		w.elementScale = w.size.X / size.X
 	}
-	if size.Y > w.size.Y {
-		scale.Y = w.size.Y / size.Y
+	if (size.Y * w.elementScale) > w.size.Y {
+		w.elementScale = w.size.Y / size.Y
 	}
-	fmt.Println(scale)
-	w.elementNode.SetScale(scale)
+	w.elementNode.SetScale(vmath.Vector2{w.elementScale, w.elementScale}.ToVector3())
+}
+
+func (w *Window) mouseMove(position vmath.Vector2) {
+	w.mousePos = position.Subtract(w.position)
+	if w.element != nil {
+		w.element.mouseMove(w.mousePos.MultiplyScalar(w.elementScale))
+	}
+}
+
+func (w *Window) mouseClick(button int, release bool) {
+	if w.element != nil {
+		w.element.mouseClick(button, release, w.mousePos.MultiplyScalar(w.elementScale))
+	}
 }
 
 func NewWindow() *Window {
