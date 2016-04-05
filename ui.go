@@ -37,8 +37,11 @@ func main() {
 		container.AddChildren(imgElement)
 		imgElement = ui.NewImageElement(alienwareImg)
 		imgElement.SetSize(300, 0)
-		imgElement.AddOnClick(func(button int, release bool, position vmath.Vector2) {
-			fmt.Println(position)
+		imgElement.Hitbox.AddOnHover(func() {
+			fmt.Println(1)
+		})
+		imgElement.Hitbox.AddOnUnHover(func() {
+			fmt.Println(2)
 		})
 		container.AddChildren(imgElement)
 		window.SetElement(container)

@@ -8,13 +8,12 @@ import (
 )
 
 type ImageElement struct {
+	Hitbox        Hitbox
 	width, height int
 	rotation      float64
-	offset, size  vmath.Vector2
+	offset        vmath.Vector2
 	node          *renderer.Node
 	img           image.Image
-	eventHandler  *EventHandler
-	hoverState    bool
 }
 
 func (ie *ImageElement) Render(offset vmath.Vector2) vmath.Vector2 {
@@ -30,7 +29,7 @@ func (ie *ImageElement) Render(offset vmath.Vector2) vmath.Vector2 {
 	ie.node.SetScale(size.ToVector3())
 	ie.node.SetTranslation(offset.ToVector3())
 	ie.offset = offset
-	ie.size = size
+	ie.Hitbox.SetSize(size)
 	return size
 }
 
@@ -46,34 +45,14 @@ func (ie *ImageElement) SetRotation(rotation float64) {
 	ie.rotation = rotation
 }
 
-func (ie *ImageElement) AddOnClick(handler func(button int, release bool, position vmath.Vector2)) {
-	ie.eventHandler.AddOnClick(handler)
-}
-
-func (ie *ImageElement) AddOnHover(handler func()) {
-	ie.eventHandler.AddOnHover(handler)
-}
-
-func (ie *ImageElement) AddOnUnHover(handler func()) {
-	ie.eventHandler.AddOnUnHover(handler)
-}
-
-func (ie *ImageElement) AddOnMouseMove(handler func(position vmath.Vector2)) {
-	ie.eventHandler.AddOnMouseMove(handler)
-}
-
 func (ie *ImageElement) mouseMove(position vmath.Vector2) {
 	offsetPos := position.Subtract(ie.offset)
-	if vmath.PointLiesInsideAABB(vmath.Vector2{}, ie.size, offsetPos) {
-		ie.eventHandler.onMouseMove(offsetPos)
-	}
+	ie.Hitbox.MouseMove(offsetPos)
 }
 
 func (ie *ImageElement) mouseClick(button int, release bool, position vmath.Vector2) {
 	offsetPos := position.Subtract(ie.offset)
-	if vmath.PointLiesInsideAABB(vmath.Vector2{}, ie.size, offsetPos) {
-		ie.eventHandler.onClick(button, release, offsetPos)
-	}
+	ie.Hitbox.MouseClick(button, release, offsetPos)
 }
 
 func NewImageElement(img image.Image) *ImageElement {
@@ -85,11 +64,11 @@ func NewImageElement(img image.Image) *ImageElement {
 	node := renderer.CreateNode()
 	node.Add(box)
 	return &ImageElement{
-		width:        img.Bounds().Size().X,
-		height:       img.Bounds().Size().Y,
-		rotation:     0,
-		node:         node,
-		img:          img,
-		eventHandler: NewEventHandler(),
+		width:    img.Bounds().Size().X,
+		height:   img.Bounds().Size().Y,
+		rotation: 0,
+		node:     node,
+		img:      img,
+		Hitbox:   NewHitbox(),
 	}
 }
