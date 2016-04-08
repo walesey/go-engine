@@ -9,6 +9,7 @@ import (
 
 type Window struct {
 	node, elementNode, background *renderer.Node
+	backgroundBox                 *renderer.Geometry
 	element                       Element
 	elementScale                  float64
 	size, position                vmath.Vector2
@@ -40,6 +41,10 @@ func (w *Window) SetTranslation(translation vmath.Vector3) {
 
 func (w *Window) SetOrientation(orientation vmath.Quaternion) {
 	w.node.SetOrientation(orientation)
+}
+
+func (w *Window) SetBackgroundColor(r, g, b, a uint8) {
+	w.backgroundBox.SetColor(color.NRGBA{r, g, b, a})
 }
 
 func (w *Window) SetElement(element Element) {
@@ -81,7 +86,7 @@ func NewWindow() *Window {
 	elementNode := renderer.CreateNode()
 	background := renderer.CreateNode()
 	box := renderer.CreateBoxWithOffset(1, 1, 0, 0)
-	box.SetColor(color.RGBA{255, 255, 255, 255})
+	box.SetColor(color.NRGBA{255, 255, 255, 255})
 	mat := renderer.CreateMaterial()
 	mat.LightingMode = renderer.MODE_UNLIT
 	box.Material = mat
@@ -89,9 +94,10 @@ func NewWindow() *Window {
 	node.Add(background)
 	node.Add(elementNode)
 	return &Window{
-		node:        node,
-		background:  background,
-		elementNode: elementNode,
-		size:        vmath.Vector2{1, 1},
+		node:          node,
+		backgroundBox: box,
+		background:    background,
+		elementNode:   elementNode,
+		size:          vmath.Vector2{1, 1},
 	}
 }

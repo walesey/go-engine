@@ -71,6 +71,10 @@ func (node *Node) Remove(spatial Spatial) {
 	}
 }
 
+func (node *Node) RemoveAll() {
+	node.children = node.children[:0]
+}
+
 func (node *Node) SetScale(scale vectormath.Vector3) {
 	node.Scale = scale
 	node.Transform.From(node.Scale, node.Translation, node.Orientation)

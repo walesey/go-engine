@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"image/color"
 	"runtime"
 
 	"github.com/walesey/go-engine/assets"
@@ -38,14 +38,18 @@ func main() {
 		imgElement = ui.NewImageElement(alienwareImg)
 		imgElement.SetSize(300, 0)
 		imgElement.Hitbox.AddOnHover(func() {
-			fmt.Println(1)
+			imgElement.SetSize(350, 0)
+			window.Render()
 		})
 		imgElement.Hitbox.AddOnUnHover(func() {
-			fmt.Println(2)
+			imgElement.SetSize(300, 0)
+			window.Render()
 		})
 		container.AddChildren(imgElement)
+		container.AddChildren(ui.NewTextElement("test text", color.Black, 25))
 		window.SetElement(container)
 		window.SetScale(vmath.Vector3{900, 700, 1})
+		window.SetBackgroundColor(90, 0, 255, 255)
 		gameEngine.AddOrtho(window)
 
 		//input/controller manager

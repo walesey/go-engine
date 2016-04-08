@@ -45,6 +45,19 @@ func (ie *ImageElement) SetRotation(rotation float64) {
 	ie.rotation = rotation
 }
 
+func (ie *ImageElement) SetImage(img image.Image) {
+	ie.node.RemoveAll()
+	box := renderer.CreateBoxWithOffset(1, 1, 0, 0)
+	mat := renderer.CreateMaterial()
+	mat.Diffuse = img
+	mat.LightingMode = renderer.MODE_UNLIT
+	box.Material = mat
+	ie.img = img
+	ie.node.Add(box)
+	ie.width = img.Bounds().Size().X
+	ie.height = img.Bounds().Size().Y
+}
+
 func (ie *ImageElement) mouseMove(position vmath.Vector2) {
 	offsetPos := position.Subtract(ie.offset)
 	ie.Hitbox.MouseMove(offsetPos)
@@ -56,19 +69,11 @@ func (ie *ImageElement) mouseClick(button int, release bool, position vmath.Vect
 }
 
 func NewImageElement(img image.Image) *ImageElement {
-	box := renderer.CreateBoxWithOffset(1, 1, 0, 0)
-	mat := renderer.CreateMaterial()
-	mat.Diffuse = img
-	mat.LightingMode = renderer.MODE_UNLIT
-	box.Material = mat
-	node := renderer.CreateNode()
-	node.Add(box)
-	return &ImageElement{
-		width:    img.Bounds().Size().X,
-		height:   img.Bounds().Size().Y,
+	imageElement := &ImageElement{
 		rotation: 0,
-		node:     node,
-		img:      img,
 		Hitbox:   NewHitbox(),
+		node:     renderer.CreateNode(),
 	}
+	imageElement.SetImage(img)
+	return imageElement
 }
