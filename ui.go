@@ -46,7 +46,7 @@ func main() {
 			window.Render()
 		})
 		container.AddChildren(imgElement)
-		container.AddChildren(ui.NewTextElement("test text", color.Black, 25))
+		container.AddChildren(ui.NewTextElement("test text text test text test text test text test text test text test text test text", color.Black, 32))
 		window.SetElement(container)
 		window.SetScale(vmath.Vector3{900, 700, 1})
 		window.SetBackgroundColor(90, 0, 255, 255)

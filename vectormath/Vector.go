@@ -59,6 +59,13 @@ func (v Vector2) MultiplyScalar(scalar float64) Vector2 {
 	}
 }
 
+func (v Vector2) DivideScalar(scalar float64) Vector2 {
+	return Vector2{
+		v.X / scalar,
+		v.Y / scalar,
+	}
+}
+
 func (v Vector3) ToVector2() Vector2 {
 	return Vector2{v.X, v.Y}
 }

@@ -7,6 +7,7 @@ import (
 	"image/draw"
 	"io/ioutil"
 	"log"
+	"strings"
 
 	"github.com/disintegration/imaging"
 	"github.com/walesey/freetype"
@@ -17,11 +18,12 @@ import (
 )
 
 type TextElement struct {
-	img       *ImageElement
-	text      string
-	textColor color.Color
-	textSize  float64
-	useFont   *truetype.Font
+	img           *ImageElement
+	width, height int
+	text          string
+	textColor     color.Color
+	textSize      float64
+	useFont       *truetype.Font
 }
 
 func LoadFont(fontfile string) (*truetype.Font, error) {
@@ -38,57 +40,70 @@ func LoadFont(fontfile string) (*truetype.Font, error) {
 	return f, nil
 }
 
-func (te *TextElement) UpdateImage(dimensions vmath.Vector2) {
+func (te *TextElement) updateImage() {
 	// Initialize the context.
 	bg := image.Transparent
 	c := freetype.NewContext()
-	c.SetDPI(4 * te.textSize)
+	c.SetDPI(75)
 	c.SetFont(te.useFont)
 	c.SetFontSize(te.textSize)
 	c.SetSrc(image.NewUniform(te.textColor))
 	c.SetHinting(font.HintingNone)
 
-	// Establish image dimensions
+	// Establish image dimensions and do ward wrap
 	textHeight := c.PointToFixed(te.textSize)
-	// var width fixed.Int26_6
-	// var height fixed.Int26_6
-	// for _, s := range text {
-	// dimensions, _ := c.StringDimensions(te.text)
-	// height = height + dimensions.Y
-	// if dimensions.X > width {
-	// 	width = dimensions.X
-	// }
-	// }
-	// imgWidth := int(width >> 6)
-	// imgHeight := int(height >> 6)
-	fmt.Println(dimensions)
-	rgba := image.NewRGBA(image.Rect(0, 0, int(dimensions.X), int(dimensions.Y)))
+	var width int
+	var height int = int(textHeight >> 6)
+	words := strings.Split(te.text, " ")
+	lines := []string{""}
+	lineNb := 0
+	for _, word := range words {
+		wordWithSpace := fmt.Sprintf("%v ", word)
+		dimensions, _ := c.StringDimensions(wordWithSpace)
+		width += int(dimensions.X >> 6)
+		if width > te.width {
+			width = int(dimensions.X >> 6)
+			height += int(dimensions.Y>>6) + 1
+			lines = append(lines, "")
+			lineNb += 1
+		}
+		lines[lineNb] = fmt.Sprintf("%v%v", lines[lineNb], wordWithSpace)
+	}
+	if te.height > 0 {
+		height = te.height
+	}
+
+	rgba := image.NewRGBA(image.Rect(0, 0, te.width, height+1))
 	draw.Draw(rgba, rgba.Bounds(), bg, image.ZP, draw.Src)
 	c.SetClip(rgba.Bounds())
 	c.SetDst(rgba)
 
 	// Draw the text.
 	pt := freetype.Pt(0, int(textHeight>>6))
-	// for _, s := range text {
-	_, err := c.DrawString(te.text, pt)
-	if err != nil {
-		log.Printf("Error drawing string: %v\n", err)
-		return
+	for _, line := range lines {
+		_, err := c.DrawString(line, pt)
+		if err != nil {
+			log.Printf("Error drawing string: %v\n", err)
+			return
+		}
+		pt.Y += textHeight
 	}
-	pt.Y += textHeight
-	// }
 
 	te.img.SetImage(imaging.FlipV(rgba))
 }
 
+func (te *TextElement) SetText(text string) {
+	te.text = text
+	te.updateImage()
+}
+
 func (te *TextElement) SetSize(width, height int) {
-	te.img.SetSize(width, height)
+	te.width, te.height = width, height
+	te.updateImage()
 }
 
 func (te *TextElement) Render(offset vmath.Vector2) vmath.Vector2 {
-	dimensions := te.img.Render(offset)
-	te.UpdateImage(dimensions)
-	return dimensions
+	return te.img.Render(offset)
 }
 
 func (te *TextElement) Spatial() renderer.Spatial {
@@ -103,15 +118,15 @@ func (te *TextElement) mouseClick(button int, release bool, position vmath.Vecto
 	te.img.mouseClick(button, release, position)
 }
 
-func NewTextElement(text string, textColor color.Color, size float64) *TextElement {
-	useFont, _ := LoadFont("TestAssets/luximr.ttf")
+func NewTextElement(text string, textColor color.Color, textSize float64) *TextElement {
+	useFont, _ := LoadFont("TestAssets/Audiowide-Regular.ttf")
 	textElem := &TextElement{
 		img:       NewImageElement(image.NewAlpha(image.Rect(0, 0, 1, 1))),
 		text:      text,
 		textColor: textColor,
-		textSize:  size,
+		textSize:  textSize,
 		useFont:   useFont,
 	}
-	textElem.SetSize(300, 100)
+	textElem.SetSize(300, 0)
 	return textElem
 }

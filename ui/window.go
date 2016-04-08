@@ -71,13 +71,13 @@ func (w *Window) Render() {
 func (w *Window) mouseMove(position vmath.Vector2) {
 	w.mousePos = position.Subtract(w.position)
 	if w.element != nil {
-		w.element.mouseMove(w.mousePos.MultiplyScalar(w.elementScale))
+		w.element.mouseMove(w.mousePos.DivideScalar(w.elementScale))
 	}
 }
 
 func (w *Window) mouseClick(button int, release bool) {
 	if w.element != nil {
-		w.element.mouseClick(button, release, w.mousePos.MultiplyScalar(w.elementScale))
+		w.element.mouseClick(button, release, w.mousePos.DivideScalar(w.elementScale))
 	}
 }
 
