@@ -26,6 +26,7 @@ func main() {
 		panic(err)
 	}
 	alienwareImg := assetLib.GetImage("alienware")
+	textFont, _ := ui.LoadFont("TestAssets/Audiowide-Regular.ttf")
 
 	gameEngine.Start(func() {
 
@@ -33,8 +34,11 @@ func main() {
 		container := ui.NewContainer()
 
 		imgElement := ui.NewImageElement(alienwareImg)
-		imgElement.SetSize(500, 0)
 		container.AddChildren(imgElement)
+		container.SetSize(400, 0)
+		container.SetMargin(ui.NewMargin(15))
+		container.SetPadding(ui.NewMargin(15))
+		container.SetBackgroundColor(0, 255, 0, 255)
 		imgElement = ui.NewImageElement(alienwareImg)
 		imgElement.SetSize(300, 0)
 		imgElement.Hitbox.AddOnHover(func() {
@@ -46,9 +50,10 @@ func main() {
 			window.Render()
 		})
 		container.AddChildren(imgElement)
-		container.AddChildren(ui.NewTextElement("test text text test text test text test text test text test text test text test text", color.Black, 32))
+		container.AddChildren(ui.NewTextElement("test text text test text test text test text test text test text test text test text", color.Black, 32, textFont))
 		window.SetElement(container)
-		window.SetScale(vmath.Vector3{900, 700, 1})
+		window.SetTranslation(vmath.Vector3{100, 100, 1})
+		window.SetScale(vmath.Vector3{600, 700, 1})
 		window.SetBackgroundColor(90, 0, 255, 255)
 		gameEngine.AddOrtho(window)
 

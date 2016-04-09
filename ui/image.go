@@ -9,35 +9,36 @@ import (
 
 type ImageElement struct {
 	Hitbox        Hitbox
-	width, height int
+	width, height float64
 	rotation      float64
 	offset        vmath.Vector2
 	node          *renderer.Node
 	img           image.Image
 }
 
-func (ie *ImageElement) Render(offset vmath.Vector2) vmath.Vector2 {
+func (ie *ImageElement) Render(size, offset vmath.Vector2) vmath.Vector2 {
 	width, height := ie.width, ie.height
 	if width == 0 && height == 0 {
-		width, height = ie.img.Bounds().Size().X, ie.img.Bounds().Size().Y
-	} else if width == 0 {
-		width = ie.img.Bounds().Size().X * height / ie.img.Bounds().Size().Y
-	} else if height == 0 {
-		height = ie.img.Bounds().Size().Y * width / ie.img.Bounds().Size().X
+		width = size.X
+		height = width * float64(ie.img.Bounds().Size().Y) / float64(ie.img.Bounds().Size().X)
+	} else if height > 0 {
+		width = height * float64(ie.img.Bounds().Size().X) / float64(ie.img.Bounds().Size().Y)
+	} else if width > 0 {
+		height = width * float64(ie.img.Bounds().Size().Y) / float64(ie.img.Bounds().Size().X)
 	}
-	size := vmath.Vector2{float64(width), float64(height)}
-	ie.node.SetScale(size.ToVector3())
+	imgSize := vmath.Vector2{float64(width), float64(height)}
+	ie.node.SetScale(imgSize.ToVector3())
 	ie.node.SetTranslation(offset.ToVector3())
 	ie.offset = offset
-	ie.Hitbox.SetSize(size)
-	return size
+	ie.Hitbox.SetSize(imgSize)
+	return imgSize
 }
 
 func (ie *ImageElement) Spatial() renderer.Spatial {
 	return ie.node
 }
 
-func (ie *ImageElement) SetSize(width, height int) {
+func (ie *ImageElement) SetSize(width, height float64) {
 	ie.width, ie.height = width, height
 }
 
@@ -54,8 +55,6 @@ func (ie *ImageElement) SetImage(img image.Image) {
 	box.Material = mat
 	ie.img = img
 	ie.node.Add(box)
-	ie.width = img.Bounds().Size().X
-	ie.height = img.Bounds().Size().Y
 }
 
 func (ie *ImageElement) mouseMove(position vmath.Vector2) {

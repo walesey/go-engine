@@ -57,7 +57,7 @@ func (w *Window) SetElement(element Element) {
 }
 
 func (w *Window) Render() {
-	size := w.element.Render(vmath.Vector2{0, 0})
+	size := w.element.Render(w.size, vmath.Vector2{0, 0})
 	w.elementScale = 1
 	if size.X > w.size.X {
 		w.elementScale = w.size.X / size.X
