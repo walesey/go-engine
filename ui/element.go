@@ -10,4 +10,5 @@ type Element interface {
 	Spatial() renderer.Spatial
 	mouseMove(position vmath.Vector2)
 	mouseClick(button int, release bool, position vmath.Vector2)
+	keyClick(key string, release bool)
 }

@@ -24,6 +24,7 @@ type TextElement struct {
 	textColor     color.Color
 	textSize      float64
 	textFont      *truetype.Font
+	active        bool
 }
 
 func LoadFont(fontfile string) (*truetype.Font, error) {
@@ -42,7 +43,7 @@ func LoadFont(fontfile string) (*truetype.Font, error) {
 
 func (te *TextElement) updateImage(size vmath.Vector2) {
 	// Initialize the context.
-	bg := image.White
+	bg := image.Transparent
 	c := freetype.NewContext()
 	c.SetDPI(75)
 	c.SetFont(te.textFont)
@@ -73,7 +74,7 @@ func (te *TextElement) updateImage(size vmath.Vector2) {
 		height = int(te.height)
 	}
 
-	rgba := image.NewRGBA(image.Rect(0, 0, int(size.X), height+1))
+	rgba := image.NewRGBA(image.Rect(0, 0, int(size.X), height+int(textHeight>>6)/3))
 	draw.Draw(rgba, rgba.Bounds(), bg, image.ZP, draw.Src)
 	c.SetClip(rgba.Bounds())
 	c.SetDst(rgba)
@@ -101,12 +102,24 @@ func (te *TextElement) SetSize(width, height float64) {
 	te.width, te.height = width, height
 }
 
+func (te *TextElement) Activate() {
+	te.active = true
+}
+
+func (te *TextElement) Deactivate() {
+	te.active = false
+}
+
 func (te *TextElement) Render(size, offset vmath.Vector2) vmath.Vector2 {
+	useWidth := size.X
+	useHeight := size.Y
 	if te.width > 0 {
-		te.updateImage(vmath.Vector2{float64(te.width), size.Y})
-	} else {
-		te.updateImage(size)
+		useWidth = te.width
 	}
+	if te.height > 0 {
+		useHeight = te.height
+	}
+	te.updateImage(vmath.Vector2{useWidth, useHeight})
 	return te.img.Render(size, offset)
 }
 
@@ -120,6 +133,19 @@ func (te *TextElement) mouseMove(position vmath.Vector2) {
 
 func (te *TextElement) mouseClick(button int, release bool, position vmath.Vector2) {
 	te.img.mouseClick(button, release, position)
+}
+
+func (te *TextElement) keyClick(key string, release bool) {
+	if !release {
+		textBytes := []byte(te.text)
+		if key == "backspace" {
+			if len(textBytes) > 0 {
+				te.SetText(string(textBytes[:len(textBytes)-1]))
+			}
+		} else {
+			te.SetText(fmt.Sprintf("%v%v", te.text, key))
+		}
+	}
 }
 
 func NewTextElement(text string, textColor color.Color, textSize float64, textFont *truetype.Font) *TextElement {

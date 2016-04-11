@@ -24,18 +24,25 @@ type Container struct {
 }
 
 func (c *Container) Render(size, offset vmath.Vector2) vmath.Vector2 {
-	containerSize := size
+	sizeMinusMargins := size.Subtract(vmath.Vector2{
+		c.margin.Left + c.margin.Right + c.padding.Left + c.padding.Right,
+		c.margin.Top + c.margin.Bottom + c.padding.Top + c.padding.Bottom,
+	})
+	containerSize := &sizeMinusMargins
 	if c.width > 0 {
-		containerSize = vmath.Vector2{c.width, size.Y}
+		containerSize.X = c.width
+	}
+	if c.height > 0 {
+		containerSize.Y = c.height
 	}
 	var width, height, highest float64 = 0, 0, 0
 	for _, child := range c.children {
-		childSize := child.Render(containerSize, vmath.Vector2{width, height})
+		childSize := child.Render(*containerSize, vmath.Vector2{width, height})
 		width += childSize.X
 		if width > containerSize.X {
 			height += highest
 			highest = 0
-			childSize = child.Render(containerSize, vmath.Vector2{0, height})
+			childSize = child.Render(*containerSize, vmath.Vector2{0, height})
 			width = childSize.X
 		}
 		if childSize.Y > highest {
@@ -43,13 +50,15 @@ func (c *Container) Render(size, offset vmath.Vector2) vmath.Vector2 {
 		}
 	}
 	height += highest
-	if c.height > 0 {
-		height = c.height
+	if vmath.ApproxEqual(c.height, 0, 0.001) {
+		containerSize.Y = height
 	}
+	//offsets and sizes
 	c.offset = offset.Add(vmath.Vector2{c.margin.Left, c.margin.Top})
 	elementsOffset := vmath.Vector2{c.padding.Left, c.padding.Top}
-	backgroundSize := vmath.Vector2{width, height}.Add(elementsOffset).Add(vmath.Vector2{c.padding.Right, c.padding.Bottom})
-	totalSize := backgroundSize.Add(vmath.Vector2{c.margin.Right, c.margin.Bottom})
+	backgroundSize := containerSize.Add(vmath.Vector2{c.padding.Left + c.padding.Right, c.padding.Top + c.padding.Bottom})
+	totalSize := backgroundSize.Add(vmath.Vector2{c.margin.Left + c.margin.Right, c.margin.Top + c.margin.Bottom})
+
 	c.background.SetScale(backgroundSize.ToVector3())
 	c.node.SetTranslation(c.offset.ToVector3())
 	c.elementsNode.SetTranslation(elementsOffset.ToVector3())
@@ -86,7 +95,7 @@ func (c *Container) AddChildren(children ...Element) {
 
 func (c *Container) RemoveChildren(children ...Element) {
 	for _, child := range children {
-		c.elementsNode.Remove(child.Spatial())
+		c.elementsNode.Remove(child.Spatial(), true)
 		for index, containerChild := range c.children {
 			if containerChild == child {
 				c.children = append(c.children[:index], c.children[index+1:]...)
@@ -111,6 +120,12 @@ func (c *Container) mouseClick(button int, release bool, position vmath.Vector2)
 	}
 }
 
+func (c *Container) keyClick(key string, release bool) {
+	for _, child := range c.children {
+		child.keyClick(key, release)
+	}
+}
+
 func NewMargin(margin float64) Margin {
 	return Margin{margin, margin, margin, margin}
 }
@@ -120,7 +135,7 @@ func NewContainer() *Container {
 	elementsNode := renderer.CreateNode()
 	background := renderer.CreateNode()
 	box := renderer.CreateBoxWithOffset(1, 1, 0, 0)
-	box.SetColor(color.NRGBA{255, 255, 255, 255})
+	box.SetColor(color.NRGBA{0, 0, 0, 0})
 	mat := renderer.CreateMaterial()
 	mat.LightingMode = renderer.MODE_UNLIT
 	box.Material = mat
@@ -134,7 +149,7 @@ func NewContainer() *Container {
 		backgroundBox: box,
 		children:      make([]Element, 0),
 		Hitbox:        NewHitbox(),
-		padding:       Margin{0, 0, 0, 0},
-		margin:        Margin{0, 0, 0, 0},
+		padding:       NewMargin(0),
+		margin:        NewMargin(0),
 	}
 }

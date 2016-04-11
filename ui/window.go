@@ -11,13 +11,16 @@ type Window struct {
 	node, elementNode, background *renderer.Node
 	backgroundBox                 *renderer.Geometry
 	element                       Element
-	elementScale                  float64
 	size, position                vmath.Vector2
 	mousePos                      vmath.Vector2
 }
 
 func (w *Window) Draw(renderer renderer.Renderer) {
 	w.node.Draw(renderer)
+}
+
+func (w *Window) Destroy(renderer renderer.Renderer) {
+	w.node.Destroy(renderer)
 }
 
 func (w *Window) Centre() vmath.Vector3 {
@@ -49,7 +52,7 @@ func (w *Window) SetBackgroundColor(r, g, b, a uint8) {
 
 func (w *Window) SetElement(element Element) {
 	if w.element != nil {
-		w.elementNode.Remove(w.element.Spatial())
+		w.elementNode.Remove(w.element.Spatial(), true)
 	}
 	w.element = element
 	w.elementNode.Add(element.Spatial())
@@ -58,26 +61,31 @@ func (w *Window) SetElement(element Element) {
 
 func (w *Window) Render() {
 	size := w.element.Render(w.size, vmath.Vector2{0, 0})
-	w.elementScale = 1
 	if size.X > w.size.X {
-		w.elementScale = w.size.X / size.X
+		w.size.X = size.X
 	}
-	if (size.Y * w.elementScale) > w.size.Y {
-		w.elementScale = w.size.Y / size.Y
+	if size.Y > w.size.Y {
+		w.size.Y = size.Y
 	}
-	w.elementNode.SetScale(vmath.Vector2{w.elementScale, w.elementScale}.ToVector3())
+	w.background.SetScale(w.size.ToVector3())
 }
 
 func (w *Window) mouseMove(position vmath.Vector2) {
 	w.mousePos = position.Subtract(w.position)
 	if w.element != nil {
-		w.element.mouseMove(w.mousePos.DivideScalar(w.elementScale))
+		w.element.mouseMove(w.mousePos)
 	}
 }
 
 func (w *Window) mouseClick(button int, release bool) {
 	if w.element != nil {
-		w.element.mouseClick(button, release, w.mousePos.DivideScalar(w.elementScale))
+		w.element.mouseClick(button, release, w.mousePos)
+	}
+}
+
+func (w *Window) keyClick(key string, release bool) {
+	if w.element != nil {
+		w.element.keyClick(key, release)
 	}
 }
 

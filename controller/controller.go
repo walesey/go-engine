@@ -22,6 +22,7 @@ type MouseButtonAction struct {
 }
 
 type ActionMap struct {
+	keyActionList        []func(key glfw.Key, action glfw.Action)
 	keyActionMap         map[KeyAction]func()
 	mouseButtonActionMap map[MouseButtonAction]func()
 	axisActions          []func(xpos, ypos float64)
@@ -30,6 +31,7 @@ type ActionMap struct {
 
 func NewActionMap() *ActionMap {
 	am := &ActionMap{
+		keyActionList:        make([]func(key glfw.Key, action glfw.Action), 0, 0),
 		keyActionMap:         make(map[KeyAction]func()),
 		mouseButtonActionMap: make(map[MouseButtonAction]func()),
 		axisActions:          make([]func(xpos, ypos float64), 0, 0),
@@ -42,6 +44,10 @@ func NewActionMap() *ActionMap {
 func (am *ActionMap) BindAction(function func(), key glfw.Key, action glfw.Action) {
 	ka := KeyAction{key, action}
 	am.keyActionMap[ka] = function
+}
+
+func (am *ActionMap) BindKeyAction(function func(key glfw.Key, action glfw.Action)) {
+	am.keyActionList = append(am.keyActionList, function)
 }
 
 func (am *ActionMap) BindMouseAction(function func(), button glfw.MouseButton, action glfw.Action) {
@@ -62,6 +68,9 @@ func (am *ActionMap) KeyCallback(window *glfw.Window, key glfw.Key, scancode int
 	ka := KeyAction{key, action}
 	if am.keyActionMap[ka] != nil {
 		am.keyActionMap[ka]()
+	}
+	for _, function := range am.keyActionList {
+		function(key, action)
 	}
 }
 
