@@ -312,6 +312,14 @@ func (glRenderer *OpenglRenderer) CreateMaterial(material *Material) {
 	}
 }
 
+//
+func (glRenderer *OpenglRenderer) DestroyMaterial(material *Material) {
+	gl.DeleteTextures(1, &material.diffuseId)
+	gl.DeleteTextures(1, &material.normalId)
+	gl.DeleteTextures(1, &material.specularId)
+	gl.DeleteTextures(1, &material.roughnessId)
+}
+
 //setup Texture
 func (glRenderer *OpenglRenderer) newTexture(img image.Image, textureUnit uint32) uint32 {
 	rgba := image.NewRGBA(img.Bounds())
@@ -402,14 +410,6 @@ func (glRenderer *OpenglRenderer) newCubeMap(right, left, top, bottom, back, fro
 	gl.TexParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
 	gl.TexParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE)
 	return texId
-}
-
-//
-func (glRenderer *OpenglRenderer) DestroyMaterial(material *Material) {
-	gl.DeleteTextures(1, &material.diffuseId)
-	gl.DeleteTextures(1, &material.normalId)
-	gl.DeleteTextures(1, &material.specularId)
-	gl.DeleteTextures(1, &material.roughnessId)
 }
 
 //

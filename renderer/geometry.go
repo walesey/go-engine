@@ -75,6 +75,13 @@ func (geometry *Geometry) load(renderer Renderer) {
 	}
 }
 
+func (geometry *Geometry) Destroy(renderer Renderer) {
+	renderer.DestroyGeometry(geometry)
+	if geometry.Material != nil {
+		renderer.DestroyMaterial(geometry.Material)
+	}
+}
+
 func (geometry *Geometry) Centre() vectormath.Vector3 {
 	return vectormath.Vector3{0, 0, 0}
 }

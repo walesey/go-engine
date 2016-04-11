@@ -95,6 +95,10 @@ func (ps *ParticleSystem) Draw(renderer renderer.Renderer) {
 	ps.geometry.Draw(renderer)
 }
 
+func (ps *ParticleSystem) Destroy(renderer renderer.Renderer) {
+	ps.geometry.Destroy(renderer)
+}
+
 func (ps *ParticleSystem) Centre() vectormath.Vector3 {
 	return ps.Location
 }

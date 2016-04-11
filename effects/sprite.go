@@ -56,6 +56,10 @@ func (sprite *Sprite) Draw(r renderer.Renderer) {
 	sprite.node.Draw(r)
 }
 
+func (sprite *Sprite) Destroy(renderer renderer.Renderer) {
+	sprite.node.Destroy(renderer)
+}
+
 func (sprite *Sprite) Centre() vectormath.Vector3 {
 	return sprite.location
 }

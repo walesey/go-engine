@@ -27,7 +27,7 @@ func (sceneGraph *SceneGraph) Add(spatial Spatial) {
 }
 
 func (sceneGraph *SceneGraph) Remove(spatial Spatial) {
-	sceneGraph.transparentNode.Remove(spatial)
+	sceneGraph.transparentNode.Remove(spatial, false)
 }
 
 func (sceneGraph *SceneGraph) AddBackGround(spatial Spatial) {

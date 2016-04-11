@@ -7,6 +7,7 @@ import (
 //A Spatial is something that can be Drawn by a Renderer
 type Spatial interface {
 	Draw(renderer Renderer)
+	Destroy(renderer Renderer)
 	Centre() vectormath.Vector3
 	Optimize(geometry *Geometry, transform Transform)
 }
@@ -21,6 +22,7 @@ type Entity interface {
 //Node
 type Node struct {
 	children    []Spatial
+	deleted     []Spatial
 	Transform   Transform
 	Scale       vectormath.Vector3
 	Translation vectormath.Vector3
@@ -28,10 +30,9 @@ type Node struct {
 }
 
 func CreateNode() *Node {
-	//create slice to store children
-	children := make([]Spatial, 0, 0)
 	return &Node{
-		children:    children,
+		children:    make([]Spatial, 0, 0),
+		deleted:     make([]Spatial, 0, 0),
 		Transform:   CreateTransform(),
 		Scale:       vectormath.Vector3{1, 1, 1},
 		Translation: vectormath.Vector3{0, 0, 0},
@@ -46,6 +47,21 @@ func (node *Node) Draw(renderer Renderer) {
 		child.Draw(renderer)
 	}
 	renderer.PopTransform()
+	node.cleanupDeleted(renderer)
+}
+
+func (node *Node) Destroy(renderer Renderer) {
+	for _, child := range node.children {
+		child.Destroy(renderer)
+	}
+	node.cleanupDeleted(renderer)
+}
+
+func (node *Node) cleanupDeleted(renderer Renderer) {
+	for _, child := range node.deleted {
+		child.Destroy(renderer)
+	}
+	node.deleted = node.deleted[:0]
 }
 
 func (node *Node) Centre() vectormath.Vector3 {
@@ -53,25 +69,25 @@ func (node *Node) Centre() vectormath.Vector3 {
 }
 
 func (node *Node) Add(spatial Spatial) {
-	//append to the slice
 	node.children = append(node.children, spatial)
 }
 
-func (node *Node) Remove(spatial Spatial) {
-	//find the address in the slice, remove it and return
+func (node *Node) Remove(spatial Spatial, destroy bool) {
 	for index, child := range node.children {
 		if child == spatial {
-			if index+1 == len(node.children) {
-				node.children = node.children[:index]
-			} else {
-				node.children = append(node.children[:index], node.children[index+1:]...)
+			node.children = append(node.children[:index], node.children[index+1:]...)
+			if destroy {
+				node.deleted = append(node.deleted, child)
 			}
 			break
 		}
 	}
 }
 
-func (node *Node) RemoveAll() {
+func (node *Node) RemoveAll(destroy bool) {
+	if destroy {
+		node.deleted = append(node.deleted, node.children...)
+	}
 	node.children = node.children[:0]
 }
 
