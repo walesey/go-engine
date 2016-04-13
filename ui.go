@@ -4,7 +4,6 @@ import (
 	"image/color"
 	"runtime"
 
-	"github.com/go-gl/glfw/v3.1/glfw"
 	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/controller"
 	"github.com/walesey/go-engine/engine"
@@ -36,7 +35,7 @@ func main() {
 
 		tab := ui.NewContainer()
 		tab.SetBackgroundColor(120, 120, 120, 255)
-		tab.SetSize(0, 40)
+		tab.SetHeight(40)
 
 		container := ui.NewContainer()
 		container.SetMargin(ui.NewMargin(15))
@@ -47,12 +46,12 @@ func main() {
 		imgElement := ui.NewImageElement(alienwareImg)
 		container.AddChildren(imgElement)
 		imgElement = ui.NewImageElement(alienwareImg)
-		imgElement.SetSize(300, 0)
+		imgElement.SetWidth(300)
 		imgElement.Hitbox.AddOnHover(func() {
-			imgElement.SetSize(350, 0)
+			imgElement.SetWidth(350)
 		})
 		imgElement.Hitbox.AddOnUnHover(func() {
-			imgElement.SetSize(300, 0)
+			imgElement.SetWidth(300)
 		})
 		container.AddChildren(imgElement)
 
@@ -78,23 +77,6 @@ func main() {
 		//custom controller
 		customController := controller.NewActionMap()
 		controllerManager.AddController(customController)
-
-		//Click and drag window
-		grabbed := false
-		grabOffset := vmath.Vector2{}
-		tab.Hitbox.AddOnClick(func(button int, release bool, position vmath.Vector2) {
-			grabOffset = position
-			grabbed = !release
-		})
-		customController.BindMouseAction(func() {
-			grabbed = false
-		}, glfw.MouseButton1, glfw.Release)
-		customController.BindAxisAction(func(xpos, ypos float64) {
-			if grabbed {
-				position := vmath.Vector2{xpos, ypos}
-				window.SetTranslation(position.Subtract(grabOffset).ToVector3())
-			}
-		})
-
+		ui.ClickAndDragWindow(window, tab.Hitbox, customController)
 	})
 }

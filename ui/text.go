@@ -24,7 +24,9 @@ type TextElement struct {
 	textColor     color.Color
 	textSize      float64
 	textFont      *truetype.Font
+	size          vmath.Vector2
 	active        bool
+	dirty         bool
 }
 
 func LoadFont(fontfile string) (*truetype.Font, error) {
@@ -91,15 +93,23 @@ func (te *TextElement) updateImage(size vmath.Vector2) {
 	}
 
 	te.img.SetImage(imaging.FlipV(rgba))
-	te.img.SetSize(float64(rgba.Bounds().Size().X), float64(rgba.Bounds().Size().Y))
+	te.img.SetWidth(float64(rgba.Bounds().Size().X))
+	te.img.SetHeight(float64(rgba.Bounds().Size().Y))
 }
 
 func (te *TextElement) SetText(text string) {
 	te.text = text
+	te.dirty = true
 }
 
-func (te *TextElement) SetSize(width, height float64) {
-	te.width, te.height = width, height
+func (te *TextElement) SetWidth(width float64) {
+	te.width = width
+	te.dirty = true
+}
+
+func (te *TextElement) SetHeight(height float64) {
+	te.height = height
+	te.dirty = true
 }
 
 func (te *TextElement) Activate() {
@@ -119,7 +129,15 @@ func (te *TextElement) Render(size, offset vmath.Vector2) vmath.Vector2 {
 	if te.height > 0 {
 		useHeight = te.height
 	}
-	te.updateImage(vmath.Vector2{useWidth, useHeight})
+	useSize := vmath.Vector2{useWidth, useHeight}
+	if !useSize.ApproxEqual(te.size, 0.001) {
+		te.dirty = true
+	}
+	te.size = useSize
+	if te.dirty {
+		te.dirty = false
+		te.updateImage(useSize)
+	}
 	return te.img.Render(size, offset)
 }
 
@@ -136,7 +154,7 @@ func (te *TextElement) mouseClick(button int, release bool, position vmath.Vecto
 }
 
 func (te *TextElement) keyClick(key string, release bool) {
-	if !release {
+	if te.active && !release {
 		textBytes := []byte(te.text)
 		if key == "backspace" {
 			if len(textBytes) > 0 {
@@ -155,6 +173,7 @@ func NewTextElement(text string, textColor color.Color, textSize float64, textFo
 		textColor: textColor,
 		textSize:  textSize,
 		textFont:  textFont,
+		dirty:     true,
 	}
 	return textElem
 }

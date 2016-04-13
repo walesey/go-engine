@@ -38,8 +38,12 @@ func (ie *ImageElement) Spatial() renderer.Spatial {
 	return ie.node
 }
 
-func (ie *ImageElement) SetSize(width, height float64) {
-	ie.width, ie.height = width, height
+func (ie *ImageElement) SetWidth(width float64) {
+	ie.width = width
+}
+
+func (ie *ImageElement) SetHeight(height float64) {
+	ie.height = height
 }
 
 func (ie *ImageElement) SetRotation(rotation float64) {

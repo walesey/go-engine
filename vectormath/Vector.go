@@ -66,6 +66,10 @@ func (v Vector2) DivideScalar(scalar float64) Vector2 {
 	}
 }
 
+func (v Vector2) ApproxEqual(other Vector2, epsilon float64) bool {
+	return ApproxEqual(v.X, other.X, epsilon) && ApproxEqual(v.Y, other.Y, epsilon)
+}
+
 func (v Vector3) ToVector2() Vector2 {
 	return Vector2{v.X, v.Y}
 }

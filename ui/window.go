@@ -60,14 +60,16 @@ func (w *Window) SetElement(element Element) {
 }
 
 func (w *Window) Render() {
-	size := w.element.Render(w.size, vmath.Vector2{0, 0})
-	if size.X > w.size.X {
-		w.size.X = size.X
+	if w.element != nil {
+		size := w.element.Render(w.size, vmath.Vector2{0, 0})
+		if size.X > w.size.X {
+			w.size.X = size.X
+		}
+		if size.Y > w.size.Y {
+			w.size.Y = size.Y
+		}
+		w.background.SetScale(w.size.ToVector3())
 	}
-	if size.Y > w.size.Y {
-		w.size.Y = size.Y
-	}
-	w.background.SetScale(w.size.ToVector3())
 }
 
 func (w *Window) mouseMove(position vmath.Vector2) {
@@ -106,6 +108,6 @@ func NewWindow() *Window {
 		backgroundBox: box,
 		background:    background,
 		elementNode:   elementNode,
-		size:          vmath.Vector2{1, 1},
+		size:          vmath.Vector2{500, 1},
 	}
 }

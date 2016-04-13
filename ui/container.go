@@ -70,8 +70,12 @@ func (c *Container) Spatial() renderer.Spatial {
 	return c.node
 }
 
-func (c *Container) SetSize(width, height float64) {
-	c.width, c.height = width, height
+func (c *Container) SetWidth(width float64) {
+	c.width = width
+}
+
+func (c *Container) SetHeight(height float64) {
+	c.height = height
 }
 
 func (c *Container) SetMargin(margin Margin) {
@@ -102,6 +106,17 @@ func (c *Container) RemoveChildren(children ...Element) {
 			}
 		}
 	}
+}
+
+func (c *Container) GetChild(index int) Element {
+	if index >= c.GetNbChildren() {
+		return nil
+	}
+	return c.children[index]
+}
+
+func (c *Container) GetNbChildren() int {
+	return len(c.children)
 }
 
 func (c *Container) mouseMove(position vmath.Vector2) {
