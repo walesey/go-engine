@@ -9,9 +9,10 @@ import (
 // It sets up a basic render / Update loop and provides a nice interface for writing games.
 type Engine interface {
 	Start(Init func())
-	AddOrtho(spatials ...renderer.Spatial)
-	AddSpatial(spatial ...renderer.Spatial)
-	RemoveSpatial(spatial ...renderer.Spatial)
+	AddOrtho(spatial renderer.Spatial)
+	AddSpatial(spatial renderer.Spatial)
+	RemoveSpatial(spatial renderer.Spatial, destroy bool)
+	RemoveOrtho(spatial renderer.Spatial, destroy bool)
 	AddUpdatable(updatables ...Updatable)
 	RemoveUpdatable(updatables ...Updatable)
 	Sky(material *renderer.Material, size float64)
@@ -46,22 +47,20 @@ func (engine *EngineImpl) Render() {
 	engine.orthoNode.Draw(engine.renderer)
 }
 
-func (engine *EngineImpl) AddOrtho(spatials ...renderer.Spatial) {
-	for _, s := range spatials {
-		engine.orthoNode.Add(s)
-	}
+func (engine *EngineImpl) AddOrtho(spatial renderer.Spatial) {
+	engine.orthoNode.Add(spatial)
 }
 
-func (engine *EngineImpl) AddSpatial(spatials ...renderer.Spatial) {
-	for _, s := range spatials {
-		engine.sceneGraph.Add(s)
-	}
+func (engine *EngineImpl) RemoveOrtho(spatial renderer.Spatial, destroy bool) {
+	engine.orthoNode.Remove(spatial, destroy)
 }
 
-func (engine *EngineImpl) RemoveSpatial(spatials ...renderer.Spatial) {
-	for _, s := range spatials {
-		engine.sceneGraph.Remove(s)
-	}
+func (engine *EngineImpl) AddSpatial(spatial renderer.Spatial) {
+	engine.sceneGraph.Add(spatial)
+}
+
+func (engine *EngineImpl) RemoveSpatial(spatial renderer.Spatial, destroy bool) {
+	engine.sceneGraph.Remove(spatial, destroy)
 }
 
 func (engine *EngineImpl) AddUpdatable(updatables ...Updatable) {

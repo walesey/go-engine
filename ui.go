@@ -18,7 +18,7 @@ func init() {
 }
 
 func main() {
-	glRenderer := renderer.NewOpenglRenderer("GoEngine", 1900, 1000)
+	glRenderer := &renderer.OpenglRenderer{WindowTitle: "GoEngine"}
 	gameEngine := engine.NewEngine(glRenderer)
 
 	assetLib, err := assets.LoadAssetLibrary("TestAssets/ui.asset")

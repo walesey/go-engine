@@ -25,6 +25,7 @@ func BulletDemo(c *cli.Context) {
 		WindowTitle:  "GoEngine",
 		WindowWidth:  2400,
 		WindowHeight: 1300,
+		FullScreen:   true,
 	}
 	gameEngine := engine.NewEngine(glRenderer)
 

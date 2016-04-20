@@ -44,6 +44,7 @@ func (glRenderer *OpenglRenderer) initPostEffects() {
 }
 
 func (glRenderer *OpenglRenderer) CreatePostEffect(shader Shader) {
+
 	//Create program
 	shaderName := shader.Name
 	program := programFromFile(shaderName+".vert", shaderName+".frag")

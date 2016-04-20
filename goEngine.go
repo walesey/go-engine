@@ -6,6 +6,7 @@ import (
 	"runtime"
 
 	"github.com/walesey/go-engine/assets"
+	"github.com/walesey/go-engine/editor"
 	"github.com/walesey/go-engine/examples"
 
 	"github.com/codegangsta/cli"
@@ -21,9 +22,15 @@ func init() {
 func main() {
 	app := cli.NewApp()
 	app.Name = "goEngine"
-	app.Usage = ""
+	app.Usage = "This is a basic cli for goEngine"
 	app.EnableBashCompletion = true
 	app.Commands = []cli.Command{
+
+		{
+			Name:   "editor",
+			Usage:  "Starts up the asset editor",
+			Action: startEditor,
+		},
 		{
 			Name:   "material",
 			Usage:  "Import material from file and save to a .asset file",
@@ -74,6 +81,11 @@ func main() {
 	}
 
 	app.Run(os.Args)
+}
+
+//CLI start the editor
+func startEditor(c *cli.Context) {
+	editor.New().Start()
 }
 
 //CLI remove asset from file

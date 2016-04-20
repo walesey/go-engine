@@ -18,15 +18,18 @@ import (
 )
 
 type TextElement struct {
-	img           *ImageElement
-	width, height float64
-	text          string
-	textColor     color.Color
-	textSize      float64
-	textFont      *truetype.Font
-	size          vmath.Vector2
-	active        bool
-	dirty         bool
+	img                *ImageElement
+	width, height      float64
+	text               string
+	textColor          color.Color
+	textSize           float64
+	textFont           *truetype.Font
+	size               vmath.Vector2
+	active             bool
+	dirty              bool
+	onFocusHandlers    []func()
+	onBlurHandlers     []func()
+	onKeyPressHandlers []func(key string, release bool)
 }
 
 func LoadFont(fontfile string) (*truetype.Font, error) {
@@ -97,6 +100,10 @@ func (te *TextElement) updateImage(size vmath.Vector2) {
 	te.img.SetHeight(float64(rgba.Bounds().Size().Y))
 }
 
+func (te *TextElement) GetText() string {
+	return te.text
+}
+
 func (te *TextElement) SetText(text string) {
 	te.text = text
 	te.dirty = true
@@ -113,10 +120,20 @@ func (te *TextElement) SetHeight(height float64) {
 }
 
 func (te *TextElement) Activate() {
+	if !te.active {
+		for _, handler := range te.onFocusHandlers {
+			handler()
+		}
+	}
 	te.active = true
 }
 
 func (te *TextElement) Deactivate() {
+	if te.active {
+		for _, handler := range te.onBlurHandlers {
+			handler()
+		}
+	}
 	te.active = false
 }
 
@@ -163,7 +180,22 @@ func (te *TextElement) keyClick(key string, release bool) {
 		} else {
 			te.SetText(fmt.Sprintf("%v%v", te.text, key))
 		}
+		for _, handler := range te.onKeyPressHandlers {
+			handler(key, release)
+		}
 	}
+}
+
+func (te *TextElement) AddOnFocus(handler func()) {
+	te.onFocusHandlers = append(te.onFocusHandlers, handler)
+}
+
+func (te *TextElement) AddOnBlur(handler func()) {
+	te.onBlurHandlers = append(te.onBlurHandlers, handler)
+}
+
+func (te *TextElement) AddOnKeyPress(handler func(key string, release bool)) {
+	te.onKeyPressHandlers = append(te.onKeyPressHandlers, handler)
 }
 
 func NewTextElement(text string, textColor color.Color, textSize float64, textFont *truetype.Font) *TextElement {

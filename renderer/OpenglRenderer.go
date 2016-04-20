@@ -64,6 +64,7 @@ func MultiplyAll(s util.Stack) mgl32.Mat4 {
 type OpenglRenderer struct {
 	onInit, onUpdate, onRender func()
 	WindowWidth, WindowHeight  int
+	FullScreen                 bool
 	WindowTitle                string
 	Window                     *glfw.Window
 	matStack                   util.Stack
@@ -81,11 +82,12 @@ type OpenglRenderer struct {
 	postEffects                []postEffect
 }
 
-func NewOpenglRenderer(WindowTitle string, WindowWidth, WindowHeight int) *OpenglRenderer {
+func NewOpenglRenderer(WindowTitle string, WindowWidth, WindowHeight int, FullScreen bool) *OpenglRenderer {
 	return &OpenglRenderer{
 		WindowTitle:  WindowTitle,
 		WindowWidth:  WindowWidth,
 		WindowHeight: WindowHeight,
+		FullScreen:   FullScreen,
 	}
 }
 
@@ -112,7 +114,19 @@ func (glRenderer *OpenglRenderer) Start() {
 	glfw.WindowHint(glfw.ContextVersionMinor, 1)
 	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
 	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
-	window, err := glfw.CreateWindow(glRenderer.WindowWidth, glRenderer.WindowHeight, glRenderer.WindowTitle, nil, nil)
+
+	if glRenderer.FullScreen || glRenderer.WindowWidth == 0 {
+		glRenderer.WindowWidth = glfw.GetPrimaryMonitor().GetVideoMode().Width
+	}
+	if glRenderer.FullScreen || glRenderer.WindowHeight == 0 {
+		glRenderer.WindowHeight = glfw.GetPrimaryMonitor().GetVideoMode().Height
+	}
+
+	var monitor *glfw.Monitor
+	if glRenderer.FullScreen {
+		monitor = glfw.GetPrimaryMonitor()
+	}
+	window, err := glfw.CreateWindow(glRenderer.WindowWidth, glRenderer.WindowHeight, glRenderer.WindowTitle, monitor, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -184,36 +198,40 @@ func (glRenderer *OpenglRenderer) Start() {
 
 	glRenderer.onInit()
 
+	window.SetRefreshCallback(func(w *glfw.Window) {
+		glRenderer.mainLoop()
+		window.SwapBuffers()
+	})
+
 	//Main loop
 	for !window.ShouldClose() {
-
-		glRenderer.onUpdate()
-		gl.UseProgram(program)
-		if len(glRenderer.postEffects) == 0 {
-			gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-			glRenderer.onRender()
-		} else {
-
-			//Render to the first post effect buffer
-			gl.BindFramebuffer(gl.FRAMEBUFFER, glRenderer.postEffects[0].fboId)
-			gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-			glRenderer.onRender()
-			//Render Post effects
-			for i := 0; i < len(glRenderer.postEffects)-1; i = i + 1 {
-				gl.BindFramebuffer(gl.FRAMEBUFFER, glRenderer.postEffects[i+1].fboId)
-				gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-				glRenderer.renderPostEffect(glRenderer.postEffects[i])
-			}
-			//Render final post effect to the frame buffer
-			gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
-			gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-			glRenderer.renderPostEffect(glRenderer.postEffects[len(glRenderer.postEffects)-1])
-		}
-		gl.UseProgram(program)
-
-		// Maintenance
+		glRenderer.mainLoop()
 		window.SwapBuffers()
 		glfw.PollEvents()
+	}
+}
+
+func (glRenderer *OpenglRenderer) mainLoop() {
+	glRenderer.onUpdate()
+	if len(glRenderer.postEffects) == 0 {
+		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+		glRenderer.onRender()
+	} else {
+
+		//Render to the first post effect buffer
+		gl.BindFramebuffer(gl.FRAMEBUFFER, glRenderer.postEffects[0].fboId)
+		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+		glRenderer.onRender()
+		//Render Post effects
+		for i := 0; i < len(glRenderer.postEffects)-1; i = i + 1 {
+			gl.BindFramebuffer(gl.FRAMEBUFFER, glRenderer.postEffects[i+1].fboId)
+			gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+			glRenderer.renderPostEffect(glRenderer.postEffects[i])
+		}
+		//Render final post effect to the frame buffer
+		gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+		glRenderer.renderPostEffect(glRenderer.postEffects[len(glRenderer.postEffects)-1])
 	}
 }
 

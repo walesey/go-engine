@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"runtime"
 
@@ -18,7 +19,7 @@ func init() {
 }
 
 func main() {
-	glRenderer := renderer.NewOpenglRenderer("GoEngine", 1900, 1000)
+	glRenderer := &renderer.OpenglRenderer{WindowTitle: "GoEngine"}
 	gameEngine := engine.NewEngine(glRenderer)
 
 	// assetLib, err := assets.LoadAssetLibrary("TestAssets/ui.asset")
@@ -51,6 +52,37 @@ func main() {
 		container, ok := element.(*ui.Container)
 		if ok {
 			container.SetMargin(ui.NewMargin(0))
+		}
+	})
+
+	htmlAssets.AddCallback("keypressTF", func(element ui.Element, args ...interface{}) {
+		container, ok := element.(*ui.Container)
+		if ok {
+			child := container.GetChild(0)
+			text, ok := child.(*ui.TextElement)
+			if ok {
+				fmt.Println("keypressTF", text.GetText())
+			}
+		}
+	})
+	htmlAssets.AddCallback("blurTF", func(element ui.Element, args ...interface{}) {
+		container, ok := element.(*ui.Container)
+		if ok {
+			child := container.GetChild(0)
+			text, ok := child.(*ui.TextElement)
+			if ok {
+				fmt.Println("blurTF", text.GetText())
+			}
+		}
+	})
+	htmlAssets.AddCallback("focusTF", func(element ui.Element, args ...interface{}) {
+		container, ok := element.(*ui.Container)
+		if ok {
+			child := container.GetChild(0)
+			text, ok := child.(*ui.TextElement)
+			if ok {
+				fmt.Println("focusTF", text.GetText())
+			}
 		}
 	})
 

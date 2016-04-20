@@ -45,31 +45,64 @@ func renderNode(container *Container, node *html.Node, styles *css.Stylesheet, a
 	nextNode := node
 	for nextNode != nil {
 		if nextNode.Type == 1 {
+			// create a text node
 			text := nextNode.Data
 			text = strings.TrimSpace(text)
 			if len(text) > 0 {
-				textElement := NewTextElement(text, color.Black, 32, assets.fontMap["default"])
+				textElement := createText(text, node, styles, assets)
 				container.AddChildren(textElement)
 			}
 		} else {
+			// Create a container
 			newContainer := NewContainer()
 			container.AddChildren(newContainer)
+
 			//Parse Styles
 			normalStyles := getStyles(styles, nextNode, "")
 			applyStyles(newContainer, normalStyles)
 			hoverStyles := getStyles(styles, nextNode, ":hover")
+			activeStyles := getStyles(styles, nextNode, ":active")
+			hover := false
+			active := false
+			updateState := func() {
+				applyDefaultStyles(newContainer)
+				applyStyles(newContainer, normalStyles)
+				if hover {
+					applyStyles(newContainer, hoverStyles)
+				}
+				if active {
+					applyStyles(newContainer, activeStyles)
+				}
+			}
 			if len(hoverStyles) > 0 {
 				newContainer.Hitbox.AddOnHover(func() {
-					applyDefaultStyles(newContainer)
-					applyStyles(newContainer, normalStyles)
-					applyStyles(newContainer, hoverStyles)
+					hover = true
+					updateState()
 				})
 				newContainer.Hitbox.AddOnUnHover(func() {
-					applyDefaultStyles(newContainer)
-					applyStyles(newContainer, normalStyles)
+					hover = false
+					updateState()
 				})
 			}
-			//Parse Attributes
+			if len(activeStyles) > 0 {
+				newContainer.Hitbox.AddOnClick(func(button int, release bool, position vmath.Vector2) {
+					active = !release
+					updateState()
+				})
+			}
+
+			//tag type
+			var textField *TextElement
+			if nextNode.DataAtom.String() == "input" {
+				inputType := getAttribute(nextNode, "type")
+				switch {
+				case inputType == "text":
+					textField := createText("", nextNode, styles, assets)
+					newContainer.AddChildren(textField)
+				}
+			}
+
+			//Parse html Props
 			for _, attr := range nextNode.Attr {
 				switch {
 				case attr.Key == "onclick":
@@ -86,23 +119,30 @@ func renderNode(container *Container, node *html.Node, styles *css.Stylesheet, a
 							callback(newContainer)
 						})
 					}
-				case attr.Key == "onunhover":
+				case attr.Key == "onfocus":
 					callback, ok := assets.callbackMap[attr.Val]
-					if ok {
-						newContainer.Hitbox.AddOnUnHover(func() {
+					if ok && textField != nil {
+						textField.AddOnFocus(func() {
 							callback(newContainer)
+						})
+					}
+				case attr.Key == "onblur":
+					callback, ok := assets.callbackMap[attr.Val]
+					if ok && textField != nil {
+						textField.AddOnBlur(func() {
+							callback(newContainer)
+						})
+					}
+				case attr.Key == "onkeypress":
+					callback, ok := assets.callbackMap[attr.Val]
+					if ok && textField != nil {
+						textField.AddOnKeyPress(func(key string, release bool) {
+							callback(newContainer, key, release)
 						})
 					}
 				}
 			}
-			//tag type
-			if nextNode.DataAtom.String() == "input" {
-				inputType := getAttribute(nextNode, "type")
-				switch {
-				case inputType == "text":
-					newContainer.AddChildren(NewTextElement("", color.Black, 32, assets.fontMap["default"]))
-				}
-			}
+
 			renderNode(newContainer, nextNode.FirstChild, styles, assets)
 		}
 		if nextNode == nextNode.NextSibling {
@@ -151,10 +191,34 @@ func applyStyles(container *Container, styles map[string]string) {
 			if len(height) == 1 {
 				container.SetHeight(height[0])
 			}
-		default:
-			fmt.Printf("Unsupported css prop: %v: %v;\n", prop, value)
 		}
 	}
+}
+
+func createText(text string, node *html.Node, styles *css.Stylesheet, assets HtmlAssets) *TextElement {
+	var fontColor color.Color = color.Black
+	var fontSize float64 = 16
+	fontFamily := assets.fontMap["default"]
+	textStyles := getStyles(styles, node, "")
+	fmt.Println(textStyles)
+	for prop, value := range textStyles {
+		switch {
+		case prop == "font-color":
+			c := parseColor(value)
+			fontColor = color.RGBA{c[0], c[1], c[2], c[3]}
+		case prop == "font-size":
+			size := parseDimensions(value)
+			if len(size) == 1 {
+				fontSize = size[0]
+			}
+		case prop == "font-family":
+			fontStyle, ok := assets.fontMap[value]
+			if ok {
+				fontFamily = fontStyle
+			}
+		}
+	}
+	return NewTextElement(text, fontColor, fontSize, fontFamily)
 }
 
 func parseDimensions(dimensionsStr string) []float64 {
@@ -205,14 +269,23 @@ func parseColor(colorStr string) [4]uint8 {
 }
 
 func getStyles(styles *css.Stylesheet, node *html.Node, modifier string) map[string]string {
-	id := getAttribute(node, "id")
-	class := getAttribute(node, "class")
-	tag := node.DataAtom.String()
+	hierarchy := []*html.Node{node}
+	parent := node.Parent
+	for parent != nil {
+		hierarchy = append(hierarchy, parent)
+		parent = parent.Parent
+	}
+
 	rules := make(map[string]string)
-	getStyleBySelector(styles, rules, fmt.Sprintf("#%v%v", id, modifier))
-	getStyleBySelector(styles, rules, fmt.Sprintf(".%v%v", class, modifier))
-	getStyleBySelector(styles, rules, fmt.Sprintf("%v%v", tag, modifier))
-	// TODO: get syles from node.Parent
+	for _, nextNode := range hierarchy {
+		id := getAttribute(nextNode, "id")
+		class := getAttribute(nextNode, "class")
+		tag := nextNode.DataAtom.String()
+		getStyleBySelector(styles, rules, fmt.Sprintf("#%v%v", id, modifier))
+		getStyleBySelector(styles, rules, fmt.Sprintf(".%v%v", class, modifier))
+		getStyleBySelector(styles, rules, fmt.Sprintf("%v%v", tag, modifier))
+	}
+
 	return rules
 }
 
