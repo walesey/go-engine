@@ -1,8 +1,6 @@
 package examples
 
 import (
-	"log"
-
 	"github.com/luxengine/gobullet"
 	"github.com/walesey/go-engine/actor"
 	"github.com/walesey/go-engine/assets"
@@ -37,17 +35,8 @@ func BulletDemo(c *cli.Context) {
 	physicsWorld.SetGravity(vmath.Vector3{0, -10, 0})
 	gameEngine.AddUpdatable(physicsWorld)
 
-	// assets
-	assetLib, err := assets.LoadAssetLibrary("TestAssets/physics.asset")
-	if err != nil {
-		panic(err)
-	}
-
 	//geometry for physics objects
-	geomMonkey := assetLib.GetGeometry("monkey")
-	monkeyMat := assetLib.GetMaterial("monkeyMat")
-	geomMonkey.Material = monkeyMat
-
+	geomMonkey := assets.ImportObj("TestAssets/Files/physicsMonkey/phyMonkey.obj")
 	monkeyCollision := assets.CollisionShapeFromGeometry(geomMonkey, 0.3)
 
 	spawn := func() physicsAPI.PhysicsObject {
@@ -74,13 +63,8 @@ func BulletDemo(c *cli.Context) {
 		}
 	}
 
-	terrain := assetLib.GetGeometry("terrain")
-	terrainMat := assetLib.GetMaterial("terrainMat")
-	terrain.Material = terrainMat
-	terrainCollision := assets.TriangleMeshShapeFromGeometry(assetLib.GetGeometry("terrain_lowpoli"))
-	if err != nil {
-		log.Printf("Error loading collision shape: %v\n", err)
-	}
+	terrain := assets.ImportObj("TestAssets/Files/terrain/2/terrain2.obj")
+	terrainCollision := assets.TriangleMeshShapeFromGeometry(terrain)
 
 	terrainNode := renderer.CreateNode()
 	terrainNode.Add(terrain)
@@ -96,7 +80,7 @@ func BulletDemo(c *cli.Context) {
 		glRenderer.CreateLight(0.0, 0.0, 0.0, 0.5, 0.5, 0.5, 0.7, 0.7, 0.7, true, vmath.Vector3{0.3, -1, 0.2}, 0)
 
 		//Sky
-		gameEngine.Sky(assetLib.GetMaterial("skyboxMat"), 999999)
+		gameEngine.Sky(assets.CreateMaterial(assets.ImportImage("TestAssets/Files/skybox/cubemap.png"), nil, nil, nil), 999999)
 
 		//input/controller manager
 		controllerManager := controller.NewControllerManager(glRenderer.Window)

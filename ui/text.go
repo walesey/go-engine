@@ -5,7 +5,6 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
-	"io/ioutil"
 	"log"
 	"strings"
 
@@ -30,20 +29,6 @@ type TextElement struct {
 	onFocusHandlers    []func()
 	onBlurHandlers     []func()
 	onKeyPressHandlers []func(key string, release bool)
-}
-
-func LoadFont(fontfile string) (*truetype.Font, error) {
-	fontBytes, err := ioutil.ReadFile(fontfile)
-	if err != nil {
-		log.Printf("Error Reading from font file: %v\n", err)
-		return nil, err
-	}
-	f, err := truetype.Parse(fontBytes)
-	if err != nil {
-		log.Printf("Error Parsing font file: %v\n", err)
-		return nil, err
-	}
-	return f, nil
 }
 
 func (te *TextElement) updateImage(size vmath.Vector2) {

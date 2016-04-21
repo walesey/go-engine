@@ -22,12 +22,6 @@ func main() {
 	glRenderer := &renderer.OpenglRenderer{WindowTitle: "GoEngine"}
 	gameEngine := engine.NewEngine(glRenderer)
 
-	// assetLib, err := assets.LoadAssetLibrary("TestAssets/ui.asset")
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// alienwareImg := assetLib.GetImage("alienware")
-
 	audiowideFont, _ := ui.LoadFont("TestAssets/Audiowide-Regular.ttf")
 	htmlAssets := ui.NewHtmlAssets()
 	htmlAssets.AddFont("default", audiowideFont)

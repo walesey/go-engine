@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/go-gl/glfw/v3.1/glfw"
+	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/engine"
 	"github.com/walesey/go-engine/ui"
 	vmath "github.com/walesey/go-engine/vectormath"
@@ -12,7 +13,7 @@ import (
 
 func (e *Editor) setupUI() {
 	e.uiAssets = ui.NewHtmlAssets()
-	audiowideFont, err := ui.LoadFont("TestAssets/Audiowide-Regular.ttf")
+	audiowideFont, err := assets.LoadFont("TestAssets/Audiowide-Regular.ttf")
 	if err != nil {
 		log.Printf("Error loading ui font: %v", err)
 	}

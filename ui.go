@@ -21,12 +21,8 @@ func main() {
 	glRenderer := &renderer.OpenglRenderer{WindowTitle: "GoEngine"}
 	gameEngine := engine.NewEngine(glRenderer)
 
-	assetLib, err := assets.LoadAssetLibrary("TestAssets/ui.asset")
-	if err != nil {
-		panic(err)
-	}
-	alienwareImg := assetLib.GetImage("alienware")
-	textFont, _ := ui.LoadFont("TestAssets/Audiowide-Regular.ttf")
+	alienwareImg := assets.ImportImage("TestAssets/test.png")
+	textFont, _ := assets.LoadFont("TestAssets/Audiowide-Regular.ttf")
 
 	gameEngine.Start(func() {
 
