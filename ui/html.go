@@ -58,10 +58,10 @@ func renderNode(container *Container, node *html.Node, styles *css.Stylesheet, a
 			container.AddChildren(newContainer)
 
 			//Parse Styles
-			normalStyles := getStyles(styles, nextNode, "")
+			normalStyles := getStyles(styles, nextNode, "", true)
 			applyStyles(newContainer, normalStyles)
-			hoverStyles := getStyles(styles, nextNode, ":hover")
-			activeStyles := getStyles(styles, nextNode, ":active")
+			hoverStyles := getStyles(styles, nextNode, ":hover", false)
+			activeStyles := getStyles(styles, nextNode, ":active", false)
 			hover := false
 			active := false
 			updateState := func() {
@@ -199,7 +199,7 @@ func createText(text string, node *html.Node, styles *css.Stylesheet, assets Htm
 	var fontColor color.Color = color.Black
 	var fontSize float64 = 16
 	fontFamily := assets.fontMap["default"]
-	textStyles := getStyles(styles, node, "")
+	textStyles := getStyles(styles, node, "", true)
 	fmt.Println(textStyles)
 	for prop, value := range textStyles {
 		switch {
@@ -268,10 +268,10 @@ func parseColor(colorStr string) [4]uint8 {
 	return result
 }
 
-func getStyles(styles *css.Stylesheet, node *html.Node, modifier string) map[string]string {
+func getStyles(styles *css.Stylesheet, node *html.Node, modifier string, inherit bool) map[string]string {
 	hierarchy := []*html.Node{node}
 	parent := node.Parent
-	for parent != nil {
+	for inherit && parent != nil {
 		hierarchy = append(hierarchy, parent)
 		parent = parent.Parent
 	}

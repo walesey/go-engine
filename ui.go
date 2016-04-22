@@ -22,7 +22,7 @@ func main() {
 	gameEngine := engine.NewEngine(glRenderer)
 
 	alienwareImg := assets.ImportImage("TestAssets/test.png")
-	textFont, _ := assets.LoadFont("TestAssets/Audiowide-Regular.ttf")
+	textFont, _ := ui.LoadFontFromFile("TestAssets/Audiowide-Regular.ttf")
 
 	gameEngine.Start(func() {
 

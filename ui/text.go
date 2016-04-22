@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
+	"io/ioutil"
 	"log"
 	"strings"
 
@@ -15,6 +16,24 @@ import (
 	vmath "github.com/walesey/go-engine/vectormath"
 	"golang.org/x/image/font"
 )
+
+func LoadFontFromFile(fontfile string) (*truetype.Font, error) {
+	fontBytes, err := ioutil.ReadFile(fontfile)
+	if err != nil {
+		log.Printf("Error Reading from font file: %v\n", err)
+		return nil, err
+	}
+	return LoadFont(fontBytes)
+}
+
+func LoadFont(fontData []byte) (*truetype.Font, error) {
+	f, err := truetype.Parse(fontData)
+	if err != nil {
+		log.Printf("Error Parsing font file: %v\n", err)
+		return nil, err
+	}
+	return f, nil
+}
 
 type TextElement struct {
 	img                *ImageElement

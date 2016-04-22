@@ -22,9 +22,7 @@ func main() {
 	glRenderer := &renderer.OpenglRenderer{WindowTitle: "GoEngine"}
 	gameEngine := engine.NewEngine(glRenderer)
 
-	audiowideFont, _ := ui.LoadFont("TestAssets/Audiowide-Regular.ttf")
 	htmlAssets := ui.NewHtmlAssets()
-	htmlAssets.AddFont("default", audiowideFont)
 
 	htmlAssets.AddCallback("activateTextField", func(element ui.Element, args ...interface{}) {
 		container, ok := element.(*ui.Container)

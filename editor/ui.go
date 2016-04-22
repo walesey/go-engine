@@ -1,11 +1,9 @@
 package editor
 
 import (
-	"log"
 	"strings"
 
 	"github.com/go-gl/glfw/v3.1/glfw"
-	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/engine"
 	"github.com/walesey/go-engine/ui"
 	vmath "github.com/walesey/go-engine/vectormath"
@@ -13,11 +11,6 @@ import (
 
 func (e *Editor) setupUI() {
 	e.uiAssets = ui.NewHtmlAssets()
-	audiowideFont, err := assets.LoadFont("TestAssets/Audiowide-Regular.ttf")
-	if err != nil {
-		log.Printf("Error loading ui font: %v", err)
-	}
-	e.uiAssets.AddFont("default", audiowideFont)
 
 	e.customController.BindAction(func() {
 		if e.mainMenuOpen {

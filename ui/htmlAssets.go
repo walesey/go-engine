@@ -25,9 +25,14 @@ func (assets HtmlAssets) AddImage(key string, img image.Image) {
 }
 
 func NewHtmlAssets() HtmlAssets {
-	return HtmlAssets{
+	assets := HtmlAssets{
 		fontMap:     make(map[string]*truetype.Font),
 		callbackMap: make(map[string]func(element Element, args ...interface{})),
 		imageMap:    make(map[string]image.Image),
 	}
+	defaultFont, err := LoadFont(getDefaultFont())
+	if err == nil {
+		assets.AddFont("default", defaultFont)
+	}
+	return assets
 }
