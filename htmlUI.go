@@ -95,19 +95,23 @@ func main() {
 		container := ui.NewContainer()
 		mainContainer.AddChildren(tab, container)
 
-		css, err := os.Open("TestAssets/test.css")
-		if err != nil {
-			panic(err)
-		}
-		defer css.Close()
+		loadPage := func() {
+			container.RemoveAllChildren()
+			css, err := os.Open("TestAssets/test.css")
+			if err != nil {
+				panic(err)
+			}
+			defer css.Close()
 
-		html, err := os.Open("TestAssets/test.html")
-		if err != nil {
-			panic(err)
-		}
-		defer html.Close()
+			html, err := os.Open("TestAssets/test.html")
+			if err != nil {
+				panic(err)
+			}
+			defer html.Close()
 
-		ui.LoadPage(container, html, css, htmlAssets)
+			ui.LoadPage(container, html, css, htmlAssets)
+		}
+		loadPage()
 
 		gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
 			window.Render()
@@ -123,6 +127,19 @@ func main() {
 		customController := controller.NewActionMap()
 		controllerManager.AddController(customController)
 		ui.ClickAndDragWindow(window, tab.Hitbox, customController)
+
+		timer := 0.0
+		gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
+			timer += dt
+			if timer > 3 {
+				timer = 0.0
+				loadPage()
+			}
+		}))
+
+		customController.BindAction(func() {
+			loadPage()
+		}, glfw.KeyR, glfw.Press)
 
 		customController.BindMouseAction(func() {
 			deactivateAllTextElements(mainContainer)

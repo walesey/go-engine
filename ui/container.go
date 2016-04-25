@@ -12,15 +12,17 @@ type Margin struct {
 }
 
 type Container struct {
-	Hitbox          Hitbox
-	width, height   float64
-	margin, padding Margin
-	node            *renderer.Node
-	elementsNode    *renderer.Node
-	background      *renderer.Node
-	backgroundBox   *renderer.Geometry
-	size, offset    vmath.Vector2
-	children        []Element
+	Hitbox           Hitbox
+	width, height    float64
+	margin, padding  Margin
+	node             *renderer.Node
+	elementsNode     *renderer.Node
+	background       *renderer.Node
+	backgroundBox    *renderer.Geometry
+	size, offset     vmath.Vector2
+	backgroundOffset vmath.Vector2
+	elementsOffset   vmath.Vector2
+	children         []Element
 }
 
 func (c *Container) Render(size, offset vmath.Vector2) vmath.Vector2 {
@@ -30,10 +32,10 @@ func (c *Container) Render(size, offset vmath.Vector2) vmath.Vector2 {
 	})
 	containerSize := &sizeMinusMargins
 	if c.width > 0 {
-		containerSize.X = c.width
+		containerSize.X = c.width - c.padding.Left - c.padding.Right
 	}
 	if c.height > 0 {
-		containerSize.Y = c.height
+		containerSize.Y = c.height - c.padding.Top - c.padding.Bottom
 	}
 	var width, height, highest float64 = 0, 0, 0
 	for _, child := range c.children {
@@ -54,14 +56,16 @@ func (c *Container) Render(size, offset vmath.Vector2) vmath.Vector2 {
 		containerSize.Y = height
 	}
 	//offsets and sizes
-	c.offset = offset.Add(vmath.Vector2{c.margin.Left, c.margin.Top})
-	elementsOffset := vmath.Vector2{c.padding.Left, c.padding.Top}
+	c.offset = offset
+	c.backgroundOffset = vmath.Vector2{c.margin.Left, c.margin.Top}
+	c.elementsOffset = vmath.Vector2{c.margin.Left + c.padding.Left, c.margin.Top + c.padding.Top}
 	backgroundSize := containerSize.Add(vmath.Vector2{c.padding.Left + c.padding.Right, c.padding.Top + c.padding.Bottom})
 	totalSize := backgroundSize.Add(vmath.Vector2{c.margin.Left + c.margin.Right, c.margin.Top + c.margin.Bottom})
 
 	c.background.SetScale(backgroundSize.ToVector3())
+	c.background.SetTranslation(c.backgroundOffset.ToVector3())
+	c.elementsNode.SetTranslation(c.elementsOffset.ToVector3())
 	c.node.SetTranslation(c.offset.ToVector3())
-	c.elementsNode.SetTranslation(elementsOffset.ToVector3())
 	c.Hitbox.SetSize(backgroundSize)
 	return totalSize
 }
@@ -108,6 +112,13 @@ func (c *Container) RemoveChildren(children ...Element) {
 	}
 }
 
+func (c *Container) RemoveAllChildren() {
+	for _, child := range c.children {
+		c.elementsNode.Remove(child.Spatial(), true)
+	}
+	c.children = c.children[:0]
+}
+
 func (c *Container) GetChild(index int) Element {
 	if index >= c.GetNbChildren() {
 		return nil
@@ -121,17 +132,17 @@ func (c *Container) GetNbChildren() int {
 
 func (c *Container) mouseMove(position vmath.Vector2) {
 	offsetPos := position.Subtract(c.offset)
-	c.Hitbox.MouseMove(offsetPos)
+	c.Hitbox.MouseMove(offsetPos.Subtract(c.backgroundOffset))
 	for _, child := range c.children {
-		child.mouseMove(offsetPos)
+		child.mouseMove(offsetPos.Subtract(c.elementsOffset))
 	}
 }
 
 func (c *Container) mouseClick(button int, release bool, position vmath.Vector2) {
 	offsetPos := position.Subtract(c.offset)
-	c.Hitbox.MouseClick(button, release, offsetPos)
+	c.Hitbox.MouseClick(button, release, offsetPos.Subtract(c.backgroundOffset))
 	for _, child := range c.children {
-		child.mouseClick(button, release, offsetPos)
+		child.mouseClick(button, release, offsetPos.Subtract(c.elementsOffset))
 	}
 }
 

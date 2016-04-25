@@ -17,6 +17,12 @@ import (
 	"golang.org/x/image/font"
 )
 
+const (
+	LEFT_ALIGN int = iota
+	CENTER_ALIGN
+	RIGHT_ALIGN
+)
+
 func LoadFontFromFile(fontfile string) (*truetype.Font, error) {
 	fontBytes, err := ioutil.ReadFile(fontfile)
 	if err != nil {
@@ -42,6 +48,7 @@ type TextElement struct {
 	textColor          color.Color
 	textSize           float64
 	textFont           *truetype.Font
+	textAlign          int
 	size               vmath.Vector2
 	active             bool
 	dirty              bool
@@ -159,7 +166,14 @@ func (te *TextElement) Render(size, offset vmath.Vector2) vmath.Vector2 {
 		te.dirty = false
 		te.updateImage(useSize)
 	}
-	return te.img.Render(size, offset)
+	renderSize := te.img.Render(size, offset)
+	if te.textAlign == CENTER_ALIGN {
+		te.img.Render(size, offset.Add(vmath.Vector2{(size.X - renderSize.X) * 0.5, 0}))
+	}
+	if te.textAlign == RIGHT_ALIGN {
+		te.img.Render(size, offset.Add(vmath.Vector2{size.X - renderSize.X, 0}))
+	}
+	return renderSize
 }
 
 func (te *TextElement) Spatial() renderer.Spatial {
@@ -188,6 +202,10 @@ func (te *TextElement) keyClick(key string, release bool) {
 			handler(key, release)
 		}
 	}
+}
+
+func (te *TextElement) SetAlign(align int) {
+	te.textAlign = align
 }
 
 func (te *TextElement) AddOnFocus(handler func()) {

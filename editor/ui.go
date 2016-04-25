@@ -1,6 +1,7 @@
 package editor
 
 import (
+	"os"
 	"strings"
 
 	"github.com/go-gl/glfw/v3.1/glfw"
@@ -10,7 +11,7 @@ import (
 )
 
 func (e *Editor) setupUI() {
-	e.uiAssets = ui.NewHtmlAssets()
+	e.openOverviewMenu()
 
 	e.customController.BindAction(func() {
 		if e.mainMenuOpen {
@@ -21,6 +22,16 @@ func (e *Editor) setupUI() {
 			e.openMainMenu()
 		}
 	}, glfw.KeyEscape, glfw.Press)
+
+	e.uiAssets.AddCallback("open", func(element ui.Element, args ...interface{}) {
+
+	})
+	e.uiAssets.AddCallback("save", func(element ui.Element, args ...interface{}) {
+
+	})
+	e.uiAssets.AddCallback("exit", func(element ui.Element, args ...interface{}) {
+		os.Exit(0)
+	})
 }
 
 func (e *Editor) closeMainMenu() {
@@ -30,7 +41,7 @@ func (e *Editor) closeMainMenu() {
 func (e *Editor) openMainMenu() {
 	if e.mainMenu == nil {
 		window, container, _ := e.defaultWindow()
-		window.SetTranslation(vmath.Vector3{0, 0, 1})
+		window.SetTranslation(vmath.Vector3{200, 200, 1})
 		window.SetScale(vmath.Vector3{300, 0, 1})
 
 		e.controllerManager.AddController(ui.NewUiController(window))
@@ -43,6 +54,21 @@ func (e *Editor) openMainMenu() {
 		e.mainMenu = window
 	}
 	e.gameEngine.AddOrtho(e.mainMenu)
+}
+
+func (e *Editor) openOverviewMenu() {
+	window, container, _ := e.defaultWindow()
+	window.SetTranslation(vmath.Vector3{10, 10, 1})
+	window.SetScale(vmath.Vector3{500, 0, 1})
+
+	e.controllerManager.AddController(ui.NewUiController(window))
+	ui.LoadPage(container, strings.NewReader(overviewMenuHtml), strings.NewReader(globalCss), e.uiAssets)
+
+	e.gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
+		window.Render()
+	}))
+
+	e.gameEngine.AddOrtho(window)
 }
 
 func (e *Editor) defaultWindow() (window *ui.Window, container *ui.Container, tab *ui.Container) {

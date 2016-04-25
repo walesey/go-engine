@@ -1,11 +1,9 @@
 package editor
 
 import (
-	"github.com/luxengine/gobullet"
 	"github.com/walesey/go-engine/actor"
 	"github.com/walesey/go-engine/controller"
 	"github.com/walesey/go-engine/engine"
-	"github.com/walesey/go-engine/physics/bullet"
 	"github.com/walesey/go-engine/renderer"
 	"github.com/walesey/go-engine/ui"
 	vmath "github.com/walesey/go-engine/vectormath"
@@ -22,7 +20,9 @@ type Editor struct {
 }
 
 func New() *Editor {
-	return &Editor{}
+	return &Editor{
+		uiAssets: ui.NewHtmlAssets(),
+	}
 }
 
 func (e *Editor) Start() {
@@ -31,14 +31,6 @@ func (e *Editor) Start() {
 	}
 	e.renderer = glRenderer
 	e.gameEngine = engine.NewEngine(e.renderer)
-
-	//physics engine
-	sdk := gobullet.NewBulletSDK()
-	defer sdk.Delete()
-	physicsWorld := bullet.NewBtDynamicsWorld(sdk)
-	defer physicsWorld.Delete()
-	physicsWorld.SetGravity(vmath.Vector3{0, -10, 0})
-	e.gameEngine.AddUpdatable(physicsWorld)
 
 	e.gameEngine.Start(func() {
 		//lighting

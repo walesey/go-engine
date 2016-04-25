@@ -49,7 +49,7 @@ func renderNode(container *Container, node *html.Node, styles *css.Stylesheet, a
 			text := nextNode.Data
 			text = strings.TrimSpace(text)
 			if len(text) > 0 {
-				textElement := createText(text, node, styles, assets)
+				textElement := createText(text, nextNode.Parent, styles, assets)
 				container.AddChildren(textElement)
 			}
 		} else {
@@ -58,10 +58,10 @@ func renderNode(container *Container, node *html.Node, styles *css.Stylesheet, a
 			container.AddChildren(newContainer)
 
 			//Parse Styles
-			normalStyles := getStyles(styles, nextNode, "", true)
+			normalStyles := getStyles(styles, nextNode, "")
 			applyStyles(newContainer, normalStyles)
-			hoverStyles := getStyles(styles, nextNode, ":hover", false)
-			activeStyles := getStyles(styles, nextNode, ":active", false)
+			hoverStyles := getStyles(styles, nextNode, ":hover")
+			activeStyles := getStyles(styles, nextNode, ":active")
 			hover := false
 			active := false
 			updateState := func() {
@@ -91,9 +91,10 @@ func renderNode(container *Container, node *html.Node, styles *css.Stylesheet, a
 				})
 			}
 
-			//tag type
 			var textField *TextElement
-			if nextNode.DataAtom.String() == "input" {
+			tagType := nextNode.DataAtom.String()
+			switch {
+			case tagType == "input":
 				inputType := getAttribute(nextNode, "type")
 				switch {
 				case inputType == "text":
@@ -143,6 +144,7 @@ func renderNode(container *Container, node *html.Node, styles *css.Stylesheet, a
 				}
 			}
 
+			//Render children
 			renderNode(newContainer, nextNode.FirstChild, styles, assets)
 		}
 		if nextNode == nextNode.NextSibling {
@@ -150,7 +152,6 @@ func renderNode(container *Container, node *html.Node, styles *css.Stylesheet, a
 		}
 		nextNode = nextNode.NextSibling
 	}
-	// fmt.Println(styles.Rules[0].Selectors)
 }
 
 func applyDefaultStyles(container *Container) {
@@ -199,11 +200,11 @@ func createText(text string, node *html.Node, styles *css.Stylesheet, assets Htm
 	var fontColor color.Color = color.Black
 	var fontSize float64 = 16
 	fontFamily := assets.fontMap["default"]
-	textStyles := getStyles(styles, node, "", true)
-	fmt.Println(textStyles)
+	textStyles := getStyles(styles, node, "")
+	align := LEFT_ALIGN
 	for prop, value := range textStyles {
 		switch {
-		case prop == "font-color":
+		case prop == "color":
 			c := parseColor(value)
 			fontColor = color.RGBA{c[0], c[1], c[2], c[3]}
 		case prop == "font-size":
@@ -216,9 +217,15 @@ func createText(text string, node *html.Node, styles *css.Stylesheet, assets Htm
 			if ok {
 				fontFamily = fontStyle
 			}
+		case prop == "text-align":
+			if value == "center" {
+				align = CENTER_ALIGN
+			}
 		}
 	}
-	return NewTextElement(text, fontColor, fontSize, fontFamily)
+	textElement := NewTextElement(text, fontColor, fontSize, fontFamily)
+	textElement.SetAlign(align)
+	return textElement
 }
 
 func parseDimensions(dimensionsStr string) []float64 {
@@ -227,7 +234,7 @@ func parseDimensions(dimensionsStr string) []float64 {
 	for i, dimension := range dimensions {
 		value, err := strconv.ParseFloat(strings.Replace(dimension, "px", "", 1), 64) // TODO fix this
 		if err != nil {
-			fmt.Printf("Error parsing dimensions: %v;\n", err)
+			log.Printf("Error parsing dimensions: %v;\n", err)
 		}
 		values[i] = value
 	}
@@ -268,25 +275,70 @@ func parseColor(colorStr string) [4]uint8 {
 	return result
 }
 
-func getStyles(styles *css.Stylesheet, node *html.Node, modifier string, inherit bool) map[string]string {
+func getStyles(styles *css.Stylesheet, node *html.Node, modifier string) map[string]string {
 	hierarchy := []*html.Node{node}
 	parent := node.Parent
-	for inherit && parent != nil {
+	for parent != nil {
 		hierarchy = append(hierarchy, parent)
 		parent = parent.Parent
 	}
 
+	// css styles
 	rules := make(map[string]string)
-	for _, nextNode := range hierarchy {
-		id := getAttribute(nextNode, "id")
-		class := getAttribute(nextNode, "class")
-		tag := nextNode.DataAtom.String()
-		getStyleBySelector(styles, rules, fmt.Sprintf("#%v%v", id, modifier))
-		getStyleBySelector(styles, rules, fmt.Sprintf(".%v%v", class, modifier))
-		getStyleBySelector(styles, rules, fmt.Sprintf("%v%v", tag, modifier))
+	for _, rule := range styles.Rules {
+		for _, sel := range rule.Selectors {
+			if selectorMatch(sel, modifier, hierarchy) {
+				for _, declaration := range rule.Declarations {
+					rules[declaration.Property] = declaration.Value
+				}
+			}
+		}
 	}
 
 	return rules
+}
+
+func selectorMatch(sel, modifier string, hierarchy []*html.Node) bool {
+	selectors := strings.Split(sel, " ")
+	// reverse the order
+	for i, j := 0, len(selectors)-1; i < j; i, j = i+1, j-1 {
+		selectors[i], selectors[j] = selectors[j], selectors[i]
+	}
+
+	if len(selectors) == 0 || len(hierarchy) == 0 {
+		return false
+	}
+	firstSelector := selectors[0]
+	firstNode := hierarchy[0]
+	nodeSelector := fmt.Sprintf("%v%v", firstNode.DataAtom.String(), modifier)
+	if strings.HasPrefix(firstSelector, "#") {
+		nodeSelector = fmt.Sprintf("#%v%v", getAttribute(firstNode, "id"), modifier)
+	} else if strings.HasPrefix(firstSelector, ".") {
+		nodeSelector = fmt.Sprintf(".%v%v", getAttribute(firstNode, "class"), modifier)
+	}
+	if nodeSelector != firstSelector {
+		return false
+	}
+
+SelectorLoop:
+	for i := 1; i < len(selectors); i += 1 {
+		selector := selectors[i]
+		for j := 1; j < len(hierarchy); j += 1 {
+			nextNode := hierarchy[j]
+			nodeSelector := nextNode.DataAtom.String()
+			if strings.HasPrefix(selector, "#") {
+				nodeSelector = fmt.Sprintf("#%v", getAttribute(nextNode, "id"))
+			} else if strings.HasPrefix(selector, ".") {
+				nodeSelector = fmt.Sprintf(".%v", getAttribute(nextNode, "class"))
+			}
+			if nodeSelector == selector {
+				continue SelectorLoop
+			}
+		}
+		return false
+	}
+
+	return true
 }
 
 func getAttribute(node *html.Node, key string) string {
@@ -296,18 +348,4 @@ func getAttribute(node *html.Node, key string) string {
 		}
 	}
 	return ""
-}
-
-func getStyleBySelector(styles *css.Stylesheet, dest map[string]string, selector string) {
-	for _, rule := range styles.Rules {
-		for _, sel := range rule.Selectors {
-			if sel == selector {
-				for _, declaration := range rule.Declarations {
-					if _, ok := dest[declaration.Property]; !ok {
-						dest[declaration.Property] = declaration.Value
-					}
-				}
-			}
-		}
-	}
 }

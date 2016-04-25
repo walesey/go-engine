@@ -5,16 +5,17 @@ body {
     background-color: #ddd;
 }
 
-.inner {
-    padding: 10px;
-    font-size: 28px;
+h1 {
+    font-size: 48px
 }
 
 button {
-    margin: 5px 0 5px 0;
-    padding: 5px;
+    margin: 10px 0 0 0;
+    padding: 10px;
     background-color: #22d;
-    font-color: #bbb;
+    font-size: 24px;
+    color: #bbb;
+    text-align: center;
 }
 
 button:hover {
@@ -24,16 +25,41 @@ button:hover {
 button:active {
     background-color: #005;
 }
+
+.main {
+    padding: 20px;
+}
+
+.overview {
+    padding: 20px;
+}
+
+.overview button {
+    width: 220px;
+    margin: 10px 10px 0 0;
+}
+
 `
 
 const mainMenuHtml = `
 <html>
     <body>
-        <div class="inner">
+        <div class="main">
             <h1>Main Menu</h1>
-            <button>Open</button>
-            <button>Save</button>
-            <button>Exit</button>
+            <button onclick=open>Open</button>
+            <button onclick=save>Save</button>
+            <button onclick=exit>Exit</button>
+        </div>
+    </body>
+</html>
+`
+
+const overviewMenuHtml = `
+<html>
+    <body>
+        <div class="overview">
+            <button onclick=import>Import</button>
+            <button onclick=newGroup>New group</button>
         </div>
     </body>
 </html>
