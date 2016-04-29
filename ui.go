@@ -31,7 +31,7 @@ func main() {
 		tab.SetHeight(40)
 
 		container := ui.NewContainer()
-		// container.SetMargin(ui.NewMargin(30))
+		container.SetMargin(ui.NewMargin(30))
 		container.SetPadding(ui.NewMargin(30))
 		container.SetBackgroundColor(0, 255, 0, 255)
 		mainContainer.AddChildren(tab, container)

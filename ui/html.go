@@ -16,8 +16,8 @@ import (
 	"golang.org/x/net/html"
 )
 
-// LoadPage - load the html/css code into the container
-func LoadPage(container *Container, htmlInput, cssInput io.Reader, assets HtmlAssets) error {
+// LoadHTML - load the html/css code into the container
+func LoadHTML(container *Container, htmlInput, cssInput io.Reader, assets HtmlAssets) error {
 	document, err := html.Parse(htmlInput)
 	if err != nil {
 		log.Printf("Error parsing html: %v", err)
@@ -49,13 +49,33 @@ func renderNode(container *Container, node *html.Node, styles *css.Stylesheet, a
 			text := nextNode.Data
 			text = strings.TrimSpace(text)
 			if len(text) > 0 {
-				textElement := createText(text, nextNode.Parent, styles, assets)
-				container.AddChildren(textElement)
+				createText(text, nextNode.Parent, container, styles, assets)
 			}
 		} else {
 			// Create a container
 			newContainer := NewContainer()
+			newContainer.id = getAttribute(nextNode, "id")
 			container.AddChildren(newContainer)
+
+			//Parse other html tag types
+			var textField *TextElement
+			var imageElement *ImageElement
+			tagType := nextNode.DataAtom.String()
+			switch {
+			case tagType == "input":
+				inputType := getAttribute(nextNode, "type")
+				switch {
+				case inputType == "text":
+					textField = createText("", nextNode, newContainer, styles, assets)
+				}
+			case tagType == "img":
+				imgSrc := getAttribute(nextNode, "src")
+				img, ok := assets.imageMap[imgSrc]
+				if ok {
+					imageElement = NewImageElement(img)
+					newContainer.AddChildren(imageElement)
+				}
+			}
 
 			//Parse Styles
 			normalStyles := getStyles(styles, nextNode, "")
@@ -73,6 +93,10 @@ func renderNode(container *Container, node *html.Node, styles *css.Stylesheet, a
 				if active {
 					applyStyles(newContainer, activeStyles)
 				}
+				if imageElement != nil {
+					imageElement.SetWidth(newContainer.width)
+					imageElement.SetHeight(newContainer.height)
+				}
 			}
 			if len(hoverStyles) > 0 {
 				newContainer.Hitbox.AddOnHover(func() {
@@ -89,18 +113,6 @@ func renderNode(container *Container, node *html.Node, styles *css.Stylesheet, a
 					active = !release
 					updateState()
 				})
-			}
-
-			var textField *TextElement
-			tagType := nextNode.DataAtom.String()
-			switch {
-			case tagType == "input":
-				inputType := getAttribute(nextNode, "type")
-				switch {
-				case inputType == "text":
-					textField := createText("", nextNode, styles, assets)
-					newContainer.AddChildren(textField)
-				}
 			}
 
 			//Parse html Props
@@ -196,40 +208,79 @@ func applyStyles(container *Container, styles map[string]string) {
 	}
 }
 
-func createText(text string, node *html.Node, styles *css.Stylesheet, assets HtmlAssets) *TextElement {
-	var fontColor color.Color = color.Black
-	var fontSize float64 = 16
-	fontFamily := assets.fontMap["default"]
+func createText(text string, node *html.Node, container *Container, styles *css.Stylesheet, assets HtmlAssets) *TextElement {
+	textElement := NewTextElement(text, color.Black, 16, assets.fontMap["default"])
+	textElement.SetAlign(LEFT_ALIGN)
 	textStyles := getStyles(styles, node, "")
-	align := LEFT_ALIGN
+	applyTextStyles(textElement, textStyles, assets)
+	hoverTextStyles := getStyles(styles, node, ":hover")
+	activeTextStyles := getStyles(styles, node, ":active")
+	hover := false
+	active := false
+	updateState := func() {
+		applyDefaultTextStyles(textElement, assets)
+		applyTextStyles(textElement, textStyles, assets)
+		if hover {
+			applyTextStyles(textElement, hoverTextStyles, assets)
+		}
+		if active {
+			applyTextStyles(textElement, activeTextStyles, assets)
+		}
+	}
+	if len(hoverTextStyles) > 0 {
+		container.Hitbox.AddOnHover(func() {
+			hover = true
+			updateState()
+		})
+		container.Hitbox.AddOnUnHover(func() {
+			hover = false
+			updateState()
+		})
+	}
+	if len(activeTextStyles) > 0 {
+		container.Hitbox.AddOnClick(func(button int, release bool, position vmath.Vector2) {
+			active = !release
+			updateState()
+		})
+	}
+	container.AddChildren(textElement)
+	return textElement
+}
+
+func applyDefaultTextStyles(textField *TextElement, assets HtmlAssets) {
+	textField.SetTextColor(color.Black)
+	textField.SetTextSize(16)
+	textField.SetFont(assets.fontMap["default"])
+	textField.SetAlign(CENTER_ALIGN)
+}
+
+func applyTextStyles(textField *TextElement, textStyles map[string]string, assets HtmlAssets) {
 	for prop, value := range textStyles {
 		switch {
 		case prop == "color":
 			c := parseColor(value)
-			fontColor = color.RGBA{c[0], c[1], c[2], c[3]}
+			textField.SetTextColor(color.RGBA{c[0], c[1], c[2], c[3]})
 		case prop == "font-size":
 			size := parseDimensions(value)
 			if len(size) == 1 {
-				fontSize = size[0]
+				textField.SetTextSize(size[0])
 			}
 		case prop == "font-family":
 			fontStyle, ok := assets.fontMap[value]
 			if ok {
-				fontFamily = fontStyle
+				textField.SetFont(fontStyle)
 			}
 		case prop == "text-align":
 			if value == "center" {
-				align = CENTER_ALIGN
+				// TODO:
+				textField.SetAlign(CENTER_ALIGN)
 			}
 		}
 	}
-	textElement := NewTextElement(text, fontColor, fontSize, fontFamily)
-	textElement.SetAlign(align)
-	return textElement
 }
 
 func parseDimensions(dimensionsStr string) []float64 {
-	dimensions := strings.Split(dimensionsStr, " ")
+	dimensions := strings.Fields(dimensionsStr)
 	values := make([]float64, len(dimensions))
 	for i, dimension := range dimensions {
 		value, err := strconv.ParseFloat(strings.Replace(dimension, "px", "", 1), 64) // TODO fix this
@@ -299,7 +350,7 @@ func getStyles(styles *css.Stylesheet, node *html.Node, modifier string) map[str
 }
 
 func selectorMatch(sel, modifier string, hierarchy []*html.Node) bool {
-	selectors := strings.Split(sel, " ")
+	selectors := strings.Fields(sel)
 	// reverse the order
 	for i, j := 0, len(selectors)-1; i < j; i, j = i+1, j-1 {
 		selectors[i], selectors[j] = selectors[j], selectors[i]
@@ -308,37 +359,51 @@ func selectorMatch(sel, modifier string, hierarchy []*html.Node) bool {
 	if len(selectors) == 0 || len(hierarchy) == 0 {
 		return false
 	}
+
 	firstSelector := selectors[0]
 	firstNode := hierarchy[0]
-	nodeSelector := fmt.Sprintf("%v%v", firstNode.DataAtom.String(), modifier)
 	if strings.HasPrefix(firstSelector, "#") {
-		nodeSelector = fmt.Sprintf("#%v%v", getAttribute(firstNode, "id"), modifier)
-	} else if strings.HasPrefix(firstSelector, ".") {
-		nodeSelector = fmt.Sprintf(".%v%v", getAttribute(firstNode, "class"), modifier)
-	}
-	if nodeSelector != firstSelector {
-		return false
-	}
-
-SelectorLoop:
-	for i := 1; i < len(selectors); i += 1 {
-		selector := selectors[i]
-		for j := 1; j < len(hierarchy); j += 1 {
-			nextNode := hierarchy[j]
-			nodeSelector := nextNode.DataAtom.String()
-			if strings.HasPrefix(selector, "#") {
-				nodeSelector = fmt.Sprintf("#%v", getAttribute(nextNode, "id"))
-			} else if strings.HasPrefix(selector, ".") {
-				nodeSelector = fmt.Sprintf(".%v", getAttribute(nextNode, "class"))
-			}
-			if nodeSelector == selector {
-				continue SelectorLoop
-			}
+		if fmt.Sprintf("#%v%v", getAttribute(firstNode, "id"), modifier) != firstSelector {
+			return false
 		}
+	} else if strings.HasPrefix(firstSelector, ".") {
+		if !matchClasses(firstNode, firstSelector, modifier) {
+			return false
+		}
+	} else if fmt.Sprintf("%v%v", firstNode.DataAtom.String(), modifier) != firstSelector {
 		return false
 	}
 
-	return true
+	i := 1
+	for j := 1; j < len(hierarchy) && i < len(selectors); j++ {
+		selector := selectors[i]
+		nextNode := hierarchy[j]
+		if strings.HasPrefix(selector, "#") {
+			if fmt.Sprintf("#%v", getAttribute(nextNode, "id")) == selector {
+				i++
+				continue
+			}
+		} else if strings.HasPrefix(selector, ".") {
+			if matchClasses(nextNode, selector, "") {
+				i++
+				continue
+			}
+		} else if nextNode.DataAtom.String() == selector {
+			i++
+			continue
+		}
+	}
+	return i == len(selectors)
+}
+
+func matchClasses(node *html.Node, selector, modifier string) bool {
+	nodeSelectors := strings.Fields(getAttribute(node, "class"))
+	for _, nodeSelector := range nodeSelectors {
+		if fmt.Sprintf(".%v%v", nodeSelector, modifier) == selector {
+			return true
+		}
+	}
+	return false
 }
 
 func getAttribute(node *html.Node, key string) string {

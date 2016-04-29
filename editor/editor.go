@@ -16,6 +16,7 @@ type Editor struct {
 	controllerManager *controller.ControllerManager
 	uiAssets          ui.HtmlAssets
 	mainMenu          *ui.Window
+	progressBar       *ui.Window
 	mainMenuOpen      bool
 }
 

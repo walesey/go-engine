@@ -6,6 +6,7 @@ import (
 	"runtime"
 
 	"github.com/go-gl/glfw/v3.1/glfw"
+	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/controller"
 	"github.com/walesey/go-engine/engine"
 	"github.com/walesey/go-engine/renderer"
@@ -23,6 +24,7 @@ func main() {
 	gameEngine := engine.NewEngine(glRenderer)
 
 	htmlAssets := ui.NewHtmlAssets()
+	htmlAssets.AddImage("test.png", assets.ImportImage("TestAssets/test.png"))
 
 	htmlAssets.AddCallback("activateTextField", func(element ui.Element, args ...interface{}) {
 		container, ok := element.(*ui.Container)
@@ -109,7 +111,7 @@ func main() {
 			}
 			defer html.Close()
 
-			ui.LoadPage(container, html, css, htmlAssets)
+			ui.LoadHTML(container, html, css, htmlAssets)
 		}
 		loadPage()
 
@@ -128,14 +130,14 @@ func main() {
 		controllerManager.AddController(customController)
 		ui.ClickAndDragWindow(window, tab.Hitbox, customController)
 
-		timer := 0.0
-		gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
-			timer += dt
-			if timer > 3 {
-				timer = 0.0
-				loadPage()
-			}
-		}))
+		// timer := 0.0
+		// gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
+		// 	timer += dt
+		// 	if timer > 3 {
+		// 		timer = 0.0
+		// 		loadPage()
+		// 	}
+		// }))
 
 		customController.BindAction(func() {
 			loadPage()

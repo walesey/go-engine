@@ -12,6 +12,7 @@ type Margin struct {
 }
 
 type Container struct {
+	id               string
 	Hitbox           Hitbox
 	width, height    float64
 	margin, padding  Margin
@@ -128,6 +129,25 @@ func (c *Container) GetChild(index int) Element {
 
 func (c *Container) GetNbChildren() int {
 	return len(c.children)
+}
+
+func (c *Container) GetId() string {
+	return c.id
+}
+
+func (c *Container) ElementById(id string) Element {
+	for _, child := range c.children {
+		if child.GetId() == id {
+			return child
+		}
+		container, ok := child.(*Container)
+		if ok {
+			if elem := container.ElementById(id); elem != nil {
+				return elem
+			}
+		}
+	}
+	return nil
 }
 
 func (c *Container) mouseMove(position vmath.Vector2) {

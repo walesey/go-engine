@@ -12,6 +12,8 @@ import (
 
 func (e *Editor) setupUI() {
 	e.openOverviewMenu()
+	e.openProgressBar()
+	e.setProgressBar(15)
 
 	e.customController.BindAction(func() {
 		if e.mainMenuOpen {
@@ -42,15 +44,14 @@ func (e *Editor) openMainMenu() {
 	if e.mainMenu == nil {
 		window, container, _ := e.defaultWindow()
 		window.SetTranslation(vmath.Vector3{200, 200, 1})
-		window.SetScale(vmath.Vector3{300, 0, 1})
+		window.SetScale(vmath.Vector3{400, 0, 1})
 
 		e.controllerManager.AddController(ui.NewUiController(window))
-		ui.LoadPage(container, strings.NewReader(mainMenuHtml), strings.NewReader(globalCss), e.uiAssets)
+		ui.LoadHTML(container, strings.NewReader(mainMenuHtml), strings.NewReader(globalCss), e.uiAssets)
 
 		e.gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
 			window.Render()
 		}))
-
 		e.mainMenu = window
 	}
 	e.gameEngine.AddOrtho(e.mainMenu)
@@ -62,12 +63,11 @@ func (e *Editor) openOverviewMenu() {
 	window.SetScale(vmath.Vector3{500, 0, 1})
 
 	e.controllerManager.AddController(ui.NewUiController(window))
-	ui.LoadPage(container, strings.NewReader(overviewMenuHtml), strings.NewReader(globalCss), e.uiAssets)
+	ui.LoadHTML(container, strings.NewReader(overviewMenuHtml), strings.NewReader(globalCss), e.uiAssets)
 
 	e.gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
 		window.Render()
 	}))
-
 	e.gameEngine.AddOrtho(window)
 }
 

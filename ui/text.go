@@ -42,6 +42,7 @@ func LoadFont(fontData []byte) (*truetype.Font, error) {
 }
 
 type TextElement struct {
+	id                 string
 	img                *ImageElement
 	width, height      float64
 	text               string
@@ -120,6 +121,21 @@ func (te *TextElement) SetText(text string) {
 	te.dirty = true
 }
 
+func (te *TextElement) SetFont(textFont *truetype.Font) {
+	te.textFont = textFont
+	te.dirty = true
+}
+
+func (te *TextElement) SetTextSize(textSize float64) {
+	te.textSize = textSize
+	te.dirty = true
+}
+
+func (te *TextElement) SetTextColor(textColor color.Color) {
+	te.textColor = textColor
+	te.dirty = true
+}
+
 func (te *TextElement) SetWidth(width float64) {
 	te.width = width
 	te.dirty = true
@@ -178,6 +194,10 @@ func (te *TextElement) Render(size, offset vmath.Vector2) vmath.Vector2 {
 
 func (te *TextElement) Spatial() renderer.Spatial {
 	return te.img.Spatial()
+}
+
+func (te *TextElement) GetId() string {
+	return te.id
 }
 
 func (te *TextElement) mouseMove(position vmath.Vector2) {
