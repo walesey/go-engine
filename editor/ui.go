@@ -26,7 +26,7 @@ func (e *Editor) setupUI() {
 	}, glfw.KeyEscape, glfw.Press)
 
 	e.uiAssets.AddCallback("open", func(element ui.Element, args ...interface{}) {
-
+		e.loadMap("TestAssets/test.map")
 	})
 	e.uiAssets.AddCallback("save", func(element ui.Element, args ...interface{}) {
 

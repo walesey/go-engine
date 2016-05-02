@@ -28,7 +28,7 @@ func Particles(c *cli.Context) {
 
 	//setup scenegraph
 
-	geom := assets.ImportObj("TestAssets/Files/skybox/skybox.obj")
+	geom, _ := assets.ImportObj("TestAssets/Files/skybox/skybox.obj")
 	geom.Material.LightingMode = renderer.MODE_UNLIT
 	geom.CullBackface = false
 	skyNode := renderer.CreateNode()
@@ -36,13 +36,14 @@ func Particles(c *cli.Context) {
 	skyNode.SetRotation(1.57, vectormath.Vector3{0, 1, 0})
 	skyNode.SetScale(vectormath.Vector3{5000, 5000, 5000})
 
-	geomsphere := assets.ImportObj("TestAssets/Files/sphere/sphere.obj")
+	geomsphere, _ := assets.ImportObj("TestAssets/Files/sphere/sphere.obj")
 	sphereNode := renderer.CreateNode()
 	sphereNode.Add(geomsphere)
 	sphereNode.SetTranslation(vectormath.Vector3{0, 0, 0})
 
 	//particle effects
-	explosionMat := assets.CreateMaterial(assets.ImportImage("TestAssets/test.png"), nil, nil, nil)
+	explostionImg, _ := assets.ImportImage("TestAssets/test.png")
+	explosionMat := assets.CreateMaterial(explostionImg, nil, nil, nil)
 	explosionMat.LightingMode = renderer.MODE_UNLIT
 	explosionMat.Transparency = renderer.TRANSPARENCY_EMISSIVE
 	explosionParticles := effects.CreateParticleSystem(effects.ParticleSettings{
@@ -71,7 +72,8 @@ func Particles(c *cli.Context) {
 		MinRotationVelocity: 0.0,
 	})
 
-	fireMat := assets.CreateMaterial(assets.ImportImage("TestAssets/test.png"), nil, nil, nil)
+	fireImg, _ := assets.ImportImage("TestAssets/test.png")
+	fireMat := assets.CreateMaterial(fireImg, nil, nil, nil)
 	fireMat.LightingMode = renderer.MODE_UNLIT
 	fireMat.Transparency = renderer.TRANSPARENCY_EMISSIVE
 	fireParticles := effects.CreateParticleSystem(effects.ParticleSettings{
@@ -100,7 +102,8 @@ func Particles(c *cli.Context) {
 		MinRotationVelocity: -0.3,
 	})
 
-	smokeMat := assets.CreateMaterial(assets.ImportImage("TestAssets/test.png"), nil, nil, nil)
+	smokeImg, _ := assets.ImportImage("TestAssets/test.png")
+	smokeMat := assets.CreateMaterial(smokeImg, nil, nil, nil)
 	smokeMat.LightingMode = renderer.MODE_UNLIT
 	smokeParticles := effects.CreateParticleSystem(effects.ParticleSettings{
 		MaxParticles:        38,
@@ -128,7 +131,8 @@ func Particles(c *cli.Context) {
 		MinRotationVelocity: 0.0,
 	})
 
-	sparkMat := assets.CreateMaterial(assets.ImportImage("TestAssets/test.png"), nil, nil, nil)
+	sparkImg, _ := assets.ImportImage("TestAssets/test.png")
+	sparkMat := assets.CreateMaterial(sparkImg, nil, nil, nil)
 	sparkMat.LightingMode = renderer.MODE_EMIT
 	sparkMat.Transparency = renderer.TRANSPARENCY_EMISSIVE
 	sparkParticles := effects.CreateParticleSystem(effects.ParticleSettings{
@@ -161,7 +165,8 @@ func Particles(c *cli.Context) {
 	explosionParticles.Location = vectormath.Vector3{-2, 0, -2}
 	sparkParticles.Location = vectormath.Vector3{2, 0, 2}
 
-	birdMat := assets.CreateMaterial(assets.ImportImage("TestAssets/test.png"), nil, nil, nil)
+	birdImg, _ := assets.ImportImage("TestAssets/test.png")
+	birdMat := assets.CreateMaterial(birdImg, nil, nil, nil)
 	birdMat.LightingMode = renderer.MODE_UNLIT
 	birdSprite := effects.CreateSprite(22, 5, 5, birdMat)
 	birdSprite.SetTranslation(vectormath.Vector3{-2, 0, -1})

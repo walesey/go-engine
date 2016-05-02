@@ -24,7 +24,10 @@ func main() {
 	gameEngine := engine.NewEngine(glRenderer)
 
 	htmlAssets := ui.NewHtmlAssets()
-	htmlAssets.AddImage("test.png", assets.ImportImage("TestAssets/test.png"))
+	testImg, err := assets.ImportImage("TestAssets/test.png")
+	if err == nil {
+		htmlAssets.AddImage("test.png", testImg)
+	}
 
 	htmlAssets.AddCallback("activateTextField", func(element ui.Element, args ...interface{}) {
 		container, ok := element.(*ui.Container)

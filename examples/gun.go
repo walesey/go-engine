@@ -25,7 +25,7 @@ func GunDemo(c *cli.Context) {
 	}
 
 	//setup scenegraph
-	geom := assets.ImportObj("TestAssets/Files/skybox/skybox.obj")
+	geom, _ := assets.ImportObj("TestAssets/Files/skybox/skybox.obj")
 	geom.Material.LightingMode = renderer.MODE_UNLIT
 	geom.CullBackface = false
 	skyNode := renderer.CreateNode()
@@ -33,7 +33,7 @@ func GunDemo(c *cli.Context) {
 	skyNode.SetRotation(1.57, vectormath.Vector3{0, 1, 0})
 	skyNode.SetScale(vectormath.Vector3{5000, 5000, 5000})
 
-	geomgun := assets.ImportObj("TestAssets/Files/gun/rifle.obj")
+	geomgun, _ := assets.ImportObj("TestAssets/Files/gun/rifle.obj")
 	gunNode := renderer.CreateNode()
 	gunNode.Add(geomgun)
 	gunNode.SetTranslation(vectormath.Vector3{0, 0, 0})

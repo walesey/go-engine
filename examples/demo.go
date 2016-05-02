@@ -21,7 +21,7 @@ func Demo(c *cli.Context) {
 	}
 
 	//setup scenegraph
-	skyBox := assets.ImportObj("TestAssets/Files/skybox/skybox.obj")
+	skyBox, _ := assets.ImportObj("TestAssets/Files/skybox/skybox.obj")
 	skyBox.Material.LightingMode = renderer.MODE_UNLIT
 	skyBox.CullBackface = false
 	skyNode := renderer.CreateNode()

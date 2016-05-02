@@ -2,7 +2,9 @@ package editor
 
 import (
 	"github.com/walesey/go-engine/actor"
+	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/controller"
+	"github.com/walesey/go-engine/editor/models"
 	"github.com/walesey/go-engine/engine"
 	"github.com/walesey/go-engine/renderer"
 	"github.com/walesey/go-engine/ui"
@@ -12,6 +14,8 @@ import (
 type Editor struct {
 	renderer          renderer.Renderer
 	gameEngine        engine.Engine
+	currentMap        *editorModels.MapModel
+	rootMapNode       *renderer.Node
 	customController  *controller.ActionMap
 	controllerManager *controller.ControllerManager
 	uiAssets          ui.HtmlAssets
@@ -22,7 +26,8 @@ type Editor struct {
 
 func New() *Editor {
 	return &Editor{
-		uiAssets: ui.NewHtmlAssets(),
+		uiAssets:    ui.NewHtmlAssets(),
+		rootMapNode: renderer.CreateNode(),
 	}
 }
 
@@ -37,6 +42,15 @@ func (e *Editor) Start() {
 		//lighting
 		e.renderer.CreateLight(0.0, 0.0, 0.0, 0.5, 0.5, 0.5, 0.7, 0.7, 0.7, true, vmath.Vector3{0.3, -1, 0.2}, 0)
 
+		//Sky
+		skyImg, err := assets.ImportImage("TestAssets/Files/skybox/cubemap.png")
+		if err == nil {
+			e.gameEngine.Sky(assets.CreateMaterial(skyImg, nil, nil, nil), 999999)
+		}
+
+		//root node
+		e.gameEngine.AddSpatial(e.rootMapNode)
+
 		//input/controller manager
 		e.controllerManager = controller.NewControllerManager(glRenderer.Window)
 
@@ -46,6 +60,7 @@ func (e *Editor) Start() {
 		freeMoveActor.MoveSpeed = 3.0
 		mainController := controller.NewBasicMovementController(freeMoveActor)
 		e.controllerManager.AddController(mainController)
+		e.gameEngine.AddUpdatable(freeMoveActor)
 
 		//custom controller
 		e.customController = controller.NewActionMap()

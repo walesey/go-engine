@@ -19,8 +19,6 @@ func main() {
 	glRenderer := &renderer.OpenglRenderer{WindowTitle: "GoEngine"}
 	gameEngine := engine.NewEngine(glRenderer)
 
-	// alienwareImg := assets.ImportImage("TestAssets/test.png")
-
 	gameEngine.Start(func() {
 
 		window := ui.NewWindow()

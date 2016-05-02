@@ -36,7 +36,7 @@ func BulletDemo(c *cli.Context) {
 	gameEngine.AddUpdatable(physicsWorld)
 
 	//geometry for physics objects
-	geomMonkey := assets.ImportObj("TestAssets/Files/physicsMonkey/phyMonkey.obj")
+	geomMonkey, _ := assets.ImportObj("TestAssets/Files/physicsMonkey/phyMonkey.obj")
 	monkeyCollision := assets.CollisionShapeFromGeometry(geomMonkey, 0.3)
 
 	spawn := func() physicsAPI.PhysicsObject {
@@ -63,7 +63,7 @@ func BulletDemo(c *cli.Context) {
 		}
 	}
 
-	terrain := assets.ImportObj("TestAssets/Files/terrain/2/terrain2.obj")
+	terrain, _ := assets.ImportObj("TestAssets/Files/terrain/2/terrain2.obj")
 	terrainCollision := assets.TriangleMeshShapeFromGeometry(terrain)
 
 	terrainNode := renderer.CreateNode()
@@ -80,7 +80,10 @@ func BulletDemo(c *cli.Context) {
 		glRenderer.CreateLight(0.0, 0.0, 0.0, 0.5, 0.5, 0.5, 0.7, 0.7, 0.7, true, vmath.Vector3{0.3, -1, 0.2}, 0)
 
 		//Sky
-		gameEngine.Sky(assets.CreateMaterial(assets.ImportImage("TestAssets/Files/skybox/cubemap.png"), nil, nil, nil), 999999)
+		skyImg, err := assets.ImportImage("TestAssets/Files/skybox/cubemap.png")
+		if err == nil {
+			gameEngine.Sky(assets.CreateMaterial(skyImg, nil, nil, nil), 999999)
+		}
 
 		//input/controller manager
 		controllerManager := controller.NewControllerManager(glRenderer.Window)

@@ -2,6 +2,7 @@ package assets
 
 import (
 	"bufio"
+	"fmt"
 	"image"
 	"log"
 	"os"
@@ -13,7 +14,7 @@ import (
 )
 
 //imports an obj from a filePath and return a Geometry
-func ImportObj(filePath string) *renderer.Geometry {
+func ImportObj(filePath string) (*renderer.Geometry, error) {
 
 	obj := &objData{Indicies: make([]uint32, 0, 0), Vertices: make([]float32, 0, 0)}
 	vertexList := make([]float32, 0, 0)
@@ -28,7 +29,8 @@ func ImportObj(filePath string) *renderer.Geometry {
 	//open the file and read all lines
 	file, err := os.Open(filePath)
 	if err != nil {
-		panic(err)
+		fmt.Printf("Error opening geometry file: %v\n", err)
+		return nil, err
 	}
 	defer file.Close()
 
@@ -49,7 +51,7 @@ func ImportObj(filePath string) *renderer.Geometry {
 			} else if dataType == "f" { // v/t/n face
 				obj.processFace(line, vertexList, uvList, normalList)
 			} else if dataType == "mtllib" {
-				obj.Mtl = importMTL(path, tokens[1])
+				obj.Mtl, _ = importMTL(path, tokens[1])
 			} else if dataType == "usemtl" { //mtl material
 				//TODO: multiple mtls
 			}
@@ -60,9 +62,10 @@ func ImportObj(filePath string) *renderer.Geometry {
 	material := CreateMaterial(obj.Mtl.Map_Kd, obj.Mtl.Map_Disp, obj.Mtl.Map_Spec, obj.Mtl.Map_Roughness)
 	geometry.Material = material
 	if err := scanner.Err(); err != nil {
-		panic(err)
+		fmt.Printf("Error loading geometry: %v\n", err)
+		return nil, err
 	}
-	return geometry
+	return geometry, nil
 }
 
 // Create material object from image files
@@ -183,12 +186,13 @@ func (obj *objData) processFace(line string, vertexList, uvList, normalList []fl
 }
 
 //Returns mtl object data type
-func importMTL(filePath, fileName string) *mtlData {
+func importMTL(filePath, fileName string) (*mtlData, error) {
 	mtl := &mtlData{}
 
 	file, err := os.Open(filePath + fileName)
 	if err != nil {
-		panic(err)
+		fmt.Printf("Error opening material file: %v\n", err)
+		return nil, err
 	}
 	defer file.Close()
 
@@ -198,27 +202,32 @@ func importMTL(filePath, fileName string) *mtlData {
 		tokens := strings.Fields(line)
 		if len(tokens) > 0 {
 			dataType := tokens[0]
+			var err error = nil
 			if dataType == "newmtl" {
 				mtl.Name = tokens[1]
 			} else if dataType == "Ns" {
 				mtl.Ns = stf(tokens[1])
 				//TODO: Other mtl variables
 			} else if dataType == "map_Kd" {
-				mtl.Map_Kd = ImportImage(filePath + tokens[1])
+				mtl.Map_Kd, err = ImportImage(filePath + tokens[1])
 			} else if dataType == "map_Disp" {
-				mtl.Map_Disp = ImportImage(filePath + tokens[1])
+				mtl.Map_Disp, err = ImportImage(filePath + tokens[1])
 			} else if dataType == "map_Spec" {
-				mtl.Map_Spec = ImportImage(filePath + tokens[1])
+				mtl.Map_Spec, err = ImportImage(filePath + tokens[1])
 			} else if dataType == "map_Roughness" {
-				mtl.Map_Roughness = ImportImage(filePath + tokens[1])
+				mtl.Map_Roughness, err = ImportImage(filePath + tokens[1])
+			}
+			if err != nil {
+				log.Printf("Error parsing mtl data %v: %v\n", dataType, err)
 			}
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		panic(err)
+		fmt.Printf("Error loading geometry file: %v\n", err)
+		return nil, err
 	}
 
-	return mtl
+	return mtl, nil
 }
 
 //string to float32
