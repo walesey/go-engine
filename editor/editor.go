@@ -20,8 +20,10 @@ type Editor struct {
 	controllerManager *controller.ControllerManager
 	uiAssets          ui.HtmlAssets
 	mainMenu          *ui.Window
-	progressBar       *ui.Window
 	mainMenuOpen      bool
+	progressBar       *ui.Window
+	fileBrowser       *FileBrowser
+	fileBrowserOpen   bool
 }
 
 func New() *Editor {
@@ -57,7 +59,7 @@ func (e *Editor) Start() {
 		//camera + player
 		camera := e.gameEngine.Camera()
 		freeMoveActor := actor.NewFreeMoveActor(camera)
-		freeMoveActor.MoveSpeed = 3.0
+		freeMoveActor.MoveSpeed = 10.0
 		mainController := controller.NewBasicMovementController(freeMoveActor)
 		e.controllerManager.AddController(mainController)
 		e.gameEngine.AddUpdatable(freeMoveActor)

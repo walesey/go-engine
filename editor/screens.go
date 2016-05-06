@@ -75,7 +75,7 @@ button:active {
 }
 
 .tree .delete {
-	width: 25px;
+    width: 25px;
     padding: 0 0 2px 2px;
 }
 
@@ -84,7 +84,7 @@ button:active {
 }
 
 .tree .delete:active {
-        color: #fbb;
+    color: #fbb;
 }
 
 .tree .closed .icon {
@@ -95,25 +95,58 @@ button:active {
     color: #999;
 }
 
-
-.progressBar {
-	padding: 10px;
+.fileBrowser {
+    padding: 20px;
 }
 
-.progress {
-	width: 310px;
+.fileBrowser button {
+    margin: 10px 10px 0 0;
+    width: 200px;
+}
+
+.fileBrowser .fileView {
+    height: 600px;
+    background-color: #fff;
+    padding: 5px;
+}
+
+.fileBrowser .content button {
+    width: 100%;
+    height: 20px;
+    padding: 5px 0 5px 45%;
+    margin: 0;
+    background-color: #0000;
+    font-size: 8px;
+    color: #000;
+}
+
+.fileBrowser .content button:hover {
+    background-color: #00f5;
+    color: #999;
+}
+
+.fileBrowser .content button:active {
+    background-color: #00f9;
+    color: #999;
+}
+
+.progressBar {
+    padding: 10px;
+}
+
+.progressBar .progress {
+    width: 310px;
     height: 40px;
-	padding: 0 0 0 3px;
+    padding: 0 0 0 3px;
     background-color: #666;
 }
 
-.progress div {
-	width: 10px;
-	height: 20px;
-	margin: 10px 0 10px 5px;
+.progressBar .progress div {
+    width: 10px;
+    height: 20px;
+    margin: 10px 0 10px 5px;
     float: left;
 }
-
 `
 
 const mainMenuHtml = `
@@ -141,7 +174,24 @@ const overviewMenuHtml = `
 </html>
 `
 
-const progressBar = `
+const fileBrowserHtml = `
+<html>
+    <body>
+        <div class="fileBrowser">
+            <div id="heading">File Browser</div>
+            <div class="content">
+                <button onclick=fileBrowserScrollup>^</button>
+                <div id="fileView" class="fileView"></div>
+                <button onclick=fileBrowserScrollDown>v</button>
+            </div>
+            <button onclick=fileBrowserOpen>Open</button>
+            <button onclick=fileBrowserCancel>Cancel</button>
+        </div>
+    </body>
+</html>
+`
+
+const progressBarHtml = `
 <html>
     <body>
         <div class="progressBar">
@@ -167,6 +217,7 @@ const progressBar = `
                 <div id="progress19"></div>
                 <div id="progress20"></div>
             </div>
+            <div id="progressBarMessage"></div>
         </div>
     </body>
 </html>

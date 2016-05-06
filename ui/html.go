@@ -178,31 +178,37 @@ func applyStyles(container *Container, styles map[string]string) {
 	for prop, value := range styles {
 		switch {
 		case prop == "padding":
-			paddings := parseDimensions(value)
+			paddings, units := parseDimensions(value)
 			if len(paddings) == 1 {
 				container.SetPadding(NewMargin(paddings[0]))
-			} else if len(paddings) == 4 {
+				container.SetPaddingPercent(NewMarginPercentages(len(units) == 1 && units[0] == "%"))
+			} else if len(paddings) == 4 && len(units) == 4 {
 				container.SetPadding(Margin{paddings[0], paddings[1], paddings[2], paddings[3]})
+				container.SetPaddingPercent(MarginPercentages{units[0] == "%", units[1] == "%", units[2] == "%", units[3] == "%"})
 			}
 		case prop == "margin":
-			margins := parseDimensions(value)
+			margins, units := parseDimensions(value)
 			if len(margins) == 1 {
 				container.SetMargin(NewMargin(margins[0]))
-			} else if len(margins) == 4 {
+				container.SetMarginPercent(NewMarginPercentages(len(units) == 1 && units[0] == "%"))
+			} else if len(margins) == 4 && len(units) == 4 {
 				container.SetMargin(Margin{margins[0], margins[1], margins[2], margins[3]})
+				container.SetMarginPercent(MarginPercentages{units[0] == "%", units[1] == "%", units[2] == "%", units[3] == "%"})
 			}
 		case prop == "background-color":
 			color := parseColor(value)
 			container.SetBackgroundColor(color[0], color[1], color[2], color[3])
 		case prop == "width":
-			width := parseDimensions(value)
+			width, units := parseDimensions(value)
 			if len(width) == 1 {
 				container.SetWidth(width[0])
+				container.UsePercentWidth(len(units) == 1 && units[0] == "%")
 			}
 		case prop == "height":
-			height := parseDimensions(value)
+			height, units := parseDimensions(value)
 			if len(height) == 1 {
 				container.SetHeight(height[0])
+				container.UsePercentHeight(len(units) == 1 && units[0] == "%")
 			}
 		}
 	}
@@ -261,7 +267,7 @@ func applyTextStyles(textField *TextElement, textStyles map[string]string, asset
 			c := parseColor(value)
 			textField.SetTextColor(color.RGBA{c[0], c[1], c[2], c[3]})
 		case prop == "font-size":
-			size := parseDimensions(value)
+			size, _ := parseDimensions(value)
 			if len(size) == 1 {
 				textField.SetTextSize(size[0])
 			}
@@ -279,17 +285,27 @@ func applyTextStyles(textField *TextElement, textStyles map[string]string, asset
 	}
 }
 
-func parseDimensions(dimensionsStr string) []float64 {
+func parseDimensions(dimensionsStr string) (values []float64, units []string) {
 	dimensions := strings.Fields(dimensionsStr)
-	values := make([]float64, len(dimensions))
+	values = make([]float64, len(dimensions))
+	units = make([]string, len(dimensions))
 	for i, dimension := range dimensions {
-		value, err := strconv.ParseFloat(strings.Replace(dimension, "px", "", 1), 64) // TODO fix this
+		var err error
+		if strings.HasSuffix(dimension, "px") {
+			values[i], err = strconv.ParseFloat(strings.Replace(dimension, "px", "", 1), 64)
+			units[i] = "px"
+		} else if strings.HasSuffix(dimension, "%") {
+			values[i], err = strconv.ParseFloat(strings.Replace(dimension, "%", "", 1), 64)
+			units[i] = "%"
+		} else {
+			values[i], err = strconv.ParseFloat(dimension, 64)
+			units[i] = "px"
+		}
 		if err != nil {
 			log.Printf("Error parsing dimensions: %v;\n", err)
 		}
-		values[i] = value
 	}
-	return values
+	return
 }
 
 func parseColor(colorStr string) [4]uint8 {

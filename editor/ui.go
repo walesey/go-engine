@@ -11,9 +11,7 @@ import (
 )
 
 func (e *Editor) setupUI() {
-	e.openOverviewMenu()
-	e.openProgressBar()
-	e.setProgressBar(15)
+	e.initOverviewMenu()
 
 	e.customController.BindAction(func() {
 		if e.mainMenuOpen {
@@ -24,16 +22,6 @@ func (e *Editor) setupUI() {
 			e.openMainMenu()
 		}
 	}, glfw.KeyEscape, glfw.Press)
-
-	e.uiAssets.AddCallback("open", func(element ui.Element, args ...interface{}) {
-		e.loadMap("TestAssets/test.map")
-	})
-	e.uiAssets.AddCallback("save", func(element ui.Element, args ...interface{}) {
-
-	})
-	e.uiAssets.AddCallback("exit", func(element ui.Element, args ...interface{}) {
-		os.Exit(0)
-	})
 }
 
 func (e *Editor) closeMainMenu() {
@@ -42,6 +30,23 @@ func (e *Editor) closeMainMenu() {
 
 func (e *Editor) openMainMenu() {
 	if e.mainMenu == nil {
+
+		e.uiAssets.AddCallback("open", func(element ui.Element, args ...interface{}) {
+			if len(args) >= 2 && !args[1].(bool) { // not on release
+				e.openFileBrowser("Open", func(filePath string) {
+					e.loadMap(filePath)
+					e.closeFileBrowser()
+				})
+			}
+		})
+		e.uiAssets.AddCallback("save", func(element ui.Element, args ...interface{}) {
+			if len(args) >= 2 && !args[1].(bool) { // not on release
+			}
+		})
+		e.uiAssets.AddCallback("exit", func(element ui.Element, args ...interface{}) {
+			os.Exit(0)
+		})
+
 		window, container, _ := e.defaultWindow()
 		window.SetTranslation(vmath.Vector3{200, 200, 1})
 		window.SetScale(vmath.Vector3{400, 0, 1})
@@ -55,20 +60,6 @@ func (e *Editor) openMainMenu() {
 		e.mainMenu = window
 	}
 	e.gameEngine.AddOrtho(e.mainMenu)
-}
-
-func (e *Editor) openOverviewMenu() {
-	window, container, _ := e.defaultWindow()
-	window.SetTranslation(vmath.Vector3{10, 10, 1})
-	window.SetScale(vmath.Vector3{500, 0, 1})
-
-	e.controllerManager.AddController(ui.NewUiController(window))
-	ui.LoadHTML(container, strings.NewReader(overviewMenuHtml), strings.NewReader(globalCss), e.uiAssets)
-
-	e.gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
-		window.Render()
-	}))
-	e.gameEngine.AddOrtho(window)
 }
 
 func (e *Editor) defaultWindow() (window *ui.Window, container *ui.Container, tab *ui.Container) {

@@ -2,6 +2,7 @@ package editor
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 
@@ -36,11 +37,12 @@ func (e *Editor) updateMap(clearMemory bool) {
 	cd.Start(countGeometries(e.currentMap.Root))
 	e.openProgressBar()
 	e.setProgressBar(0)
+	e.setProgressTime("Loading Map...")
 
 	updateProgress := func() {
 		cd.Count()
 		e.setProgressBar(cd.PercentageComplete() / 5)
-		//TODO: display cd.SecondsRemaining()
+		e.setProgressTime(fmt.Sprintf("Loading Map... %v seconds remaining", cd.SecondsRemaining()))
 	}
 
 	var updateNode func(srcModel *editorModels.NodeModel, destNode *renderer.Node)
@@ -63,6 +65,7 @@ func (e *Editor) updateMap(clearMemory bool) {
 	}
 
 	updateNode(e.currentMap.Root, e.rootMapNode)
+	e.closeProgressBar()
 }
 
 func countGeometries(nodeModel *editorModels.NodeModel) int {

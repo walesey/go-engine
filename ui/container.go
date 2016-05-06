@@ -11,11 +11,19 @@ type Margin struct {
 	Top, Right, Bottom, Left float64
 }
 
+type MarginPercentages struct {
+	Top, Right, Bottom, Left bool
+}
+
 type Container struct {
 	id               string
 	Hitbox           Hitbox
 	width, height    float64
+	percentWidth     bool
+	percentHeight    bool
 	margin, padding  Margin
+	marginPercent    MarginPercentages
+	paddingPercent   MarginPercentages
 	node             *renderer.Node
 	elementsNode     *renderer.Node
 	background       *renderer.Node
@@ -27,16 +35,18 @@ type Container struct {
 }
 
 func (c *Container) Render(size, offset vmath.Vector2) vmath.Vector2 {
+	padding := convertMargin(c.padding, c.paddingPercent, size.X)
+	margin := convertMargin(c.margin, c.marginPercent, size.X)
 	sizeMinusMargins := size.Subtract(vmath.Vector2{
-		c.margin.Left + c.margin.Right + c.padding.Left + c.padding.Right,
-		c.margin.Top + c.margin.Bottom + c.padding.Top + c.padding.Bottom,
+		margin.Left + margin.Right + padding.Left + padding.Right,
+		margin.Top + margin.Bottom + padding.Top + padding.Bottom,
 	})
 	containerSize := &sizeMinusMargins
 	if c.width > 0 {
-		containerSize.X = c.width - c.padding.Left - c.padding.Right
+		containerSize.X = c.getWidth(size.X) - padding.Left - padding.Right
 	}
 	if c.height > 0 {
-		containerSize.Y = c.height - c.padding.Top - c.padding.Bottom
+		containerSize.Y = c.getHeight(size.X) - padding.Top - padding.Bottom
 	}
 	var width, height, highest float64 = 0, 0, 0
 	for _, child := range c.children {
@@ -58,10 +68,10 @@ func (c *Container) Render(size, offset vmath.Vector2) vmath.Vector2 {
 	}
 	//offsets and sizes
 	c.offset = offset
-	c.backgroundOffset = vmath.Vector2{c.margin.Left, c.margin.Top}
-	c.elementsOffset = vmath.Vector2{c.margin.Left + c.padding.Left, c.margin.Top + c.padding.Top}
-	backgroundSize := containerSize.Add(vmath.Vector2{c.padding.Left + c.padding.Right, c.padding.Top + c.padding.Bottom})
-	totalSize := backgroundSize.Add(vmath.Vector2{c.margin.Left + c.margin.Right, c.margin.Top + c.margin.Bottom})
+	c.backgroundOffset = vmath.Vector2{margin.Left, margin.Top}
+	c.elementsOffset = vmath.Vector2{margin.Left + padding.Left, margin.Top + padding.Top}
+	backgroundSize := containerSize.Add(vmath.Vector2{padding.Left + padding.Right, padding.Top + padding.Bottom})
+	totalSize := backgroundSize.Add(vmath.Vector2{margin.Left + margin.Right, margin.Top + margin.Bottom})
 
 	c.background.SetScale(backgroundSize.ToVector3())
 	c.background.SetTranslation(c.backgroundOffset.ToVector3())
@@ -69,6 +79,23 @@ func (c *Container) Render(size, offset vmath.Vector2) vmath.Vector2 {
 	c.node.SetTranslation(c.offset.ToVector3())
 	c.Hitbox.SetSize(backgroundSize)
 	return totalSize
+}
+
+func convertMargin(margin Margin, percentages MarginPercentages, parentWidth float64) Margin {
+	result := &Margin{margin.Top, margin.Right, margin.Bottom, margin.Left}
+	if percentages.Bottom {
+		result.Bottom = parentWidth * margin.Bottom / 100.0
+	}
+	if percentages.Left {
+		result.Left = parentWidth * margin.Left / 100.0
+	}
+	if percentages.Right {
+		result.Right = parentWidth * margin.Right / 100.0
+	}
+	if percentages.Top {
+		result.Top = parentWidth * margin.Top / 100.0
+	}
+	return *result
 }
 
 func (c *Container) Spatial() renderer.Spatial {
@@ -79,16 +106,46 @@ func (c *Container) SetWidth(width float64) {
 	c.width = width
 }
 
+func (c *Container) UsePercentWidth(usePercent bool) {
+	c.percentWidth = usePercent
+}
+
+func (c *Container) getWidth(parentWidth float64) float64 {
+	if c.percentWidth {
+		return parentWidth * c.width / 100.0
+	}
+	return c.width
+}
+
 func (c *Container) SetHeight(height float64) {
 	c.height = height
+}
+
+func (c *Container) UsePercentHeight(usePercent bool) {
+	c.percentHeight = usePercent
+}
+
+func (c *Container) getHeight(parentWidth float64) float64 {
+	if c.percentHeight {
+		return parentWidth * c.height / 100.0
+	}
+	return c.height
 }
 
 func (c *Container) SetMargin(margin Margin) {
 	c.margin = margin
 }
 
+func (c *Container) SetMarginPercent(marginPercent MarginPercentages) {
+	c.marginPercent = marginPercent
+}
+
 func (c *Container) SetPadding(padding Margin) {
 	c.padding = padding
+}
+
+func (c *Container) SetPaddingPercent(paddingPercent MarginPercentages) {
+	c.paddingPercent = paddingPercent
 }
 
 func (c *Container) SetBackgroundColor(r, g, b, a uint8) {
@@ -174,6 +231,10 @@ func (c *Container) keyClick(key string, release bool) {
 
 func NewMargin(margin float64) Margin {
 	return Margin{margin, margin, margin, margin}
+}
+
+func NewMarginPercentages(percentage bool) MarginPercentages {
+	return MarginPercentages{percentage, percentage, percentage, percentage}
 }
 
 func NewContainer() *Container {

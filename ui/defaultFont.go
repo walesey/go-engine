@@ -1,15 +1,9 @@
 package ui
 
-import (
-	"encoding/base64"
-	"io/ioutil"
-	"strings"
-)
+import "github.com/walesey/go-engine/assets"
 
 func getDefaultFont() []byte {
-	decoder := base64.NewDecoder(base64.URLEncoding, strings.NewReader(defaultFontData))
-	data, _ := ioutil.ReadAll(decoder)
-	return data
+	return assets.Base64ToBytes(defaultFontData)
 }
 
 const defaultFontData = `

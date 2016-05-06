@@ -24,7 +24,7 @@ func (e *Editor) openProgressBar() {
 		window.SetElement(container)
 
 		e.controllerManager.AddController(ui.NewUiController(window))
-		ui.LoadHTML(container, strings.NewReader(progressBar), strings.NewReader(globalCss), e.uiAssets)
+		ui.LoadHTML(container, strings.NewReader(progressBarHtml), strings.NewReader(globalCss), e.uiAssets)
 
 		e.gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
 			window.Render()
@@ -48,5 +48,16 @@ func (e *Editor) setProgressBar(progress int) {
 				container.SetBackgroundColor(0, 255, 0, 255)
 			}
 		}
+	}
+}
+
+func (e *Editor) setProgressTime(message string) {
+	elem := e.progressBar.ElementById("progressBarMessage")
+	container, ok := elem.(*ui.Container)
+	if ok {
+		container.RemoveAllChildren()
+		html := fmt.Sprintf("<p>%v</p>", message)
+		css := "p { font-size: 8px; }"
+		ui.LoadHTML(container, strings.NewReader(html), strings.NewReader(css), e.uiAssets)
 	}
 }
