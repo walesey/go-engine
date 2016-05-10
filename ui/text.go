@@ -50,7 +50,7 @@ type TextElement struct {
 	textSize           float64
 	textFont           *truetype.Font
 	textAlign          int
-	size               vmath.Vector2
+	size, offset       vmath.Vector2
 	active             bool
 	dirty              bool
 	onFocusHandlers    []func()
@@ -178,6 +178,7 @@ func (te *TextElement) Render(size, offset vmath.Vector2) vmath.Vector2 {
 		te.dirty = true
 	}
 	te.size = useSize
+	te.offset = offset
 	if te.dirty {
 		te.dirty = false
 		te.updateImage(useSize)
@@ -221,6 +222,7 @@ func (te *TextElement) keyClick(key string, release bool) {
 		for _, handler := range te.onKeyPressHandlers {
 			handler(key, release)
 		}
+		te.Render(te.size, te.offset)
 	}
 }
 

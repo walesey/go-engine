@@ -22,9 +22,11 @@ func ImportObj(filePath string) (*renderer.Geometry, error) {
 	normalList := make([]float32, 0, 0)
 
 	//split the file name from the file path
-	filePathTokens := strings.Split(filePath, "/")
+	filePathTokens := strings.Split(strings.Replace(filePath, "\\", "/", -1), "/")
 	fileName := filePathTokens[len(filePathTokens)-1]
 	path := strings.TrimRight(filePath, fileName)
+	fmt.Println(fileName)
+	fmt.Println(path)
 
 	//open the file and read all lines
 	file, err := os.Open(filePath)
@@ -34,6 +36,7 @@ func ImportObj(filePath string) (*renderer.Geometry, error) {
 	}
 	defer file.Close()
 
+	var mtlErr error
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -51,7 +54,7 @@ func ImportObj(filePath string) (*renderer.Geometry, error) {
 			} else if dataType == "f" { // v/t/n face
 				obj.processFace(line, vertexList, uvList, normalList)
 			} else if dataType == "mtllib" {
-				obj.Mtl, _ = importMTL(path, tokens[1])
+				obj.Mtl, mtlErr = importMTL(path, tokens[1])
 			} else if dataType == "usemtl" { //mtl material
 				//TODO: multiple mtls
 			}
@@ -59,9 +62,11 @@ func ImportObj(filePath string) (*renderer.Geometry, error) {
 	}
 
 	geometry := renderer.CreateGeometry(obj.Indicies, obj.Vertices)
-	material := CreateMaterial(obj.Mtl.Map_Kd, obj.Mtl.Map_Disp, obj.Mtl.Map_Spec, obj.Mtl.Map_Roughness)
-	geometry.Material = material
-	if err := scanner.Err(); err != nil {
+	if mtlErr == nil {
+		geometry.Material = CreateMaterial(obj.Mtl.Map_Kd, obj.Mtl.Map_Disp, obj.Mtl.Map_Spec, obj.Mtl.Map_Roughness)
+	}
+
+	if err = scanner.Err(); err != nil {
 		fmt.Printf("Error loading geometry: %v\n", err)
 		return nil, err
 	}

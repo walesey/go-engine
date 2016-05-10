@@ -40,9 +40,71 @@ button:active {
 
 .tree {
     margin: 10px 0 0 0;
-	padding: 10px 10px 0 10px;
+	padding: 10px;
     background-color: #bbc;
 }
+
+.fileBrowser {
+    padding: 20px;
+}
+
+.fileBrowser button {
+    margin: 10px 10px 0 0;
+    width: 200px;
+}
+
+.fileBrowser .fileView {
+    height: 600px;
+    background-color: #fff;
+    padding: 5px;
+}
+
+.fileBrowser .content button {
+    width: 100%;
+    height: 20px;
+    padding: 5px 0 5px 45%;
+    margin: 0;
+    background-color: #0000;
+    font-size: 8px;
+    color: #000;
+}
+
+.fileBrowser .content button:hover {
+    background-color: #00f5;
+    color: #999;
+}
+
+.fileBrowser .content button:active {
+    background-color: #00f9;
+    color: #999;
+}
+
+.fileBrowser input {
+    width: 100%;
+    font-size: 16px;
+    background-color: #fff;
+}
+
+.progressBar {
+    padding: 10px;
+}
+
+.progressBar .progress {
+    width: 310px;
+    height: 40px;
+    padding: 0 0 0 3px;
+    background-color: #666;
+}
+
+.progressBar .progress div {
+    width: 10px;
+    height: 20px;
+    margin: 10px 0 10px 5px;
+    float: left;
+}
+`
+
+const treeItemCss = `
 
 .tree .treeItem {
 	margin: 0 0 10px 0;
@@ -94,59 +156,6 @@ button:active {
 .tree .closed .label {
     color: #999;
 }
-
-.fileBrowser {
-    padding: 20px;
-}
-
-.fileBrowser button {
-    margin: 10px 10px 0 0;
-    width: 200px;
-}
-
-.fileBrowser .fileView {
-    height: 600px;
-    background-color: #fff;
-    padding: 5px;
-}
-
-.fileBrowser .content button {
-    width: 100%;
-    height: 20px;
-    padding: 5px 0 5px 45%;
-    margin: 0;
-    background-color: #0000;
-    font-size: 8px;
-    color: #000;
-}
-
-.fileBrowser .content button:hover {
-    background-color: #00f5;
-    color: #999;
-}
-
-.fileBrowser .content button:active {
-    background-color: #00f9;
-    color: #999;
-}
-
-.progressBar {
-    padding: 10px;
-}
-
-.progressBar .progress {
-    width: 310px;
-    height: 40px;
-    padding: 0 0 0 3px;
-    background-color: #666;
-}
-
-.progressBar .progress div {
-    width: 10px;
-    height: 20px;
-    margin: 10px 0 10px 5px;
-    float: left;
-}
 `
 
 const mainMenuHtml = `
@@ -168,7 +177,7 @@ const overviewMenuHtml = `
         <div class="overview">
             <button onclick=import>Import</button>
             <button onclick=newGroup>New group</button>
-            <div class="tree"></div>
+            <div id="overviewTree" class="tree"></div>
         </div>
     </body>
 </html>
@@ -184,6 +193,7 @@ const fileBrowserHtml = `
                 <div id="fileView" class="fileView"></div>
                 <button onclick=fileBrowserScrollDown>v</button>
             </div>
+            <input id="filePathInput" type="text"></input>
             <button onclick=fileBrowserOpen>Open</button>
             <button onclick=fileBrowserCancel>Cancel</button>
         </div>

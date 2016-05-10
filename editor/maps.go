@@ -5,12 +5,23 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 
 	"github.com/Invictus321/invictus321-countdown"
 	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/editor/models"
 	"github.com/walesey/go-engine/renderer"
 )
+
+func (e *Editor) saveMap(filepath string) {
+	data, err := json.Marshal(e.currentMap)
+	if err != nil {
+		log.Printf("Error Marshaling map file: %v\n", err)
+		return
+	}
+
+	ioutil.WriteFile(filepath, data, os.ModePerm)
+}
 
 func (e *Editor) loadMap(path string) {
 	data, err := ioutil.ReadFile(path)
@@ -28,6 +39,7 @@ func (e *Editor) loadMap(path string) {
 
 	e.currentMap = &mapModel
 	e.updateMap(true)
+	e.overviewMenu.updateTree(e.currentMap)
 }
 
 func (e *Editor) updateMap(clearMemory bool) {

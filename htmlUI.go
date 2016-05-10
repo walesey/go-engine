@@ -114,13 +114,9 @@ func main() {
 			}
 			defer html.Close()
 
-			ui.LoadHTML(container, html, css, htmlAssets)
+			ui.LoadHTML(container, window, html, css, htmlAssets)
 		}
 		loadPage()
-
-		gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
-			window.Render()
-		}))
 
 		//input/controller manager
 		controllerManager := controller.NewControllerManager(glRenderer.Window)
@@ -147,21 +143,7 @@ func main() {
 		}, glfw.KeyR, glfw.Press)
 
 		customController.BindMouseAction(func() {
-			deactivateAllTextElements(mainContainer)
+			ui.DeactivateAllTextElements(mainContainer)
 		}, glfw.MouseButton1, glfw.Press)
 	})
-}
-
-func deactivateAllTextElements(container *ui.Container) {
-	for i := 0; i < container.GetNbChildren(); i++ {
-		child := container.GetChild(i)
-		childContainer, ok := child.(*ui.Container)
-		if ok {
-			deactivateAllTextElements(childContainer)
-		}
-		text, ok := child.(*ui.TextElement)
-		if ok {
-			text.Deactivate()
-		}
-	}
 }

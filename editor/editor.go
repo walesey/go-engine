@@ -20,6 +20,7 @@ type Editor struct {
 	controllerManager *controller.ControllerManager
 	uiAssets          ui.HtmlAssets
 	mainMenu          *ui.Window
+	overviewMenu      *Overview
 	mainMenuOpen      bool
 	progressBar       *ui.Window
 	fileBrowser       *FileBrowser
@@ -30,6 +31,10 @@ func New() *Editor {
 	return &Editor{
 		uiAssets:    ui.NewHtmlAssets(),
 		rootMapNode: renderer.CreateNode(),
+		currentMap: &editorModels.MapModel{
+			Name: "default",
+			Root: editorModels.NewNodeModel("root"),
+		},
 	}
 }
 

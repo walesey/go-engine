@@ -17,7 +17,7 @@ import (
 )
 
 // LoadHTML - load the html/css code into the container
-func LoadHTML(container *Container, htmlInput, cssInput io.Reader, assets HtmlAssets) error {
+func LoadHTML(container *Container, window *Window, htmlInput, cssInput io.Reader, assets HtmlAssets) error {
 	document, err := html.Parse(htmlInput)
 	if err != nil {
 		log.Printf("Error parsing html: %v", err)
@@ -37,6 +37,7 @@ func LoadHTML(container *Container, htmlInput, cssInput io.Reader, assets HtmlAs
 	}
 
 	renderNode(container, document.FirstChild, styles, assets)
+	window.Render()
 
 	return nil
 }
@@ -67,6 +68,11 @@ func renderNode(container *Container, node *html.Node, styles *css.Stylesheet, a
 				switch {
 				case inputType == "text":
 					textField = createText("", nextNode, newContainer, styles, assets)
+					newContainer.Hitbox.AddOnClick(func(button int, release bool, position vmath.Vector2) {
+						if !release {
+							textField.Activate()
+						}
+					})
 				}
 			case tagType == "img":
 				imgSrc := getAttribute(nextNode, "src")

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/walesey/go-engine/engine"
 	"github.com/walesey/go-engine/ui"
 	vmath "github.com/walesey/go-engine/vectormath"
 )
@@ -24,11 +23,8 @@ func (e *Editor) openProgressBar() {
 		window.SetElement(container)
 
 		e.controllerManager.AddController(ui.NewUiController(window))
-		ui.LoadHTML(container, strings.NewReader(progressBarHtml), strings.NewReader(globalCss), e.uiAssets)
+		ui.LoadHTML(container, window, strings.NewReader(progressBarHtml), strings.NewReader(globalCss), e.uiAssets)
 
-		e.gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
-			window.Render()
-		}))
 		e.progressBar = window
 	}
 	e.gameEngine.AddOrtho(e.progressBar)
@@ -58,6 +54,6 @@ func (e *Editor) setProgressTime(message string) {
 		container.RemoveAllChildren()
 		html := fmt.Sprintf("<p>%v</p>", message)
 		css := "p { font-size: 8px; }"
-		ui.LoadHTML(container, strings.NewReader(html), strings.NewReader(css), e.uiAssets)
+		ui.LoadHTML(container, e.progressBar, strings.NewReader(html), strings.NewReader(css), e.uiAssets)
 	}
 }
