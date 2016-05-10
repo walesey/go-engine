@@ -6,6 +6,10 @@
 	],
 	"Deps": [
 		{
+			"ImportPath": "github.com/Invictus321/invictus321-countdown",
+			"Rev": "142b6bf1357fcb79cc6938346cfd221ffba7c6d7"
+		},
+		{
 			"ImportPath": "github.com/aymerick/douceur/css",
 			"Comment": "v0.2.0-1-g7176f14",
 			"Rev": "7176f146738114e7386d4f915a0bbf55945e22c9"
@@ -43,17 +47,12 @@
 		},
 		{
 			"ImportPath": "github.com/luxengine/gobullet",
-			"Rev": "eb545846abc0b0d2c820e3570a4625995573fb0d"
+			"Rev": "e9b4522dd9652ffa9ec586ebf0dc99d540e66c02"
 		},
 		{
 			"ImportPath": "github.com/stretchr/testify/assert",
 			"Comment": "v1.0-49-g2b15294",
 			"Rev": "2b15294402a895a4224659d181866f545991021e"
-		},
-		{
-			"ImportPath": "github.com/walesey/freetype",
-			"Comment": "release-122-geffc31b",
-			"Rev": "effc31bbc4291f4b25015cf09e6432cd17e49880"
 		},
 		{
 			"ImportPath": "golang.org/x/image/bmp",

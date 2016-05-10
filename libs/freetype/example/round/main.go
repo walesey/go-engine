@@ -5,7 +5,7 @@
 
 // +build ignore
 //
-// This build tag means that "go install github.com/walesey/freetype/..."
+// This build tag means that "go install github.com/walesey/go-engine/libs/freetype/..."
 // doesn't install this example program. Use "go run main.go" to run it.
 
 // This program visualizes the quadratic approximation to the circle, used to
@@ -26,7 +26,7 @@ import (
 	"math"
 	"os"
 
-	"github.com/walesey/freetype/raster"
+	"github.com/walesey/go-engine/libs/freetype/raster"
 	"golang.org/x/image/math/fixed"
 )
 

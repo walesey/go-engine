@@ -13,8 +13,8 @@ import (
 	"image"
 	"image/draw"
 
-	"github.com/walesey/freetype/raster"
-	"github.com/walesey/freetype/truetype"
+	"github.com/walesey/go-engine/libs/freetype/raster"
+	"github.com/walesey/go-engine/libs/freetype/truetype"
 	"golang.org/x/image/font"
 	"golang.org/x/image/math/fixed"
 )

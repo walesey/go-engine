@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	"github.com/disintegration/imaging"
-	"github.com/walesey/freetype"
-	"github.com/walesey/freetype/truetype"
+	"github.com/walesey/go-engine/libs/freetype"
+	"github.com/walesey/go-engine/libs/freetype/truetype"
 	"github.com/walesey/go-engine/renderer"
 	vmath "github.com/walesey/go-engine/vectormath"
 	"golang.org/x/image/font"

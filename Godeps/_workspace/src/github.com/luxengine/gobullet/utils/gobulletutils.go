@@ -3,7 +3,7 @@ package gobulletutils
 import (
 	"bufio"
 	"fmt"
-	bullet "github.com/luxengine/gobullet"
+	bullet "github.com/hydroflame/gobullet"
 	"os"
 	"strings"
 )

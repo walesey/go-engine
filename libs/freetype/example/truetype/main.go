@@ -5,7 +5,7 @@
 
 // +build ignore
 //
-// This build tag means that "go install github.com/walesey/freetype/..."
+// This build tag means that "go install github.com/walesey/go-engine/libs/freetype/..."
 // doesn't install this example program. Use "go run main.go" to run it.
 
 package main
@@ -16,7 +16,7 @@ import (
 	"io/ioutil"
 	"log"
 
-	"github.com/walesey/freetype/truetype"
+	"github.com/walesey/go-engine/libs/freetype/truetype"
 	"golang.org/x/image/font"
 	"golang.org/x/image/math/fixed"
 )
