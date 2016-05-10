@@ -53,6 +53,7 @@ type TextElement struct {
 	size, offset       vmath.Vector2
 	active             bool
 	dirty              bool
+	cursorPos          int
 	onFocusHandlers    []func()
 	onBlurHandlers     []func()
 	onKeyPressHandlers []func(key string, release bool)
@@ -216,8 +217,20 @@ func (te *TextElement) keyClick(key string, release bool) {
 			if len(textBytes) > 0 {
 				te.SetText(string(textBytes[:len(textBytes)-1]))
 			}
+		} else if key == "leftArrow" {
+			if te.cursorPos > 0 {
+				te.cursorPos--
+			}
+		} else if key == "rightArrow" {
+			if te.cursorPos < len(te.text) {
+				te.cursorPos++
+			}
 		} else {
-			te.SetText(fmt.Sprintf("%v%v", te.text, key))
+			insertText := []rune(key)
+			newText := []rune(te.text)
+			newText = append(newText[:te.cursorPos], append(insertText, newText[te.cursorPos:]...)...)
+			te.SetText(string(newText))
+			te.cursorPos += len(insertText)
 		}
 		for _, handler := range te.onKeyPressHandlers {
 			handler(key, release)

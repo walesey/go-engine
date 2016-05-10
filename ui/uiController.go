@@ -45,8 +45,17 @@ func NewUiController(window *Window) controller.Controller {
 			} else {
 				keyString = strings.ToLower(keyString)
 			}
-			if key == glfw.KeyBackspace {
+			switch {
+			case key == glfw.KeyBackspace:
 				keyString = "backspace"
+			case key == glfw.KeyLeft:
+				keyString = "leftArrow"
+			case key == glfw.KeyRight:
+				keyString = "rightArrow"
+			case key == glfw.KeyUp:
+				keyString = "upArrow"
+			case key == glfw.KeyDown:
+				keyString = "downArrow"
 			}
 			window.keyClick(keyString, action == glfw.Release)
 		}
