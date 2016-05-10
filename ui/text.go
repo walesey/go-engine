@@ -216,6 +216,7 @@ func (te *TextElement) keyClick(key string, release bool) {
 		if key == "backspace" {
 			if len(textBytes) > 0 {
 				te.SetText(string(textBytes[:len(textBytes)-1]))
+				te.cursorPos--
 			}
 		} else if key == "leftArrow" {
 			if te.cursorPos > 0 {
