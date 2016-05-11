@@ -15,13 +15,14 @@ import (
 const maxFileDisplayed = 37
 
 type FileBrowser struct {
-	window       *ui.Window
-	assets       ui.HtmlAssets
-	callback     func(filePath string)
-	root         string
-	scrollOffset int
-	openFolders  map[string]bool
-	selectedFile string
+	window          *ui.Window
+	assets          ui.HtmlAssets
+	callback        func(filePath string)
+	root            string
+	scrollOffset    int
+	openFolders     map[string]bool
+	selectedFile    string
+	extensionFilter []string
 }
 
 func (e *Editor) closeFileBrowser() {
@@ -31,7 +32,7 @@ func (e *Editor) closeFileBrowser() {
 	}
 }
 
-func (e *Editor) openFileBrowser(heading string, callback func(filePath string)) {
+func (e *Editor) openFileBrowser(heading string, callback func(filePath string), filters ...string) {
 	if e.fileBrowserOpen {
 		return
 	}
@@ -92,12 +93,22 @@ func (e *Editor) openFileBrowser(heading string, callback func(filePath string))
 			scrollOffset: 0,
 			openFolders:  make(map[string]bool),
 		}
-		e.fileBrowser.UpdateFileSystem()
 	}
 	e.fileBrowser.callback = callback
 	e.fileBrowser.SetHeading(heading)
+	e.fileBrowser.extensionFilter = filters
 	e.gameEngine.AddOrtho(e.fileBrowser.window)
 	e.fileBrowserOpen = true
+	e.fileBrowser.UpdateFileSystem()
+}
+
+func (fb *FileBrowser) checkExtensionFilter(filename string) bool {
+	for _, filter := range fb.extensionFilter {
+		if strings.HasSuffix(filename, filter) {
+			return true
+		}
+	}
+	return false
 }
 
 func (fb *FileBrowser) UpdateFileSystem() {
@@ -114,6 +125,9 @@ func (fb *FileBrowser) UpdateFileSystem() {
 			}
 			inClosedDir = false
 		}
+		if !info.IsDir() && len(fb.extensionFilter) > 0 && !fb.checkExtensionFilter(info.Name()) {
+			return nil
+		}
 		open, ok := fb.openFolders[path]
 		isOpen := ok && open
 		if !isOpen {
@@ -121,15 +135,14 @@ func (fb *FileBrowser) UpdateFileSystem() {
 			closedDepth = depth
 		}
 		if err == nil && fileCounter >= fb.scrollOffset && fileCounter < fb.scrollOffset+maxFileDisplayed {
-			name := info.Name()
 			if info.IsDir() {
 				if isOpen {
-					fb.RenderFile(name, path, "folderOpen", depth)
+					fb.RenderFile(info.Name(), path, "folderOpen", depth)
 				} else {
-					fb.RenderFile(name, path, "folderClosed", depth)
+					fb.RenderFile(info.Name(), path, "folderClosed", depth)
 				}
 			} else {
-				fb.RenderFile(name, path, "file", depth)
+				fb.RenderFile(info.Name(), path, "file", depth)
 			}
 		}
 		fileCounter++

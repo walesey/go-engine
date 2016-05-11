@@ -34,7 +34,7 @@ func (e *Editor) initOverviewMenu() {
 				e.setGeametry(filePath)
 				e.overviewMenu.updateTree(e.currentMap)
 				e.closeFileBrowser()
-			})
+			}, ".obj")
 		}
 	})
 
