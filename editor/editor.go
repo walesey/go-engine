@@ -64,8 +64,8 @@ func (e *Editor) Start() {
 		//camera + player
 		camera := e.gameEngine.Camera()
 		freeMoveActor := actor.NewFreeMoveActor(camera)
-		freeMoveActor.MoveSpeed = 10.0
-		mainController := controller.NewBasicMovementController(freeMoveActor)
+		freeMoveActor.MoveSpeed = 25.0
+		mainController := controller.NewBasicMovementController(freeMoveActor, true)
 		e.controllerManager.AddController(mainController)
 		e.gameEngine.AddUpdatable(freeMoveActor)
 

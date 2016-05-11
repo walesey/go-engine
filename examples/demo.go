@@ -38,7 +38,7 @@ func Demo(c *cli.Context) {
 		//input/controller manager
 		controllerManager := controller.NewControllerManager(glRenderer.Window)
 		//camera free move actor
-		mainController := controller.NewBasicMovementController(freeMoveActor)
+		mainController := controller.NewBasicMovementController(freeMoveActor, false)
 		controllerManager.AddController(mainController)
 	})
 

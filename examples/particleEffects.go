@@ -226,7 +226,7 @@ func Particles(c *cli.Context) {
 		glRenderer.LockCursor(true)
 
 		//camera free move actor
-		mainController := controller.NewBasicMovementController(freeMoveActor)
+		mainController := controller.NewBasicMovementController(freeMoveActor, false)
 		controllerManager.AddController(mainController)
 
 		customController := controller.NewActionMap()

@@ -2,9 +2,10 @@ package controller
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/go-gl/glfw/v3.1/glfw"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 type TestBasicMovementActor struct {
@@ -45,7 +46,7 @@ func TestBasicMovementController(t *testing.T) {
 	manager := &ControllerManager{controllerList}
 
 	actor := &TestBasicMovementActor{0, 0, false, false, false, false}
-	var c = NewBasicMovementController(actor)
+	var c = NewBasicMovementController(actor, false)
 	manager.AddController(c)
 
 	fmt.Println("About to test basic movement")
