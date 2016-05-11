@@ -54,7 +54,7 @@ func (e *Editor) openFileBrowser(heading string, callback func(filePath string),
 
 		e.uiAssets.AddCallback("fileBrowserOpen", func(element ui.Element, args ...interface{}) {
 			if len(args) >= 2 && !args[1].(bool) { // not on release
-				e.fileBrowser.callback(e.fileBrowser.selectedFile)
+				e.fileBrowser.callback(e.fileBrowser.GetFileTextField())
 			}
 		})
 
@@ -96,6 +96,7 @@ func (e *Editor) openFileBrowser(heading string, callback func(filePath string),
 	}
 	e.fileBrowser.callback = callback
 	e.fileBrowser.SetHeading(heading)
+	e.fileBrowser.SetFileTextField("")
 	e.fileBrowser.extensionFilter = filters
 	e.gameEngine.AddOrtho(e.fileBrowser.window)
 	e.fileBrowserOpen = true
@@ -109,6 +110,29 @@ func (fb *FileBrowser) checkExtensionFilter(filename string) bool {
 		}
 	}
 	return false
+}
+
+func (fb *FileBrowser) SetFileTextField(path string) {
+	elem := fb.window.ElementById("filePathInput")
+	container, ok := elem.(*ui.Container)
+	if ok && container.GetNbChildren() > 0 {
+		inputText, ok := container.GetChild(0).(*ui.TextElement)
+		if ok {
+			inputText.SetText(path)
+		}
+	}
+}
+
+func (fb *FileBrowser) GetFileTextField() string {
+	elem := fb.window.ElementById("filePathInput")
+	container, ok := elem.(*ui.Container)
+	if ok && container.GetNbChildren() > 0 {
+		inputText, ok := container.GetChild(0).(*ui.TextElement)
+		if ok {
+			return inputText.GetText()
+		}
+	}
+	return ""
 }
 
 func (fb *FileBrowser) UpdateFileSystem() {
@@ -166,6 +190,7 @@ func (fb *FileBrowser) RenderFile(name, path, img string, depth int) {
 		fb.assets.AddCallback(onclickName, func(element ui.Element, args ...interface{}) {
 			if len(args) >= 2 && !args[1].(bool) { // not on release
 				fb.selectedFile = path
+				fb.SetFileTextField(path)
 				open, openOk := fb.openFolders[path]
 				fb.openFolders[path] = !openOk || !open
 				fb.UpdateFileSystem()

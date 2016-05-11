@@ -119,6 +119,7 @@ func (te *TextElement) GetText() string {
 
 func (te *TextElement) SetText(text string) {
 	te.text = text
+	te.cursorPos = len(text)
 	te.dirty = true
 }
 
@@ -215,8 +216,10 @@ func (te *TextElement) keyClick(key string, release bool) {
 		textBytes := []byte(te.text)
 		if key == "backspace" {
 			if len(textBytes) > 0 {
-				te.SetText(string(textBytes[:len(textBytes)-1]))
-				te.cursorPos--
+				cursorPos := te.cursorPos
+				newText := append(textBytes[:cursorPos-1], textBytes[cursorPos:]...)
+				te.SetText(string(newText))
+				te.cursorPos = cursorPos - 1
 			}
 		} else if key == "leftArrow" {
 			if te.cursorPos > 0 {
@@ -230,8 +233,9 @@ func (te *TextElement) keyClick(key string, release bool) {
 			insertText := []rune(key)
 			newText := []rune(te.text)
 			newText = append(newText[:te.cursorPos], append(insertText, newText[te.cursorPos:]...)...)
+			cursorPos := te.cursorPos
 			te.SetText(string(newText))
-			te.cursorPos += len(insertText)
+			te.cursorPos = cursorPos + 1
 		}
 		for _, handler := range te.onKeyPressHandlers {
 			handler(key, release)
