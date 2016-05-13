@@ -33,15 +33,25 @@ button:active {
     padding: 20px;
 }
 
-.overview button {
-    width: 220px;
-    margin: 10px 10px 0 0;
+.overview .panel {
+    margin: 10px 0 0 0;
+    padding: 10px;
+    background-color: #bbc;
 }
 
-.tree {
-    margin: 10px 0 0 0;
-	padding: 10px;
-    background-color: #bbc;
+.overview button {
+    width: 22px;
+    padding: 3px;
+    background-color: #fff;
+    margin: 0 5px 0 0;
+}
+
+.overview button:hover {
+    background-color: #66f;
+}
+
+.overview button:active {
+    background-color: #33f;
 }
 
 .fileBrowser {
@@ -175,9 +185,17 @@ const overviewMenuHtml = `
 <html>
     <body>
         <div class="overview">
-            <button onclick=import>Import</button>
-            <button onclick=newGroup>New group</button>
-            <div id="overviewTree" class="tree"></div>
+            <div class="panel">
+                <button onclick=newGroup><img src=planetOpen></img></button>
+                <button onclick=copyGroup><img src=file></img></button>
+                <button onclick=deleteGroup><img src=trash></img></button>
+                <button onclick=import><img src=geometry></img></button>
+                <button onclick=scale><img src=scale></img></button>
+                <button onclick=translate><img src=translate></img></button>
+                <button onclick=rotate><img src=rotate></img></button>
+                <button onclick=reset><img src=reset></img></button>
+            </div>
+            <div id="overviewTree" class="panel"></div>
         </div>
     </body>
 </html>

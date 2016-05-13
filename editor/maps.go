@@ -44,6 +44,7 @@ func (e *Editor) loadMap(path string) {
 
 func (e *Editor) updateMap(clearMemory bool) {
 	e.rootMapNode.RemoveAll(clearMemory)
+	e.nodeIndex = make(map[string]*renderer.Node)
 
 	cd := countdown.Countdown{}
 	cd.Start(countGeometries(e.currentMap.Root))
@@ -72,6 +73,7 @@ func (e *Editor) updateMap(clearMemory bool) {
 		for _, childModel := range srcModel.Children {
 			newNode := renderer.CreateNode()
 			destNode.Add(newNode)
+			e.nodeIndex[childModel.Id] = newNode
 			updateNode(childModel, newNode)
 		}
 	}

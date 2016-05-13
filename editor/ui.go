@@ -1,15 +1,30 @@
 package editor
 
 import (
+	"bytes"
 	"os"
 	"strings"
 
 	"github.com/go-gl/glfw/v3.1/glfw"
+	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/ui"
 	vmath "github.com/walesey/go-engine/vectormath"
 )
 
 func (e *Editor) setupUI() {
+	//images
+	loadImageAsset("file", FileIconData, e.uiAssets)
+	loadImageAsset("folderOpen", FolderOpenData, e.uiAssets)
+	loadImageAsset("folderClosed", FolderClosedData, e.uiAssets)
+	loadImageAsset("planetOpen", PlanetOpenData, e.uiAssets)
+	loadImageAsset("planetClosed", PlanetClosedData, e.uiAssets)
+	loadImageAsset("trash", TrashIconData, e.uiAssets)
+	loadImageAsset("geometry", GeometryIconData, e.uiAssets)
+	loadImageAsset("scale", ScaleIconData, e.uiAssets)
+	loadImageAsset("translate", TranslateIconData, e.uiAssets)
+	loadImageAsset("rotate", RotateIconData, e.uiAssets)
+	loadImageAsset("reset", ResetIconData, e.uiAssets)
+
 	e.initOverviewMenu()
 
 	e.customController.BindAction(func() {
@@ -21,6 +36,11 @@ func (e *Editor) setupUI() {
 			e.openMainMenu()
 		}
 	}, glfw.KeyEscape, glfw.Press)
+}
+
+func loadImageAsset(key, data string, uiAssets ui.HtmlAssets) {
+	img, _ := assets.DecodeImage(bytes.NewBuffer(assets.Base64ToBytes(data)))
+	uiAssets.AddImage(key, img)
 }
 
 func (e *Editor) closeMainMenu() {

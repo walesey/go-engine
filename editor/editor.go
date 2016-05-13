@@ -16,6 +16,7 @@ type Editor struct {
 	gameEngine        engine.Engine
 	currentMap        *editorModels.MapModel
 	rootMapNode       *renderer.Node
+	nodeIndex         map[string]*renderer.Node
 	customController  *controller.ActionMap
 	controllerManager *controller.ControllerManager
 	uiAssets          ui.HtmlAssets
@@ -25,16 +26,19 @@ type Editor struct {
 	progressBar       *ui.Window
 	fileBrowser       *FileBrowser
 	fileBrowserOpen   bool
+	mouseMode         string
 }
 
 func New() *Editor {
 	return &Editor{
 		uiAssets:    ui.NewHtmlAssets(),
 		rootMapNode: renderer.CreateNode(),
+		nodeIndex:   make(map[string]*renderer.Node),
 		currentMap: &editorModels.MapModel{
 			Name: "default",
 			Root: editorModels.NewNodeModel("root"),
 		},
+		mouseMode: "scale",
 	}
 }
 
@@ -64,20 +68,19 @@ func (e *Editor) Start() {
 		//camera + player
 		camera := e.gameEngine.Camera()
 		freeMoveActor := actor.NewFreeMoveActor(camera)
-		freeMoveActor.MoveSpeed = 25.0
+		freeMoveActor.MoveSpeed = 20.0
+		freeMoveActor.LookSpeed = 0.002
 		mainController := controller.NewBasicMovementController(freeMoveActor, true)
 		e.controllerManager.AddController(mainController)
 		e.gameEngine.AddUpdatable(freeMoveActor)
+
+		//editor controller
+		e.controllerManager.AddController(NewEditorController(e))
 
 		//custom controller
 		e.customController = controller.NewActionMap()
 		e.controllerManager.AddController(e.customController)
 
 		e.setupUI()
-
-		//event loop
-		e.gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
-			//TODO:
-		}))
 	})
 }

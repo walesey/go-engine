@@ -1,13 +1,11 @@
 package editor
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/ui"
 	vmath "github.com/walesey/go-engine/vectormath"
 )
@@ -37,20 +35,6 @@ func (e *Editor) openFileBrowser(heading string, callback func(filePath string),
 		return
 	}
 	if e.fileBrowser == nil {
-		fileImg, err := assets.DecodeImage(bytes.NewBuffer(assets.Base64ToBytes(FileIconData)))
-		if err == nil {
-			e.uiAssets.AddImage("file", fileImg)
-		}
-
-		folderOpenImg, err := assets.DecodeImage(bytes.NewBuffer(assets.Base64ToBytes(FolderOpenData)))
-		if err == nil {
-			e.uiAssets.AddImage("folderOpen", folderOpenImg)
-		}
-
-		folderClosedImg, err := assets.DecodeImage(bytes.NewBuffer(assets.Base64ToBytes(FolderClosedData)))
-		if err == nil {
-			e.uiAssets.AddImage("folderClosed", folderClosedImg)
-		}
 
 		e.uiAssets.AddCallback("fileBrowserOpen", func(element ui.Element, args ...interface{}) {
 			if len(args) >= 2 && !args[1].(bool) { // not on release

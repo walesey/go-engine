@@ -1,11 +1,9 @@
 package editor
 
 import (
-	"bytes"
 	"fmt"
 	"strings"
 
-	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/editor/models"
 	"github.com/walesey/go-engine/ui"
 	vmath "github.com/walesey/go-engine/vectormath"
@@ -21,12 +19,6 @@ type Overview struct {
 }
 
 func (e *Editor) initOverviewMenu() {
-
-	planetOpenImg, _ := assets.DecodeImage(bytes.NewBuffer(assets.Base64ToBytes(PlanetOpenData)))
-	e.uiAssets.AddImage("planetOpen", planetOpenImg)
-
-	planetClosedImg, _ := assets.DecodeImage(bytes.NewBuffer(assets.Base64ToBytes(PlanetClosedData)))
-	e.uiAssets.AddImage("planetClosed", planetClosedImg)
 
 	e.uiAssets.AddCallback("import", func(element ui.Element, args ...interface{}) {
 		if len(args) >= 2 && !args[1].(bool) { // not on release
@@ -46,6 +38,38 @@ func (e *Editor) initOverviewMenu() {
 		}
 	})
 
+	e.uiAssets.AddCallback("copyGroup", func(element ui.Element, args ...interface{}) {
+		if len(args) >= 2 && !args[1].(bool) { // not on release
+			e.copyNewGroup()
+			e.overviewMenu.updateTree(e.currentMap)
+			e.updateMap(true)
+		}
+	})
+
+	e.uiAssets.AddCallback("deleteGroup", func(element ui.Element, args ...interface{}) {
+		if len(args) >= 2 && !args[1].(bool) { // not on release
+			e.deleteGroup()
+			e.overviewMenu.updateTree(e.currentMap)
+			e.updateMap(true)
+		}
+	})
+
+	e.uiAssets.AddCallback("scale", func(element ui.Element, args ...interface{}) {
+		e.mouseMode = "scale"
+	})
+
+	e.uiAssets.AddCallback("translate", func(element ui.Element, args ...interface{}) {
+		e.mouseMode = "translate"
+	})
+
+	e.uiAssets.AddCallback("rotate", func(element ui.Element, args ...interface{}) {
+		e.mouseMode = "rotate"
+	})
+
+	e.uiAssets.AddCallback("reset", func(element ui.Element, args ...interface{}) {
+		e.resetGroup()
+	})
+
 	window, container, _ := e.defaultWindow()
 	window.SetTranslation(vmath.Vector3{10, 10, 1})
 	window.SetScale(vmath.Vector3{500, 0, 1})
@@ -63,32 +87,72 @@ func (e *Editor) initOverviewMenu() {
 }
 
 func (e *Editor) setGeametry(filePath string) {
-	if node := findNodeById(e.overviewMenu.selectedNodeId, e.currentMap.Root); node != nil {
+	if node, _ := e.overviewMenu.getSelectedNode(e.currentMap.Root); node != nil {
 		node.Geometry = &filePath
 		e.updateMap(true)
 	}
 }
 
 func (e *Editor) createNewGroup(name string) {
-	if node := findNodeById(e.overviewMenu.selectedNodeId, e.currentMap.Root); node != nil {
-		if check := findNodeById(name, e.currentMap.Root); check != nil {
+	if node, _ := findNodeById(e.overviewMenu.selectedNodeId, e.currentMap.Root); node != nil {
+		if check, _ := findNodeById(name, e.currentMap.Root); check != nil {
 			return // id already taken
 		}
 		node.Children = append(node.Children, editorModels.NewNodeModel(name))
 	}
 }
 
-func findNodeById(nodeId string, model *editorModels.NodeModel) *editorModels.NodeModel {
-	if model.Id == nodeId {
-		return model
+func (e *Editor) copyNewGroup() {
+	if node, parent := findNodeById(e.overviewMenu.selectedNodeId, e.currentMap.Root); node != nil && parent != nil {
+		uniqueIdCounter++
+		parent.Children = append(parent.Children, node.Copy(func(name string) string {
+			return fmt.Sprintf("%v_copy_%v", name, uniqueIdCounter)
+		}))
 	}
-	for _, childModel := range model.Children {
-		result := findNodeById(nodeId, childModel)
-		if result != nil {
-			return result
+}
+
+func (e *Editor) deleteGroup() {
+	if node, parent := findNodeById(e.overviewMenu.selectedNodeId, e.currentMap.Root); node != nil && parent != nil {
+		for i, childNode := range parent.Children {
+			if childNode == node {
+				parent.Children = append(parent.Children[:i], parent.Children[i+1:]...)
+				break
+			}
 		}
 	}
-	return nil
+}
+
+func (e *Editor) resetGroup() {
+	selectedNode, ok := e.nodeIndex[e.overviewMenu.selectedNodeId]
+	if node, _ := findNodeById(e.overviewMenu.selectedNodeId, e.currentMap.Root); node != nil && ok {
+		node.Scale = vmath.Vector3{1, 1, 1}
+		node.Translation = vmath.Vector3{}
+		node.Orientation = vmath.IdentityQuaternion()
+		selectedNode.SetScale(node.Scale)
+		selectedNode.SetTranslation(node.Translation)
+		selectedNode.SetOrientation(node.Orientation)
+	}
+}
+
+func findNodeById(nodeId string, model *editorModels.NodeModel) (node, parent *editorModels.NodeModel) {
+	if model.Id == nodeId {
+		node = model
+		return
+	}
+	for _, childModel := range model.Children {
+		node, parent = findNodeById(nodeId, childModel)
+		if node != nil {
+			if parent == nil {
+				parent = model
+			}
+			return
+		}
+	}
+	return
+}
+
+func (o *Overview) getSelectedNode(model *editorModels.NodeModel) (node, parent *editorModels.NodeModel) {
+	return findNodeById(o.selectedNodeId, model)
 }
 
 func (o *Overview) updateTree(mapModel *editorModels.MapModel) {
