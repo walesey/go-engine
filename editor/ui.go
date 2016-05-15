@@ -14,6 +14,8 @@ import (
 func (e *Editor) setupUI() {
 	//images
 	loadImageAsset("file", FileIconData, e.uiAssets)
+	loadImageAsset("copy", CopyIconData, e.uiAssets)
+	loadImageAsset("reference", LinkIconData, e.uiAssets)
 	loadImageAsset("folderOpen", FolderOpenData, e.uiAssets)
 	loadImageAsset("folderClosed", FolderClosedData, e.uiAssets)
 	loadImageAsset("planetOpen", PlanetOpenData, e.uiAssets)

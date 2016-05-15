@@ -187,7 +187,8 @@ const overviewMenuHtml = `
         <div class="overview">
             <div class="panel">
                 <button onclick=newGroup><img src=planetOpen></img></button>
-                <button onclick=copyGroup><img src=file></img></button>
+                <button onclick=copyGroup><img src=copy></img></button>
+                <button onclick=referenceGroup><img src=reference></img></button>
                 <button onclick=deleteGroup><img src=trash></img></button>
                 <button onclick=import><img src=geometry></img></button>
                 <button onclick=scale><img src=scale></img></button>

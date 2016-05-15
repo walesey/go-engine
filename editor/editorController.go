@@ -52,27 +52,24 @@ func NewEditorController(e *Editor) controller.Controller {
 
 func (e *Editor) ScaleSelectedNodeModel(x, y float64, axisLock vmath.Vector3) {
 	selectedModel, _ := e.overviewMenu.getSelectedNode(e.currentMap.Root)
-	selectedNode, ok := e.nodeIndex[e.overviewMenu.selectedNodeId]
-	if ok {
+	if selectedModel != nil {
 		selectedModel.Scale = selectedModel.Scale.Add(axisLock.MultiplyScalar(x * mouseSpeed))
-		selectedNode.SetScale(selectedModel.Scale)
 	}
+	UpdateMapNode(e.currentMap.Root)
 }
 
 func (e *Editor) MoveSelectedNodeModel(x, y float64, axisLock vmath.Vector3) {
 	selectedModel, _ := e.overviewMenu.getSelectedNode(e.currentMap.Root)
-	selectedNode, ok := e.nodeIndex[e.overviewMenu.selectedNodeId]
-	if ok {
+	if selectedModel != nil {
 		selectedModel.Translation = selectedModel.Translation.Add(axisLock.MultiplyScalar(x * mouseSpeed))
-		selectedNode.SetTranslation(selectedModel.Translation)
 	}
+	UpdateMapNode(e.currentMap.Root)
 }
 
 func (e *Editor) RotateSelectedNodeModel(x, y float64, axisLock vmath.Vector3) {
 	selectedModel, _ := e.overviewMenu.getSelectedNode(e.currentMap.Root)
-	selectedNode, ok := e.nodeIndex[e.overviewMenu.selectedNodeId]
-	if ok {
-		selectedModel.Orientation = vmath.AngleAxis(x*mouseSpeed, axisLock).Multiply(selectedModel.Orientation)
-		selectedNode.SetOrientation(selectedModel.Orientation.Normalize())
+	if selectedModel != nil {
+		selectedModel.Orientation = vmath.AngleAxis(x*mouseSpeed, axisLock).Multiply(selectedModel.Orientation).Normalize()
 	}
+	UpdateMapNode(e.currentMap.Root)
 }

@@ -15,7 +15,7 @@ type Overview struct {
 	window         *ui.Window
 	assets         ui.HtmlAssets
 	selectedNodeId string
-	closedNodes    map[string]bool
+	openNodes      map[string]bool
 }
 
 func (e *Editor) initOverviewMenu() {
@@ -42,7 +42,15 @@ func (e *Editor) initOverviewMenu() {
 		if len(args) >= 2 && !args[1].(bool) { // not on release
 			e.copyNewGroup()
 			e.overviewMenu.updateTree(e.currentMap)
-			e.updateMap(true)
+			e.updateMap()
+		}
+	})
+
+	e.uiAssets.AddCallback("referenceGroup", func(element ui.Element, args ...interface{}) {
+		if len(args) >= 2 && !args[1].(bool) { // not on release
+			e.referenceGroup()
+			e.overviewMenu.updateTree(e.currentMap)
+			e.updateMap()
 		}
 	})
 
@@ -50,7 +58,7 @@ func (e *Editor) initOverviewMenu() {
 		if len(args) >= 2 && !args[1].(bool) { // not on release
 			e.deleteGroup()
 			e.overviewMenu.updateTree(e.currentMap)
-			e.updateMap(true)
+			e.updateMap()
 		}
 	})
 
@@ -79,9 +87,9 @@ func (e *Editor) initOverviewMenu() {
 
 	e.gameEngine.AddOrtho(window)
 	e.overviewMenu = &Overview{
-		window:      window,
-		assets:      e.uiAssets,
-		closedNodes: make(map[string]bool),
+		window:    window,
+		assets:    e.uiAssets,
+		openNodes: make(map[string]bool),
 	}
 	e.overviewMenu.updateTree(e.currentMap)
 }
@@ -89,7 +97,7 @@ func (e *Editor) initOverviewMenu() {
 func (e *Editor) setGeametry(filePath string) {
 	if node, _ := e.overviewMenu.getSelectedNode(e.currentMap.Root); node != nil {
 		node.Geometry = &filePath
-		e.updateMap(true)
+		e.updateMap()
 	}
 }
 
@@ -111,6 +119,19 @@ func (e *Editor) copyNewGroup() {
 	}
 }
 
+func (e *Editor) referenceGroup() {
+	if node, parent := findNodeById(e.overviewMenu.selectedNodeId, e.currentMap.Root); node != nil && parent != nil {
+		uniqueIdCounter++
+		name := fmt.Sprintf("%v_link_%v", node.Id, uniqueIdCounter)
+		for check, _ := findNodeById(name, e.currentMap.Root); check != nil; uniqueIdCounter++ {
+			name = fmt.Sprintf("%v_link_%v", node.Id, uniqueIdCounter)
+		}
+		newModel := editorModels.NewNodeModel(name)
+		newModel.Reference = &node.Id
+		parent.Children = append(parent.Children, newModel)
+	}
+}
+
 func (e *Editor) deleteGroup() {
 	if node, parent := findNodeById(e.overviewMenu.selectedNodeId, e.currentMap.Root); node != nil && parent != nil {
 		for i, childNode := range parent.Children {
@@ -123,15 +144,28 @@ func (e *Editor) deleteGroup() {
 }
 
 func (e *Editor) resetGroup() {
-	selectedNode, ok := e.nodeIndex[e.overviewMenu.selectedNodeId]
-	if node, _ := findNodeById(e.overviewMenu.selectedNodeId, e.currentMap.Root); node != nil && ok {
+	if node, _ := findNodeById(e.overviewMenu.selectedNodeId, e.currentMap.Root); node != nil {
+		selectedNode := node.GetNode()
+		if selectedNode != nil {
+			selectedNode.SetScale(node.Scale)
+			selectedNode.SetTranslation(node.Translation)
+			selectedNode.SetOrientation(node.Orientation)
+		}
 		node.Scale = vmath.Vector3{1, 1, 1}
 		node.Translation = vmath.Vector3{}
 		node.Orientation = vmath.IdentityQuaternion()
-		selectedNode.SetScale(node.Scale)
-		selectedNode.SetTranslation(node.Translation)
-		selectedNode.SetOrientation(node.Orientation)
 	}
+}
+
+func searchNodesByReference(referenceId string, model *editorModels.NodeModel) []*editorModels.NodeModel {
+	results := []*editorModels.NodeModel{}
+	if *model.Reference == referenceId {
+		results = append(results, model)
+	}
+	for _, childModel := range model.Children {
+		results = append(results, searchNodesByReference(referenceId, childModel)...)
+	}
+	return results
 }
 
 func findNodeById(nodeId string, model *editorModels.NodeModel) (node, parent *editorModels.NodeModel) {
@@ -164,17 +198,20 @@ func (o *Overview) updateTree(mapModel *editorModels.MapModel) {
 		o.assets.AddCallback(onclickName, func(element ui.Element, args ...interface{}) {
 			if len(args) >= 2 && !args[1].(bool) { // not on release
 				if o.selectedNodeId == model.Id {
-					o.closedNodes[model.Id] = !o.closedNodes[model.Id]
+					o.openNodes[model.Id] = !o.openNodes[model.Id]
 				}
 				o.selectedNodeId = model.Id
 				o.updateTree(mapModel)
 			}
 		})
-		isClosed := o.closedNodes[model.Id]
+		isOpen := o.openNodes[model.Id]
 
-		iconImg := "planetOpen"
-		if isClosed {
-			iconImg = "planetClosed"
+		iconImg := "planetClosed"
+		if isOpen {
+			iconImg = "planetOpen"
+		}
+		if model.Reference != nil {
+			iconImg = "reference"
 		}
 
 		html := fmt.Sprintf("<div onclick=%v><img src=%v></img><p>%v</p>", onclickName, iconImg, model.Id)
@@ -190,12 +227,12 @@ func (o *Overview) updateTree(mapModel *editorModels.MapModel) {
 		if model.Id == o.selectedNodeId {
 			css = fmt.Sprintf("%v div { background-color: #ff5 }", css)
 		}
-		if isClosed {
+		if !isOpen {
 			css = fmt.Sprintf("%v p { color: #999 }", css)
 		}
 		ui.LoadHTML(container, o.window, strings.NewReader(html), strings.NewReader(css), o.assets)
 
-		if !isClosed {
+		if isOpen {
 			for _, childModel := range model.Children {
 				nodeContainer := ui.NewContainer()
 				container.AddChildren(nodeContainer)

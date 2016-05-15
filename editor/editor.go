@@ -16,7 +16,6 @@ type Editor struct {
 	gameEngine        engine.Engine
 	currentMap        *editorModels.MapModel
 	rootMapNode       *renderer.Node
-	nodeIndex         map[string]*renderer.Node
 	customController  *controller.ActionMap
 	controllerManager *controller.ControllerManager
 	uiAssets          ui.HtmlAssets
@@ -33,7 +32,6 @@ func New() *Editor {
 	return &Editor{
 		uiAssets:    ui.NewHtmlAssets(),
 		rootMapNode: renderer.CreateNode(),
-		nodeIndex:   make(map[string]*renderer.Node),
 		currentMap: &editorModels.MapModel{
 			Name: "default",
 			Root: editorModels.NewNodeModel("root"),

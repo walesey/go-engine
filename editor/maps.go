@@ -38,28 +38,14 @@ func (e *Editor) loadMap(path string) {
 	}
 
 	e.currentMap = &mapModel
-	e.updateMap(true)
+	e.updateMap()
 	e.overviewMenu.updateTree(e.currentMap)
 }
 
-func (e *Editor) updateMap(clearMemory bool) {
-	e.rootMapNode.RemoveAll(clearMemory)
-	e.nodeIndex = make(map[string]*renderer.Node)
-
-	cd := countdown.Countdown{}
-	cd.Start(countGeometries(e.currentMap.Root))
-	e.openProgressBar()
-	e.setProgressBar(0)
-	e.setProgressTime("Loading Map...")
-
-	updateProgress := func() {
-		cd.Count()
-		e.setProgressBar(cd.PercentageComplete() / 5)
-		e.setProgressTime(fmt.Sprintf("Loading Map... %v seconds remaining", cd.SecondsRemaining()))
-	}
-
+func LoadMapToNode(model *editorModels.NodeModel, node *renderer.Node, updateProgress func()) {
 	var updateNode func(srcModel *editorModels.NodeModel, destNode *renderer.Node)
 	updateNode = func(srcModel *editorModels.NodeModel, destNode *renderer.Node) {
+		srcModel.SetNode(destNode)
 		if srcModel.Geometry != nil {
 			geometry, err := assets.ImportObjCached(*srcModel.Geometry)
 			if err == nil {
@@ -70,15 +56,53 @@ func (e *Editor) updateMap(clearMemory bool) {
 		destNode.SetScale(srcModel.Scale)
 		destNode.SetTranslation(srcModel.Translation)
 		destNode.SetOrientation(srcModel.Orientation)
+		if srcModel.Reference != nil {
+			if refModel, _ := findNodeById(*srcModel.Reference, model); refModel != nil {
+				for _, childModel := range refModel.Children {
+					refNode := childModel.GetNode()
+					if refNode != nil {
+						destNode.Add(refNode)
+					}
+				}
+			}
+		}
 		for _, childModel := range srcModel.Children {
 			newNode := renderer.CreateNode()
 			destNode.Add(newNode)
-			e.nodeIndex[childModel.Id] = newNode
 			updateNode(childModel, newNode)
 		}
 	}
 
-	updateNode(e.currentMap.Root, e.rootMapNode)
+	updateNode(model, node)
+}
+
+func UpdateMapNode(model *editorModels.NodeModel) {
+	node := model.GetNode()
+	if node != nil {
+		node.SetScale(model.Scale)
+		node.SetTranslation(model.Translation)
+		node.SetOrientation(model.Orientation)
+	}
+	for _, childModel := range model.Children {
+		UpdateMapNode(childModel)
+	}
+}
+
+func (e *Editor) updateMap() {
+	e.rootMapNode.RemoveAll(true)
+
+	cd := countdown.Countdown{}
+	cd.Start(countGeometries(e.currentMap.Root))
+	e.openProgressBar()
+	e.setProgressBar(0)
+	e.setProgressTime("Loading Map...")
+
+	LoadMapToNode(e.currentMap.Root, e.rootMapNode, func() {
+		cd.Count()
+		e.setProgressBar(cd.PercentageComplete() / 5)
+		e.setProgressTime(fmt.Sprintf("Loading Map... %v seconds remaining", cd.SecondsRemaining()))
+	})
+
 	e.closeProgressBar()
 }
 
