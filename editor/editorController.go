@@ -55,7 +55,7 @@ func (e *Editor) ScaleSelectedNodeModel(x, y float64, axisLock vmath.Vector3) {
 	if selectedModel != nil {
 		selectedModel.Scale = selectedModel.Scale.Add(axisLock.MultiplyScalar(x * mouseSpeed))
 	}
-	UpdateMapNode(e.currentMap.Root)
+	updateMap(e.currentMap.Root)
 }
 
 func (e *Editor) MoveSelectedNodeModel(x, y float64, axisLock vmath.Vector3) {
@@ -63,7 +63,7 @@ func (e *Editor) MoveSelectedNodeModel(x, y float64, axisLock vmath.Vector3) {
 	if selectedModel != nil {
 		selectedModel.Translation = selectedModel.Translation.Add(axisLock.MultiplyScalar(x * mouseSpeed))
 	}
-	UpdateMapNode(e.currentMap.Root)
+	updateMap(e.currentMap.Root)
 }
 
 func (e *Editor) RotateSelectedNodeModel(x, y float64, axisLock vmath.Vector3) {
@@ -71,5 +71,5 @@ func (e *Editor) RotateSelectedNodeModel(x, y float64, axisLock vmath.Vector3) {
 	if selectedModel != nil {
 		selectedModel.Orientation = vmath.AngleAxis(x*mouseSpeed, axisLock).Multiply(selectedModel.Orientation).Normalize()
 	}
-	UpdateMapNode(e.currentMap.Root)
+	updateMap(e.currentMap.Root)
 }

@@ -42,7 +42,7 @@ func (e *Editor) initOverviewMenu() {
 		if len(args) >= 2 && !args[1].(bool) { // not on release
 			e.copyNewGroup()
 			e.overviewMenu.updateTree(e.currentMap)
-			e.updateMap()
+			e.refreshMap()
 		}
 	})
 
@@ -50,7 +50,7 @@ func (e *Editor) initOverviewMenu() {
 		if len(args) >= 2 && !args[1].(bool) { // not on release
 			e.referenceGroup()
 			e.overviewMenu.updateTree(e.currentMap)
-			e.updateMap()
+			e.refreshMap()
 		}
 	})
 
@@ -58,7 +58,7 @@ func (e *Editor) initOverviewMenu() {
 		if len(args) >= 2 && !args[1].(bool) { // not on release
 			e.deleteGroup()
 			e.overviewMenu.updateTree(e.currentMap)
-			e.updateMap()
+			e.refreshMap()
 		}
 	})
 
@@ -97,7 +97,7 @@ func (e *Editor) initOverviewMenu() {
 func (e *Editor) setGeametry(filePath string) {
 	if node, _ := e.overviewMenu.getSelectedNode(e.currentMap.Root); node != nil {
 		node.Geometry = &filePath
-		e.updateMap()
+		e.refreshMap()
 	}
 }
 
