@@ -24,20 +24,7 @@ func (e *Editor) saveMap(filepath string) {
 }
 
 func (e *Editor) loadMap(path string) {
-	data, err := ioutil.ReadFile(path)
-	if err != nil {
-		log.Printf("Error Reading map file: %v\n", err)
-		return
-	}
-
-	var mapModel editorModels.MapModel
-	err = json.Unmarshal(data, &mapModel)
-	if err != nil {
-		log.Printf("Error unmarshaling map model: %v\n", err)
-		return
-	}
-
-	e.currentMap = &mapModel
+	e.currentMap = assets.LoadMap(path)
 	e.updateMap()
 	e.overviewMenu.updateTree(e.currentMap)
 }

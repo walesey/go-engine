@@ -4,9 +4,11 @@ import (
 	"github.com/walesey/go-engine/actor"
 	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/controller"
+	"github.com/walesey/go-engine/engine"
 	"github.com/walesey/go-engine/renderer"
 
 	"github.com/codegangsta/cli"
+	vmath "github.com/walesey/go-engine/vectormath"
 )
 
 //
@@ -19,40 +21,33 @@ func Demo(c *cli.Context) {
 		WindowWidth:  1900,
 		WindowHeight: 1000,
 	}
+	gameEngine := engine.NewEngine(glRenderer)
 
-	//setup scenegraph
-	skyBox, _ := assets.ImportObj("TestAssets/Files/skybox/skybox.obj")
-	skyBox.Material.LightingMode = renderer.MODE_UNLIT
-	skyBox.CullBackface = false
-	skyNode := renderer.CreateNode()
-	skyNode.Add(skyBox)
-	sceneGraph := renderer.CreateSceneGraph()
-	sceneGraph.AddBackGround(skyNode)
+	gameEngine.Start(func() {
+		//lighting
+		glRenderer.CreateLight(0.0, 0.0, 0.0, 0.5, 0.5, 0.5, 0.7, 0.7, 0.7, true, vmath.Vector3{0.3, -1, 0.2}, 0)
 
-	//camera
-	camera := renderer.CreateCamera(glRenderer)
-	freeMoveActor := actor.NewFreeMoveActor(camera)
-	freeMoveActor.MoveSpeed = 3.0
+		//Sky
+		skyImg, err := assets.ImportImage("TestAssets/Files/skybox/cubemap.png")
+		if err == nil {
+			gameEngine.Sky(assets.CreateMaterial(skyImg, nil, nil, nil), 999999)
+		}
 
-	glRenderer.Init(func() {
+		mapNode := renderer.CreateNode()
+		mapModel := assets.LoadMap("TestAssets/map.map")
+		mapModel.Root = assets.LoadMapToNode(mapModel.Root, mapNode)
+		gameEngine.AddSpatial(mapNode)
+
 		//input/controller manager
 		controllerManager := controller.NewControllerManager(glRenderer.Window)
-		//camera free move actor
-		mainController := controller.NewBasicMovementController(freeMoveActor, false)
+
+		//camera + player
+		camera := gameEngine.Camera()
+		freeMoveActor := actor.NewFreeMoveActor(camera)
+		freeMoveActor.MoveSpeed = 20.0
+		freeMoveActor.LookSpeed = 0.002
+		mainController := controller.NewBasicMovementController(freeMoveActor, true)
 		controllerManager.AddController(mainController)
+		gameEngine.AddUpdatable(freeMoveActor)
 	})
-
-	glRenderer.Update(func() {
-		//update things that need updating
-		fps.UpdateFPSMeter()
-		freeMoveActor.Update(0.018)
-	})
-
-	glRenderer.Render(func() {
-		//render the whole scene
-		sceneGraph.RenderScene(glRenderer)
-	})
-
-	//start the renderer and launch the window
-	glRenderer.Start()
 }
