@@ -1,10 +1,10 @@
 COVER_DIR = cover
 
 test:
-	godep go test github.com/walesey/go-engine/actor
-	godep go test github.com/walesey/go-engine/controller
-	godep go test github.com/walesey/go-engine/util
-	godep go test github.com/walesey/go-engine/vectormath
+	go test github.com/walesey/go-engine/actor
+	go test github.com/walesey/go-engine/controller
+	go test github.com/walesey/go-engine/util
+	go test github.com/walesey/go-engine/vectormath
 
 coverage:
 	mkdir -p $(COVER_DIR)
