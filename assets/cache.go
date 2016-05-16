@@ -1,6 +1,8 @@
 package assets
 
-import "github.com/walesey/go-engine/renderer"
+import (
+	"github.com/walesey/go-engine/renderer"
+)
 
 type AssetCache struct {
 	geometries map[string]*renderer.Geometry

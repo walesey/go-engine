@@ -1,8 +1,6 @@
 package renderer
 
-import (
-	"github.com/walesey/go-engine/vectormath"
-)
+import "github.com/walesey/go-engine/vectormath"
 
 //A Spatial is something that can be Drawn by a Renderer
 type Spatial interface {

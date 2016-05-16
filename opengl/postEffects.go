@@ -1,29 +1,20 @@
-package renderer
+package opengl
 
 import (
 	"fmt"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/walesey/go-engine/renderer"
 	"github.com/walesey/go-engine/vectormath"
 )
-
-type Uniform struct {
-	Name  string
-	Value interface{}
-}
-
-type Shader struct {
-	Name     string
-	Uniforms []Uniform
-}
 
 type postEffect struct {
 	program   uint32
 	fboId     uint32
 	dboId     uint32
 	textureId uint32
-	shader    Shader
+	shader    renderer.Shader
 }
 
 //Set up the frame buffer for rendering each post effect filter pass
@@ -43,7 +34,7 @@ func (glRenderer *OpenglRenderer) initPostEffects() {
 	glRenderer.postEffectVbo = vbo
 }
 
-func (glRenderer *OpenglRenderer) CreatePostEffect(shader Shader) {
+func (glRenderer *OpenglRenderer) CreatePostEffect(shader renderer.Shader) {
 
 	//Create program
 	shaderName := shader.Name
@@ -88,7 +79,7 @@ func (glRenderer *OpenglRenderer) CreatePostEffect(shader Shader) {
 	glRenderer.postEffects = append(glRenderer.postEffects, newPe)
 }
 
-func (glRenderer *OpenglRenderer) DestroyPostEffects(shader Shader) {
+func (glRenderer *OpenglRenderer) DestroyPostEffects(shader renderer.Shader) {
 	shaderName := shader.Name
 	for i, po := range glRenderer.postEffects {
 		if po.shader.Name == shaderName {

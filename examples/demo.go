@@ -5,6 +5,7 @@ import (
 	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/controller"
 	"github.com/walesey/go-engine/engine"
+	"github.com/walesey/go-engine/opengl"
 	"github.com/walesey/go-engine/renderer"
 
 	"github.com/codegangsta/cli"
@@ -16,7 +17,7 @@ func Demo(c *cli.Context) {
 	fps := renderer.CreateFPSMeter(1.0)
 	fps.FpsCap = 60
 
-	glRenderer := &renderer.OpenglRenderer{
+	glRenderer := &opengl.OpenglRenderer{
 		WindowTitle:  "GoEngine",
 		WindowWidth:  1900,
 		WindowHeight: 1000,

@@ -1,8 +1,9 @@
 package renderer
 
 import (
-	"github.com/disintegration/imaging"
 	"image"
+
+	"github.com/disintegration/imaging"
 )
 
 type CubeMap struct {

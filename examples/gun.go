@@ -4,6 +4,7 @@ import (
 	"github.com/walesey/go-engine/actor"
 	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/controller"
+	"github.com/walesey/go-engine/opengl"
 	"github.com/walesey/go-engine/renderer"
 	"github.com/walesey/go-engine/vectormath"
 
@@ -18,7 +19,7 @@ func GunDemo(c *cli.Context) {
 	fps := renderer.CreateFPSMeter(1.0)
 	fps.FpsCap = 1960
 
-	glRenderer := &renderer.OpenglRenderer{
+	glRenderer := &opengl.OpenglRenderer{
 		WindowTitle:  "GoEngine",
 		WindowWidth:  1900,
 		WindowHeight: 1000,

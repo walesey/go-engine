@@ -6,6 +6,7 @@ import (
 	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/controller"
 	"github.com/walesey/go-engine/engine"
+	"github.com/walesey/go-engine/opengl"
 	"github.com/walesey/go-engine/physics/bullet"
 	"github.com/walesey/go-engine/physics/physicsAPI"
 	"github.com/walesey/go-engine/renderer"
@@ -19,7 +20,7 @@ import (
 //
 func BulletDemo(c *cli.Context) {
 	//Setup renderer and game Engine
-	glRenderer := &renderer.OpenglRenderer{
+	glRenderer := &opengl.OpenglRenderer{
 		WindowTitle:  "GoEngine",
 		WindowWidth:  2400,
 		WindowHeight: 1300,

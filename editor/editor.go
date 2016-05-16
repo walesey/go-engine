@@ -6,6 +6,7 @@ import (
 	"github.com/walesey/go-engine/controller"
 	"github.com/walesey/go-engine/editor/models"
 	"github.com/walesey/go-engine/engine"
+	"github.com/walesey/go-engine/opengl"
 	"github.com/walesey/go-engine/renderer"
 	"github.com/walesey/go-engine/ui"
 	vmath "github.com/walesey/go-engine/vectormath"
@@ -41,7 +42,7 @@ func New() *Editor {
 }
 
 func (e *Editor) Start() {
-	glRenderer := &renderer.OpenglRenderer{
+	glRenderer := &opengl.OpenglRenderer{
 		WindowTitle: "GoEngine editor",
 	}
 	e.renderer = glRenderer

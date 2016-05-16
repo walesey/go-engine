@@ -9,7 +9,7 @@ import (
 	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/controller"
 	"github.com/walesey/go-engine/engine"
-	"github.com/walesey/go-engine/renderer"
+	"github.com/walesey/go-engine/opengl"
 	"github.com/walesey/go-engine/ui"
 	vmath "github.com/walesey/go-engine/vectormath"
 )
@@ -20,7 +20,7 @@ func init() {
 }
 
 func main() {
-	glRenderer := &renderer.OpenglRenderer{WindowTitle: "GoEngine"}
+	glRenderer := &opengl.OpenglRenderer{WindowTitle: "GoEngine"}
 	gameEngine := engine.NewEngine(glRenderer)
 
 	htmlAssets := ui.NewHtmlAssets()

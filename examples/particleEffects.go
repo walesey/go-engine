@@ -7,6 +7,7 @@ import (
 	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/controller"
 	"github.com/walesey/go-engine/effects"
+	"github.com/walesey/go-engine/opengl"
 	"github.com/walesey/go-engine/renderer"
 	"github.com/walesey/go-engine/vectormath"
 
@@ -20,7 +21,7 @@ func Particles(c *cli.Context) {
 	fps := renderer.CreateFPSMeter(1.0)
 	fps.FpsCap = 60
 
-	glRenderer := &renderer.OpenglRenderer{
+	glRenderer := &opengl.OpenglRenderer{
 		WindowTitle:  "GoEngine",
 		WindowWidth:  1400,
 		WindowHeight: 900,

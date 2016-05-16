@@ -21,11 +21,11 @@ const (
 )
 
 type Material struct {
-	diffuseId, normalId, specularId, glossId, roughnessId uint32
-	loaded                                                bool
-	LightingMode                                          int32
-	Transparency                                          int
-	Diffuse, Normal, Specular, Roughness                  image.Image
+	DiffuseId, NormalId, SpecularId, RoughnessId uint32
+	loaded                                       bool
+	LightingMode                                 int32
+	Transparency                                 int
+	Diffuse, Normal, Specular, Roughness         image.Image
 }
 
 func CreateMaterial() *Material {
@@ -34,7 +34,7 @@ func CreateMaterial() *Material {
 
 //Geometry
 type Geometry struct {
-	vboId, iboId uint32
+	VboId, IboId uint32
 	loadedLen    int
 	VboDirty     bool
 	Indicies     []uint32
