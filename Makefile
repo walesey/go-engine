@@ -1,5 +1,11 @@
 COVER_DIR = cover
 
+test:
+	godep go test github.com/walesey/go-engine/actor
+	godep go test github.com/walesey/go-engine/controller
+	godep go test github.com/walesey/go-engine/util
+	godep go test github.com/walesey/go-engine/vectormath
+
 coverage:
 	mkdir -p $(COVER_DIR)
 	go test github.com/walesey/go-engine/controller -coverprofile=$(COVER_DIR)/controller.cover.out && \
