@@ -3,6 +3,10 @@ COVER_DIR = cover
 test:
 	go test github.com/walesey/go-engine/actor
 	go test github.com/walesey/go-engine/controller
+	go test github.com/walesey/go-engine/effects
+	go test github.com/walesey/go-engine/engine
+	go test github.com/walesey/go-engine/physics/physicsAPI
+	go test github.com/walesey/go-engine/ui
 	go test github.com/walesey/go-engine/util
 	go test github.com/walesey/go-engine/vectormath
 
