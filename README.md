@@ -6,21 +6,16 @@ A Simple Rendering and scene graph library for Golang.
 
 ### Features
 * OpenGL renderer.
-* Scenegraph 
 * Obj importer
-* Asset management system
-* Lighting 
-* Multiple point light sources
-* Single directional light source
-* Transparency system
+* Lighting Engine
 * Particle System
+* html/css based UI system
+* Bullet physics (gobullet)
+* Controller system (mouse, keyboard, joystick)
 
 ### Planned features
-* PBR lighting
-* Post effects
-* 2D/3D physics
-* character controller system
-* fps controller
-* network socket manager
+* Map editor
+* multiplayer
 * network replication
 * network lobby system
+* Physics Engine
