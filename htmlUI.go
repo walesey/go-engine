@@ -5,10 +5,10 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/go-gl/glfw/v3.1/glfw"
 	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/controller"
 	"github.com/walesey/go-engine/engine"
+	"github.com/walesey/go-engine/glfwController"
 	"github.com/walesey/go-engine/opengl"
 	"github.com/walesey/go-engine/ui"
 	vmath "github.com/walesey/go-engine/vectormath"
@@ -17,6 +17,8 @@ import (
 func init() {
 	// GLFW event handling must run on the main OS thread
 	runtime.LockOSThread()
+	//Set default glfw controller
+	controller.SetDefaultConstructor(glfwController.NewActionMap)
 }
 
 func main() {
@@ -119,14 +121,14 @@ func main() {
 		loadPage()
 
 		//input/controller manager
-		controllerManager := controller.NewControllerManager(glRenderer.Window)
+		controllerManager := glfwController.NewControllerManager(glRenderer.Window)
 
 		uiController := ui.NewUiController(window)
-		controllerManager.AddController(uiController)
+		controllerManager.AddController(uiController.(glfwController.Controller))
 
 		//custom controller
-		customController := controller.NewActionMap()
-		controllerManager.AddController(customController)
+		customController := controller.CreateController()
+		controllerManager.AddController(customController.(glfwController.Controller))
 		ui.ClickAndDragWindow(window, tab.Hitbox, customController)
 
 		// timer := 0.0
@@ -140,10 +142,10 @@ func main() {
 
 		customController.BindAction(func() {
 			loadPage()
-		}, glfw.KeyR, glfw.Press)
+		}, controller.KeyR, controller.Press)
 
 		customController.BindMouseAction(func() {
 			ui.DeactivateAllTextElements(mainContainer)
-		}, glfw.MouseButton1, glfw.Press)
+		}, controller.MouseButton1, controller.Press)
 	})
 }

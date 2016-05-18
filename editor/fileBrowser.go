@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/walesey/go-engine/glfwController"
 	"github.com/walesey/go-engine/ui"
 	vmath "github.com/walesey/go-engine/vectormath"
 )
@@ -66,7 +67,7 @@ func (e *Editor) openFileBrowser(heading string, callback func(filePath string),
 		window.SetTranslation(vmath.Vector3{100, 100, 1})
 		window.SetScale(vmath.Vector3{800, 0, 1})
 
-		e.controllerManager.AddController(ui.NewUiController(window))
+		e.controllerManager.AddController(ui.NewUiController(window).(glfwController.Controller))
 		ui.LoadHTML(container, window, strings.NewReader(fileBrowserHtml), strings.NewReader(globalCss), e.uiAssets)
 
 		e.fileBrowser = &FileBrowser{

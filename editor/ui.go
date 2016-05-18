@@ -5,8 +5,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/go-gl/glfw/v3.1/glfw"
 	"github.com/walesey/go-engine/assets"
+	"github.com/walesey/go-engine/controller"
+	"github.com/walesey/go-engine/glfwController"
 	"github.com/walesey/go-engine/ui"
 	vmath "github.com/walesey/go-engine/vectormath"
 )
@@ -37,7 +38,7 @@ func (e *Editor) setupUI() {
 			e.mainMenuOpen = true
 			e.openMainMenu()
 		}
-	}, glfw.KeyEscape, glfw.Press)
+	}, controller.KeyEscape, controller.Press)
 }
 
 func loadImageAsset(key, data string, uiAssets ui.HtmlAssets) {
@@ -76,7 +77,7 @@ func (e *Editor) openMainMenu() {
 		window.SetTranslation(vmath.Vector3{200, 200, 1})
 		window.SetScale(vmath.Vector3{400, 0, 1})
 
-		e.controllerManager.AddController(ui.NewUiController(window))
+		e.controllerManager.AddController(ui.NewUiController(window).(glfwController.Controller))
 		ui.LoadHTML(container, window, strings.NewReader(mainMenuHtml), strings.NewReader(globalCss), e.uiAssets)
 
 		e.mainMenu = window
@@ -100,7 +101,7 @@ func (e *Editor) defaultWindow() (window *ui.Window, container *ui.Container, ta
 
 	e.customController.BindMouseAction(func() {
 		ui.DeactivateAllTextElements(container)
-	}, glfw.MouseButton1, glfw.Press)
+	}, controller.MouseButton1, controller.Press)
 
 	return
 }

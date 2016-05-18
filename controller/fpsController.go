@@ -1,9 +1,5 @@
 package controller
 
-import (
-	"github.com/go-gl/glfw/v3.1/glfw"
-)
-
 type FPSActor interface {
 	Look(dx, dy float64)
 	StartMovingForward()
@@ -23,26 +19,26 @@ type FPSActor interface {
 }
 
 func NewFPSController(actor FPSActor) Controller {
-	c := NewActionMap()
+	c := CreateController()
 	x, y := 0.0, 0.0
 	doLook := func(xpos, ypos float64) {
 		actor.Look(xpos-x, ypos-y)
 		x, y = xpos, ypos
 	}
 	c.BindAxisAction(doLook)
-	c.BindAction(actor.StartMovingForward, glfw.KeyW, glfw.Press)
-	c.BindAction(actor.StartMovingBackward, glfw.KeyS, glfw.Press)
-	c.BindAction(actor.StopMovingForward, glfw.KeyW, glfw.Release)
-	c.BindAction(actor.StopMovingBackward, glfw.KeyS, glfw.Release)
-	c.BindAction(actor.StartStrafingLeft, glfw.KeyA, glfw.Press)
-	c.BindAction(actor.StopStrafingLeft, glfw.KeyA, glfw.Release)
-	c.BindAction(actor.StartStrafingRight, glfw.KeyD, glfw.Press)
-	c.BindAction(actor.StopStrafingRight, glfw.KeyD, glfw.Release)
-	c.BindAction(actor.Jump, glfw.KeySpace, glfw.Press)
-	c.BindAction(actor.Crouch, glfw.KeyLeftControl, glfw.Press)
-	c.BindAction(actor.StandUp, glfw.KeyLeftControl, glfw.Release)
-	c.BindAction(actor.Prone, glfw.KeyZ, glfw.Press)
-	c.BindAction(actor.StartSprinting, glfw.KeyLeftShift, glfw.Press)
-	c.BindAction(actor.StopSprinting, glfw.KeyLeftShift, glfw.Release)
+	c.BindAction(actor.StartMovingForward, KeyW, Press)
+	c.BindAction(actor.StartMovingBackward, KeyS, Press)
+	c.BindAction(actor.StopMovingForward, KeyW, Release)
+	c.BindAction(actor.StopMovingBackward, KeyS, Release)
+	c.BindAction(actor.StartStrafingLeft, KeyA, Press)
+	c.BindAction(actor.StopStrafingLeft, KeyA, Release)
+	c.BindAction(actor.StartStrafingRight, KeyD, Press)
+	c.BindAction(actor.StopStrafingRight, KeyD, Release)
+	c.BindAction(actor.Jump, KeySpace, Press)
+	c.BindAction(actor.Crouch, KeyLeftControl, Press)
+	c.BindAction(actor.StandUp, KeyLeftControl, Release)
+	c.BindAction(actor.Prone, KeyZ, Press)
+	c.BindAction(actor.StartSprinting, KeyLeftShift, Press)
+	c.BindAction(actor.StopSprinting, KeyLeftShift, Release)
 	return c
 }

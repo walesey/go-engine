@@ -4,12 +4,12 @@ import (
 	"github.com/walesey/go-engine/actor"
 	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/controller"
+	"github.com/walesey/go-engine/glfwController"
 	"github.com/walesey/go-engine/opengl"
 	"github.com/walesey/go-engine/renderer"
 	"github.com/walesey/go-engine/vectormath"
 
 	"github.com/codegangsta/cli"
-	"github.com/go-gl/glfw/v3.1/glfw"
 	"github.com/go-gl/mathgl/mgl32"
 	// "github.com/go-gl/mathgl/mgl32"
 )
@@ -82,23 +82,23 @@ func GunDemo(c *cli.Context) {
 		glRenderer.CreatePostEffect(bloomHorizontal)
 
 		//input/controller manager
-		controllerManager := controller.NewControllerManager(glRenderer.Window)
+		controllerManager := glfwController.NewControllerManager(glRenderer.Window)
 
 		//lock the cursor
 		glRenderer.LockCursor(true)
 
 		//camera free move actor
 		mainController := controller.NewBasicMovementController(freeMoveActor, false)
-		controllerManager.AddController(mainController)
+		controllerManager.AddController(mainController.(glfwController.Controller))
 
 		//custom controller
-		customController := controller.NewActionMap()
-		controllerManager.AddController(customController)
+		customController := controller.CreateController()
+		controllerManager.AddController(customController.(glfwController.Controller))
 
 		//close window and exit on escape
 		customController.BindAction(func() {
 			glRenderer.Window.SetShouldClose(true)
-		}, glfw.KeyEscape, glfw.Press)
+		}, controller.KeyEscape, controller.Press)
 	})
 
 	glRenderer.Update(func() {

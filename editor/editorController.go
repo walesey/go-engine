@@ -1,7 +1,6 @@
 package editor
 
 import (
-	"github.com/go-gl/glfw/v3.1/glfw"
 	"github.com/walesey/go-engine/controller"
 	vmath "github.com/walesey/go-engine/vectormath"
 )
@@ -9,7 +8,7 @@ import (
 const mouseSpeed = 0.01
 
 func NewEditorController(e *Editor) controller.Controller {
-	c := controller.NewActionMap()
+	c := controller.CreateController()
 	var mouseDown bool
 	x, y := 0.0, 0.0
 	axisLock := vmath.Vector3{1, 1, 1}
@@ -28,25 +27,24 @@ func NewEditorController(e *Editor) controller.Controller {
 		x, y = xpos, ypos
 	}
 	c.BindAxisAction(doMouseMove)
-	c.BindMouseAction(func() { mouseDown = true }, glfw.MouseButtonRight, glfw.Press)
-	c.BindMouseAction(func() { mouseDown = false }, glfw.MouseButtonRight, glfw.Release)
-	c.BindAction(func() { axisLock = vmath.Vector3{1, 0, 0} }, glfw.KeyX, glfw.Press)
-	c.BindAction(func() { axisLock = vmath.Vector3{0, 1, 0} }, glfw.KeyY, glfw.Press)
-	c.BindAction(func() { axisLock = vmath.Vector3{0, 0, 1} }, glfw.KeyZ, glfw.Press)
+	c.BindMouseAction(func() { mouseDown = true }, controller.MouseButtonRight, controller.Press)
+	c.BindMouseAction(func() { mouseDown = false }, controller.MouseButtonRight, controller.Release)
+	c.BindAction(func() { axisLock = vmath.Vector3{1, 0, 0} }, controller.KeyX, controller.Press)
+	c.BindAction(func() { axisLock = vmath.Vector3{0, 1, 0} }, controller.KeyY, controller.Press)
+	c.BindAction(func() { axisLock = vmath.Vector3{0, 0, 1} }, controller.KeyZ, controller.Press)
 
 	c.BindAction(func() {
 		e.mouseMode = "scale"
 		axisLock = vmath.Vector3{1, 1, 1}
-	}, glfw.KeyT, glfw.Press)
+	}, controller.KeyT, controller.Press)
 	c.BindAction(func() {
 		e.mouseMode = "translate"
 		axisLock = vmath.Vector3{1, 0, 0}
-	}, glfw.KeyG, glfw.Press)
+	}, controller.KeyG, controller.Press)
 	c.BindAction(func() {
 		e.mouseMode = "rotate"
 		axisLock = vmath.Vector3{0, 1, 0}
-	}, glfw.KeyR, glfw.Press)
-
+	}, controller.KeyR, controller.Press)
 	return c
 }
 

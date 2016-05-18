@@ -3,41 +3,40 @@ package ui
 import (
 	"strings"
 
-	"github.com/go-gl/glfw/v3.1/glfw"
 	"github.com/walesey/go-engine/controller"
 	vmath "github.com/walesey/go-engine/vectormath"
 )
 
-func controlKey(key glfw.Key) bool {
-	return key == glfw.KeyLeftAlt ||
-		key == glfw.KeyLeftControl ||
-		key == glfw.KeyLeftShift ||
-		key == glfw.KeyRightAlt ||
-		key == glfw.KeyRightControl ||
-		key == glfw.KeyRightShift
+func controlKey(key controller.Key) bool {
+	return key == controller.KeyLeftAlt ||
+		key == controller.KeyLeftControl ||
+		key == controller.KeyLeftShift ||
+		key == controller.KeyRightAlt ||
+		key == controller.KeyRightControl ||
+		key == controller.KeyRightShift
 }
 
 func NewUiController(window *Window) controller.Controller {
-	c := controller.NewActionMap()
+	c := controller.CreateController()
 	doMouseMove := func(xpos, ypos float64) {
 		window.mouseMove(vmath.Vector2{xpos, ypos})
 	}
 	c.BindAxisAction(doMouseMove)
-	c.BindMouseAction(func() { window.mouseClick(1, false) }, glfw.MouseButton1, glfw.Press)
-	c.BindMouseAction(func() { window.mouseClick(2, false) }, glfw.MouseButton2, glfw.Press)
-	c.BindMouseAction(func() { window.mouseClick(3, false) }, glfw.MouseButton3, glfw.Press)
-	c.BindMouseAction(func() { window.mouseClick(4, false) }, glfw.MouseButton4, glfw.Press)
-	c.BindMouseAction(func() { window.mouseClick(5, false) }, glfw.MouseButton5, glfw.Press)
-	c.BindMouseAction(func() { window.mouseClick(1, true) }, glfw.MouseButton1, glfw.Release)
-	c.BindMouseAction(func() { window.mouseClick(2, true) }, glfw.MouseButton2, glfw.Release)
-	c.BindMouseAction(func() { window.mouseClick(3, true) }, glfw.MouseButton3, glfw.Release)
-	c.BindMouseAction(func() { window.mouseClick(4, true) }, glfw.MouseButton4, glfw.Release)
-	c.BindMouseAction(func() { window.mouseClick(5, true) }, glfw.MouseButton5, glfw.Release)
+	c.BindMouseAction(func() { window.mouseClick(1, false) }, controller.MouseButton1, controller.Press)
+	c.BindMouseAction(func() { window.mouseClick(2, false) }, controller.MouseButton2, controller.Press)
+	c.BindMouseAction(func() { window.mouseClick(3, false) }, controller.MouseButton3, controller.Press)
+	c.BindMouseAction(func() { window.mouseClick(4, false) }, controller.MouseButton4, controller.Press)
+	c.BindMouseAction(func() { window.mouseClick(5, false) }, controller.MouseButton5, controller.Press)
+	c.BindMouseAction(func() { window.mouseClick(1, true) }, controller.MouseButton1, controller.Release)
+	c.BindMouseAction(func() { window.mouseClick(2, true) }, controller.MouseButton2, controller.Release)
+	c.BindMouseAction(func() { window.mouseClick(3, true) }, controller.MouseButton3, controller.Release)
+	c.BindMouseAction(func() { window.mouseClick(4, true) }, controller.MouseButton4, controller.Release)
+	c.BindMouseAction(func() { window.mouseClick(5, true) }, controller.MouseButton5, controller.Release)
 
 	var shift bool
-	c.BindAction(func() { shift = true }, glfw.KeyLeftShift, glfw.Press)
-	c.BindAction(func() { shift = false }, glfw.KeyLeftShift, glfw.Release)
-	c.BindKeyAction(func(key glfw.Key, action glfw.Action) {
+	c.BindAction(func() { shift = true }, controller.KeyLeftShift, controller.Press)
+	c.BindAction(func() { shift = false }, controller.KeyLeftShift, controller.Release)
+	c.BindKeyAction(func(key controller.Key, action controller.Action) {
 		if !controlKey(key) {
 			keyString := string(byte(key))
 			if shift {
@@ -46,18 +45,18 @@ func NewUiController(window *Window) controller.Controller {
 				keyString = strings.ToLower(keyString)
 			}
 			switch {
-			case key == glfw.KeyBackspace:
+			case key == controller.KeyBackspace:
 				keyString = "backspace"
-			case key == glfw.KeyLeft:
+			case key == controller.KeyLeft:
 				keyString = "leftArrow"
-			case key == glfw.KeyRight:
+			case key == controller.KeyRight:
 				keyString = "rightArrow"
-			case key == glfw.KeyUp:
+			case key == controller.KeyUp:
 				keyString = "upArrow"
-			case key == glfw.KeyDown:
+			case key == controller.KeyDown:
 				keyString = "downArrow"
 			}
-			window.keyClick(keyString, action == glfw.Release)
+			window.keyClick(keyString, action == controller.Release)
 		}
 	})
 	return c

@@ -6,6 +6,7 @@ import (
 	"github.com/walesey/go-engine/controller"
 	"github.com/walesey/go-engine/editor/models"
 	"github.com/walesey/go-engine/engine"
+	"github.com/walesey/go-engine/glfwController"
 	"github.com/walesey/go-engine/opengl"
 	"github.com/walesey/go-engine/renderer"
 	"github.com/walesey/go-engine/ui"
@@ -17,8 +18,8 @@ type Editor struct {
 	gameEngine        engine.Engine
 	currentMap        *editorModels.MapModel
 	rootMapNode       *renderer.Node
-	customController  *controller.ActionMap
-	controllerManager *controller.ControllerManager
+	customController  controller.Controller
+	controllerManager *glfwController.ControllerManager
 	uiAssets          ui.HtmlAssets
 	mainMenu          *ui.Window
 	overviewMenu      *Overview
@@ -62,7 +63,7 @@ func (e *Editor) Start() {
 		e.gameEngine.AddSpatial(e.rootMapNode)
 
 		//input/controller manager
-		e.controllerManager = controller.NewControllerManager(glRenderer.Window)
+		e.controllerManager = glfwController.NewControllerManager(glRenderer.Window)
 
 		//camera + player
 		camera := e.gameEngine.Camera()
@@ -70,15 +71,15 @@ func (e *Editor) Start() {
 		freeMoveActor.MoveSpeed = 20.0
 		freeMoveActor.LookSpeed = 0.002
 		mainController := controller.NewBasicMovementController(freeMoveActor, true)
-		e.controllerManager.AddController(mainController)
+		e.controllerManager.AddController(mainController.(glfwController.Controller))
 		e.gameEngine.AddUpdatable(freeMoveActor)
 
 		//editor controller
-		e.controllerManager.AddController(NewEditorController(e))
+		e.controllerManager.AddController(NewEditorController(e).(glfwController.Controller))
 
 		//custom controller
-		e.customController = controller.NewActionMap()
-		e.controllerManager.AddController(e.customController)
+		e.customController = controller.CreateController()
+		e.controllerManager.AddController(e.customController.(glfwController.Controller))
 
 		e.setupUI()
 	})

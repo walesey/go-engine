@@ -4,8 +4,10 @@ import (
 	"os"
 	"runtime"
 
+	"github.com/walesey/go-engine/controller"
 	"github.com/walesey/go-engine/editor"
 	"github.com/walesey/go-engine/examples"
+	"github.com/walesey/go-engine/glfwController"
 
 	"github.com/codegangsta/cli"
 )
@@ -15,6 +17,8 @@ func init() {
 	runtime.LockOSThread()
 	// Use all cpu cores
 	runtime.GOMAXPROCS(runtime.NumCPU())
+	//Set default glfw controller
+	controller.SetDefaultConstructor(glfwController.NewActionMap)
 }
 
 func main() {

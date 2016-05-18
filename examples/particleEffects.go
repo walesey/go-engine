@@ -7,12 +7,12 @@ import (
 	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/controller"
 	"github.com/walesey/go-engine/effects"
+	"github.com/walesey/go-engine/glfwController"
 	"github.com/walesey/go-engine/opengl"
 	"github.com/walesey/go-engine/renderer"
 	"github.com/walesey/go-engine/vectormath"
 
 	"github.com/codegangsta/cli"
-	"github.com/go-gl/glfw/v3.1/glfw"
 	"github.com/go-gl/mathgl/mgl32"
 )
 
@@ -221,46 +221,46 @@ func Particles(c *cli.Context) {
 		}
 
 		//input/controller manager
-		controllerManager := controller.NewControllerManager(glRenderer.Window)
+		controllerManager := glfwController.NewControllerManager(glRenderer.Window)
 
 		//lock the cursor
 		glRenderer.LockCursor(true)
 
 		//camera free move actor
 		mainController := controller.NewBasicMovementController(freeMoveActor, false)
-		controllerManager.AddController(mainController)
+		controllerManager.AddController(mainController.(glfwController.Controller))
 
-		customController := controller.NewActionMap()
-		controllerManager.AddController(customController)
+		customController := controller.CreateController()
+		controllerManager.AddController(customController.(glfwController.Controller))
 
 		//close window and exit on escape
 		customController.BindAction(func() {
 			glRenderer.Window.SetShouldClose(true)
-		}, glfw.KeyEscape, glfw.Press)
+		}, controller.KeyEscape, controller.Press)
 
 		//test the portabitity of the actor / entity interfaces
-		customController.BindAction(func() { freeMoveActor.Entity = camera }, glfw.KeyQ, glfw.Press)
-		customController.BindAction(func() { freeMoveActor.Entity = sphereNode }, glfw.KeyW, glfw.Press)
-		customController.BindAction(func() { freeMoveActor.Entity = explosionParticles }, glfw.KeyE, glfw.Press)
-		customController.BindAction(func() { freeMoveActor.Entity = birdSprite }, glfw.KeyR, glfw.Press)
+		customController.BindAction(func() { freeMoveActor.Entity = camera }, controller.KeyQ, controller.Press)
+		customController.BindAction(func() { freeMoveActor.Entity = sphereNode }, controller.KeyW, controller.Press)
+		customController.BindAction(func() { freeMoveActor.Entity = explosionParticles }, controller.KeyE, controller.Press)
+		customController.BindAction(func() { freeMoveActor.Entity = birdSprite }, controller.KeyR, controller.Press)
 
 		customController.BindAction(func() { //no post effects
 			glRenderer.DestroyPostEffects(bloomVertical)
 			glRenderer.DestroyPostEffects(bloomHorizontal)
 			glRenderer.DestroyPostEffects(cell)
-		}, glfw.KeyA, glfw.Press)
+		}, controller.KeyA, controller.Press)
 
 		customController.BindAction(func() { //bloom effect
 			glRenderer.CreatePostEffect(bloomVertical)
 			glRenderer.CreatePostEffect(bloomHorizontal)
 			glRenderer.DestroyPostEffects(cell)
-		}, glfw.KeyS, glfw.Press)
+		}, controller.KeyS, controller.Press)
 
 		customController.BindAction(func() { //cell effect
 			glRenderer.DestroyPostEffects(bloomVertical)
 			glRenderer.DestroyPostEffects(bloomHorizontal)
 			glRenderer.CreatePostEffect(cell)
-		}, glfw.KeyD, glfw.Press)
+		}, controller.KeyD, controller.Press)
 	})
 
 	glRenderer.Update(func() {

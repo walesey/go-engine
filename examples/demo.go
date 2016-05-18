@@ -5,6 +5,7 @@ import (
 	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/controller"
 	"github.com/walesey/go-engine/engine"
+	"github.com/walesey/go-engine/glfwController"
 	"github.com/walesey/go-engine/opengl"
 	"github.com/walesey/go-engine/renderer"
 
@@ -40,7 +41,7 @@ func Demo(c *cli.Context) {
 		gameEngine.AddSpatial(mapNode)
 
 		//input/controller manager
-		controllerManager := controller.NewControllerManager(glRenderer.Window)
+		controllerManager := glfwController.NewControllerManager(glRenderer.Window)
 
 		//camera + player
 		camera := gameEngine.Camera()
@@ -48,7 +49,7 @@ func Demo(c *cli.Context) {
 		freeMoveActor.MoveSpeed = 20.0
 		freeMoveActor.LookSpeed = 0.002
 		mainController := controller.NewBasicMovementController(freeMoveActor, true)
-		controllerManager.AddController(mainController)
+		controllerManager.AddController(mainController.(glfwController.Controller))
 		gameEngine.AddUpdatable(freeMoveActor)
 	})
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/controller"
 	"github.com/walesey/go-engine/engine"
+	"github.com/walesey/go-engine/glfwController"
 	"github.com/walesey/go-engine/opengl"
 	"github.com/walesey/go-engine/physics/bullet"
 	"github.com/walesey/go-engine/physics/physicsAPI"
@@ -14,7 +15,6 @@ import (
 	vmath "github.com/walesey/go-engine/vectormath"
 
 	"github.com/codegangsta/cli"
-	"github.com/go-gl/glfw/v3.1/glfw"
 )
 
 //
@@ -87,7 +87,7 @@ func BulletDemo(c *cli.Context) {
 		}
 
 		//input/controller manager
-		controllerManager := controller.NewControllerManager(glRenderer.Window)
+		controllerManager := glfwController.NewControllerManager(glRenderer.Window)
 
 		//lock the cursor
 		glRenderer.LockCursor(true)
@@ -104,23 +104,23 @@ func BulletDemo(c *cli.Context) {
 
 		//fps controller
 		mainController := controller.NewFPSController(fpsActor)
-		controllerManager.AddController(mainController)
+		controllerManager.AddController(mainController.(glfwController.Controller))
 
 		//custom controller
-		customController := controller.NewActionMap()
-		controllerManager.AddController(customController)
+		customController := controller.CreateController()
+		controllerManager.AddController(customController.(glfwController.Controller))
 
 		//spawn objects
 		customController.BindAction(func() {
 			phyObj := spawn()
 			phyObj.SetPosition(camera.GetTranslation().Add(camera.GetDirection().MultiplyScalar(4)))
 			phyObj.SetVelocity(camera.GetDirection().MultiplyScalar(30))
-		}, glfw.KeyR, glfw.Press)
+		}, controller.KeyR, controller.Press)
 
 		//close window and exit on escape
 		customController.BindAction(func() {
 			glRenderer.Window.SetShouldClose(true)
-		}, glfw.KeyEscape, glfw.Press)
+		}, controller.KeyEscape, controller.Press)
 
 		gameEngine.AddOrtho(ui.NewWindow())
 

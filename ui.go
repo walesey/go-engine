@@ -5,6 +5,7 @@ import (
 
 	"github.com/walesey/go-engine/controller"
 	"github.com/walesey/go-engine/engine"
+	"github.com/walesey/go-engine/glfwController"
 	"github.com/walesey/go-engine/opengl"
 	"github.com/walesey/go-engine/ui"
 	vmath "github.com/walesey/go-engine/vectormath"
@@ -13,6 +14,8 @@ import (
 func init() {
 	// GLFW event handling must run on the main OS thread
 	runtime.LockOSThread()
+	//Set default glfw controller
+	controller.SetDefaultConstructor(glfwController.NewActionMap)
 }
 
 func main() {
@@ -64,14 +67,14 @@ func main() {
 		}))
 
 		//input/controller manager
-		controllerManager := controller.NewControllerManager(glRenderer.Window)
+		controllerManager := glfwController.NewControllerManager(glRenderer.Window)
 
 		uiController := ui.NewUiController(window)
-		controllerManager.AddController(uiController)
+		controllerManager.AddController(uiController.(glfwController.Controller))
 
 		//custom controller
-		customController := controller.NewActionMap()
-		controllerManager.AddController(customController)
+		customController := controller.CreateController()
+		controllerManager.AddController(customController.(glfwController.Controller))
 		ui.ClickAndDragWindow(window, tab.Hitbox, customController)
 	})
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/walesey/go-engine/glfwController"
 	"github.com/walesey/go-engine/ui"
 	vmath "github.com/walesey/go-engine/vectormath"
 )
@@ -22,7 +23,7 @@ func (e *Editor) openProgressBar() {
 		container.SetBackgroundColor(200, 200, 200, 255)
 		window.SetElement(container)
 
-		e.controllerManager.AddController(ui.NewUiController(window))
+		e.controllerManager.AddController(ui.NewUiController(window).(glfwController.Controller))
 		ui.LoadHTML(container, window, strings.NewReader(progressBarHtml), strings.NewReader(globalCss), e.uiAssets)
 
 		e.progressBar = window

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/walesey/go-engine/editor/models"
+	"github.com/walesey/go-engine/glfwController"
 	"github.com/walesey/go-engine/ui"
 	vmath "github.com/walesey/go-engine/vectormath"
 )
@@ -82,7 +83,7 @@ func (e *Editor) initOverviewMenu() {
 	window.SetTranslation(vmath.Vector3{10, 10, 1})
 	window.SetScale(vmath.Vector3{500, 0, 1})
 
-	e.controllerManager.AddController(ui.NewUiController(window))
+	e.controllerManager.AddController(ui.NewUiController(window).(glfwController.Controller))
 	ui.LoadHTML(container, window, strings.NewReader(overviewMenuHtml), strings.NewReader(globalCss), e.uiAssets)
 
 	e.gameEngine.AddOrtho(window)

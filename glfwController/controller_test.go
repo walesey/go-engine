@@ -1,11 +1,12 @@
-package controller
+package glfwController
 
 import (
 	"fmt"
-	"github.com/go-gl/glfw/v3.1/glfw"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+
+	"github.com/go-gl/glfw/v3.1/glfw"
+	"github.com/stretchr/testify/assert"
 )
 
 type TestObject struct {
