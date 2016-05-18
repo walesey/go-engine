@@ -1,4 +1,4 @@
-package assets
+package util
 
 import (
 	"encoding/base64"

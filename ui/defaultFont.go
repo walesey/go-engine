@@ -1,9 +1,9 @@
 package ui
 
-import "github.com/walesey/go-engine/assets"
+import "github.com/walesey/go-engine/util"
 
 func getDefaultFont() []byte {
-	return assets.Base64ToBytes(defaultFontData)
+	return util.Base64ToBytes(defaultFontData)
 }
 
 const defaultFontData = `

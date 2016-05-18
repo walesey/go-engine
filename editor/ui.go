@@ -9,6 +9,7 @@ import (
 	"github.com/walesey/go-engine/controller"
 	"github.com/walesey/go-engine/glfwController"
 	"github.com/walesey/go-engine/ui"
+	"github.com/walesey/go-engine/util"
 	vmath "github.com/walesey/go-engine/vectormath"
 )
 
@@ -42,7 +43,7 @@ func (e *Editor) setupUI() {
 }
 
 func loadImageAsset(key, data string, uiAssets ui.HtmlAssets) {
-	img, _ := assets.DecodeImage(bytes.NewBuffer(assets.Base64ToBytes(data)))
+	img, _ := assets.DecodeImage(bytes.NewBuffer(util.Base64ToBytes(data)))
 	uiAssets.AddImage(key, img)
 }
 
