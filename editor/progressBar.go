@@ -33,11 +33,7 @@ func (e *Editor) openProgressBar() {
 
 func (e *Editor) setProgressBar(progress int) {
 	for i := 1; i <= 20; i++ {
-		elem := e.progressBar.ElementById(fmt.Sprintf("progress%v", i))
-		if elem == nil {
-			continue
-		}
-		container, ok := elem.(*ui.Container)
+		container, ok := e.progressBar.ElementById(fmt.Sprintf("progress%v", i)).(*ui.Container)
 		if ok {
 			if i > progress {
 				container.SetBackgroundColor(0, 0, 0, 0)
@@ -49,8 +45,7 @@ func (e *Editor) setProgressBar(progress int) {
 }
 
 func (e *Editor) setProgressTime(message string) {
-	elem := e.progressBar.ElementById("progressBarMessage")
-	container, ok := elem.(*ui.Container)
+	container, ok := e.progressBar.ElementById("progressBarMessage").(*ui.Container)
 	if ok {
 		container.RemoveAllChildren()
 		html := fmt.Sprintf("<p>%v</p>", message)

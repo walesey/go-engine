@@ -98,24 +98,16 @@ func (fb *FileBrowser) checkExtensionFilter(filename string) bool {
 }
 
 func (fb *FileBrowser) SetFileTextField(path string) {
-	elem := fb.window.ElementById("filePathInput")
-	container, ok := elem.(*ui.Container)
-	if ok && container.GetNbChildren() > 0 {
-		inputText, ok := container.GetChild(0).(*ui.TextElement)
-		if ok {
-			inputText.SetText(path)
-		}
+	filePathInput := fb.window.TextElementById("filePathInput")
+	if filePathInput != nil {
+		filePathInput.SetText(path)
 	}
 }
 
 func (fb *FileBrowser) GetFileTextField() string {
-	elem := fb.window.ElementById("filePathInput")
-	container, ok := elem.(*ui.Container)
-	if ok && container.GetNbChildren() > 0 {
-		inputText, ok := container.GetChild(0).(*ui.TextElement)
-		if ok {
-			return inputText.GetText()
-		}
+	filePathInput := fb.window.TextElementById("filePathInput")
+	if filePathInput != nil {
+		return filePathInput.GetText()
 	}
 	return ""
 }
@@ -160,16 +152,14 @@ func (fb *FileBrowser) UpdateFileSystem() {
 }
 
 func (fb *FileBrowser) ClearFiles() {
-	elem := fb.window.ElementById("fileView")
-	container, ok := elem.(*ui.Container)
+	container, ok := fb.window.ElementById("fileView").(*ui.Container)
 	if ok {
 		container.RemoveAllChildren()
 	}
 }
 
 func (fb *FileBrowser) RenderFile(name, path, img string, depth int) {
-	elem := fb.window.ElementById("fileView")
-	container, ok := elem.(*ui.Container)
+	container, ok := fb.window.ElementById("fileView").(*ui.Container)
 	if ok {
 		onclickName := fmt.Sprintf("onClick_%v", path)
 		fb.assets.AddCallback(onclickName, func(element ui.Element, args ...interface{}) {
@@ -197,8 +187,7 @@ func (fb *FileBrowser) RenderFile(name, path, img string, depth int) {
 }
 
 func (fb *FileBrowser) SetHeading(heading string) {
-	elem := fb.window.ElementById("heading")
-	container, ok := elem.(*ui.Container)
+	container, ok := fb.window.ElementById("heading").(*ui.Container)
 	if ok {
 		container.RemoveAllChildren()
 		html := fmt.Sprintf("<h1>%v</h1>", heading)

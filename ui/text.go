@@ -52,7 +52,6 @@ type TextElement struct {
 	textAlign          int
 	size, offset       vmath.Vector2
 	active             bool
-	dirty              bool
 	cursorPos          int
 	onFocusHandlers    []func()
 	onBlurHandlers     []func()
@@ -120,32 +119,34 @@ func (te *TextElement) GetText() string {
 func (te *TextElement) SetText(text string) {
 	te.text = text
 	te.cursorPos = len(text)
-	te.dirty = true
+	te.Render(te.size, te.offset)
 }
 
 func (te *TextElement) SetFont(textFont *truetype.Font) {
 	te.textFont = textFont
-	te.dirty = true
+	te.Render(te.size, te.offset)
+	te.Render(te.size, te.offset)
 }
 
 func (te *TextElement) SetTextSize(textSize float64) {
 	te.textSize = textSize
-	te.dirty = true
+	te.Render(te.size, te.offset)
+	te.Render(te.size, te.offset)
 }
 
 func (te *TextElement) SetTextColor(textColor color.Color) {
 	te.textColor = textColor
-	te.dirty = true
+	te.Render(te.size, te.offset)
 }
 
 func (te *TextElement) SetWidth(width float64) {
 	te.width = width
-	te.dirty = true
+	te.Render(te.size, te.offset)
 }
 
 func (te *TextElement) SetHeight(height float64) {
 	te.height = height
-	te.dirty = true
+	te.Render(te.size, te.offset)
 }
 
 func (te *TextElement) Activate() {
@@ -176,15 +177,9 @@ func (te *TextElement) Render(size, offset vmath.Vector2) vmath.Vector2 {
 		useHeight = te.height
 	}
 	useSize := vmath.Vector2{useWidth, useHeight}
-	if !useSize.ApproxEqual(te.size, 0.001) {
-		te.dirty = true
-	}
 	te.size = useSize
 	te.offset = offset
-	if te.dirty {
-		te.dirty = false
-		te.updateImage(useSize)
-	}
+	te.updateImage(useSize)
 	renderSize := te.img.Render(size, offset)
 	if te.textAlign == CENTER_ALIGN {
 		te.img.Render(size, offset.Add(vmath.Vector2{(size.X - renderSize.X) * 0.5, 0}))
@@ -240,7 +235,6 @@ func (te *TextElement) keyClick(key string, release bool) {
 		for _, handler := range te.onKeyPressHandlers {
 			handler(key, release)
 		}
-		te.Render(te.size, te.offset)
 	}
 }
 
@@ -267,7 +261,6 @@ func NewTextElement(text string, textColor color.Color, textSize float64, textFo
 		textColor: textColor,
 		textSize:  textSize,
 		textFont:  textFont,
-		dirty:     true,
 	}
 	return textElem
 }

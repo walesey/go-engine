@@ -28,6 +28,7 @@ func (e *Editor) setupUI() {
 	loadImageAsset("translate", TranslateIconData, e.uiAssets)
 	loadImageAsset("rotate", RotateIconData, e.uiAssets)
 	loadImageAsset("reset", ResetIconData, e.uiAssets)
+	loadImageAsset("cog", CogIconData, e.uiAssets)
 
 	e.initOverviewMenu()
 

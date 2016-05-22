@@ -10,34 +10,42 @@ type ControllerManager struct {
 
 //Key Callback
 func (c *ControllerManager) KeyCallback(window *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
-	for i := range c.controllerList {
-		c.controllerList[i].KeyCallback(window, key, scancode, action, mods)
+	for _, cont := range c.controllerList {
+		cont.KeyCallback(window, key, scancode, action, mods)
 	}
 }
 
 //Mouse click callback
 func (c *ControllerManager) MouseButtonCallback(window *glfw.Window, button glfw.MouseButton, action glfw.Action, mods glfw.ModifierKey) {
-	for i := range c.controllerList {
-		c.controllerList[i].MouseButtonCallback(window, button, action, mods)
+	for _, cont := range c.controllerList {
+		cont.MouseButtonCallback(window, button, action, mods)
 	}
 }
 
 //Mouse movement callback
 func (c *ControllerManager) CursorPosCallback(window *glfw.Window, xpos, ypos float64) {
-	for i := range c.controllerList {
-		c.controllerList[i].CursorPosCallback(window, xpos, ypos)
+	for _, cont := range c.controllerList {
+		cont.CursorPosCallback(window, xpos, ypos)
 	}
 }
 
 //Mouse scrollwheel callback
 func (c *ControllerManager) ScrollCallback(window *glfw.Window, xoffset, yoffset float64) {
-	for i := range c.controllerList {
-		c.controllerList[i].ScrollCallback(window, xoffset, yoffset)
+	for _, cont := range c.controllerList {
+		cont.ScrollCallback(window, xoffset, yoffset)
 	}
 }
 
 func (c *ControllerManager) AddController(newCont Controller) {
 	c.controllerList = append(c.controllerList, newCont)
+}
+
+func (c *ControllerManager) RemoveController(controller Controller) {
+	for index, cont := range c.controllerList {
+		if cont == controller {
+			c.controllerList = append(c.controllerList[:index], c.controllerList[index+1:]...)
+		}
+	}
 }
 
 func NewControllerManager(window *glfw.Window) *ControllerManager {

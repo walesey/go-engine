@@ -63,6 +63,14 @@ func (e *Editor) initOverviewMenu() {
 		}
 	})
 
+	e.uiAssets.AddCallback("editGroup", func(element ui.Element, args ...interface{}) {
+		if len(args) >= 2 && !args[1].(bool) { // not on release
+			e.editGroup(func() {
+				e.overviewMenu.updateTree(e.currentMap)
+			})
+		}
+	})
+
 	e.uiAssets.AddCallback("scale", func(element ui.Element, args ...interface{}) {
 		e.mouseMode = "scale"
 	})
@@ -144,6 +152,12 @@ func (e *Editor) deleteGroup() {
 	}
 }
 
+func (e *Editor) editGroup(cb func()) {
+	if node, _ := findNodeById(e.overviewMenu.selectedNodeId, e.currentMap.Root); node != nil {
+		e.openNodeEditor(node, cb)
+	}
+}
+
 func (e *Editor) resetGroup() {
 	if node, _ := findNodeById(e.overviewMenu.selectedNodeId, e.currentMap.Root); node != nil {
 		selectedNode := node.GetNode()
@@ -205,6 +219,7 @@ func (o *Overview) updateTree(mapModel *editorModels.MapModel) {
 				o.updateTree(mapModel)
 			}
 		})
+
 		isOpen := o.openNodes[model.Id]
 
 		iconImg := "planetClosed"
@@ -215,11 +230,11 @@ func (o *Overview) updateTree(mapModel *editorModels.MapModel) {
 			iconImg = "reference"
 		}
 
-		html := fmt.Sprintf("<div onclick=%v><img src=%v></img><p>%v</p>", onclickName, iconImg, model.Id)
+		html := fmt.Sprintf("<div onclick=%v><img src=%v></img><p>%v", onclickName, iconImg, model.Id)
 		for _, class := range model.Classes {
-			html = fmt.Sprintf("%v :: <p>%v</p>", html, class)
+			html = fmt.Sprintf("%v :: %v", html, class)
 		}
-		html = fmt.Sprintf("%v</div>", html)
+		html = fmt.Sprintf("%v</p></div>", html)
 		css := `
 		p { font-size: 12px; width: 80%; padding: 0 0 0 5px; }
 		img { width: 16px; height: 16px; }
@@ -243,8 +258,7 @@ func (o *Overview) updateTree(mapModel *editorModels.MapModel) {
 		}
 	}
 
-	elem := o.window.ElementById("overviewTree")
-	container, ok := elem.(*ui.Container)
+	container, ok := o.window.ElementById("overviewTree").(*ui.Container)
 	if ok {
 		container.RemoveAllChildren()
 		updateNode(mapModel.Root, container)

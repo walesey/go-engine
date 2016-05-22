@@ -62,13 +62,14 @@ func (w *Window) SetElement(element Element) {
 func (w *Window) Render() {
 	if w.element != nil {
 		size := w.element.Render(w.size, vmath.Vector2{0, 0})
-		if size.X > w.size.X {
-			w.size.X = size.X
+		width, height := w.size.X, w.size.Y
+		if size.X > width {
+			width = size.X
 		}
-		if size.Y > w.size.Y {
-			w.size.Y = size.Y
+		if size.Y > height {
+			height = size.Y
 		}
-		w.background.SetScale(w.size.ToVector3())
+		w.background.SetScale(vmath.Vector2{width, height}.ToVector3())
 	}
 }
 
@@ -80,6 +81,17 @@ func (w *Window) ElementById(id string) Element {
 		container, ok := w.element.(*Container)
 		if ok {
 			return container.ElementById(id)
+		}
+	}
+	return nil
+}
+
+func (w *Window) TextElementById(id string) *TextElement {
+	container, ok := w.ElementById(id).(*Container)
+	if ok && container.GetNbChildren() > 0 {
+		textElement, ok := container.GetChild(0).(*TextElement)
+		if ok {
+			return textElement
 		}
 	}
 	return nil

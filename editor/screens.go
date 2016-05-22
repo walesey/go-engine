@@ -93,6 +93,7 @@ button:active {
     width: 100%;
     font-size: 16px;
     background-color: #fff;
+    padding: 2px;
 }
 
 .progressBar {
@@ -111,6 +112,24 @@ button:active {
     height: 20px;
     margin: 10px 0 10px 5px;
     float: left;
+}
+
+.nodeEditor {
+    padding: 20px;
+}
+
+.nodeEditor input {
+    width: 100%;
+    font-size: 16px;
+    background-color: #fff;
+    padding: 2px;
+    margin: 5px 0 0 0;
+
+}
+
+.nodeEditor button {
+    margin: 10px 10px 0 0;
+    width: 200px;
 }
 `
 
@@ -190,6 +209,7 @@ const overviewMenuHtml = `
                 <button onclick=copyGroup><img src=copy></img></button>
                 <button onclick=referenceGroup><img src=reference></img></button>
                 <button onclick=deleteGroup><img src=trash></img></button>
+                <button onclick=editGroup><img src=cog></img></button>
                 <button onclick=import><img src=geometry></img></button>
                 <button onclick=scale><img src=scale></img></button>
                 <button onclick=translate><img src=translate></img></button>
@@ -197,6 +217,23 @@ const overviewMenuHtml = `
                 <button onclick=reset><img src=reset></img></button>
             </div>
             <div id="overviewTree" class="panel"></div>
+        </div>
+    </body>
+</html>
+`
+
+const nodeEditMenuHtml = `
+<html>
+    <body>
+        <div class="nodeEditor">
+            <h3>Name</h3>
+            <input type="text" id=name></input>
+            <h3>Classes</h3>
+            <input type="text" id=class1></input>
+            <input type="text" id=class2></input>
+            <input type="text" id=class3></input>
+            <button onclick=nodeEditorOk>Ok</button>
+            <button onclick=nodeEditorCancel>Cancel</button>
         </div>
     </body>
 </html>
