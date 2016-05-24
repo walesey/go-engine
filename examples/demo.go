@@ -1,6 +1,8 @@
 package examples
 
 import (
+	"fmt"
+
 	"github.com/walesey/go-engine/actor"
 	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/controller"
@@ -51,5 +53,16 @@ func Demo(c *cli.Context) {
 		mainController := controller.NewBasicMovementController(freeMoveActor, true)
 		controllerManager.AddController(mainController.(glfwController.Controller))
 		gameEngine.AddUpdatable(freeMoveActor)
+
+		// Define map class behaviours
+		spiners := assets.FindNodeByClass("spiner", mapModel.Root)
+		fmt.Println(len(spiners))
+		for _, spiner := range spiners {
+			gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
+				if node := spiner.GetNode(); node != nil && freeMoveActor.Location.Subtract(node.Translation).LengthSquared() < 30.0 {
+					node.SetOrientation(vmath.AngleAxis(dt, vmath.Vector3{0, 1, 0}).Multiply(node.Orientation))
+				}
+			}))
+		}
 	})
 }

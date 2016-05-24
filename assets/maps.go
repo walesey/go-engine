@@ -29,46 +29,66 @@ func LoadMap(path string) *editorModels.MapModel {
 
 func LoadMapToNode(srcModel *editorModels.NodeModel, destNode *renderer.Node) *editorModels.NodeModel {
 	copy := srcModel.Copy(func(name string) string { return name })
-	loadMapRecursive(srcModel, copy, destNode)
+	loadMapRecursive(copy, srcModel, destNode)
 	return copy
 }
 
-func loadMapRecursive(srcModel, model *editorModels.NodeModel, destNode *renderer.Node) {
-	srcModel.SetNode(destNode)
-	if srcModel.Geometry != nil {
-		geometry, err := ImportObjCached(*srcModel.Geometry)
+func loadMapRecursive(model, srcModel *editorModels.NodeModel, destNode *renderer.Node) {
+	model.SetNode(destNode)
+	if model.Geometry != nil {
+		geometry, err := ImportObjCached(*model.Geometry)
 		if err == nil {
 			destNode.Add(geometry)
 		}
 	}
-	destNode.SetScale(srcModel.Scale)
-	destNode.SetTranslation(srcModel.Translation)
-	destNode.SetOrientation(srcModel.Orientation)
-	if srcModel.Reference != nil {
-		if refModel := findNodeById(*srcModel.Reference, model); refModel != nil {
+	destNode.SetScale(model.Scale)
+	destNode.SetTranslation(model.Translation)
+	destNode.SetOrientation(model.Orientation)
+	if model.Reference != nil {
+		if refModel := FindNodeById(*model.Reference, srcModel); refModel != nil {
 			for _, childModel := range refModel.Children {
-				srcModel.Children = append(srcModel.Children, childModel.Copy(func(name string) string {
-					return fmt.Sprintf("%v::%v", srcModel.Reference, name)
+				model.Children = append(model.Children, childModel.Copy(func(name string) string { //TODO: fix this for refs within refs
+					return fmt.Sprintf("%v::%v", *model.Reference, name)
 				}))
 			}
 		}
 	}
-	for _, childModel := range srcModel.Children {
+	for _, childModel := range model.Children {
 		newNode := renderer.CreateNode()
 		destNode.Add(newNode)
-		loadMapRecursive(childModel, model, newNode)
+		loadMapRecursive(childModel, srcModel, newNode)
 	}
 }
 
-func findNodeById(nodeId string, model *editorModels.NodeModel) *editorModels.NodeModel {
+func FindNodeById(nodeId string, model *editorModels.NodeModel) *editorModels.NodeModel {
 	if model.Id == nodeId {
 		return model
 	}
 	for _, childModel := range model.Children {
-		node := findNodeById(nodeId, childModel)
+		node := FindNodeById(nodeId, childModel)
 		if node != nil {
 			return node
 		}
 	}
 	return nil
+}
+
+func FindNodeByClass(class string, model *editorModels.NodeModel) []*editorModels.NodeModel {
+	results := []*editorModels.NodeModel{}
+	if hasClass(class, model) {
+		results = append(results, model)
+	}
+	for _, childModel := range model.Children {
+		results = append(results, FindNodeByClass(class, childModel)...)
+	}
+	return results
+}
+
+func hasClass(class string, model *editorModels.NodeModel) bool {
+	for _, modelClass := range model.Classes {
+		if class == modelClass {
+			return true
+		}
+	}
+	return false
 }
