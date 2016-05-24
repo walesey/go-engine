@@ -30,6 +30,20 @@ func (e *Editor) setupUI() {
 	loadImageAsset("reset", ResetIconData, e.uiAssets)
 	loadImageAsset("cog", CogIconData, e.uiAssets)
 
+	// callbacks used to highlight text active text fields
+	e.uiAssets.AddCallback("inputfocus", func(element ui.Element, args ...interface{}) {
+		container, ok := element.(*ui.Container)
+		if ok {
+			container.SetBackgroundColor(255, 255, 50, 255)
+		}
+	})
+	e.uiAssets.AddCallback("inputblur", func(element ui.Element, args ...interface{}) {
+		container, ok := element.(*ui.Container)
+		if ok {
+			container.SetBackgroundColor(255, 255, 255, 255)
+		}
+	})
+
 	e.initOverviewMenu()
 
 	e.customController.BindAction(func() {

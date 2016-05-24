@@ -6,7 +6,7 @@ body {
 }
 
 h1 {
-    font-size: 48px
+    font-size: 36px
 }
 
 button {
@@ -124,7 +124,6 @@ button:active {
     background-color: #fff;
     padding: 2px;
     margin: 5px 0 0 0;
-
 }
 
 .nodeEditor button {
@@ -173,11 +172,11 @@ const nodeEditMenuHtml = `
     <body>
         <div class="nodeEditor">
             <h3>Name</h3>
-            <input type="text" id=name></input>
+            <input type="text" id=name onfocus=inputfocus onblur=inputblur></input>
             <h3>Classes</h3>
-            <input type="text" id=class1></input>
-            <input type="text" id=class2></input>
-            <input type="text" id=class3></input>
+            <input type="text" id=class1 onfocus=inputfocus onblur=inputblur></input>
+            <input type="text" id=class2 onfocus=inputfocus onblur=inputblur></input>
+            <input type="text" id=class3 onfocus=inputfocus onblur=inputblur></input>
             <button onclick=nodeEditorOk>Ok</button>
             <button onclick=nodeEditorCancel>Cancel</button>
         </div>
@@ -195,7 +194,7 @@ const fileBrowserHtml = `
                 <div id="fileView" class="fileView"></div>
                 <button onclick=fileBrowserScrollDown>v</button>
             </div>
-            <input id="filePathInput" type="text"></input>
+            <input id="filePathInput" type="text" onfocus=inputfocus onblur=inputblur></input>
             <button onclick=fileBrowserOpen>Open</button>
             <button onclick=fileBrowserCancel>Cancel</button>
         </div>
