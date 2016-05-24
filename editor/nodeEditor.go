@@ -47,7 +47,7 @@ func (e *Editor) openNodeEditor(node *editorModels.NodeModel, callback func()) {
 	})
 
 	e.controllerManager.AddController(uiController)
-	ui.LoadHTML(container, window, strings.NewReader(nodeEditMenuHtml), strings.NewReader(globalCss), e.uiAssets)
+	ui.LoadHTML(container, strings.NewReader(nodeEditMenuHtml), strings.NewReader(globalCss), e.uiAssets)
 
 	e.gameEngine.AddOrtho(window)
 
@@ -57,5 +57,5 @@ func (e *Editor) openNodeEditor(node *editorModels.NodeModel, callback func()) {
 			window.TextElementById(fmt.Sprintf("class%v", i+1)).SetText(class)
 		}
 	}
-
+	window.Render()
 }

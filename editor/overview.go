@@ -92,7 +92,7 @@ func (e *Editor) initOverviewMenu() {
 	window.SetScale(vmath.Vector3{500, 0, 1})
 
 	e.controllerManager.AddController(ui.NewUiController(window).(glfwController.Controller))
-	ui.LoadHTML(container, window, strings.NewReader(overviewMenuHtml), strings.NewReader(globalCss), e.uiAssets)
+	ui.LoadHTML(container, strings.NewReader(overviewMenuHtml), strings.NewReader(globalCss), e.uiAssets)
 
 	e.gameEngine.AddOrtho(window)
 	e.overviewMenu = &Overview{
@@ -246,7 +246,7 @@ func (o *Overview) updateTree(mapModel *editorModels.MapModel) {
 		if !isOpen {
 			css = fmt.Sprintf("%v p { color: #999 }", css)
 		}
-		ui.LoadHTML(container, o.window, strings.NewReader(html), strings.NewReader(css), o.assets)
+		ui.LoadHTML(container, strings.NewReader(html), strings.NewReader(css), o.assets)
 
 		if isOpen {
 			for _, childModel := range model.Children {
@@ -262,5 +262,6 @@ func (o *Overview) updateTree(mapModel *editorModels.MapModel) {
 	if ok {
 		container.RemoveAllChildren()
 		updateNode(mapModel.Root, container)
+		o.window.Render()
 	}
 }

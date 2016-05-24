@@ -17,7 +17,7 @@ import (
 )
 
 // LoadHTML - load the html/css code into the container
-func LoadHTML(container *Container, window *Window, htmlInput, cssInput io.Reader, assets HtmlAssets) error {
+func LoadHTML(container *Container, htmlInput, cssInput io.Reader, assets HtmlAssets) error {
 	document, err := html.Parse(htmlInput)
 	if err != nil {
 		log.Printf("Error parsing html: %v", err)
@@ -37,7 +37,6 @@ func LoadHTML(container *Container, window *Window, htmlInput, cssInput io.Reade
 	}
 
 	renderNode(container, document.FirstChild, styles, assets)
-	window.Render()
 
 	return nil
 }
@@ -238,6 +237,7 @@ func createText(text string, node *html.Node, container *Container, styles *css.
 		if active {
 			applyTextStyles(textElement, activeTextStyles, assets)
 		}
+		textElement.ReRender()
 	}
 	if len(hoverTextStyles) > 0 {
 		container.Hitbox.AddOnHover(func() {

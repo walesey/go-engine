@@ -80,7 +80,8 @@ func (e *Editor) openMainMenu() {
 		window.SetScale(vmath.Vector3{400, 0, 1})
 
 		e.controllerManager.AddController(ui.NewUiController(window).(glfwController.Controller))
-		ui.LoadHTML(container, window, strings.NewReader(mainMenuHtml), strings.NewReader(globalCss), e.uiAssets)
+		ui.LoadHTML(container, strings.NewReader(mainMenuHtml), strings.NewReader(globalCss), e.uiAssets)
+		window.Render()
 
 		e.mainMenu = window
 	}

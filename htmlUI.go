@@ -116,7 +116,8 @@ func main() {
 			}
 			defer html.Close()
 
-			ui.LoadHTML(container, window, html, css, htmlAssets)
+			ui.LoadHTML(container, html, css, htmlAssets)
+			window.Render()
 		}
 		loadPage()
 

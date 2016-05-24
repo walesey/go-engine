@@ -56,6 +56,7 @@ type TextElement struct {
 	onFocusHandlers    []func()
 	onBlurHandlers     []func()
 	onKeyPressHandlers []func(key string, release bool)
+	dirty              bool
 }
 
 func (te *TextElement) updateImage(size vmath.Vector2) {
@@ -119,34 +120,32 @@ func (te *TextElement) GetText() string {
 func (te *TextElement) SetText(text string) {
 	te.text = text
 	te.cursorPos = len(text)
-	te.Render(te.size, te.offset)
+	te.dirty = true
 }
 
 func (te *TextElement) SetFont(textFont *truetype.Font) {
 	te.textFont = textFont
-	te.Render(te.size, te.offset)
-	te.Render(te.size, te.offset)
+	te.dirty = true
 }
 
 func (te *TextElement) SetTextSize(textSize float64) {
 	te.textSize = textSize
-	te.Render(te.size, te.offset)
-	te.Render(te.size, te.offset)
+	te.dirty = true
 }
 
 func (te *TextElement) SetTextColor(textColor color.Color) {
 	te.textColor = textColor
-	te.Render(te.size, te.offset)
+	te.dirty = true
 }
 
 func (te *TextElement) SetWidth(width float64) {
 	te.width = width
-	te.Render(te.size, te.offset)
+	te.dirty = true
 }
 
 func (te *TextElement) SetHeight(height float64) {
 	te.height = height
-	te.Render(te.size, te.offset)
+	te.dirty = true
 }
 
 func (te *TextElement) Activate() {
@@ -179,7 +178,10 @@ func (te *TextElement) Render(size, offset vmath.Vector2) vmath.Vector2 {
 	useSize := vmath.Vector2{useWidth, useHeight}
 	te.size = useSize
 	te.offset = offset
-	te.updateImage(useSize)
+	if te.dirty {
+		te.updateImage(useSize)
+	}
+	te.dirty = false
 	renderSize := te.img.Render(size, offset)
 	if te.textAlign == CENTER_ALIGN {
 		te.img.Render(size, offset.Add(vmath.Vector2{(size.X - renderSize.X) * 0.5, 0}))
@@ -188,6 +190,10 @@ func (te *TextElement) Render(size, offset vmath.Vector2) vmath.Vector2 {
 		te.img.Render(size, offset.Add(vmath.Vector2{size.X - renderSize.X, 0}))
 	}
 	return renderSize
+}
+
+func (te *TextElement) ReRender() {
+	te.Render(te.size, te.offset)
 }
 
 func (te *TextElement) Spatial() renderer.Spatial {
@@ -235,6 +241,7 @@ func (te *TextElement) keyClick(key string, release bool) {
 		for _, handler := range te.onKeyPressHandlers {
 			handler(key, release)
 		}
+		te.ReRender()
 	}
 }
 
@@ -261,6 +268,7 @@ func NewTextElement(text string, textColor color.Color, textSize float64, textFo
 		textColor: textColor,
 		textSize:  textSize,
 		textFont:  textFont,
+		dirty:     true,
 	}
 	return textElem
 }

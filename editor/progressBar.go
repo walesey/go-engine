@@ -24,7 +24,8 @@ func (e *Editor) openProgressBar() {
 		window.SetElement(container)
 
 		e.controllerManager.AddController(ui.NewUiController(window).(glfwController.Controller))
-		ui.LoadHTML(container, window, strings.NewReader(progressBarHtml), strings.NewReader(globalCss), e.uiAssets)
+		ui.LoadHTML(container, strings.NewReader(progressBarHtml), strings.NewReader(globalCss), e.uiAssets)
+		window.Render()
 
 		e.progressBar = window
 	}
@@ -50,6 +51,7 @@ func (e *Editor) setProgressTime(message string) {
 		container.RemoveAllChildren()
 		html := fmt.Sprintf("<p>%v</p>", message)
 		css := "p { font-size: 8px; }"
-		ui.LoadHTML(container, e.progressBar, strings.NewReader(html), strings.NewReader(css), e.uiAssets)
+		ui.LoadHTML(container, strings.NewReader(html), strings.NewReader(css), e.uiAssets)
+		e.progressBar.Render()
 	}
 }

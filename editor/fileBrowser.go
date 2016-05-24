@@ -68,7 +68,7 @@ func (e *Editor) openFileBrowser(heading string, callback func(filePath string),
 		window.SetScale(vmath.Vector3{800, 0, 1})
 
 		e.controllerManager.AddController(ui.NewUiController(window).(glfwController.Controller))
-		ui.LoadHTML(container, window, strings.NewReader(fileBrowserHtml), strings.NewReader(globalCss), e.uiAssets)
+		ui.LoadHTML(container, strings.NewReader(fileBrowserHtml), strings.NewReader(globalCss), e.uiAssets)
 
 		e.fileBrowser = &FileBrowser{
 			window:       window,
@@ -149,6 +149,7 @@ func (fb *FileBrowser) UpdateFileSystem() {
 		fileCounter++
 		return nil
 	})
+	fb.window.Render()
 }
 
 func (fb *FileBrowser) ClearFiles() {
@@ -182,16 +183,13 @@ func (fb *FileBrowser) RenderFile(name, path, img string, depth int) {
 			css = fmt.Sprintf("%v div { background-color: #ff5 }", css)
 		}
 
-		ui.LoadHTML(container, fb.window, strings.NewReader(html), strings.NewReader(css), fb.assets)
+		ui.LoadHTML(container, strings.NewReader(html), strings.NewReader(css), fb.assets)
 	}
 }
 
 func (fb *FileBrowser) SetHeading(heading string) {
-	container, ok := fb.window.ElementById("heading").(*ui.Container)
-	if ok {
-		container.RemoveAllChildren()
-		html := fmt.Sprintf("<h1>%v</h1>", heading)
-		css := "h1 { font-size: 16px }"
-		ui.LoadHTML(container, fb.window, strings.NewReader(html), strings.NewReader(css), fb.assets)
+	headingElem := fb.window.TextElementById("heading")
+	if headingElem != nil {
+		headingElem.SetText(heading)
 	}
 }

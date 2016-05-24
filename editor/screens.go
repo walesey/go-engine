@@ -133,60 +133,6 @@ button:active {
 }
 `
 
-const treeItemCss = `
-
-.tree .treeItem {
-	margin: 0 0 10px 0;
-}
-
-.tree .lvl2 { margin: 0 0 10px 10px; }
-.tree .lvl3 { margin: 0 0 10px 20px; }
-.tree .lvl4 { margin: 0 0 10px 30px; }
-.tree .lvl5 { margin: 0 0 10px 40px; }
-.tree .lvl6 { margin: 0 0 10px 50px; }
-.tree .lvl7 { margin: 0 0 10px 60px; }
-.tree .lvl8 { margin: 0 0 10px 70px; }
-.tree .lvl9 { margin: 0 0 10px 80px; }
-.tree .lvl10 { margin: 0 0 10px 90px; }
-
-.tree .treeItem div {
-    height: 20px;
-    margin: 0 5px 0 5px;
-}
-
-.tree .icon {
-    background-color: #333;
-    width: 10px;
-}
-
-.tree .label {
-	width: 150px;
-    font-size: 16px;
-    padding: 1px;
-}
-
-.tree .delete {
-    width: 25px;
-    padding: 0 0 2px 2px;
-}
-
-.tree .delete:hover {
-    color: #f00;
-}
-
-.tree .delete:active {
-    color: #fbb;
-}
-
-.tree .closed .icon {
-    background-color: #777;
-}
-
-.tree .closed .label {
-    color: #999;
-}
-`
-
 const mainMenuHtml = `
 <html>
     <body>
@@ -243,7 +189,7 @@ const fileBrowserHtml = `
 <html>
     <body>
         <div class="fileBrowser">
-            <div id="heading">File Browser</div>
+            <h1 id="heading">File Browser</1>
             <div class="content">
                 <button onclick=fileBrowserScrollup>^</button>
                 <div id="fileView" class="fileView"></div>
