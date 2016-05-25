@@ -1,3 +1,6 @@
+package shaders
+
+var MainVert = `
 #version 330
 
 uniform vec4 worldCamPos;
@@ -35,3 +38,4 @@ void main() {
 	fragTexCoord = vertTexCoord;
 	fragColor = color;
 }
+` + "\x00"

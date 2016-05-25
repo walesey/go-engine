@@ -14,6 +14,7 @@ import (
 	"github.com/go-gl/glfw/v3.1/glfw"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/renderer"
+	"github.com/walesey/go-engine/shaders"
 	"github.com/walesey/go-engine/util"
 	vmath "github.com/walesey/go-engine/vectormath"
 )
@@ -119,7 +120,7 @@ func (glRenderer *OpenglRenderer) Start() {
 	fmt.Println("OpenGL version", version)
 
 	// Configure the vertex and fragment shaders
-	program := programFromFile("shaders/main.vert", "shaders/main.frag")
+	program, _ := newProgram(shaders.MainVert, shaders.MainFrag)
 	gl.UseProgram(program)
 	glRenderer.program = program
 

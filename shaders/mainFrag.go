@@ -1,3 +1,6 @@
+package shaders
+
+var MainFrag = `
 #version 330
 
 #define MAX_LIGHTS 8
@@ -170,3 +173,4 @@ void main() {
 	//final output
 	outputColor = finalColor;
 }
+` + "\x00"
