@@ -1,8 +1,6 @@
 package examples
 
 import (
-	"fmt"
-
 	"github.com/walesey/go-engine/actor"
 	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/controller"
@@ -56,10 +54,11 @@ func Demo(c *cli.Context) {
 
 		// Define map class behaviours
 		spiners := assets.FindNodeByClass("spiner", mapModel.Root)
-		fmt.Println(len(spiners))
 		for _, spiner := range spiners {
+			node := spiner.GetNode()
 			gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
-				if node := spiner.GetNode(); node != nil && freeMoveActor.Location.Subtract(node.Translation).LengthSquared() < 30.0 {
+				worldPosition, _ := mapModel.Root.GetNode().RelativePosition(node)
+				if freeMoveActor.Location.Subtract(worldPosition).LengthSquared() < 30.0 {
 					node.SetOrientation(vmath.AngleAxis(dt, vmath.Vector3{0, 1, 0}).Multiply(node.Orientation))
 				}
 			}))

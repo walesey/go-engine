@@ -1,20 +1,24 @@
 package renderer
 
-import "github.com/walesey/go-engine/vectormath"
+import (
+	"fmt"
+
+	vmath "github.com/walesey/go-engine/vectormath"
+)
 
 //A Spatial is something that can be Drawn by a Renderer
 type Spatial interface {
 	Draw(renderer Renderer)
 	Destroy(renderer Renderer)
-	Centre() vectormath.Vector3
+	Centre() vmath.Vector3
 	Optimize(geometry *Geometry, transform Transform)
 }
 
 //An Entity is something that can be scaled, positioned and rotated (orientation)
 type Entity interface {
-	SetScale(scale vectormath.Vector3)
-	SetTranslation(translation vectormath.Vector3)
-	SetOrientation(orientation vectormath.Quaternion)
+	SetScale(scale vmath.Vector3)
+	SetTranslation(translation vmath.Vector3)
+	SetOrientation(orientation vmath.Quaternion)
 }
 
 //Node
@@ -22,9 +26,9 @@ type Node struct {
 	children    []Spatial
 	deleted     []Spatial
 	Transform   Transform
-	Scale       vectormath.Vector3
-	Translation vectormath.Vector3
-	Orientation vectormath.Quaternion
+	Scale       vmath.Vector3
+	Translation vmath.Vector3
+	Orientation vmath.Quaternion
 }
 
 func CreateNode() *Node {
@@ -32,9 +36,9 @@ func CreateNode() *Node {
 		children:    make([]Spatial, 0, 0),
 		deleted:     make([]Spatial, 0, 0),
 		Transform:   CreateTransform(),
-		Scale:       vectormath.Vector3{1, 1, 1},
-		Translation: vectormath.Vector3{0, 0, 0},
-		Orientation: vectormath.IdentityQuaternion(),
+		Scale:       vmath.Vector3{1, 1, 1},
+		Translation: vmath.Vector3{0, 0, 0},
+		Orientation: vmath.IdentityQuaternion(),
 	}
 }
 
@@ -62,7 +66,7 @@ func (node *Node) cleanupDeleted(renderer Renderer) {
 	node.deleted = node.deleted[:0]
 }
 
-func (node *Node) Centre() vectormath.Vector3 {
+func (node *Node) Centre() vmath.Vector3 {
 	return node.Translation
 }
 
@@ -89,23 +93,23 @@ func (node *Node) RemoveAll(destroy bool) {
 	node.children = node.children[:0]
 }
 
-func (node *Node) SetScale(scale vectormath.Vector3) {
+func (node *Node) SetScale(scale vmath.Vector3) {
 	node.Scale = scale
 	node.Transform.From(node.Scale, node.Translation, node.Orientation)
 }
 
-func (node *Node) SetTranslation(translation vectormath.Vector3) {
+func (node *Node) SetTranslation(translation vmath.Vector3) {
 	node.Translation = translation
 	node.Transform.From(node.Scale, node.Translation, node.Orientation)
 }
 
-func (node *Node) SetOrientation(orientation vectormath.Quaternion) {
+func (node *Node) SetOrientation(orientation vmath.Quaternion) {
 	node.Orientation = orientation
 	node.Transform.From(node.Scale, node.Translation, node.Orientation)
 }
 
-func (node *Node) SetRotation(angle float64, axis vectormath.Vector3) {
-	node.Orientation = vectormath.AngleAxis(angle, axis)
+func (node *Node) SetRotation(angle float64, axis vmath.Vector3) {
+	node.Orientation = vmath.AngleAxis(angle, axis)
 	node.Transform.From(node.Scale, node.Translation, node.Orientation)
 }
 
@@ -123,4 +127,18 @@ func (node *Node) Optimize(geometry *Geometry, transform Transform) {
 	for _, child := range node.children {
 		child.Optimize(geometry, newTransform)
 	}
+}
+
+func (node *Node) RelativePosition(n *Node) (vmath.Vector3, error) {
+	if node == n {
+		return vmath.Vector3{}, nil
+	}
+	for _, child := range node.children {
+		if childNode, ok := child.(*Node); ok {
+			if rPost, err := childNode.RelativePosition(n); err == nil {
+				return rPost.Add(childNode.Translation), nil
+			}
+		}
+	}
+	return vmath.Vector3{}, fmt.Errorf("Node not found")
 }

@@ -45,18 +45,29 @@ func loadMapRecursive(model, srcModel *editorModels.NodeModel, destNode *rendere
 	destNode.SetTranslation(model.Translation)
 	destNode.SetOrientation(model.Orientation)
 	if model.Reference != nil {
-		if refModel := FindNodeById(*model.Reference, srcModel); refModel != nil {
-			for _, childModel := range refModel.Children {
-				model.Children = append(model.Children, childModel.Copy(func(name string) string { //TODO: fix this for refs within refs
-					return fmt.Sprintf("%v::%v", *model.Reference, name)
-				}))
-			}
-		}
+		copyRef(model, srcModel)
 	}
 	for _, childModel := range model.Children {
 		newNode := renderer.CreateNode()
 		destNode.Add(newNode)
 		loadMapRecursive(childModel, srcModel, newNode)
+	}
+}
+
+func copyRef(model, srcModel *editorModels.NodeModel) {
+	if model.Reference != nil {
+		if refModel := FindNodeById(*model.Reference, srcModel); refModel != nil {
+			for _, childModel := range refModel.Children {
+				childCopy := childModel.Copy(func(name string) string {
+					return fmt.Sprintf("%v::%v", *model.Reference, name)
+				})
+				model.Children = append(model.Children, childCopy)
+			}
+			model.Reference = nil
+		}
+	}
+	for _, child := range model.Children {
+		copyRef(child, srcModel)
 	}
 }
 

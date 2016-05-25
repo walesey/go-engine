@@ -25,7 +25,7 @@ func (n *NodeModel) SetNode(node *renderer.Node) {
 	n.node = node
 }
 
-func (n *NodeModel) Copy(nameGenerator func(name string) string) *NodeModel {
+func (n *NodeModel) CopyShallow(nameGenerator func(name string) string) *NodeModel {
 	copiedNode := &NodeModel{
 		Id:          nameGenerator(n.Id),
 		Classes:     n.Classes,
@@ -42,6 +42,11 @@ func (n *NodeModel) Copy(nameGenerator func(name string) string) *NodeModel {
 		ref := *n.Reference
 		copiedNode.Reference = &ref
 	}
+	return copiedNode
+}
+
+func (n *NodeModel) Copy(nameGenerator func(name string) string) *NodeModel {
+	copiedNode := n.CopyShallow(nameGenerator)
 	for i, child := range n.Children {
 		copiedNode.Children[i] = child.Copy(nameGenerator)
 	}
