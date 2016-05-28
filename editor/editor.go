@@ -14,20 +14,21 @@ import (
 )
 
 type Editor struct {
-	renderer          renderer.Renderer
-	gameEngine        engine.Engine
-	currentMap        *editorModels.MapModel
-	rootMapNode       *renderer.Node
-	customController  controller.Controller
-	controllerManager *glfwController.ControllerManager
-	uiAssets          ui.HtmlAssets
-	mainMenu          *ui.Window
-	overviewMenu      *Overview
-	mainMenuOpen      bool
-	progressBar       *ui.Window
-	fileBrowser       *FileBrowser
-	fileBrowserOpen   bool
-	mouseMode         string
+	renderer           renderer.Renderer
+	gameEngine         engine.Engine
+	currentMap         *editorModels.MapModel
+	rootMapNode        *renderer.Node
+	customController   controller.Controller
+	controllerManager  *glfwController.ControllerManager
+	uiAssets           ui.HtmlAssets
+	mainMenu           *ui.Window
+	mainMenuController glfwController.Controller
+	overviewMenu       *Overview
+	mainMenuOpen       bool
+	progressBar        *ui.Window
+	fileBrowser        *FileBrowser
+	fileBrowserOpen    bool
+	mouseMode          string
 }
 
 func New() *Editor {
@@ -51,7 +52,7 @@ func (e *Editor) Start() {
 
 	e.gameEngine.Start(func() {
 		//lighting
-		e.renderer.CreateLight(0.0, 0.0, 0.0, 0.5, 0.5, 0.5, 0.7, 0.7, 0.7, true, vmath.Vector3{0.3, -1, 0.2}, 0)
+		e.renderer.CreateLight(0.0, 0.0, 0.0, 0.5, 0.5, 0.5, 0.7, 0.7, 0.7, true, vmath.Vector3{0.5, -1, 0.3}, 0)
 
 		//Sky
 		skyImg, err := assets.ImportImage("TestAssets/Files/skybox/cubemap.png")

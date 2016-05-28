@@ -55,6 +55,7 @@ vec4 vectorCap( vec4 vector, float cap ){
 
 vec4 directBRDF( vec4 LightDiff, vec4 LightSpec, vec4 LightDir, vec4 albedoValue, vec4 specularValue, vec4 tangentNormal, vec4 tangentReflectedEye){
 	vec3 tangentLightDirection = LightDir.xyz * TBNMatrix;
+	tangentLightDirection = normalize( tangentLightDirection );
 
 	float diffuseMultiplier = max(0.0, dot(tangentNormal.xyz, -tangentLightDirection));
 	vec4 diffuseOut = albedoValue * diffuseMultiplier * LightDiff;

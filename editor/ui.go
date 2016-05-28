@@ -64,6 +64,7 @@ func loadImageAsset(key, data string, uiAssets ui.HtmlAssets) {
 
 func (e *Editor) closeMainMenu() {
 	e.gameEngine.RemoveOrtho(e.mainMenu, false)
+	e.controllerManager.RemoveController(e.mainMenuController)
 }
 
 func (e *Editor) openMainMenu() {
@@ -93,13 +94,14 @@ func (e *Editor) openMainMenu() {
 		window.SetTranslation(vmath.Vector3{200, 200, 1})
 		window.SetScale(vmath.Vector3{400, 0, 1})
 
-		e.controllerManager.AddController(ui.NewUiController(window).(glfwController.Controller))
 		ui.LoadHTML(container, strings.NewReader(mainMenuHtml), strings.NewReader(globalCss), e.uiAssets)
 		window.Render()
 
+		e.mainMenuController = ui.NewUiController(window).(glfwController.Controller)
 		e.mainMenu = window
 	}
 	e.gameEngine.AddOrtho(e.mainMenu)
+	e.controllerManager.AddController(e.mainMenuController)
 }
 
 func (e *Editor) defaultWindow() (window *ui.Window, container *ui.Container, tab *ui.Container) {

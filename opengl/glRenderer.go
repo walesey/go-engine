@@ -509,31 +509,31 @@ func (glRenderer *OpenglRenderer) DrawGeometry(geometry *renderer.Geometry) {
 
 // ambient, diffuse and specular light values ( i is the light index )
 func (glRenderer *OpenglRenderer) CreateLight(ar, ag, ab, dr, dg, db, sr, sg, sb float32, directional bool, position vmath.Vector3, i int) {
-	lights := &glRenderer.lights
+	lights := glRenderer.lights
 	if directional {
-		lights = &glRenderer.directionalLights
+		lights = glRenderer.directionalLights
 	}
 
 	//position
-	(*lights)[(i * 16)] = (float32)(position.X)
-	(*lights)[(i*16)+1] = (float32)(position.Y)
-	(*lights)[(i*16)+2] = (float32)(position.Z)
-	(*lights)[(i*16)+3] = 1
+	lights[(i * 16)] = (float32)(position.X)
+	lights[(i*16)+1] = (float32)(position.Y)
+	lights[(i*16)+2] = (float32)(position.Z)
+	lights[(i*16)+3] = 1
 	//ambient
-	(*lights)[(i*16)+4] = ar
-	(*lights)[(i*16)+5] = ag
-	(*lights)[(i*16)+6] = ab
-	(*lights)[(i*16)+7] = 1
+	lights[(i*16)+4] = ar
+	lights[(i*16)+5] = ag
+	lights[(i*16)+6] = ab
+	lights[(i*16)+7] = 1
 	//diffuse
-	(*lights)[(i*16)+8] = dr
-	(*lights)[(i*16)+9] = dg
-	(*lights)[(i*16)+10] = db
-	(*lights)[(i*16)+11] = 1
+	lights[(i*16)+8] = dr
+	lights[(i*16)+9] = dg
+	lights[(i*16)+10] = db
+	lights[(i*16)+11] = 1
 	//specular
-	(*lights)[(i*16)+12] = sr
-	(*lights)[(i*16)+13] = sg
-	(*lights)[(i*16)+14] = sb
-	(*lights)[(i*16)+15] = 1
+	lights[(i*16)+12] = sr
+	lights[(i*16)+13] = sg
+	lights[(i*16)+14] = sb
+	lights[(i*16)+15] = 1
 
 	//set uniform array
 	uniformName := "lights\x00"
@@ -541,7 +541,7 @@ func (glRenderer *OpenglRenderer) CreateLight(ar, ag, ab, dr, dg, db, sr, sg, sb
 		uniformName = "directionalLights\x00"
 	}
 	lightsUniform := gl.GetUniformLocation(glRenderer.program, gl.Str(uniformName))
-	gl.Uniform4fv(lightsUniform, (int32)(maxLights*16), &(*lights)[0])
+	gl.Uniform4fv(lightsUniform, (int32)(maxLights*16), &lights[0])
 }
 
 func (glRenderer *OpenglRenderer) DestroyLight(i int) {
