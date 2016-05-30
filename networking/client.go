@@ -5,13 +5,17 @@ import (
 	"net"
 )
 
+const clientPacketBufferSize = 100
+
 type Client struct {
-	session Session
-	conn    *net.UDPConn
+	session *Session
+	packets chan Packet
 }
 
 func NewClient() *Client {
-	return &Client{}
+	return &Client{
+		packets: make(chan Packet, clientPacketBufferSize),
+	}
 }
 
 func (c *Client) Connect(addr string) {
@@ -27,36 +31,29 @@ func (c *Client) Connect(addr string) {
 		return
 	}
 
-	c.conn, err = net.DialUDP("udp", localAddr, serverAddr)
+	conn, err := net.DialUDP("udp", localAddr, serverAddr)
 	if err != nil {
 		fmt.Println("Error connecting to udp server address: ", err)
 		return
 	}
 
-	buf := make([]byte, 65500)
-	go func() {
-		for c.conn != nil {
-			n, addr, err := c.conn.ReadFromUDP(buf)
-			data := buf[0:n]
-			fmt.Println("Received ", string(data), " from ", addr)
-
-			if err != nil {
-				fmt.Println("Error: ", err)
-				break
-			}
-		}
-	}()
+	c.session = NewSession(conn, c.packets)
+	c.session.Listen()
 }
 
 func (c *Client) WriteMessage(data []byte) {
-	_, err := c.conn.Write(data)
-	if err != nil {
-		fmt.Println("Error writting message to server: ", err)
-		return
+	c.session.WriteMessage(data)
+}
+
+func (c *Client) GetNextMessage() (Packet, bool) {
+	select {
+	case packet := <-c.packets:
+		return packet, true
+	default:
 	}
+	return Packet{}, false
 }
 
 func (c *Client) Close() {
-	c.conn.Close()
-	c.conn = nil
+	c.session.Close()
 }

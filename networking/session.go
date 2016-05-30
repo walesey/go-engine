@@ -1,48 +1,71 @@
 package networking
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
 	"net"
 )
 
-var tokenId = 0
+var ids int64
+
+type Command struct {
+	command string
+	args    []interface{}
+}
+
+type Packet struct {
+	Command
+	sessionId int64
+}
 
 type Session struct {
-	token string
-	addr  net.Addr
+	id      int64
+	conn    *net.UDPConn
+	packets chan Packet
 }
 
-func NewSession(addr net.Addr) Session {
-	return Session{addr: addr, token: generateToken()}
+func NewSession(conn *net.UDPConn, packets chan Packet) *Session {
+	ids++
+	return &Session{
+		id:      ids,
+		conn:    conn,
+		packets: packets,
+	}
 }
 
-func generateToken() string {
-	tokenId++
-	return fmt.Sprintf("%v", tokenId)
+func (s *Session) Listen() {
+	data := make([]byte, 65500)
+	go func() {
+		for s.conn != nil {
+			n, _, err := s.conn.ReadFromUDP(data)
+			if err != nil {
+				fmt.Println("Error reading udp packet: ", err)
+				continue
+			}
+
+			dataBuf := bytes.NewBuffer(data[0:n])
+			decoder := gob.NewDecoder(dataBuf)
+			var command Command
+			err = decoder.Decode(&command)
+			if err != nil {
+				fmt.Println("Error decoding udp packet: ", err)
+				continue
+			}
+
+			s.packets <- Packet{Command: command, sessionId: s.id}
+		}
+	}()
 }
 
-func (sess Session) WriteMessage(data []byte) {
-	clientAddr, err := net.ResolveUDPAddr("udp", sess.addr.String())
-	if err != nil {
-		fmt.Println("Error resolving server udp address: ", err)
-		return
-	}
+func (s *Session) Close() {
+	s.conn.Close()
+	s.conn = nil
+}
 
-	localAddr, err := net.ResolveUDPAddr("udp", "127.0.0.1:0")
+func (s *Session) WriteMessage(data []byte) {
+	_, err := s.conn.Write(data)
 	if err != nil {
-		fmt.Println("Error resolving local udp address: ", err)
-		return
-	}
-
-	clientConn, err := net.DialUDP("udp", localAddr, clientAddr)
-	if err != nil {
-		fmt.Println("Error connecting to udp client address: ", err)
-		return
-	}
-
-	_, err = clientConn.Write(data)
-	if err != nil {
-		fmt.Println("Error writting message to client: ", err)
-		return
+		fmt.Println("Error writing udp message to session address: ", err)
 	}
 }

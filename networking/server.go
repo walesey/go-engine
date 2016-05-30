@@ -5,16 +5,20 @@ import (
 	"net"
 )
 
+const serverPacketBufferSize = 1000
+const serverSessionBufferSize = 20
+
 type Server struct {
-	sessions    []Session
-	newSessions chan Session
-	conn        *net.UDPConn
+	sessions    []*Session
+	newSessions chan *Session
+	packets     chan Packet
 }
 
 func NewServer() *Server {
 	return &Server{
-		sessions:    make([]Session, 0),
-		newSessions: make(chan Session),
+		sessions:    make([]*Session, 0),
+		newSessions: make(chan *Session, serverSessionBufferSize),
+		packets:     make(chan Packet, clientPacketBufferSize),
 	}
 }
 
@@ -25,29 +29,39 @@ func (s *Server) Listen(port int) {
 		return
 	}
 
-	s.conn, err = net.ListenUDP("udp", serverAddr)
-	if err != nil {
-		fmt.Println("Error listening on udp address: ", err)
-		return
-	}
-
-	buf := make([]byte, 65500)
 	go func() {
-		for s.conn != nil {
-			n, addr, err := s.conn.ReadFromUDP(buf)
-
-			data := buf[0:n]
-			fmt.Println("Received ", string(data), " from ", addr)
-
+		for {
+			fmt.Println("test")
+			newConn, err := net.ListenUDP("udp", serverAddr)
 			if err != nil {
-				fmt.Println("Error: ", err)
+				fmt.Println("Error listening on udp address: ", err)
 				break
 			}
+			s.newSessions <- NewSession(newConn, s.packets)
 		}
 	}()
 }
 
-func (s *Server) Close() {
-	s.conn.Close()
-	s.conn = nil
+func (s *Server) GetNextMessage() (Packet, bool) {
+	select {
+	case packet := <-s.packets:
+		return packet, true
+	default:
+	}
+	return Packet{}, false
+}
+
+func (s *Server) Update(dt float64) {
+	select {
+	case packet := <-s.newSessions:
+		s.sessions = append(s.sessions, packet)
+		break
+	default:
+	}
+}
+
+func (s *Server) CloseAll() {
+	for _, session := range s.sessions {
+		session.Close()
+	}
 }
