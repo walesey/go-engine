@@ -1,13 +1,20 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/walesey/go-engine/networking"
 )
 
 func main() {
 	server := networking.NewServer()
-	server.Listen(19999)
+	server.Listen(29999)
+	defer server.Close()
 	for {
-
+		server.Update(0)
+		next, ok := server.GetNextMessage()
+		if ok {
+			fmt.Println(next)
+		}
 	}
 }

@@ -1,6 +1,8 @@
 package networking
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
 	"net"
 )
@@ -8,7 +10,8 @@ import (
 const clientPacketBufferSize = 100
 
 type Client struct {
-	session *Session
+	token   string
+	conn    *net.UDPConn
 	packets chan Packet
 }
 
@@ -31,18 +34,55 @@ func (c *Client) Connect(addr string) {
 		return
 	}
 
-	conn, err := net.DialUDP("udp", localAddr, serverAddr)
+	c.conn, err = net.DialUDP("udp", localAddr, serverAddr)
 	if err != nil {
 		fmt.Println("Error connecting to udp server address: ", err)
 		return
 	}
 
-	c.session = NewSession(conn, c.packets)
-	c.session.Listen()
+	data := make([]byte, 65500)
+	go func() {
+		for c.conn != nil {
+			n, _, err := c.conn.ReadFromUDP(data)
+			if err != nil {
+				fmt.Println("Error reading udp packet: ", err)
+				continue
+			}
+
+			dataBuf := bytes.NewBuffer(data[0:n])
+			decoder := gob.NewDecoder(dataBuf)
+			var packet Packet
+			err = decoder.Decode(&packet)
+			if err != nil {
+				fmt.Println("Error decoding udp packet: ", err)
+				continue
+			}
+			c.token = packet.Token
+
+			c.packets <- packet
+		}
+	}()
 }
 
-func (c *Client) WriteMessage(data []byte) {
-	c.session.WriteMessage(data)
+func (c *Client) WriteMessage(command string, args ...interface{}) {
+	packet := Packet{
+		Token:   c.token,
+		Command: command,
+		Args:    args,
+	}
+
+	dataBuf := bytes.NewBuffer(make([]byte, 61500))
+	endcoder := gob.NewEncoder(dataBuf)
+	err := endcoder.Encode(packet)
+	if err != nil {
+		fmt.Println("Error encoding udp message: ", err)
+		return
+	}
+
+	_, err = c.conn.Write(dataBuf.Bytes())
+	if err != nil {
+		fmt.Println("Error writing udp message to session address: ", err)
+	}
 }
 
 func (c *Client) GetNextMessage() (Packet, bool) {
@@ -55,5 +95,5 @@ func (c *Client) GetNextMessage() (Packet, bool) {
 }
 
 func (c *Client) Close() {
-	c.session.Close()
+	c.conn.Close()
 }
