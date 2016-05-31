@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/walesey/go-engine/networking"
 )
@@ -16,5 +17,7 @@ func main() {
 		if ok {
 			fmt.Println(next)
 		}
+
+		time.Sleep(1000 * time.Millisecond)
 	}
 }

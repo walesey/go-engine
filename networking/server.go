@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+	"github.com/walesey/go-engine/util"
 	"net"
 )
 
@@ -80,15 +81,16 @@ func (s *Server) WriteMessage(command string, token string, args ...interface{})
 			Args:    args,
 		}
 
-		dataBuf := bytes.NewBuffer(make([]byte, 65500))
-		endcoder := gob.NewEncoder(dataBuf)
-		err := endcoder.Encode(packet)
+		data, err := util.Serialize(packet)
 		if err != nil {
-			fmt.Println("Error encoding udp message: ", err)
+			fmt.Println("Error Serializing udp message: ", err)
 			return
 		}
 
-		session.WriteMessage(dataBuf.Bytes())
+		s.conn.WriteToUDP(data, session.addr)
+		if err != nil {
+			fmt.Println("Error Writing udp message: ", err)
+		}
 	}
 }
 
@@ -96,7 +98,7 @@ func (s *Server) Update(dt float64) {
 	select {
 	case newSession := <-s.newSessions:
 		s.sessions[newSession.token] = newSession
-		s.WriteMessage("", newSession.token)
+		s.WriteMessage("test", newSession.token)
 	default:
 	}
 }

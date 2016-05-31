@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+	"github.com/walesey/go-engine/util"
 	"net"
 )
 
@@ -71,15 +72,13 @@ func (c *Client) WriteMessage(command string, args ...interface{}) {
 		Args:    args,
 	}
 
-	dataBuf := bytes.NewBuffer(make([]byte, 61500))
-	endcoder := gob.NewEncoder(dataBuf)
-	err := endcoder.Encode(packet)
+	data, err := util.Serialize(packet)
 	if err != nil {
-		fmt.Println("Error encoding udp message: ", err)
+		fmt.Println("Error Serializing udp message: ", err)
 		return
 	}
 
-	_, err = c.conn.Write(dataBuf.Bytes())
+	_, err = c.conn.Write(data)
 	if err != nil {
 		fmt.Println("Error writing udp message to session address: ", err)
 	}
