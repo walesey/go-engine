@@ -1,9 +1,14 @@
 package engine
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/walesey/go-engine/renderer"
 	vmath "github.com/walesey/go-engine/vectormath"
 )
+
+var ids = 0
 
 // Engine is a wrapper for all the go-engine boilerblate code.
 // It sets up a basic render / Update loop and provides a nice interface for writing games.
@@ -13,10 +18,13 @@ type Engine interface {
 	AddSpatial(spatial renderer.Spatial)
 	RemoveSpatial(spatial renderer.Spatial, destroy bool)
 	RemoveOrtho(spatial renderer.Spatial, destroy bool)
-	AddUpdatable(updatables ...Updatable)
-	RemoveUpdatable(updatables ...Updatable)
+	AddUpdatable(updatable Updatable) string
+	RemoveUpdatable(updatable Updatable)
+	AddUpdatableKey(key string, updatable Updatable)
+	RemoveUpdatableKey(key string)
 	Sky(material *renderer.Material, size float64)
 	Camera() *renderer.Camera
+	Update()
 }
 
 type EngineImpl struct {
@@ -29,10 +37,18 @@ type EngineImpl struct {
 }
 
 func (engine *EngineImpl) Start(Init func()) {
-	engine.renderer.Init(Init)
-	engine.renderer.Update(engine.Update)
-	engine.renderer.Render(engine.Render)
-	engine.renderer.Start()
+	if engine.renderer != nil {
+		engine.renderer.Init(Init)
+		engine.renderer.Update(engine.Update)
+		engine.renderer.Render(engine.Render)
+		engine.renderer.Start()
+	} else {
+		Init()
+		for {
+			engine.Update()
+			time.Sleep(18 * time.Millisecond)
+		}
+	}
 }
 
 func (engine *EngineImpl) Update() {
@@ -63,12 +79,23 @@ func (engine *EngineImpl) RemoveSpatial(spatial renderer.Spatial, destroy bool) 
 	engine.sceneGraph.Remove(spatial, destroy)
 }
 
-func (engine *EngineImpl) AddUpdatable(updatables ...Updatable) {
-	engine.updatableStore.Add(updatables...)
+func (engine *EngineImpl) AddUpdatable(updatable Updatable) string {
+	ids++
+	key := fmt.Sprintf("%v", ids)
+	engine.updatableStore.Add(key, updatable)
+	return key
 }
 
-func (engine *EngineImpl) RemoveUpdatable(updatables ...Updatable) {
-	engine.updatableStore.Remove(updatables...)
+func (engine *EngineImpl) RemoveUpdatable(updatable Updatable) {
+	engine.updatableStore.RemoveUpdatable(updatable)
+}
+
+func (engine *EngineImpl) AddUpdatableKey(key string, updatable Updatable) {
+	engine.updatableStore.Add(key, updatable)
+}
+
+func (engine *EngineImpl) RemoveUpdatableKey(key string) {
+	engine.updatableStore.Remove(key)
 }
 
 func (engine *EngineImpl) Sky(material *renderer.Material, size float64) {
@@ -105,5 +132,16 @@ func NewEngine(r renderer.Renderer) Engine {
 		updatableStore: updatableStore,
 		renderer:       r,
 		camera:         camera,
+	}
+}
+
+func NewHeadlessEngine() Engine {
+	updatableStore := NewUpdatableStore()
+	fpsMeter := renderer.CreateFPSMeter(1.0)
+	fpsMeter.FpsCap = 60
+
+	return &EngineImpl{
+		fpsMeter:       fpsMeter,
+		updatableStore: updatableStore,
 	}
 }

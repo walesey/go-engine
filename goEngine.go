@@ -55,6 +55,11 @@ func main() {
 			Usage:  "run the bullet physics demo",
 			Action: examples.BulletDemo,
 		},
+		{
+			Name:   "network",
+			Usage:  "run the network multiplayer demo: network <server|client> ",
+			Action: examples.Network,
+		},
 	}
 
 	app.Run(os.Args)

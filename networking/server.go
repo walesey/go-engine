@@ -4,12 +4,22 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
-	"github.com/walesey/go-engine/util"
 	"net"
+
+	"github.com/walesey/go-engine/util"
+	vmath "github.com/walesey/go-engine/vectormath"
 )
 
 const serverPacketBufferSize = 1000
 const serverSessionBufferSize = 20
+
+func init() {
+	gob.Register([]interface{}{})
+	gob.Register(vmath.Vector4{})
+	gob.Register(vmath.Vector3{})
+	gob.Register(vmath.Vector2{})
+	gob.Register(vmath.Quaternion{})
+}
 
 type Packet struct {
 	Token   string
@@ -49,6 +59,7 @@ func (s *Server) Listen(port int) {
 	go func() {
 		for s.conn != nil {
 			n, addr, err := s.conn.ReadFromUDP(data)
+			fmt.Println(addr)
 			if err != nil {
 				fmt.Println("Error reading udp packet: ", err)
 				continue
@@ -91,6 +102,12 @@ func (s *Server) WriteMessage(command string, token string, args ...interface{})
 		if err != nil {
 			fmt.Println("Error Writing udp message: ", err)
 		}
+	}
+}
+
+func (s *Server) BroadcastMessage(command string, args ...interface{}) {
+	for token, _ := range s.sessions {
+		s.WriteMessage(command, token, args...)
 	}
 }
 
