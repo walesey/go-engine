@@ -17,4 +17,9 @@ type PhysicsSpace interface {
 }
 
 type PhysicsSpace2D interface {
+	Update(dt float64)
+	AddBody(body PhysicsObject2D)
+	RemoveBody(body PhysicsObject2D)
+	SetGravity(gravity vmath.Vector2)
+	GetGravity() vmath.Vector2
 }

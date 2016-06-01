@@ -29,17 +29,25 @@ type PhysicsObject interface {
 }
 
 type PhysicsObject2D interface {
-	ApplyForce(force, position vmath.Vector3)
-	ApplyTorque(torque vmath.Vector3)
-	GetPosition() vmath.Vector2
-	GetVelocity() vmath.Vector2
-	GetRotation() float64
-	GetAngularVelocity() float64
+	KineticEnergy() float64
+	SetMass(mass float64)
+	SetMoment(moment float64)
+	GetMoment() float64
+	SetAngle(angle float64)
+	AddAngle(angle float64)
 	GetMass() float64
+	SetPosition(pos vmath.Vector2)
+	AddForce(force vmath.Vector2)
+	SetForce(force vmath.Vector2)
+	AddVelocity(velocity vmath.Vector2)
 	SetVelocity(velocity vmath.Vector2)
-	SetRotation(orientation vmath.Quaternion)
-	SetAngularVelocity(av float64)
-}
-
-type PhysicsShape2D interface {
+	AddTorque(t float64)
+	GetTorque() float64
+	GetAngularVelocity() float64
+	SetTorque(t float64)
+	AddAngularVelocity(w float64)
+	SetAngularVelocity(w float64)
+	GetVelocity() vmath.Vector2
+	GetPosition() vmath.Vector2
+	GetAngle() float64
 }

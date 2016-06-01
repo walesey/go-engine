@@ -56,6 +56,11 @@ func main() {
 			Action: examples.BulletDemo,
 		},
 		{
+			Name:   "chipmunk",
+			Usage:  "run the chipmunk physics demo",
+			Action: examples.Chipmunk,
+		},
+		{
 			Name:   "network",
 			Usage:  "run the network multiplayer demo: network <server|client> ",
 			Action: examples.Network,

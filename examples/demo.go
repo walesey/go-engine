@@ -15,8 +15,6 @@ import (
 
 //
 func Demo(c *cli.Context) {
-	fps := renderer.CreateFPSMeter(1.0)
-	fps.FpsCap = 60
 
 	glRenderer := &opengl.OpenglRenderer{
 		WindowTitle:  "GoEngine",
