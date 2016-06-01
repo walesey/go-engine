@@ -27,3 +27,19 @@ type PhysicsObject interface {
 	SetFriction(friction float64)
 	SetRestitution(restitution float64)
 }
+
+type PhysicsObject2D interface {
+	ApplyForce(force, position vmath.Vector3)
+	ApplyTorque(torque vmath.Vector3)
+	GetPosition() vmath.Vector2
+	GetVelocity() vmath.Vector2
+	GetRotation() float64
+	GetAngularVelocity() float64
+	GetMass() float64
+	SetVelocity(velocity vmath.Vector2)
+	SetRotation(orientation vmath.Quaternion)
+	SetAngularVelocity(av float64)
+}
+
+type PhysicsShape2D interface {
+}

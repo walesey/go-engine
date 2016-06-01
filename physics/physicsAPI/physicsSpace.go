@@ -15,3 +15,6 @@ type PhysicsSpace interface {
 	SetGravity(gravity vmath.Vector3)
 	GetGravity() vmath.Vector3
 }
+
+type PhysicsSpace2D interface {
+}
