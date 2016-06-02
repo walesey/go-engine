@@ -31,8 +31,8 @@ func IntersectGeometry(geometry *renderer.Geometry) [][2]vmath.Vector2 {
 		t_ab := -va.Y / (va.Y - vb.Y)
 		t_ac := -va.Y / (va.Y - vc.Y)
 		segments = append(segments, [2]vmath.Vector2{
-			vmath.Vector2{va.X + (va.X-vb.X)*t_ab, va.Y + (va.Y-vb.Y)*t_ab},
-			vmath.Vector2{va.X + (va.X-vc.X)*t_ac, va.Y + (va.Y-vc.Y)*t_ac},
+			vmath.Vector2{va.X + (va.X-vb.X)*t_ab, va.Z + (va.Z-vb.Z)*t_ab},
+			vmath.Vector2{va.X + (va.X-vc.X)*t_ac, va.Z + (va.Z-vc.Z)*t_ac},
 		})
 	}
 	return segments
