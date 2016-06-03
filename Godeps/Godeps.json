@@ -55,6 +55,10 @@
 			"Rev": "2b15294402a895a4224659d181866f545991021e"
 		},
 		{
+			"ImportPath": "github.com/vova616/chipmunk",
+			"Rev": "c304c21f756a8f10596ac9fe519d53d1736e0400"
+		},
+		{
 			"ImportPath": "golang.org/x/image/bmp",
 			"Rev": "baddd3465a05d84a6d8d3507547a91cb188c81ea"
 		},
