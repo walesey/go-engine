@@ -12,6 +12,7 @@ import (
 
 const serverPacketBufferSize = 1000
 const serverSessionBufferSize = 20
+const sessionTimeout = 10 * 60 // 10 minutes
 
 func init() {
 	gob.Register([]interface{}{})
@@ -121,17 +122,29 @@ func (s *Server) ClientJoinedEvent(callback func(clientId string)) {
 }
 
 func (s *Server) Update(dt float64) {
+	// check for new sessions
 	select {
 	case newSession := <-s.newSessions:
 		s.sessions[newSession.token] = newSession
 		s.onClientJoined(newSession.token)
 	default:
 	}
+
+	// check for session timeouts
+	for token, session := range s.sessions {
+		if session.idleTime > sessionTimeout {
+			delete(s.sessions, token)
+		}
+		session.idleTime = session.idleTime + dt
+	}
 }
 
 func (s *Server) GetNextMessage() (Packet, bool) {
 	select {
 	case packet := <-s.packets:
+		if session, ok := s.sessions[packet.Token]; ok {
+			session.idleTime = 0
+		}
 		return packet, true
 	default:
 	}

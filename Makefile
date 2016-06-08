@@ -2,6 +2,7 @@ COVER_DIR = cover
 
 test:
 	go test github.com/walesey/go-engine/actor
+	go test github.com/walesey/go-engine/assets
 	go test github.com/walesey/go-engine/controller
 	go test github.com/walesey/go-engine/effects
 	go test github.com/walesey/go-engine/engine

@@ -38,7 +38,7 @@ func BulletDemo(c *cli.Context) {
 
 	//geometry for physics objects
 	geomMonkey, _ := assets.ImportObj("TestAssets/Files/physicsMonkey/phyMonkey.obj")
-	monkeyCollision := assets.CollisionShapeFromGeometry(geomMonkey, 0.3)
+	monkeyCollision := bullet.CollisionShapeFromGeometry(geomMonkey, 0.3)
 
 	spawn := func() physicsAPI.PhysicsObject {
 		monkeyNode := renderer.CreateNode()
@@ -65,7 +65,7 @@ func BulletDemo(c *cli.Context) {
 	}
 
 	terrain, _ := assets.ImportObj("TestAssets/Files/terrain/2/terrain2.obj")
-	terrainCollision := assets.TriangleMeshShapeFromGeometry(terrain)
+	terrainCollision := bullet.TriangleMeshShapeFromGeometry(terrain)
 
 	terrainNode := renderer.CreateNode()
 	terrainNode.Add(terrain)
