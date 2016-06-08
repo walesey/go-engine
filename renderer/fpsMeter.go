@@ -1,9 +1,6 @@
 package renderer
 
-import (
-	"fmt"
-	"time"
-)
+import "time"
 
 type FPSMeter struct {
 	start      time.Time
@@ -12,6 +9,7 @@ type FPSMeter struct {
 	sampleTime float64
 	FpsCap     float64
 	FrameTime  float64
+	value      float64
 }
 
 func CreateFPSMeter(sampleTime float64) *FPSMeter {
@@ -22,8 +20,7 @@ func (fps *FPSMeter) UpdateFPSMeter() {
 	fps.frames = fps.frames + 1
 	elapsed := time.Since(fps.start)
 	if elapsed.Seconds() >= fps.sampleTime {
-		fpsCount := (float64)(fps.frames) / fps.sampleTime
-		fmt.Printf("fps: %f\n", fpsCount)
+		fps.value = (float64)(fps.frames) / fps.sampleTime
 		fps.start = time.Now()
 		fps.frames = 0
 	}
@@ -34,4 +31,8 @@ func (fps *FPSMeter) UpdateFPSMeter() {
 		time.Sleep(sleepTime * time.Millisecond)
 	}
 	fps.last = time.Now()
+}
+
+func (fps *FPSMeter) Value() float64 {
+	return fps.value
 }

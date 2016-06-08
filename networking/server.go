@@ -28,18 +28,24 @@ type Packet struct {
 }
 
 type Server struct {
-	conn        *net.UDPConn
-	sessions    map[string]*Session
-	newSessions chan *Session
-	packets     chan Packet
+	conn           *net.UDPConn
+	sessions       map[string]*Session
+	newSessions    chan *Session
+	packets        chan Packet
+	onClientJoined func(clientId string)
 }
 
 func NewServer() *Server {
-	return &Server{
+	var server *Server
+	server = &Server{
 		sessions:    make(map[string]*Session),
 		newSessions: make(chan *Session, serverSessionBufferSize),
 		packets:     make(chan Packet, clientPacketBufferSize),
+		onClientJoined: func(clientId string) {
+			server.WriteMessage("", clientId)
+		},
 	}
+	return server
 }
 
 func (s *Server) Listen(port int) {
@@ -59,7 +65,6 @@ func (s *Server) Listen(port int) {
 	go func() {
 		for s.conn != nil {
 			n, addr, err := s.conn.ReadFromUDP(data)
-			fmt.Println(addr)
 			if err != nil {
 				fmt.Println("Error reading udp packet: ", err)
 				continue
@@ -111,11 +116,15 @@ func (s *Server) BroadcastMessage(command string, args ...interface{}) {
 	}
 }
 
+func (s *Server) ClientJoinedEvent(callback func(clientId string)) {
+	s.onClientJoined = callback
+}
+
 func (s *Server) Update(dt float64) {
 	select {
 	case newSession := <-s.newSessions:
 		s.sessions[newSession.token] = newSession
-		s.WriteMessage("test", newSession.token)
+		s.onClientJoined(newSession.token)
 	default:
 	}
 }

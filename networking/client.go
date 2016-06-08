@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
-	"github.com/walesey/go-engine/util"
 	"net"
+
+	"github.com/walesey/go-engine/util"
 )
 
 const clientPacketBufferSize = 100

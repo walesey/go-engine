@@ -13,6 +13,22 @@ import (
 	"github.com/walesey/go-engine/renderer"
 )
 
+//vericies format : x,y,z,   nx,ny,nz,tx,ty,tz,btx,bty,btz,   u,v,  r,g,b,a
+//Indicies format : f1,f2,f3 (triangles)
+type objData struct {
+	Name     string
+	Indicies []uint32
+	Vertices []float32
+	Mtl      *mtlData
+}
+
+type mtlData struct {
+	Name                                      string
+	Ns, Ka, Kd, Ks, Ni, D                     float32
+	Illum                                     int
+	Map_Kd, Map_Disp, Map_Spec, Map_Roughness image.Image
+}
+
 //imports an obj from a filePath and return a Geometry
 func ImportObj(filePath string) (*renderer.Geometry, error) {
 
@@ -25,8 +41,6 @@ func ImportObj(filePath string) (*renderer.Geometry, error) {
 	filePathTokens := strings.Split(strings.Replace(filePath, "\\", "/", -1), "/")
 	fileName := filePathTokens[len(filePathTokens)-1]
 	path := strings.TrimRight(filePath, fileName)
-	fmt.Println(fileName)
-	fmt.Println(path)
 
 	//open the file and read all lines
 	file, err := os.Open(filePath)
@@ -62,7 +76,7 @@ func ImportObj(filePath string) (*renderer.Geometry, error) {
 	}
 
 	geometry := renderer.CreateGeometry(obj.Indicies, obj.Vertices)
-	if mtlErr == nil {
+	if mtlErr == nil && obj.Mtl != nil {
 		geometry.Material = CreateMaterial(obj.Mtl.Map_Kd, obj.Mtl.Map_Disp, obj.Mtl.Map_Spec, obj.Mtl.Map_Roughness)
 	}
 
@@ -81,22 +95,6 @@ func CreateMaterial(diffuse, normal, specular, roughness image.Image) *renderer.
 	mat.Specular = specular
 	mat.Roughness = roughness
 	return mat
-}
-
-//vericies format : x,y,z,   nx,ny,nz,tx,ty,tz,btx,bty,btz,   u,v,  r,g,b,a
-//Indicies format : f1,f2,f3 (triangles)
-type objData struct {
-	Name     string
-	Indicies []uint32
-	Vertices []float32
-	Mtl      *mtlData
-}
-
-type mtlData struct {
-	Name                                      string
-	Ns, Ka, Kd, Ks, Ni, D                     float32
-	Illum                                     int
-	Map_Kd, Map_Disp, Map_Spec, Map_Roughness image.Image
 }
 
 //returns corresponding index (0,1,2...)

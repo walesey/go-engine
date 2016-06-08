@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/walesey/go-engine/renderer"
 	vmath "github.com/walesey/go-engine/vectormath"
@@ -24,13 +23,15 @@ type Engine interface {
 	RemoveUpdatableKey(key string)
 	Sky(material *renderer.Material, size float64)
 	Camera() *renderer.Camera
+	SetFpsCap(FpsCap float64)
+	FPS() float64
 	Update()
 }
 
 type EngineImpl struct {
 	fpsMeter       *renderer.FPSMeter
 	renderer       renderer.Renderer
-	sceneGraph     renderer.SceneGraph
+	sceneGraph     *renderer.SceneGraph
 	orthoNode      *renderer.Node
 	camera         *renderer.Camera
 	updatableStore *UpdatableStore
@@ -46,14 +47,13 @@ func (engine *EngineImpl) Start(Init func()) {
 		Init()
 		for {
 			engine.Update()
-			time.Sleep(18 * time.Millisecond)
 		}
 	}
 }
 
 func (engine *EngineImpl) Update() {
 	engine.fpsMeter.UpdateFPSMeter()
-	engine.updatableStore.UpdateAll(0.018)
+	engine.updatableStore.UpdateAll(1.0 / engine.fpsMeter.FpsCap) //TODO: calculate actual elapsed time.
 }
 
 func (engine *EngineImpl) Render() {
@@ -64,19 +64,27 @@ func (engine *EngineImpl) Render() {
 }
 
 func (engine *EngineImpl) AddOrtho(spatial renderer.Spatial) {
-	engine.orthoNode.Add(spatial)
+	if engine.orthoNode != nil {
+		engine.orthoNode.Add(spatial)
+	}
 }
 
 func (engine *EngineImpl) RemoveOrtho(spatial renderer.Spatial, destroy bool) {
-	engine.orthoNode.Remove(spatial, destroy)
+	if engine.orthoNode != nil {
+		engine.orthoNode.Remove(spatial, destroy)
+	}
 }
 
 func (engine *EngineImpl) AddSpatial(spatial renderer.Spatial) {
-	engine.sceneGraph.Add(spatial)
+	if engine.sceneGraph != nil {
+		engine.sceneGraph.Add(spatial)
+	}
 }
 
 func (engine *EngineImpl) RemoveSpatial(spatial renderer.Spatial, destroy bool) {
-	engine.sceneGraph.Remove(spatial, destroy)
+	if engine.sceneGraph != nil {
+		engine.sceneGraph.Remove(spatial, destroy)
+	}
 }
 
 func (engine *EngineImpl) AddUpdatable(updatable Updatable) string {
@@ -114,6 +122,14 @@ func (engine *EngineImpl) Sky(material *renderer.Material, size float64) {
 
 func (engine *EngineImpl) Camera() *renderer.Camera {
 	return engine.camera
+}
+
+func (engine *EngineImpl) SetFpsCap(FpsCap float64) {
+	engine.fpsMeter.FpsCap = FpsCap
+}
+
+func (engine *EngineImpl) FPS() float64 {
+	return engine.fpsMeter.Value()
 }
 
 func NewEngine(r renderer.Renderer) Engine {

@@ -13,8 +13,8 @@ type SceneGraph struct {
 }
 
 //factory
-func CreateSceneGraph() SceneGraph {
-	sceneGraph := SceneGraph{
+func CreateSceneGraph() *SceneGraph {
+	sceneGraph := &SceneGraph{
 		backgroundNode:  CreateNode(),
 		transparentNode: CreateNode(),
 		matStack:        util.CreateStack(),

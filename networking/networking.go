@@ -1,5 +1,7 @@
 package networking
 
+import "log"
+
 type Network struct {
 	client *Client
 	server *Server
@@ -7,9 +9,11 @@ type Network struct {
 }
 
 func NewNetwork() *Network {
-	return &Network{
+	var network *Network
+	network = &Network{
 		events: make(map[string]func(clientId string, args ...interface{})),
 	}
+	return network
 }
 
 func (n *Network) StartServer(port int) {
@@ -29,20 +33,21 @@ func (n *Network) Update(dt float64) {
 	if n.IsClient() {
 		// for packet, ok := n.client.GetNextMessage(); ok; {
 		if packet, ok := n.client.GetNextMessage(); ok {
-			n.callEvent(packet.Command, packet.Token, packet.Args...)
+			n.CallEvent(packet.Command, packet.Token, packet.Args...)
 		}
 	} else if n.IsServer() {
 		n.server.Update(dt)
 		// for packet, ok := n.server.GetNextMessage(); ok; {
 		if packet, ok := n.server.GetNextMessage(); ok {
-			n.callEvent(packet.Command, packet.Token, packet.Args...)
+			n.CallEvent(packet.Command, packet.Token, packet.Args...)
 		}
 	}
 }
 
-func (n *Network) callEvent(name, clientId string, args ...interface{}) {
+func (n *Network) CallEvent(name, clientId string, args ...interface{}) {
 	callback, ok := n.events[name]
 	if ok {
+		log.Printf("[NETWORK EVENT] %v (%v)", name, clientId)
 		callback(clientId, args...)
 	}
 }
@@ -77,12 +82,19 @@ func (n *Network) BroadcastEvent(name string, args ...interface{}) {
 // CallOnServerAndClient - trigger an event on the server and on all client.
 // If called on the client, this will trigger the event on the client and on the server.
 func (n *Network) TriggerOnServerAndClients(name string, args ...interface{}) {
-	n.callEvent(name, "", args...)
+	n.CallEvent(name, "", args...)
 	if n.IsClient() {
 		n.client.WriteMessage(name, args...)
 	}
 	if n.IsServer() {
 		n.server.BroadcastMessage(name, args...)
+	}
+}
+
+//ClientJoinedEvent - This function is called when a new client connects to the server
+func (n *Network) ClientJoinedEvent(callback func(clientId string)) {
+	if n.server != nil {
+		n.server.ClientJoinedEvent(callback)
 	}
 }
 
