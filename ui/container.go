@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"image"
 	"image/color"
 
 	"github.com/walesey/go-engine/renderer"
@@ -150,6 +151,17 @@ func (c *Container) SetPaddingPercent(paddingPercent MarginPercentages) {
 
 func (c *Container) SetBackgroundColor(r, g, b, a uint8) {
 	c.backgroundBox.SetColor(color.NRGBA{r, g, b, a})
+}
+
+func (c *Container) SetBackgroundImage(img image.Image) {
+	c.background.Remove(c.backgroundBox, true)
+	box := renderer.CreateBoxWithOffset(1, 1, 0, 0)
+	mat := renderer.CreateMaterial()
+	mat.Diffuse = img
+	mat.LightingMode = renderer.MODE_UNLIT
+	box.Material = mat
+	c.backgroundBox = box
+	c.background.Add(box)
 }
 
 func (c *Container) AddChildren(children ...Element) {

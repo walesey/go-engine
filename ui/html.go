@@ -84,19 +84,19 @@ func renderNode(container *Container, node *html.Node, styles *css.Stylesheet, a
 
 			//Parse Styles
 			normalStyles := getStyles(styles, nextNode, "")
-			applyStyles(newContainer, normalStyles)
+			applyStyles(newContainer, normalStyles, assets)
 			hoverStyles := getStyles(styles, nextNode, ":hover")
 			activeStyles := getStyles(styles, nextNode, ":active")
 			hover := false
 			active := false
 			updateState := func() {
 				applyDefaultStyles(newContainer)
-				applyStyles(newContainer, normalStyles)
+				applyStyles(newContainer, normalStyles, assets)
 				if hover {
-					applyStyles(newContainer, hoverStyles)
+					applyStyles(newContainer, hoverStyles, assets)
 				}
 				if active {
-					applyStyles(newContainer, activeStyles)
+					applyStyles(newContainer, activeStyles, assets)
 				}
 				if imageElement != nil {
 					imageElement.SetWidth(newContainer.width)
@@ -179,7 +179,7 @@ func applyDefaultStyles(container *Container) {
 	container.SetPadding(NewMargin(0))
 }
 
-func applyStyles(container *Container, styles map[string]string) {
+func applyStyles(container *Container, styles map[string]string, assets HtmlAssets) {
 	for prop, value := range styles {
 		switch {
 		case prop == "padding":
@@ -203,6 +203,12 @@ func applyStyles(container *Container, styles map[string]string) {
 		case prop == "background-color":
 			color := parseColor(value)
 			container.SetBackgroundColor(color[0], color[1], color[2], color[3])
+		case prop == "background-image":
+			img, ok := assets.imageMap[value]
+			fmt.Println(value)
+			if ok {
+				container.SetBackgroundImage(img)
+			}
 		case prop == "width":
 			width, units := parseDimensions(value)
 			if len(width) == 1 {
