@@ -205,7 +205,6 @@ func applyStyles(container *Container, styles map[string]string, assets HtmlAsse
 			container.SetBackgroundColor(color[0], color[1], color[2], color[3])
 		case prop == "background-image":
 			img, ok := assets.imageMap[value]
-			fmt.Println(value)
 			if ok {
 				container.SetBackgroundImage(img)
 			}
