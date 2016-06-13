@@ -7,12 +7,19 @@ import (
 	vmath "github.com/walesey/go-engine/vectormath"
 )
 
+type Activatable interface {
+	Active() bool
+	Activate()
+	Deactivate()
+}
+
 type Window struct {
 	node, elementNode, background *renderer.Node
 	backgroundBox                 *renderer.Geometry
 	element                       Element
 	size, position                vmath.Vector2
 	mousePos                      vmath.Vector2
+	Tabs                          []Activatable
 }
 
 func (w *Window) Draw(renderer renderer.Renderer) {
@@ -137,5 +144,6 @@ func NewWindow() *Window {
 		background:    background,
 		elementNode:   elementNode,
 		size:          vmath.Vector2{500, 1},
+		Tabs:          []Activatable{},
 	}
 }

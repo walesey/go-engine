@@ -155,6 +155,10 @@ func (te *TextElement) SetHeight(height float64) {
 	te.dirty = true
 }
 
+func (te *TextElement) Active() bool {
+	return te.active
+}
+
 func (te *TextElement) Activate() {
 	if !te.active {
 		te.active = true

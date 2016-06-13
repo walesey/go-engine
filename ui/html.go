@@ -17,31 +17,32 @@ import (
 )
 
 // LoadHTML - load the html/css code into the container
-func LoadHTML(container *Container, htmlInput, cssInput io.Reader, assets HtmlAssets) error {
+func LoadHTML(container *Container, htmlInput, cssInput io.Reader, assets HtmlAssets) ([]Activatable, error) {
 	document, err := html.Parse(htmlInput)
 	if err != nil {
 		log.Printf("Error parsing html: %v", err)
-		return err
+		return []Activatable{}, err
 	}
 
 	css, err := ioutil.ReadAll(cssInput)
 	if err != nil {
 		log.Printf("Error reading css: %v", err)
-		return err
+		return []Activatable{}, err
 	}
 
 	styles, err := parser.Parse(string(css))
 	if err != nil {
 		log.Printf("Error parsing css: %v", err)
-		return err
+		return []Activatable{}, err
 	}
 
-	renderNode(container, document.FirstChild, styles, assets)
+	activatables := renderNode(container, document.FirstChild, styles, assets)
 
-	return nil
+	return activatables, nil
 }
 
-func renderNode(container *Container, node *html.Node, styles *css.Stylesheet, assets HtmlAssets) {
+func renderNode(container *Container, node *html.Node, styles *css.Stylesheet, assets HtmlAssets) []Activatable {
+	activatables := []Activatable{}
 	nextNode := node
 	for nextNode != nil {
 		if nextNode.Type == 1 {
@@ -67,6 +68,7 @@ func renderNode(container *Container, node *html.Node, styles *css.Stylesheet, a
 				switch {
 				case inputType == "text":
 					textField = createText("", nextNode, newContainer, styles, assets)
+					activatables = append(activatables, textField)
 					newContainer.Hitbox.AddOnClick(func(button int, release bool, position vmath.Vector2) {
 						if !release {
 							textField.Activate()
@@ -162,13 +164,14 @@ func renderNode(container *Container, node *html.Node, styles *css.Stylesheet, a
 			}
 
 			//Render children
-			renderNode(newContainer, nextNode.FirstChild, styles, assets)
+			activatables = append(activatables, renderNode(newContainer, nextNode.FirstChild, styles, assets)...)
 		}
 		if nextNode == nextNode.NextSibling {
 			break
 		}
 		nextNode = nextNode.NextSibling
 	}
+	return activatables
 }
 
 func applyDefaultStyles(container *Container) {
