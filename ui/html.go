@@ -65,9 +65,9 @@ func renderNode(container *Container, node *html.Node, styles *css.Stylesheet, a
 			switch {
 			case tagType == "input":
 				inputType := getAttribute(nextNode, "type")
-				switch {
-				case inputType == "text":
+				if inputType == "text" || inputType == "password" {
 					textField = createText("", nextNode, newContainer, styles, assets)
+					textField.SetHidden(inputType == "password")
 					activatables = append(activatables, textField)
 					newContainer.Hitbox.AddOnClick(func(button int, release bool, position vmath.Vector2) {
 						if !release {

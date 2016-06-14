@@ -54,6 +54,7 @@ type TextElement struct {
 	textAlign          int
 	size, offset       vmath.Vector2
 	active             bool
+	hidden             bool
 	cursorPos          int
 	onFocusHandlers    []func()
 	onBlurHandlers     []func()
@@ -77,10 +78,11 @@ func (te *TextElement) updateImage(size vmath.Vector2) {
 	c := te.getContext()
 
 	// Establish image dimensions and do word wrap
+	text := te.GetHiddenText()
 	textHeight := c.PointToFixed(te.textSize)
 	var width int
 	var height int = int(textHeight >> 6)
-	words := strings.Split(te.text, " ")
+	words := strings.Split(text, " ")
 	lines := []string{""}
 	lineNb := 0
 	for _, word := range words {
@@ -124,6 +126,17 @@ func (te *TextElement) GetText() string {
 	return te.text
 }
 
+func (te *TextElement) GetHiddenText() string {
+	if te.hidden {
+		text := ""
+		for i := 0; i < len(te.text); i++ {
+			text = fmt.Sprint(text, "*")
+		}
+		return text
+	}
+	return te.text
+}
+
 func (te *TextElement) SetText(text string) {
 	te.text = text
 	te.cursorPos = len(text)
@@ -153,6 +166,10 @@ func (te *TextElement) SetWidth(width float64) {
 func (te *TextElement) SetHeight(height float64) {
 	te.height = height
 	te.dirty = true
+}
+
+func (te *TextElement) SetHidden(hidden bool) {
+	te.hidden = hidden
 }
 
 func (te *TextElement) Active() bool {
@@ -212,7 +229,8 @@ func (te *TextElement) ReRender() {
 
 func (te *TextElement) RenderCursor() {
 	c := te.getContext()
-	cursorTranslation, _ := c.StringDimensions(string([]byte(te.text)[:te.cursorPos]))
+	text := te.GetHiddenText()
+	cursorTranslation, _ := c.StringDimensions(string([]byte(text)[:te.cursorPos]))
 	xPos := int(cursorTranslation.X >> 6)
 	te.cursor.SetTranslation(vmath.Vector2{float64(xPos), 0}.ToVector3())
 	if te.active {

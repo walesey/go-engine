@@ -351,15 +351,15 @@ func (glRenderer *OpenglRenderer) newTexture(img image.Image, textureUnit uint32
 }
 
 func (glRenderer *OpenglRenderer) ReflectionMap(cm *renderer.CubeMap) {
-	cm.Resize(512)
+	cm.Resize(256)
 	glRenderer.envMapId = glRenderer.newCubeMap(cm.Right, cm.Left, cm.Top, cm.Bottom, cm.Back, cm.Front, gl.TEXTURE4)
-	cm.Resize(64)
+	cm.Resize(80)
 	glRenderer.envMapLOD1Id = glRenderer.newCubeMap(cm.Right, cm.Left, cm.Top, cm.Bottom, cm.Back, cm.Front, gl.TEXTURE5)
-	cm.Resize(32)
+	cm.Resize(30)
 	glRenderer.envMapLOD2Id = glRenderer.newCubeMap(cm.Right, cm.Left, cm.Top, cm.Bottom, cm.Back, cm.Front, gl.TEXTURE6)
-	cm.Resize(16)
+	cm.Resize(12)
 	glRenderer.envMapLOD3Id = glRenderer.newCubeMap(cm.Right, cm.Left, cm.Top, cm.Bottom, cm.Back, cm.Front, gl.TEXTURE7)
-	cm.Resize(8)
+	cm.Resize(6)
 	glRenderer.illuminanceMapId = glRenderer.newCubeMap(cm.Right, cm.Left, cm.Top, cm.Bottom, cm.Back, cm.Front, gl.TEXTURE8)
 }
 
