@@ -2,8 +2,10 @@ package engine
 
 import (
 	"fmt"
+	"image/color"
 
 	"github.com/walesey/go-engine/renderer"
+	"github.com/walesey/go-engine/ui"
 	vmath "github.com/walesey/go-engine/vectormath"
 )
 
@@ -25,6 +27,7 @@ type Engine interface {
 	Camera() *renderer.Camera
 	SetFpsCap(FpsCap float64)
 	FPS() float64
+	InitFpsDial()
 	Update()
 }
 
@@ -130,6 +133,37 @@ func (engine *EngineImpl) SetFpsCap(FpsCap float64) {
 
 func (engine *EngineImpl) FPS() float64 {
 	return engine.fpsMeter.Value()
+}
+
+func (engine *EngineImpl) InitFpsDial() {
+	window := ui.NewWindow()
+	window.SetTranslation(vmath.Vector3{10, 10, 1})
+	window.SetScale(vmath.Vector3{400, 0, 1})
+	window.SetBackgroundColor(0, 0, 0, 0)
+
+	container := ui.NewContainer()
+	container.SetBackgroundColor(0, 0, 0, 0)
+	window.SetElement(container)
+
+	text := ui.NewTextElement("0", color.RGBA{255, 0, 0, 255}, 18, nil)
+	container.AddChildren(text)
+	engine.AddUpdatable(UpdatableFunc(func(dt float64) {
+		fps := engine.FPS()
+		text.SetText(fmt.Sprintf("%v", int(fps)))
+		if fps < 20 {
+			text.SetTextColor(color.RGBA{255, 0, 0, 255})
+		} else if fps < 30 {
+			text.SetTextColor(color.RGBA{255, 90, 0, 255})
+		} else if fps < 50 {
+			text.SetTextColor(color.RGBA{255, 255, 0, 255})
+		} else {
+			text.SetTextColor(color.RGBA{0, 255, 0, 255})
+		}
+		text.ReRender()
+	}))
+
+	window.Render()
+	engine.AddOrtho(window)
 }
 
 func NewEngine(r renderer.Renderer) Engine {

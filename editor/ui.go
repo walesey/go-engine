@@ -14,6 +14,7 @@ import (
 )
 
 func (e *Editor) setupUI() {
+
 	//images
 	loadImageAsset("file", FileIconData, e.uiAssets)
 	loadImageAsset("copy", CopyIconData, e.uiAssets)
@@ -45,6 +46,7 @@ func (e *Editor) setupUI() {
 	})
 
 	e.initOverviewMenu()
+	e.gameEngine.InitFpsDial()
 
 	e.customController.BindAction(func() {
 		if e.mainMenuOpen {

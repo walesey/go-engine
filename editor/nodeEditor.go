@@ -47,7 +47,7 @@ func (e *Editor) openNodeEditor(node *editorModels.NodeModel, callback func()) {
 	})
 
 	e.controllerManager.AddController(uiController)
-	ui.LoadHTML(container, strings.NewReader(nodeEditMenuHtml), strings.NewReader(globalCss), e.uiAssets)
+	window.Tabs, _ = ui.LoadHTML(container, strings.NewReader(nodeEditMenuHtml), strings.NewReader(globalCss), e.uiAssets)
 
 	e.gameEngine.AddOrtho(window)
 

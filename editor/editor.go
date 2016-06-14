@@ -14,21 +14,22 @@ import (
 )
 
 type Editor struct {
-	renderer           renderer.Renderer
-	gameEngine         engine.Engine
-	currentMap         *editorModels.MapModel
-	rootMapNode        *renderer.Node
-	customController   controller.Controller
-	controllerManager  *glfwController.ControllerManager
-	uiAssets           ui.HtmlAssets
-	mainMenu           *ui.Window
-	mainMenuController glfwController.Controller
-	overviewMenu       *Overview
-	mainMenuOpen       bool
-	progressBar        *ui.Window
-	fileBrowser        *FileBrowser
-	fileBrowserOpen    bool
-	mouseMode          string
+	renderer              renderer.Renderer
+	gameEngine            engine.Engine
+	currentMap            *editorModels.MapModel
+	rootMapNode           *renderer.Node
+	customController      controller.Controller
+	controllerManager     *glfwController.ControllerManager
+	uiAssets              ui.HtmlAssets
+	mainMenu              *ui.Window
+	mainMenuController    glfwController.Controller
+	overviewMenu          *Overview
+	mainMenuOpen          bool
+	progressBar           *ui.Window
+	fileBrowser           *FileBrowser
+	fileBrowserOpen       bool
+	fileBrowserController glfwController.Controller
+	mouseMode             string
 }
 
 func New() *Editor {

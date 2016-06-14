@@ -27,6 +27,7 @@ func BulletDemo(c *cli.Context) {
 		FullScreen:   true,
 	}
 	gameEngine := engine.NewEngine(glRenderer)
+	gameEngine.InitFpsDial()
 
 	//physics engine
 	sdk := gobullet.NewBulletSDK()

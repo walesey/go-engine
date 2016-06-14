@@ -24,6 +24,8 @@ func Chipmunk(c *cli.Context) {
 		WindowHeight: 1000,
 	}
 	gameEngine := engine.NewEngine(glRenderer)
+	gameEngine.InitFpsDial()
+
 	physicsSpace := chipmunkPhysics.NewChipmonkSpace()
 	physicsSpace.SetGravity(vmath.Vector2{0, -10})
 	gameEngine.AddUpdatable(physicsSpace)

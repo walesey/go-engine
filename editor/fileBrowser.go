@@ -27,6 +27,7 @@ type FileBrowser struct {
 func (e *Editor) closeFileBrowser() {
 	if e.fileBrowserOpen {
 		e.gameEngine.RemoveOrtho(e.fileBrowser.window, false)
+		e.controllerManager.RemoveController(e.fileBrowserController)
 		e.fileBrowserOpen = false
 	}
 }
@@ -67,8 +68,8 @@ func (e *Editor) openFileBrowser(heading string, callback func(filePath string),
 		window.SetTranslation(vmath.Vector3{100, 100, 1})
 		window.SetScale(vmath.Vector3{800, 0, 1})
 
-		e.controllerManager.AddController(ui.NewUiController(window).(glfwController.Controller))
-		ui.LoadHTML(container, strings.NewReader(fileBrowserHtml), strings.NewReader(globalCss), e.uiAssets)
+		e.fileBrowserController = ui.NewUiController(window).(glfwController.Controller)
+		window.Tabs, _ = ui.LoadHTML(container, strings.NewReader(fileBrowserHtml), strings.NewReader(globalCss), e.uiAssets)
 
 		e.fileBrowser = &FileBrowser{
 			window:       window,
@@ -84,6 +85,7 @@ func (e *Editor) openFileBrowser(heading string, callback func(filePath string),
 	e.fileBrowser.SetFileTextField("")
 	e.fileBrowser.extensionFilter = filters
 	e.gameEngine.AddOrtho(e.fileBrowser.window)
+	e.controllerManager.AddController(e.fileBrowserController)
 	e.fileBrowserOpen = true
 	e.fileBrowser.UpdateFileSystem()
 }

@@ -309,5 +309,9 @@ func NewTextElement(text string, textColor color.Color, textSize float64, textFo
 		textFont:  textFont,
 		dirty:     true,
 	}
+	if textFont == nil {
+		defaultFont, _ := LoadFont(getDefaultFont())
+		textElem.SetFont(defaultFont)
+	}
 	return textElem
 }
