@@ -106,9 +106,6 @@ func (w *Window) TextElementById(id string) *TextElement {
 
 func (w *Window) mouseMove(position vmath.Vector2) {
 	w.mousePos = position.Subtract(w.position)
-	// TODO: figure out what is causing this vertical error
-	w.mousePos = w.mousePos.Add(vmath.Vector2{0, 2})
-	w.mousePos = w.mousePos.Multiply(vmath.Vector2{1, 1.02})
 	if w.element != nil {
 		w.element.mouseMove(w.mousePos)
 	}

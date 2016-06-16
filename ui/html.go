@@ -160,6 +160,10 @@ func renderNode(container *Container, node *html.Node, styles *css.Stylesheet, a
 							callback(newContainer, key, release)
 						})
 					}
+				case attr.Key == "placeholder":
+					if textField != nil {
+						textField.SetPlaceholder(attr.Val)
+					}
 				}
 			}
 

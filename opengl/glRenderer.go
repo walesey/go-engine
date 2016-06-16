@@ -93,12 +93,17 @@ func (glRenderer *OpenglRenderer) Start() {
 	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
 	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
 
-	if glRenderer.FullScreen || glRenderer.WindowWidth == 0 {
+	if glRenderer.FullScreen {
 		glRenderer.WindowWidth = glfw.GetPrimaryMonitor().GetVideoMode().Width
+	} else if glRenderer.WindowWidth == 0 {
+		glRenderer.WindowWidth = glfw.GetPrimaryMonitor().GetVideoMode().Width * 95 / 100
 	}
-	if glRenderer.FullScreen || glRenderer.WindowHeight == 0 {
+	if glRenderer.FullScreen {
 		glRenderer.WindowHeight = glfw.GetPrimaryMonitor().GetVideoMode().Height
+	} else if glRenderer.WindowHeight == 0 {
+		glRenderer.WindowHeight = glfw.GetPrimaryMonitor().GetVideoMode().Height * 95 / 100
 	}
+	fmt.Println(glRenderer.WindowWidth, glRenderer.WindowHeight)
 
 	var monitor *glfw.Monitor
 	if glRenderer.FullScreen {

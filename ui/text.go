@@ -48,6 +48,7 @@ type TextElement struct {
 	img                *ImageElement
 	width, height      float64
 	text               string
+	placeholder        string
 	textColor          color.Color
 	textSize           float64
 	textFont           *truetype.Font
@@ -77,8 +78,15 @@ func (te *TextElement) updateImage(size vmath.Vector2) {
 	bg := image.Transparent
 	c := te.getContext()
 
-	// Establish image dimensions and do word wrap
 	text := te.GetHiddenText()
+	if len(text) == 0 {
+		text = te.placeholder
+		r, g, b, _ := te.textColor.RGBA()
+		placeholderColor := color.RGBA{uint8(r), uint8(g), uint8(b), 80}
+		c.SetSrc(image.NewUniform(placeholderColor))
+	}
+
+	// Establish image dimensions and do word wrap
 	textHeight := c.PointToFixed(te.textSize)
 	var width int
 	var height int = int(textHeight >> 6)
@@ -137,39 +145,52 @@ func (te *TextElement) GetHiddenText() string {
 	return te.text
 }
 
-func (te *TextElement) SetText(text string) {
+func (te *TextElement) SetText(text string) *TextElement {
 	te.text = text
 	te.cursorPos = len(text)
 	te.dirty = true
+	return te
 }
 
-func (te *TextElement) SetFont(textFont *truetype.Font) {
+func (te *TextElement) SetPlaceholder(placeholder string) *TextElement {
+	te.placeholder = placeholder
+	te.dirty = true
+	return te
+}
+
+func (te *TextElement) SetFont(textFont *truetype.Font) *TextElement {
 	te.textFont = textFont
 	te.dirty = true
+	return te
 }
 
-func (te *TextElement) SetTextSize(textSize float64) {
+func (te *TextElement) SetTextSize(textSize float64) *TextElement {
 	te.textSize = textSize
 	te.dirty = true
+	return te
 }
 
-func (te *TextElement) SetTextColor(textColor color.Color) {
+func (te *TextElement) SetTextColor(textColor color.Color) *TextElement {
 	te.textColor = textColor
 	te.dirty = true
+	return te
 }
 
-func (te *TextElement) SetWidth(width float64) {
+func (te *TextElement) SetWidth(width float64) *TextElement {
 	te.width = width
 	te.dirty = true
+	return te
 }
 
-func (te *TextElement) SetHeight(height float64) {
+func (te *TextElement) SetHeight(height float64) *TextElement {
 	te.height = height
 	te.dirty = true
+	return te
 }
 
-func (te *TextElement) SetHidden(hidden bool) {
+func (te *TextElement) SetHidden(hidden bool) *TextElement {
 	te.hidden = hidden
+	return te
 }
 
 func (te *TextElement) Active() bool {
