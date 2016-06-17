@@ -457,6 +457,10 @@ func (a *face) drawContour(ps []Point, dx, dy fixed.Int26_6) {
 	}
 }
 
+func (a *face) Metrics() font.Metrics {
+	return font.Metrics{}
+}
+
 // facePainter is like a raster.AlphaSrcPainter, with an additional Y offset
 // (face.paintOffset) to the painted spans.
 type facePainter struct {
