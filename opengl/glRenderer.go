@@ -103,7 +103,6 @@ func (glRenderer *OpenglRenderer) Start() {
 	} else if glRenderer.WindowHeight == 0 {
 		glRenderer.WindowHeight = glfw.GetPrimaryMonitor().GetVideoMode().Height * 95 / 100
 	}
-	fmt.Println(glRenderer.WindowWidth, glRenderer.WindowHeight)
 
 	var monitor *glfw.Monitor
 	if glRenderer.FullScreen {
