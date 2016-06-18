@@ -22,12 +22,16 @@
 		},
 		{
 			"ImportPath": "github.com/codegangsta/cli",
-			"Comment": "v1.8.0-4-g142e6cd",
-			"Rev": "142e6cd241a4dfbf7f07a018f1f8225180018da4"
+			"Comment": "v1.17.0-77-gb438abf",
+			"Rev": "b438abf775124d32be72016935a9553dbffe8473"
+		},
+		{
+			"ImportPath": "github.com/davecgh/go-spew/spew",
+			"Rev": "5215b55f46b2b919f50a1df0eaa5886afe4e3b3d"
 		},
 		{
 			"ImportPath": "github.com/disintegration/imaging",
-			"Rev": "3ab6ec550f20d497d2755ed3c48a3e45ad6b7eb9"
+			"Rev": "d8bbae1de109b518dabc98c6c1633eb358c148a4"
 		},
 		{
 			"ImportPath": "github.com/go-gl/gl/v4.1-core/gl",
@@ -47,9 +51,13 @@
 			"Rev": "a80e24ada2699166544311f07c26ef37eaf64012"
 		},
 		{
+			"ImportPath": "github.com/pmezard/go-difflib/difflib",
+			"Rev": "792786c7400a136282c1664665ae0a8db921c6c2"
+		},
+		{
 			"ImportPath": "github.com/stretchr/testify/assert",
-			"Comment": "v1.0-49-g2b15294",
-			"Rev": "2b15294402a895a4224659d181866f545991021e"
+			"Comment": "v1.1.3-19-gd77da35",
+			"Rev": "d77da356e56a7428ad25149ca77381849a6a5232"
 		},
 		{
 			"ImportPath": "github.com/vova616/chipmunk",
@@ -65,35 +73,35 @@
 		},
 		{
 			"ImportPath": "golang.org/x/image/bmp",
-			"Rev": "baddd3465a05d84a6d8d3507547a91cb188c81ea"
+			"Rev": "97680175a5267bb8b31f1923e7a66df98013b11a"
 		},
 		{
 			"ImportPath": "golang.org/x/image/font",
-			"Rev": "baddd3465a05d84a6d8d3507547a91cb188c81ea"
+			"Rev": "97680175a5267bb8b31f1923e7a66df98013b11a"
 		},
 		{
 			"ImportPath": "golang.org/x/image/math/f32",
-			"Rev": "baddd3465a05d84a6d8d3507547a91cb188c81ea"
+			"Rev": "97680175a5267bb8b31f1923e7a66df98013b11a"
 		},
 		{
 			"ImportPath": "golang.org/x/image/math/fixed",
-			"Rev": "baddd3465a05d84a6d8d3507547a91cb188c81ea"
+			"Rev": "97680175a5267bb8b31f1923e7a66df98013b11a"
 		},
 		{
 			"ImportPath": "golang.org/x/image/tiff",
-			"Rev": "baddd3465a05d84a6d8d3507547a91cb188c81ea"
+			"Rev": "97680175a5267bb8b31f1923e7a66df98013b11a"
 		},
 		{
 			"ImportPath": "golang.org/x/image/tiff/lzw",
-			"Rev": "baddd3465a05d84a6d8d3507547a91cb188c81ea"
+			"Rev": "97680175a5267bb8b31f1923e7a66df98013b11a"
 		},
 		{
 			"ImportPath": "golang.org/x/net/html",
-			"Rev": "b4e17d61b15679caf2335da776c614169a1b4643"
+			"Rev": "1961d9def2b2d7a28d7958926d2457d05a178ecd"
 		},
 		{
 			"ImportPath": "golang.org/x/net/html/atom",
-			"Rev": "b4e17d61b15679caf2335da776c614169a1b4643"
+			"Rev": "1961d9def2b2d7a28d7958926d2457d05a178ecd"
 		}
 	]
 }
