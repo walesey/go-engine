@@ -51,11 +51,6 @@ func main() {
 			Action: examples.GunDemo,
 		},
 		{
-			Name:   "bullet",
-			Usage:  "run the bullet physics demo",
-			Action: examples.BulletDemo,
-		},
-		{
 			Name:   "chipmunk",
 			Usage:  "run the chipmunk physics demo",
 			Action: examples.Chipmunk,

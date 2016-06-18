@@ -10,7 +10,6 @@ A Simple Rendering and scene graph library for Golang.
 * Lighting Engine
 * Particle System
 * html/css based UI system
-* Bullet physics (gobullet)
 * Controller system (mouse, keyboard, joystick)
 
 ### Planned features
