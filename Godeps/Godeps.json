@@ -1,9 +1,7 @@
 {
 	"ImportPath": "github.com/walesey/go-engine",
-	"GoVersion": "go1.5.3",
-	"Packages": [
-		"./..."
-	],
+	"GoVersion": "go1.6",
+	"GodepVersion": "v74",
 	"Deps": [
 		{
 			"ImportPath": "github.com/Invictus321/invictus321-countdown",
@@ -21,7 +19,7 @@
 		},
 		{
 			"ImportPath": "github.com/codegangsta/cli",
-			"Comment": "1.2.0-139-g142e6cd",
+			"Comment": "v1.8.0-4-g142e6cd",
 			"Rev": "142e6cd241a4dfbf7f07a018f1f8225180018da4"
 		},
 		{
@@ -46,16 +44,15 @@
 			"Rev": "a80e24ada2699166544311f07c26ef37eaf64012"
 		},
 		{
-			"ImportPath": "github.com/luxengine/gobullet",
-			"Rev": "e9b4522dd9652ffa9ec586ebf0dc99d540e66c02"
-		},
-		{
-			"ImportPath": "github.com/stretchr/testify/assert",
-			"Comment": "v1.0-49-g2b15294",
-			"Rev": "2b15294402a895a4224659d181866f545991021e"
-		},
-		{
 			"ImportPath": "github.com/vova616/chipmunk",
+			"Rev": "c304c21f756a8f10596ac9fe519d53d1736e0400"
+		},
+		{
+			"ImportPath": "github.com/vova616/chipmunk/transform",
+			"Rev": "c304c21f756a8f10596ac9fe519d53d1736e0400"
+		},
+		{
+			"ImportPath": "github.com/vova616/chipmunk/vect",
 			"Rev": "c304c21f756a8f10596ac9fe519d53d1736e0400"
 		},
 		{
@@ -79,7 +76,15 @@
 			"Rev": "baddd3465a05d84a6d8d3507547a91cb188c81ea"
 		},
 		{
+			"ImportPath": "golang.org/x/image/tiff/lzw",
+			"Rev": "baddd3465a05d84a6d8d3507547a91cb188c81ea"
+		},
+		{
 			"ImportPath": "golang.org/x/net/html",
+			"Rev": "b4e17d61b15679caf2335da776c614169a1b4643"
+		},
+		{
+			"ImportPath": "golang.org/x/net/html/atom",
 			"Rev": "b4e17d61b15679caf2335da776c614169a1b4643"
 		}
 	]
