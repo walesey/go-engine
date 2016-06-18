@@ -28,16 +28,16 @@
 		},
 		{
 			"ImportPath": "github.com/go-gl/gl/v4.1-core/gl",
-			"Rev": "41aed3351edcf3da1ccc41c8a1db99af2c854ea7"
+			"Rev": "cd1cf4a9b229045e8a41d5945fc597617e8bae4f"
 		},
 		{
 			"ImportPath": "github.com/go-gl/glfw/v3.1/glfw",
-			"Rev": "444b30a23d42cdecfaa72d8f91f8020efc99eb9d"
+			"Rev": "e08e51ed34fa8be1bab154a41910d15c6e9202ac"
 		},
 		{
 			"ImportPath": "github.com/go-gl/mathgl/mgl32",
-			"Comment": "Go1.2.2-87-g30f1c47",
-			"Rev": "30f1c4750afba2aa0b15b673ffcf80789188c7b3"
+			"Comment": "Go1.2.2-113-g4051097",
+			"Rev": "40510979b0b281f0fdb879958e0416f38f0f3504"
 		},
 		{
 			"ImportPath": "github.com/gorilla/css/scanner",
