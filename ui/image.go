@@ -10,6 +10,8 @@ import (
 type ImageElement struct {
 	id            string
 	Hitbox        Hitbox
+	percentWidth  bool
+	percentHeight bool
 	width, height float64
 	rotation      float64
 	offset        vmath.Vector2
@@ -18,7 +20,7 @@ type ImageElement struct {
 }
 
 func (ie *ImageElement) Render(size, offset vmath.Vector2) vmath.Vector2 {
-	width, height := ie.width, ie.height
+	width, height := ie.getWidth(size.X), ie.getHeight(size.X)
 	if width <= 0 && height <= 0 {
 		width = float64(ie.img.Bounds().Size().X)
 		height = float64(ie.img.Bounds().Size().Y)
@@ -47,8 +49,30 @@ func (ie *ImageElement) SetWidth(width float64) {
 	ie.width = width
 }
 
+func (ie *ImageElement) UsePercentWidth(usePercent bool) {
+	ie.percentWidth = usePercent
+}
+
 func (ie *ImageElement) SetHeight(height float64) {
 	ie.height = height
+}
+
+func (ie *ImageElement) UsePercentHeight(usePercent bool) {
+	ie.percentHeight = usePercent
+}
+
+func (ie *ImageElement) getWidth(parentWidth float64) float64 {
+	if ie.percentWidth {
+		return parentWidth * ie.width / 100.0
+	}
+	return ie.width
+}
+
+func (ie *ImageElement) getHeight(parentWidth float64) float64 {
+	if ie.percentHeight {
+		return parentWidth * ie.height / 100.0
+	}
+	return ie.height
 }
 
 func (ie *ImageElement) SetRotation(rotation float64) {
