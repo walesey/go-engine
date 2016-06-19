@@ -14,12 +14,13 @@ type ImageElement struct {
 	percentHeight bool
 	width, height float64
 	rotation      float64
-	offset        vmath.Vector2
+	size, offset  vmath.Vector2
 	node          *renderer.Node
 	img           image.Image
 }
 
 func (ie *ImageElement) Render(size, offset vmath.Vector2) vmath.Vector2 {
+	ie.size, ie.offset = size, offset
 	width, height := ie.getWidth(size.X), ie.getHeight(size.X)
 	if width <= 0 && height <= 0 {
 		width = float64(ie.img.Bounds().Size().X)
@@ -35,6 +36,10 @@ func (ie *ImageElement) Render(size, offset vmath.Vector2) vmath.Vector2 {
 	ie.offset = offset
 	ie.Hitbox.SetSize(imgSize)
 	return imgSize
+}
+
+func (ie *ImageElement) ReRender() {
+	ie.Render(ie.size, ie.offset)
 }
 
 func (ie *ImageElement) Spatial() renderer.Spatial {

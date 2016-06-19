@@ -36,6 +36,7 @@ type Container struct {
 }
 
 func (c *Container) Render(size, offset vmath.Vector2) vmath.Vector2 {
+	c.size, c.offset = size, offset
 	padding := convertMargin(c.padding, c.paddingPercent, size.X)
 	margin := convertMargin(c.margin, c.marginPercent, size.X)
 	sizeMinusMargins := size.Subtract(vmath.Vector2{
@@ -68,7 +69,6 @@ func (c *Container) Render(size, offset vmath.Vector2) vmath.Vector2 {
 		containerSize.Y = height
 	}
 	//offsets and sizes
-	c.offset = offset
 	c.backgroundOffset = vmath.Vector2{margin.Left, margin.Top}
 	c.elementsOffset = vmath.Vector2{margin.Left + padding.Left, margin.Top + padding.Top}
 	backgroundSize := containerSize.Add(vmath.Vector2{padding.Left + padding.Right, padding.Top + padding.Bottom})
@@ -80,6 +80,10 @@ func (c *Container) Render(size, offset vmath.Vector2) vmath.Vector2 {
 	c.node.SetTranslation(c.offset.ToVector3())
 	c.Hitbox.SetSize(backgroundSize)
 	return totalSize
+}
+
+func (c *Container) ReRender() {
+	c.Render(c.size, c.offset)
 }
 
 func convertMargin(margin Margin, percentages MarginPercentages, parentWidth float64) Margin {

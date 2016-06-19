@@ -118,6 +118,7 @@ func renderNode(container *Container, node *html.Node, styles *css.Stylesheet, a
 					applyStyles(newContainer, activeStyles, assets)
 				}
 				updateImage()
+				newContainer.ReRender()
 			}
 			if len(hoverStyles) > 0 {
 				newContainer.Hitbox.AddOnHover(func() {

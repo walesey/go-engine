@@ -7,6 +7,7 @@ import (
 
 type Element interface {
 	Render(size, offset vmath.Vector2) vmath.Vector2
+	ReRender()
 	Spatial() renderer.Spatial
 	GetId() string
 	mouseMove(position vmath.Vector2)
