@@ -94,9 +94,17 @@ func renderNode(container *Container, node *html.Node, styles *css.Stylesheet, a
 			updateImage := func() {
 				if imageElement != nil {
 					imageElement.UsePercentWidth(newContainer.percentWidth)
+					if newContainer.percentWidth {
+						imageElement.SetWidth(100)
+					} else {
+						imageElement.SetWidth(newContainer.width)
+					}
 					imageElement.UsePercentHeight(newContainer.percentHeight)
-					imageElement.SetWidth(newContainer.width)
-					imageElement.SetHeight(newContainer.height)
+					if newContainer.percentHeight {
+						imageElement.SetHeight(100)
+					} else {
+						imageElement.SetHeight(newContainer.height)
+					}
 				}
 			}
 			updateImage()
