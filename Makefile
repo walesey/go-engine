@@ -24,3 +24,11 @@ coverage:
 		cat $(COVER_DIR)/*.cover.out | sed '/mode: set/d' >> $(COVER_DIR)/coverage.out && \
 		go tool cover -html=$(COVER_DIR)/coverage.out -o=$(COVER_DIR)/coverage.html && \
 		rm $(COVER_DIR)/*.cover.out
+
+updateGodeps:
+	mkdir -p tmp/
+	mv vendor/github.com/go-gl/glfw/v3.1/glfw/glfw tmp/glfw && \
+	mv vendor/ tmp/vendor_old && \
+	mv Godeps/ tmp/Godeps_old && \
+	godep save ./... && \
+	mv tmp/glfw/ vendor/github.com/go-gl/glfw/v3.1/glfw/glfw
