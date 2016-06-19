@@ -19,12 +19,12 @@ type ImageElement struct {
 
 func (ie *ImageElement) Render(size, offset vmath.Vector2) vmath.Vector2 {
 	width, height := ie.width, ie.height
-	if width < 0 && height < 0 {
+	if width <= 0 && height <= 0 {
 		width = float64(ie.img.Bounds().Size().X)
 		height = float64(ie.img.Bounds().Size().Y)
-	} else if width < 0 {
+	} else if width <= 0 {
 		width = height * float64(ie.img.Bounds().Size().X) / float64(ie.img.Bounds().Size().Y)
-	} else if height < 0 {
+	} else if height <= 0 {
 		height = width * float64(ie.img.Bounds().Size().Y) / float64(ie.img.Bounds().Size().X)
 	}
 	imgSize := vmath.Vector2{float64(width), float64(height)}
@@ -81,8 +81,6 @@ func (ie *ImageElement) keyClick(key string, release bool) {}
 func NewImageElement(img image.Image) *ImageElement {
 	imageElement := &ImageElement{
 		rotation: 0,
-		width:    -1,
-		height:   -1,
 		Hitbox:   NewHitbox(),
 		node:     renderer.CreateNode(),
 	}

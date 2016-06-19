@@ -91,6 +91,15 @@ func renderNode(container *Container, node *html.Node, styles *css.Stylesheet, a
 			activeStyles := getStyles(styles, nextNode, ":active")
 			hover := false
 			active := false
+			updateImage := func() {
+				if imageElement != nil {
+					fmt.Println("width ", newContainer.width)
+					fmt.Println("height ", newContainer.height)
+					imageElement.SetWidth(newContainer.width)
+					imageElement.SetHeight(newContainer.height)
+				}
+			}
+			updateImage()
 			updateState := func() {
 				applyDefaultStyles(newContainer)
 				applyStyles(newContainer, normalStyles, assets)
@@ -100,10 +109,7 @@ func renderNode(container *Container, node *html.Node, styles *css.Stylesheet, a
 				if active {
 					applyStyles(newContainer, activeStyles, assets)
 				}
-				if imageElement != nil {
-					imageElement.SetWidth(newContainer.width)
-					imageElement.SetHeight(newContainer.height)
-				}
+				updateImage()
 			}
 			if len(hoverStyles) > 0 {
 				newContainer.Hitbox.AddOnHover(func() {
