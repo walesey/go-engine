@@ -47,12 +47,15 @@ func (r *Requestor) Request(req *http.Request, response interface{}, callback fu
 			return
 		}
 
-		err = json.Unmarshal(data, response)
-		if err != nil {
-			log.Println("Error Unmarshaling response from request: ", err)
-			r.queue <- result{callback: callback, statusCode: 500}
-			return
+		if response != nil {
+			err = json.Unmarshal(data, response)
+			if err != nil {
+				log.Println("Error Unmarshaling response from request: ", err)
+				r.queue <- result{callback: callback, statusCode: 500}
+				return
+			}
 		}
+
 		r.queue <- result{callback: callback, header: resp.Header, statusCode: resp.StatusCode}
 	}()
 }
