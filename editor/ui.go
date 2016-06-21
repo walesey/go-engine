@@ -77,7 +77,7 @@ func (e *Editor) openMainMenu() {
 				e.openFileBrowser("Open", func(filePath string) {
 					e.loadMap(filePath)
 					e.closeFileBrowser()
-				}, ".map")
+				}, ".json")
 			}
 		})
 		e.uiAssets.AddCallback("save", func(element ui.Element, args ...interface{}) {
@@ -85,7 +85,7 @@ func (e *Editor) openMainMenu() {
 				e.openFileBrowser("Save", func(filePath string) {
 					e.saveMap(filePath)
 					e.closeFileBrowser()
-				}, ".map")
+				}, ".json")
 			}
 		})
 		e.uiAssets.AddCallback("exit", func(element ui.Element, args ...interface{}) {

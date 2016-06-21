@@ -4,6 +4,7 @@ import (
 	"github.com/walesey/go-engine/actor"
 	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/controller"
+	"github.com/walesey/go-engine/editor/models"
 	"github.com/walesey/go-engine/engine"
 	"github.com/walesey/go-engine/glfwController"
 	"github.com/walesey/go-engine/opengl"
@@ -33,11 +34,6 @@ func Demo(c *cli.Context) {
 			gameEngine.Sky(assets.CreateMaterial(skyImg, nil, nil, nil), 999999)
 		}
 
-		mapNode := renderer.CreateNode()
-		mapModel := assets.LoadMap("TestAssets/map.map")
-		mapModel.Root = assets.LoadMapToNode(mapModel.Root, mapNode)
-		gameEngine.AddSpatial(mapNode)
-
 		//input/controller manager
 		controllerManager := glfwController.NewControllerManager(glRenderer.Window)
 
@@ -50,16 +46,22 @@ func Demo(c *cli.Context) {
 		controllerManager.AddController(mainController.(glfwController.Controller))
 		gameEngine.AddUpdatable(freeMoveActor)
 
-		// Define map class behaviours
-		spiners := assets.FindNodeByClass("spiner", mapModel.Root)
-		for _, spiner := range spiners {
-			node := spiner.GetNode()
-			gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
-				worldPosition, _ := mapModel.Root.GetNode().RelativePosition(node)
-				if freeMoveActor.Location.Subtract(worldPosition).LengthSquared() < 30.0 {
-					node.SetOrientation(vmath.AngleAxis(dt, vmath.Vector3{0, 1, 0}).Multiply(node.Orientation))
-				}
-			}))
-		}
+		//Map loader
+		assetLoader := assets.NewLoader()
+		gameEngine.AddUpdatable(assetLoader)
+		assetLoader.LoadMap("TestAssets/map.json", func(mapNode *renderer.Node, mapModel *editorModels.NodeModel) {
+			gameEngine.AddSpatial(mapNode)
+			// Define map class behaviours
+			spiners := assets.FindNodeByClass("spiner", mapModel)
+			for _, spiner := range spiners {
+				node := spiner.GetNode()
+				gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
+					worldPosition, _ := mapModel.GetNode().RelativePosition(node)
+					if freeMoveActor.Location.Subtract(worldPosition).LengthSquared() < 30.0 {
+						node.SetOrientation(vmath.AngleAxis(dt, vmath.Vector3{0, 1, 0}).Multiply(node.Orientation))
+					}
+				}))
+			}
+		})
 	})
 }
