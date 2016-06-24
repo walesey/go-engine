@@ -75,9 +75,11 @@ func (node *Node) Add(spatial Spatial) {
 }
 
 func (node *Node) Remove(spatial Spatial, destroy bool) {
-	for index, child := range node.children {
+	for i, child := range node.children {
 		if child == spatial {
-			node.children = append(node.children[:index], node.children[index+1:]...)
+			node.children[i] = node.children[len(node.children)-1]
+			node.children[len(node.children)-1] = nil
+			node.children = node.children[:len(node.children)-1]
 			if destroy {
 				node.deleted = append(node.deleted, child)
 			}

@@ -47,7 +47,7 @@ func (n *Network) Update(dt float64) {
 func (n *Network) CallEvent(name, clientId string, args ...interface{}) {
 	callback, ok := n.events[name]
 	if ok {
-		log.Printf("[NETWORK EVENT] %v (%v)", name, clientId)
+		log.Printf("[NETWORK EVENT] %v clientId:%v", name, clientId)
 		callback(clientId, args...)
 	}
 }

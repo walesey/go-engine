@@ -17,12 +17,12 @@ func UpdatableFunc(update func(dt float64)) Updatable {
 }
 
 type UpdatableStore struct {
-	updatables map[string]Updatable
+	updatables []Updatable
 }
 
 func NewUpdatableStore() *UpdatableStore {
 	return &UpdatableStore{
-		updatables: make(map[string]Updatable),
+		updatables: make([]Updatable, 0),
 	}
 }
 
@@ -32,18 +32,17 @@ func (store *UpdatableStore) UpdateAll(dt float64) {
 	}
 }
 
-func (store *UpdatableStore) Add(key string, updatable Updatable) {
-	store.updatables[key] = updatable
+func (store *UpdatableStore) Add(updatable Updatable) {
+	store.updatables = append(store.updatables, updatable)
 }
 
-func (store *UpdatableStore) Remove(key string) {
-	delete(store.updatables, key)
-}
-
-func (store *UpdatableStore) RemoveUpdatable(updatable Updatable) {
-	for key, u := range store.updatables {
+func (store *UpdatableStore) Remove(updatable Updatable) {
+	for i, u := range store.updatables {
 		if updatable == u {
-			delete(store.updatables, key)
+			store.updatables[i] = store.updatables[len(store.updatables)-1]
+			store.updatables[len(store.updatables)-1] = nil
+			store.updatables = store.updatables[:len(store.updatables)-1]
+			break
 		}
 	}
 }

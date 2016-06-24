@@ -56,6 +56,11 @@ func (c *Camera) SetOrientation(orientation vmath.Quaternion) {
 	c.Perspective()
 }
 
+func (c *Camera) SetLookat(lookat vmath.Vector3) {
+	c.lookat = lookat
+	c.Perspective()
+}
+
 func (c *Camera) SetUp(up vmath.Vector3) {
 	c.up = up
 	c.Perspective()

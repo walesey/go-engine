@@ -9,8 +9,6 @@ import (
 	vmath "github.com/walesey/go-engine/vectormath"
 )
 
-var ids = 0
-
 // Engine is a wrapper for all the go-engine boilerblate code.
 // It sets up a basic render / Update loop and provides a nice interface for writing games.
 type Engine interface {
@@ -19,10 +17,8 @@ type Engine interface {
 	AddSpatial(spatial renderer.Spatial)
 	RemoveSpatial(spatial renderer.Spatial, destroy bool)
 	RemoveOrtho(spatial renderer.Spatial, destroy bool)
-	AddUpdatable(updatable Updatable) string
+	AddUpdatable(updatable Updatable)
 	RemoveUpdatable(updatable Updatable)
-	AddUpdatableKey(key string, updatable Updatable)
-	RemoveUpdatableKey(key string)
 	Sky(material *renderer.Material, size float64)
 	Camera() *renderer.Camera
 	SetFpsCap(FpsCap float64)
@@ -90,23 +86,12 @@ func (engine *EngineImpl) RemoveSpatial(spatial renderer.Spatial, destroy bool) 
 	}
 }
 
-func (engine *EngineImpl) AddUpdatable(updatable Updatable) string {
-	ids++
-	key := fmt.Sprintf("%v", ids)
-	engine.updatableStore.Add(key, updatable)
-	return key
+func (engine *EngineImpl) AddUpdatable(updatable Updatable) {
+	engine.updatableStore.Add(updatable)
 }
 
 func (engine *EngineImpl) RemoveUpdatable(updatable Updatable) {
-	engine.updatableStore.RemoveUpdatable(updatable)
-}
-
-func (engine *EngineImpl) AddUpdatableKey(key string, updatable Updatable) {
-	engine.updatableStore.Add(key, updatable)
-}
-
-func (engine *EngineImpl) RemoveUpdatableKey(key string) {
-	engine.updatableStore.Remove(key)
+	engine.updatableStore.Remove(updatable)
 }
 
 func (engine *EngineImpl) Sky(material *renderer.Material, size float64) {
