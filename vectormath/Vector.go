@@ -66,6 +66,14 @@ func (v Vector2) DivideScalar(scalar float64) Vector2 {
 	}
 }
 
+func (v Vector2) Rotate(angle float64) Vector2 {
+	sn, cs := math.Sin(angle), math.Cos(angle)
+	return Vector2{
+		v.X*cs - v.Y*sn,
+		v.X*sn + v.Y*cs,
+	}
+}
+
 func (v Vector2) ApproxEqual(other Vector2, epsilon float64) bool {
 	return ApproxEqual(v.X, other.X, epsilon) && ApproxEqual(v.Y, other.Y, epsilon)
 }

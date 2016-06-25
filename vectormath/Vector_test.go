@@ -1,9 +1,25 @@
 package vectormath
 
 import (
-	"github.com/stretchr/testify/assert"
+	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
+
+func expectApproxEqual2D(t *testing.T, v1, v2 Vector2) {
+	assert.True(t, v1.ApproxEqual(v2, 0.001), fmt.Sprintf("Expect %v to approx equal %v", v1, v2))
+}
+
+func expectApproxEqual(t *testing.T, v1, v2 Vector3) {
+	assert.True(t, v1.ApproxEqual(v2, 0.001), fmt.Sprintf("Expect %v to approx equal %v", v1, v2))
+}
+
+func TestRotate(t *testing.T) {
+	v := Vector2{1, 1}
+	rv := v.Rotate(1.57)
+	expectApproxEqual2D(t, rv, Vector2{-1, 1})
+}
 
 func TestLengthSquared(t *testing.T) {
 	v := Vector3{2, 2, 2}
@@ -20,9 +36,7 @@ func TestLength(t *testing.T) {
 func TestNormalize(t *testing.T) {
 	v := Vector3{4, 2, -1}
 	v = v.Normalize()
-	assert.EqualValues(t, 0.87287156094396952506438994166248, v.X, "NormalizeX")
-	assert.EqualValues(t, 0.43643578047198476253219497083124, v.Y, "NormalizeY")
-	assert.EqualValues(t, -0.21821789023599238126609748541562, v.Z, "NormalizeZ")
+	expectApproxEqual(t, v, Vector3{0.872, 0.436, -0.218})
 }
 
 func TestAdd(t *testing.T) {
