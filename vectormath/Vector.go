@@ -27,8 +27,23 @@ func (v Vector2) Length() float64 {
 	return math.Sqrt(v.LengthSquared())
 }
 
+func (v Vector2) Normalize() Vector2 {
+	if v.LengthSquared() > 0.99999 && v.LengthSquared() < 1.00001 {
+		return v
+	}
+	return v.DivideScalar(v.Length())
+}
+
 func (v Vector2) ToVector3() Vector3 {
 	return Vector3{v.X, v.Y, 0}
+}
+
+func (v *Vector2) Set(value Vector2) {
+	v.SetValue(value.X, value.Y)
+}
+
+func (v *Vector2) SetValue(x, y float64) {
+	v.X, v.Y = x, y
 }
 
 func (v Vector2) Add(other Vector2) Vector2 {

@@ -2,6 +2,7 @@ package networking
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/gob"
 	"fmt"
 	"net"
@@ -12,9 +13,11 @@ import (
 const clientPacketBufferSize = 100
 
 type Client struct {
-	token   string
-	conn    *net.UDPConn
-	packets chan Packet
+	token         string
+	conn          *net.UDPConn
+	packets       chan Packet
+	bytesSent     int64
+	bytesReceived int64
 }
 
 func NewClient() *Client {
@@ -51,8 +54,15 @@ func (c *Client) Connect(addr string) {
 				continue
 			}
 
+			c.bytesReceived += int64(n)
 			dataBuf := bytes.NewBuffer(data[0:n])
-			decoder := gob.NewDecoder(dataBuf)
+			gzipReader, err := gzip.NewReader(dataBuf)
+			if err != nil {
+				fmt.Println("Error creating gzip Reader for udp packet: ", err)
+				continue
+			}
+
+			decoder := gob.NewDecoder(gzipReader)
 			var packet Packet
 			err = decoder.Decode(&packet)
 			if err != nil {
@@ -79,9 +89,29 @@ func (c *Client) WriteMessage(command string, args ...interface{}) {
 		return
 	}
 
-	_, err = c.conn.Write(data)
+	var gzipBuf bytes.Buffer
+	gzipWriter := gzip.NewWriter(&gzipBuf)
+	_, err = gzipWriter.Write(data)
 	if err != nil {
-		fmt.Println("Error writing udp message to session address: ", err)
+		fmt.Println("Error Gzip compressing udp message: ", err)
+		return
+	}
+
+	if err := gzipWriter.Flush(); err != nil {
+		fmt.Println("Error Flushing Gzip writer for udp message: ", err)
+		return
+	}
+
+	if err := gzipWriter.Close(); err != nil {
+		fmt.Println("Error Closing Gzip writer for udp message: ", err)
+		return
+	}
+
+	gzipData := gzipBuf.Bytes()
+	c.bytesSent += int64(len(gzipData))
+	_, err = c.conn.Write(gzipData)
+	if err != nil {
+		fmt.Println("Error writing udp message: ", err)
 	}
 }
 

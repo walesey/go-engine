@@ -49,6 +49,8 @@ func (n *Network) CallEvent(name, clientId string, args ...interface{}) {
 	if ok {
 		log.Printf("[NETWORK EVENT] %v clientId:%v", name, clientId)
 		callback(clientId, args...)
+	} else {
+		log.Printf("[NETWORK EVENT] ERROR: Unknown event: %v clientId:%v", name, clientId)
 	}
 }
 
@@ -96,6 +98,26 @@ func (n *Network) ClientJoinedEvent(callback func(clientId string)) {
 	if n.server != nil {
 		n.server.ClientJoinedEvent(callback)
 	}
+}
+
+func (n *Network) BytesSent() int64 {
+	if n.IsClient() {
+		return n.client.bytesSent
+	}
+	if n.IsServer() {
+		return n.server.bytesSent
+	}
+	return 0
+}
+
+func (n *Network) BytesReceived() int64 {
+	if n.IsClient() {
+		return n.client.bytesReceived
+	}
+	if n.IsServer() {
+		return n.server.bytesReceived
+	}
+	return 0
 }
 
 func (n *Network) IsClient() bool {
