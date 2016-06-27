@@ -33,13 +33,7 @@ func (c *Client) Connect(addr string) {
 		return
 	}
 
-	localAddr, err := net.ResolveUDPAddr("udp", "127.0.0.1:0")
-	if err != nil {
-		fmt.Println("Error resolving local udp address: ", err)
-		return
-	}
-
-	c.conn, err = net.DialUDP("udp", localAddr, serverAddr)
+	c.conn, err = net.DialUDP("udp", nil, serverAddr)
 	if err != nil {
 		fmt.Println("Error connecting to udp server address: ", err)
 		return
