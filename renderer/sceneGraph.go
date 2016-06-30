@@ -7,31 +7,36 @@ import (
 )
 
 type SceneGraph struct {
-	backgroundNode, transparentNode *Node
-	matStack                        util.Stack
-	transparentBucket               bucketEntries
+	opaqueNode        *Node
+	transparentNode   *Node
+	matStack          util.Stack
+	transparentBucket bucketEntries
 }
 
 //factory
 func CreateSceneGraph() *SceneGraph {
 	sceneGraph := &SceneGraph{
-		backgroundNode:  CreateNode(),
+		opaqueNode:      CreateNode(),
 		transparentNode: CreateNode(),
 		matStack:        util.CreateStack(),
 	}
 	return sceneGraph
 }
 
-func (sceneGraph *SceneGraph) Add(spatial Spatial) {
+func (sceneGraph *SceneGraph) AddTransparent(spatial Spatial) {
 	sceneGraph.transparentNode.Add(spatial)
 }
 
-func (sceneGraph *SceneGraph) Remove(spatial Spatial, destroy bool) {
+func (sceneGraph *SceneGraph) RemoveTransparent(spatial Spatial, destroy bool) {
 	sceneGraph.transparentNode.Remove(spatial, destroy)
 }
 
-func (sceneGraph *SceneGraph) AddBackGround(spatial Spatial) {
-	sceneGraph.backgroundNode.Add(spatial)
+func (sceneGraph *SceneGraph) Add(spatial Spatial) {
+	sceneGraph.opaqueNode.Add(spatial)
+}
+
+func (sceneGraph *SceneGraph) Remove(spatial Spatial, destroy bool) {
+	sceneGraph.opaqueNode.Remove(spatial, destroy)
 }
 
 func (sceneGraph *SceneGraph) RenderScene(renderer Renderer) {
@@ -40,12 +45,13 @@ func (sceneGraph *SceneGraph) RenderScene(renderer Renderer) {
 	sceneGraph.buildBuckets(sceneGraph.transparentNode)
 	sceneGraph.sortBuckets(renderer)
 	//render buckets
-	//renderer.EnableDepthTest(true)
-	sceneGraph.backgroundNode.Draw(renderer)
-	//renderer.EnableDepthTest(false)
+	renderer.EnableDepthMask(true)
+	sceneGraph.opaqueNode.Draw(renderer)
+	renderer.EnableDepthMask(false)
 	for _, entry := range sceneGraph.transparentBucket {
 		renderEntry(entry, renderer)
 	}
+	renderer.EnableDepthMask(true)
 }
 
 func renderEntry(entry bucketEntry, renderer Renderer) {

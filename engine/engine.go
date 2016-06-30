@@ -15,6 +15,7 @@ type Engine interface {
 	Start(Init func())
 	AddOrtho(spatial renderer.Spatial)
 	AddSpatial(spatial renderer.Spatial)
+	AddSpatialTransparent(spatial renderer.Spatial)
 	RemoveSpatial(spatial renderer.Spatial, destroy bool)
 	RemoveOrtho(spatial renderer.Spatial, destroy bool)
 	AddUpdatable(updatable Updatable)
@@ -51,8 +52,8 @@ func (engine *EngineImpl) Start(Init func()) {
 }
 
 func (engine *EngineImpl) Update() {
-	engine.fpsMeter.UpdateFPSMeter()
-	engine.updatableStore.UpdateAll(1.0 / engine.fpsMeter.FpsCap) //TODO: calculate actual elapsed time.
+	dt := engine.fpsMeter.UpdateFPSMeter()
+	engine.updatableStore.UpdateAll(dt)
 }
 
 func (engine *EngineImpl) Render() {
@@ -80,9 +81,16 @@ func (engine *EngineImpl) AddSpatial(spatial renderer.Spatial) {
 	}
 }
 
+func (engine *EngineImpl) AddSpatialTransparent(spatial renderer.Spatial) {
+	if engine.sceneGraph != nil {
+		engine.sceneGraph.AddTransparent(spatial)
+	}
+}
+
 func (engine *EngineImpl) RemoveSpatial(spatial renderer.Spatial, destroy bool) {
 	if engine.sceneGraph != nil {
 		engine.sceneGraph.Remove(spatial, destroy)
+		engine.sceneGraph.RemoveTransparent(spatial, destroy)
 	}
 }
 
@@ -95,17 +103,19 @@ func (engine *EngineImpl) RemoveUpdatable(updatable Updatable) {
 }
 
 func (engine *EngineImpl) Sky(material *renderer.Material, size float64) {
-	geom := renderer.CreateSkyBox()
-	geom.Material = material
-	geom.Material.LightingMode = renderer.MODE_UNLIT
-	geom.CullBackface = false
-	skyNode := renderer.CreateNode()
-	skyNode.Add(geom)
-	skyNode.SetRotation(1.57, vmath.Vector3{0, 1, 0})
-	skyNode.SetScale(vmath.Vector3{1, 1, 1}.MultiplyScalar(size))
-	engine.AddSpatial(skyNode)
-	cubeMap := renderer.CreateCubemap(material.Diffuse)
-	engine.renderer.ReflectionMap(cubeMap)
+	if engine.sceneGraph != nil {
+		geom := renderer.CreateSkyBox()
+		geom.Material = material
+		geom.Material.LightingMode = renderer.MODE_UNLIT
+		geom.CullBackface = false
+		skyNode := renderer.CreateNode()
+		skyNode.Add(geom)
+		skyNode.SetRotation(1.57, vmath.Vector3{0, 1, 0})
+		skyNode.SetScale(vmath.Vector3{1, 1, 1}.MultiplyScalar(size))
+		engine.AddSpatial(skyNode)
+		cubeMap := renderer.CreateCubemap(material.Diffuse)
+		engine.renderer.ReflectionMap(cubeMap)
+	}
 }
 
 func (engine *EngineImpl) Camera() *renderer.Camera {

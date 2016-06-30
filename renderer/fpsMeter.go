@@ -16,7 +16,7 @@ func CreateFPSMeter(sampleTime float64) *FPSMeter {
 	return &FPSMeter{start: time.Now(), frames: 0, sampleTime: sampleTime, FpsCap: 120}
 }
 
-func (fps *FPSMeter) UpdateFPSMeter() {
+func (fps *FPSMeter) UpdateFPSMeter() float64 {
 	fps.frames = fps.frames + 1
 	elapsed := time.Since(fps.start)
 	if elapsed.Seconds() >= fps.sampleTime {
@@ -30,7 +30,9 @@ func (fps *FPSMeter) UpdateFPSMeter() {
 	if sleepTime > 0 {
 		time.Sleep(sleepTime * time.Millisecond)
 	}
+	frameTime := time.Since(fps.last)
 	fps.last = time.Now()
+	return frameTime.Seconds()
 }
 
 func (fps *FPSMeter) Value() float64 {

@@ -49,9 +49,8 @@ func BoxFlipbook(geometry *renderer.Geometry, frame, framesX, framesY int) {
 
 func (sprite *Sprite) Draw(r renderer.Renderer) {
 	if sprite.FaceCamera {
-		sprite.transform.Facing(sprite.Rotation, r.CameraLocation().Subtract(sprite.location), vectormath.Vector3{0, 0, 1}, vectormath.Vector3{-1, 0, 0})
-		sprite.node.Transform.From(sprite.scale, sprite.location, vectormath.IdentityQuaternion())
-		sprite.node.Transform.ApplyTransform(sprite.transform)
+		orientation := vectormath.FacingOrientation(sprite.Rotation, r.CameraLocation().Subtract(sprite.location), vectormath.Vector3{0, 0, 1}, vectormath.Vector3{-1, 0, 0})
+		sprite.node.Transform.From(sprite.scale, sprite.location, orientation)
 	}
 	sprite.node.Draw(r)
 }

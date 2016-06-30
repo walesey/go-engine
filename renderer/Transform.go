@@ -12,7 +12,6 @@ type Transform interface {
 	From(scale, translation vmath.Vector3, orientation vmath.Quaternion)
 	TransformCoordinate(v vmath.Vector3) vmath.Vector3
 	TransformNormal(n vmath.Vector3) vmath.Vector3
-	Facing(rotation float64, direction, normal, tangent vmath.Vector3)
 }
 
 type GlTransform struct {
@@ -22,21 +21,6 @@ type GlTransform struct {
 func CreateTransform() Transform {
 	glTx := &GlTransform{Mat: mgl32.Ident4()}
 	return glTx
-}
-
-func (glTx *GlTransform) Facing(rotation float64, direction, normal, tangent vmath.Vector3) {
-	var betweenVectorsQ vmath.Quaternion
-	correctionAngle := 0.0
-	if direction.Dot(normal) >= 0 {
-		betweenVectorsQ = vmath.BetweenVectors(normal, direction)
-		correctionAngle = 3.14
-	} else {
-		betweenVectorsQ = vmath.BetweenVectors(normal, direction.MultiplyScalar(-1))
-		betweenVectorsQ = betweenVectorsQ.Multiply(vmath.AngleAxis(3.14, tangent))
-	}
-	angleQ := vmath.AngleAxis(rotation+correctionAngle, normal)
-	orientation := betweenVectorsQ.Multiply(angleQ)
-	glTx.From(vmath.Vector3{1, 1, 1}, vmath.Vector3{0, 0, 0}, orientation)
 }
 
 func (glTx *GlTransform) ApplyTransform(transform Transform) {

@@ -279,6 +279,10 @@ func (glRenderer *OpenglRenderer) EnableDepthTest(depthTest bool) {
 	}
 }
 
+func (glRenderer *OpenglRenderer) EnableDepthMask(depthMast bool) {
+	gl.DepthMask(depthMast)
+}
+
 // CreateGeometry - add geometry to the renderer
 func (glRenderer *OpenglRenderer) CreateGeometry(geometry *renderer.Geometry) {
 

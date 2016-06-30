@@ -25,6 +25,7 @@ type Renderer interface {
 	PopTransform()
 	PushTransform()
 	EnableDepthTest(depthTest bool)
+	EnableDepthMask(depthMast bool)
 	ApplyTransform(transform Transform)
 	CreateGeometry(geometry *Geometry)
 	DestroyGeometry(geometry *Geometry)

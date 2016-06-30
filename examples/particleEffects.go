@@ -13,7 +13,6 @@ import (
 	"github.com/walesey/go-engine/vectormath"
 
 	"github.com/codegangsta/cli"
-	"github.com/go-gl/mathgl/mgl32"
 )
 
 //
@@ -43,7 +42,7 @@ func Particles(c *cli.Context) {
 	sphereNode.SetTranslation(vectormath.Vector3{0, 0, 0})
 
 	//particle effects
-	explostionImg, _ := assets.ImportImage("TestAssets/test.png")
+	explostionImg, _ := assets.ImportImage("TestAssets/Explosion.png")
 	explosionMat := assets.CreateMaterial(explostionImg, nil, nil, nil)
 	explosionMat.LightingMode = renderer.MODE_UNLIT
 	explosionMat.Transparency = renderer.TRANSPARENCY_EMISSIVE
@@ -55,7 +54,6 @@ func Particles(c *cli.Context) {
 		TotalFrames:         36,
 		FramesX:             6,
 		FramesY:             6,
-		FaceCamera:          true,
 		MaxLife:             1.0,
 		MinLife:             2.0,
 		StartSize:           vectormath.Vector3{0.4, 0.4, 0.4},
@@ -73,7 +71,7 @@ func Particles(c *cli.Context) {
 		MinRotationVelocity: 0.0,
 	})
 
-	fireImg, _ := assets.ImportImage("TestAssets/test.png")
+	fireImg, _ := assets.ImportImage("TestAssets/Fire.png")
 	fireMat := assets.CreateMaterial(fireImg, nil, nil, nil)
 	fireMat.LightingMode = renderer.MODE_UNLIT
 	fireMat.Transparency = renderer.TRANSPARENCY_EMISSIVE
@@ -85,7 +83,6 @@ func Particles(c *cli.Context) {
 		TotalFrames:         36,
 		FramesX:             6,
 		FramesY:             6,
-		FaceCamera:          true,
 		MaxLife:             1.0,
 		MinLife:             1.3,
 		StartSize:           vectormath.Vector3{1.0, 1.0, 1.0},
@@ -103,7 +100,7 @@ func Particles(c *cli.Context) {
 		MinRotationVelocity: -0.3,
 	})
 
-	smokeImg, _ := assets.ImportImage("TestAssets/test.png")
+	smokeImg, _ := assets.ImportImage("TestAssets/Smoke.png")
 	smokeMat := assets.CreateMaterial(smokeImg, nil, nil, nil)
 	smokeMat.LightingMode = renderer.MODE_UNLIT
 	smokeParticles := effects.CreateParticleSystem(effects.ParticleSettings{
@@ -114,7 +111,6 @@ func Particles(c *cli.Context) {
 		TotalFrames:         64,
 		FramesX:             8,
 		FramesY:             8,
-		FaceCamera:          true,
 		MaxLife:             2.5,
 		MinLife:             2.3,
 		StartSize:           vectormath.Vector3{0.4, 0.4, 0.4},
@@ -144,7 +140,6 @@ func Particles(c *cli.Context) {
 		TotalFrames:         1,
 		FramesX:             1,
 		FramesY:             1,
-		FaceCamera:          true,
 		MaxLife:             0.9,
 		MinLife:             0.7,
 		StartSize:           vectormath.Vector3{0.02, 0.02, 0.02},
@@ -173,13 +168,13 @@ func Particles(c *cli.Context) {
 	birdSprite.SetTranslation(vectormath.Vector3{-2, 0, -1})
 
 	sceneGraph := renderer.CreateSceneGraph()
-	sceneGraph.AddBackGround(skyNode)
+	sceneGraph.Add(skyNode)
 	sceneGraph.Add(sphereNode)
-	sceneGraph.Add(fireParticles)
-	sceneGraph.Add(smokeParticles)
-	sceneGraph.Add(explosionParticles)
-	sceneGraph.Add(birdSprite)
-	sceneGraph.Add(sparkParticles)
+	sceneGraph.AddTransparent(fireParticles)
+	sceneGraph.AddTransparent(smokeParticles)
+	sceneGraph.AddTransparent(explosionParticles)
+	sceneGraph.AddTransparent(birdSprite)
+	sceneGraph.AddTransparent(sparkParticles)
 
 	//camera
 	camera := renderer.CreateCamera(glRenderer)
@@ -196,29 +191,29 @@ func Particles(c *cli.Context) {
 		glRenderer.ReflectionMap(cubeMap)
 
 		//post effects
-		cell := renderer.Shader{
-			Name: "shaders/cell/cellCoarse",
-		}
-		bloomHorizontal := renderer.Shader{
-			Name: "shaders/bloom/bloomHorizontal",
-			Uniforms: []renderer.Uniform{
-				renderer.Uniform{"size", mgl32.Vec2{1900, 1000}},
-				renderer.Uniform{"quality", 2.5},
-				renderer.Uniform{"samples", 12},
-				renderer.Uniform{"threshold", 0.995},
-				renderer.Uniform{"intensity", 1.9},
-			},
-		}
-		bloomVertical := renderer.Shader{
-			Name: "shaders/bloom/bloomVertical",
-			Uniforms: []renderer.Uniform{
-				renderer.Uniform{"size", mgl32.Vec2{1900, 1000}},
-				renderer.Uniform{"quality", 2.5},
-				renderer.Uniform{"samples", 12},
-				renderer.Uniform{"threshold", 0.995},
-				renderer.Uniform{"intensity", 1.9},
-			},
-		}
+		// cell := renderer.Shader{
+		// 	Name: "shaders/cell/cellCoarse",
+		// }
+		// bloomHorizontal := renderer.Shader{
+		// 	Name: "shaders/bloom/bloomHorizontal",
+		// 	Uniforms: []renderer.Uniform{
+		// 		renderer.Uniform{"size", mgl32.Vec2{1900, 1000}},
+		// 		renderer.Uniform{"quality", 2.5},
+		// 		renderer.Uniform{"samples", 12},
+		// 		renderer.Uniform{"threshold", 0.995},
+		// 		renderer.Uniform{"intensity", 1.9},
+		// 	},
+		// }
+		// bloomVertical := renderer.Shader{
+		// 	Name: "shaders/bloom/bloomVertical",
+		// 	Uniforms: []renderer.Uniform{
+		// 		renderer.Uniform{"size", mgl32.Vec2{1900, 1000}},
+		// 		renderer.Uniform{"quality", 2.5},
+		// 		renderer.Uniform{"samples", 12},
+		// 		renderer.Uniform{"threshold", 0.995},
+		// 		renderer.Uniform{"intensity", 1.9},
+		// 	},
+		// }
 
 		//input/controller manager
 		controllerManager := glfwController.NewControllerManager(glRenderer.Window)
@@ -244,33 +239,37 @@ func Particles(c *cli.Context) {
 		customController.BindAction(func() { freeMoveActor.Entity = explosionParticles }, controller.KeyE, controller.Press)
 		customController.BindAction(func() { freeMoveActor.Entity = birdSprite }, controller.KeyR, controller.Press)
 
-		customController.BindAction(func() { //no post effects
-			glRenderer.DestroyPostEffects(bloomVertical)
-			glRenderer.DestroyPostEffects(bloomHorizontal)
-			glRenderer.DestroyPostEffects(cell)
-		}, controller.KeyA, controller.Press)
-
-		customController.BindAction(func() { //bloom effect
-			glRenderer.CreatePostEffect(bloomVertical)
-			glRenderer.CreatePostEffect(bloomHorizontal)
-			glRenderer.DestroyPostEffects(cell)
-		}, controller.KeyS, controller.Press)
-
-		customController.BindAction(func() { //cell effect
-			glRenderer.DestroyPostEffects(bloomVertical)
-			glRenderer.DestroyPostEffects(bloomHorizontal)
-			glRenderer.CreatePostEffect(cell)
-		}, controller.KeyD, controller.Press)
+		// customController.BindAction(func() { //no post effects
+		// 	glRenderer.DestroyPostEffects(bloomVertical)
+		// 	glRenderer.DestroyPostEffects(bloomHorizontal)
+		// 	glRenderer.DestroyPostEffects(cell)
+		// }, controller.KeyA, controller.Press)
+		//
+		// customController.BindAction(func() { //bloom effect
+		// 	glRenderer.CreatePostEffect(bloomVertical)
+		// 	glRenderer.CreatePostEffect(bloomHorizontal)
+		// 	glRenderer.DestroyPostEffects(cell)
+		// }, controller.KeyS, controller.Press)
+		//
+		// customController.BindAction(func() { //cell effect
+		// 	glRenderer.DestroyPostEffects(bloomVertical)
+		// 	glRenderer.DestroyPostEffects(bloomHorizontal)
+		// 	glRenderer.CreatePostEffect(cell)
+		// }, controller.KeyD, controller.Press)
 	})
 
 	glRenderer.Update(func() {
 		fps.UpdateFPSMeter()
 
 		//update things that need updating
-		explosionParticles.Update(0.018, glRenderer)
-		fireParticles.Update(0.018, glRenderer)
-		smokeParticles.Update(0.018, glRenderer)
-		sparkParticles.Update(0.018, glRenderer)
+		explosionParticles.UpdateCameraLocation(glRenderer.CameraLocation())
+		fireParticles.UpdateCameraLocation(glRenderer.CameraLocation())
+		smokeParticles.UpdateCameraLocation(glRenderer.CameraLocation())
+		sparkParticles.UpdateCameraLocation(glRenderer.CameraLocation())
+		explosionParticles.Update(0.018)
+		fireParticles.Update(0.018)
+		smokeParticles.Update(0.018)
+		sparkParticles.Update(0.018)
 
 		birdSprite.NextFrame()
 

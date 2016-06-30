@@ -56,6 +56,14 @@ func CreateGeometry(indicies []uint32, verticies []float32) *Geometry {
 	}
 }
 
+func (geometry *Geometry) Copy() *Geometry {
+	indicies := make([]uint32, len(geometry.Indicies))
+	verticies := make([]float32, len(geometry.Verticies))
+	copy(indicies, geometry.Indicies)
+	copy(verticies, geometry.Verticies)
+	return CreateGeometry(indicies, verticies)
+}
+
 func (geometry *Geometry) Draw(renderer Renderer) {
 	geometry.load(renderer)
 	renderer.DrawGeometry(geometry)

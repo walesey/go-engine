@@ -141,3 +141,19 @@ func RowMat3ColumnProduct(mat Matrix3, row, col Vector3) float64 {
 	c := row.X*mat.M02*col.Z + row.Y*mat.M12*col.Z + row.Z*mat.M22*col.Z
 	return a + b + c
 }
+
+//FacingOrientation - return an orientation that always faces the given direction with rotation
+func FacingOrientation(rotation float64, direction, normal, tangent Vector3) Quaternion {
+	var betweenVectorsQ Quaternion
+	correctionAngle := 0.0
+	if direction.Dot(normal) >= 0 {
+		betweenVectorsQ = BetweenVectors(normal, direction)
+		correctionAngle = 3.14
+	} else {
+		betweenVectorsQ = BetweenVectors(normal, direction.MultiplyScalar(-1))
+		betweenVectorsQ = betweenVectorsQ.Multiply(AngleAxis(3.14, tangent))
+	}
+	angleQ := AngleAxis(rotation+correctionAngle, normal)
+	orientation := betweenVectorsQ.Multiply(angleQ)
+	return orientation
+}

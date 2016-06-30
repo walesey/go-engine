@@ -40,7 +40,7 @@ func GunDemo(c *cli.Context) {
 	gunNode.SetTranslation(vectormath.Vector3{0, 0, 0})
 
 	sceneGraph := renderer.CreateSceneGraph()
-	sceneGraph.AddBackGround(skyNode)
+	sceneGraph.Add(skyNode)
 	sceneGraph.Add(gunNode)
 
 	//camera

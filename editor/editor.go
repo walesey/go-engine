@@ -62,7 +62,7 @@ func (e *Editor) Start() {
 		}
 
 		//root node
-		e.gameEngine.AddSpatial(e.rootMapNode)
+		e.gameEngine.AddSpatialTransparent(e.rootMapNode)
 
 		//input/controller manager
 		e.controllerManager = glfwController.NewControllerManager(glRenderer.Window)
