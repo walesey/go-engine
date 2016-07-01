@@ -1,11 +1,14 @@
 package assets
 
 import (
+	"image"
+
 	"github.com/walesey/go-engine/renderer"
 )
 
 type AssetCache struct {
 	geometries map[string]*renderer.Geometry
+	images     map[string]image.Image
 }
 
 var globalCache *AssetCache
@@ -15,15 +18,33 @@ func init() {
 }
 
 func (ac *AssetCache) ImportObj(path string) (*renderer.Geometry, error) {
-	_, ok := ac.geometries[path]
+	geometry, ok := ac.geometries[path]
 	if !ok {
-		geometry, err := ImportObj(path)
+		var err error
+		geometry, err = ImportObj(path)
 		if err != nil {
 			return geometry, err
 		}
 		ac.geometries[path] = geometry
 	}
-	return ac.geometries[path], nil
+	return geometry, nil
+}
+
+func (ac *AssetCache) ImportImage(path string) (image.Image, error) {
+	image, ok := ac.images[path]
+	if !ok {
+		var err error
+		image, err = ImportImage(path)
+		if err != nil {
+			return image, err
+		}
+		ac.images[path] = image
+	}
+	return image, nil
+}
+
+func ImportImageCached(path string) (image.Image, error) {
+	return globalCache.ImportImage(path)
 }
 
 func ImportObjCached(path string) (*renderer.Geometry, error) {
@@ -33,5 +54,6 @@ func ImportObjCached(path string) (*renderer.Geometry, error) {
 func NewAssetCache() *AssetCache {
 	return &AssetCache{
 		geometries: make(map[string]*renderer.Geometry),
+		images:     make(map[string]image.Image),
 	}
 }

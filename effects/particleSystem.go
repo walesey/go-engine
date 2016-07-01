@@ -3,7 +3,6 @@ package effects
 import (
 	"image/color"
 	"math/rand"
-	"sort"
 
 	"github.com/walesey/go-engine/renderer"
 	vmath "github.com/walesey/go-engine/vectormath"
@@ -44,20 +43,6 @@ type Particle struct {
 	rotation            float64
 	velocity            vmath.Vector3
 	rotationVelocity    float64
-}
-
-func (ps *ParticleSystem) Len() int {
-	return len(ps.particles)
-}
-
-func (ps *ParticleSystem) Less(i, j int) bool {
-	cameraDeltai := ps.particles[i].translation.Subtract(ps.cameraPosition).LengthSquared()
-	cameraDeltaj := ps.particles[j].translation.Subtract(ps.cameraPosition).LengthSquared()
-	return cameraDeltai < cameraDeltaj
-}
-
-func (ps *ParticleSystem) Swap(i, j int) {
-	ps.particles[i], ps.particles[j] = ps.particles[j], ps.particles[i]
 }
 
 func CreateParticleSystem(settings ParticleSettings) *ParticleSystem {
@@ -120,7 +105,6 @@ func (ps *ParticleSystem) Update(dt float64) {
 		}
 	}
 	//sort particles and build geometry
-	sort.Sort(ps)
 	ps.geometry.ClearBuffers()
 	for _, p := range ps.particles {
 		if p.active {

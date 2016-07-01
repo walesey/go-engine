@@ -10,8 +10,6 @@ uniform mat4 model;
 
 in vec3 vert;
 in vec3 normal;
-in vec3 tangent;
-in vec3 bitangent;
 in vec2 vertTexCoord;
 in vec4 color;
 
@@ -28,6 +26,8 @@ void main() {
 	gl_Position = projection * camera * worldVertex;
 	mat4 modelNormal = transpose(inverse(model));
 	worldNormal = (modelNormal * vec4(normal,1)).xyz;
+	vec3 tangent = cross(normal, normal + vec3(-1));
+	vec3 bitangent = cross(normal, tangent);
 	vec3 worldTangent = (modelNormal * vec4(tangent,1)).xyz;
 	vec3 worldBitangent = (modelNormal * vec4(bitangent,1)).xyz;
 	//tangent space conversion - worldToTangent

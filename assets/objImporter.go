@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/renderer"
 )
 
@@ -98,9 +97,9 @@ func CreateMaterial(diffuse, normal, specular, roughness image.Image) *renderer.
 }
 
 //returns corresponding index (0,1,2...)
-func (obj *objData) pushVert(x, y, z, nx, ny, nz, tx, ty, tz, btx, bty, btz, u, v, r, g, b, a float32) uint32 {
-	obj.Vertices = append(obj.Vertices, x, y, z, nx, ny, nz, tx, ty, tz, btx, bty, btz, u, v, r, g, b, a)
-	return (uint32)((len(obj.Vertices) / 18) - 1)
+func (obj *objData) pushVert(x, y, z, nx, ny, nz, u, v, r, g, b, a float32) uint32 {
+	obj.Vertices = append(obj.Vertices, x, y, z, nx, ny, nz, u, v, r, g, b, a)
+	return (uint32)((len(obj.Vertices) / 12) - 1)
 }
 
 func (obj *objData) pushIndex(indicies ...uint32) {
@@ -136,29 +135,14 @@ func (obj *objData) processFaceVertex(token string, vertexList, uvList, normalLi
 	nx := (float32)(0.0)
 	ny := (float32)(0.0)
 	nz := (float32)(0.0)
-	tanx := (float32)(0.0)
-	tany := (float32)(0.0)
-	tanz := (float32)(0.0)
-	bitanx := (float32)(0.0)
-	bitany := (float32)(0.0)
-	bitanz := (float32)(0.0)
 	if len(face) > 2 && face[2] != "" {
 		index = (sti(face[2]) - 1) * 3
 		nx = normalList[index]
 		ny = normalList[index+1]
 		nz = normalList[index+2]
-		norm := mgl32.Vec3{nx, ny, nz}
-		tangent := norm.Cross(norm.Add(mgl32.Vec3{1, 1, 1}))
-		bitangent := norm.Cross(tangent)
-		tanx = tangent.X()
-		tany = tangent.Y()
-		tanz = tangent.Z()
-		bitanx = bitangent.X()
-		bitany = bitangent.Y()
-		bitanz = bitangent.Z()
 	}
 
-	return obj.pushVert(vx, vy, vz, nx, ny, nz, tanx, tany, tanz, bitanx, bitany, bitanz, vtx, vty, 1.0, 1.0, 1.0, 1.0)
+	return obj.pushVert(vx, vy, vz, nx, ny, nz, vtx, vty, 1.0, 1.0, 1.0, 1.0)
 }
 
 //Processes a polygonal face by splitting it into triangles

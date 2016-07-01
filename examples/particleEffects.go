@@ -262,10 +262,10 @@ func Particles(c *cli.Context) {
 		fps.UpdateFPSMeter()
 
 		//update things that need updating
-		explosionParticles.UpdateCameraLocation(glRenderer.CameraLocation())
-		fireParticles.UpdateCameraLocation(glRenderer.CameraLocation())
-		smokeParticles.UpdateCameraLocation(glRenderer.CameraLocation())
-		sparkParticles.UpdateCameraLocation(glRenderer.CameraLocation())
+		explosionParticles.SetCameraLocation(glRenderer.CameraLocation())
+		fireParticles.SetCameraLocation(glRenderer.CameraLocation())
+		smokeParticles.SetCameraLocation(glRenderer.CameraLocation())
+		sparkParticles.SetCameraLocation(glRenderer.CameraLocation())
 		explosionParticles.Update(0.018)
 		fireParticles.Update(0.018)
 		smokeParticles.Update(0.018)

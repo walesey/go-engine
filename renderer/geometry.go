@@ -7,7 +7,7 @@ import (
 	"github.com/walesey/go-engine/vectormath"
 )
 
-const VertexStride = 18
+const VertexStride = 12
 
 const (
 	MODE_UNLIT int32 = iota
@@ -43,7 +43,7 @@ type Geometry struct {
 	CullBackface bool
 }
 
-//vericies format : x,y,z,   nx,ny,nz,tx,ty,tz,btx,bty,btz,   u,v,  r,g,b,a
+//vericies format : x,y,z,   nx,ny,nz,   u,v,  r,g,b,a
 //indicies format : f1,f2,f3 (triangles)
 func CreateGeometry(indicies []uint32, verticies []float32) *Geometry {
 	mat := CreateMaterial()
@@ -100,7 +100,7 @@ func (geometry *Geometry) ClearBuffers() {
 }
 
 func (geometry *Geometry) SetColor(color color.Color) {
-	for i := 14; i < len(geometry.Verticies); i = i + VertexStride {
+	for i := 8; i < len(geometry.Verticies); i = i + VertexStride {
 		r, g, b, a := color.RGBA()
 		geometry.Verticies[i] = float32(r) / 65535.0
 		geometry.Verticies[i+1] = float32(g) / 65535.0
@@ -126,28 +126,12 @@ func (geometry *Geometry) transformRange(transform Transform, from int) {
 			float64(geometry.Verticies[i+4]),
 			float64(geometry.Verticies[i+5]),
 		})
-		t := transform.TransformNormal(vectormath.Vector3{
-			float64(geometry.Verticies[i+6]),
-			float64(geometry.Verticies[i+7]),
-			float64(geometry.Verticies[i+8]),
-		})
-		bt := transform.TransformNormal(vectormath.Vector3{
-			float64(geometry.Verticies[i+9]),
-			float64(geometry.Verticies[i+10]),
-			float64(geometry.Verticies[i+11]),
-		})
 		geometry.Verticies[i] = float32(v.X)
 		geometry.Verticies[i+1] = float32(v.Y)
 		geometry.Verticies[i+2] = float32(v.Z)
 		geometry.Verticies[i+3] = float32(n.X)
 		geometry.Verticies[i+4] = float32(n.Y)
 		geometry.Verticies[i+5] = float32(n.Z)
-		geometry.Verticies[i+6] = float32(t.X)
-		geometry.Verticies[i+7] = float32(t.Y)
-		geometry.Verticies[i+8] = float32(t.Z)
-		geometry.Verticies[i+9] = float32(bt.X)
-		geometry.Verticies[i+10] = float32(bt.Y)
-		geometry.Verticies[i+11] = float32(bt.Z)
 	}
 	geometry.VboDirty = true
 }
@@ -167,8 +151,8 @@ func (geometry *Geometry) Optimize(geom *Geometry, transform Transform) {
 
 func (geometry *Geometry) SetUVs(uvs ...float32) {
 	for i := 0; i < len(uvs); i = i + 2 {
-		geometry.Verticies[((i/2)*VertexStride)+12] = uvs[i]
-		geometry.Verticies[((i/2)*VertexStride)+13] = uvs[i+1]
+		geometry.Verticies[((i/2)*VertexStride)+6] = uvs[i]
+		geometry.Verticies[((i/2)*VertexStride)+7] = uvs[i+1]
 	}
 	geometry.VboDirty = true
 }
@@ -180,12 +164,12 @@ func CreateBox(width, height float32) *Geometry {
 
 func CreateBoxWithOffset(width, height, offsetX, offsetY float32) *Geometry {
 	verticies := []float32{
-		offsetX, height + offsetY, 0, 0, 1, 0, 1, 0, -1, -1, 0, -1, 0, 0, 1.0, 1.0, 1.0, 1.0,
-		width + offsetX, height + offsetY, 0, 0, 1, 0, 1, 0, -1, -1, 0, -1, 1, 0, 1.0, 1.0, 1.0, 1.0,
-		width + offsetX, offsetY, 0, 0, 1, 0, 1, 0, -1, -1, 0, -1, 1, 1, 1.0, 1.0, 1.0, 1.0,
-		width + offsetX, offsetY, 0, 0, 1, 0, 1, 0, -1, -1, 0, -1, 1, 1, 1.0, 1.0, 1.0, 1.0,
-		offsetX, offsetY, 0, 0, 1, 0, 1, 0, -1, -1, 0, -1, 0, 1, 1.0, 1.0, 1.0, 1.0,
-		offsetX, height + offsetY, 0, 0, 1, 0, 1, 0, -1, -1, 0, -1, 0, 0, 1.0, 1.0, 1.0, 1.0,
+		offsetX, height + offsetY, 0, 0, 1, 0, 0, 0, 1.0, 1.0, 1.0, 1.0,
+		width + offsetX, height + offsetY, 0, 0, 1, 0, 1, 0, 1.0, 1.0, 1.0, 1.0,
+		width + offsetX, offsetY, 0, 0, 1, 0, 1, 1, 1.0, 1.0, 1.0, 1.0,
+		width + offsetX, offsetY, 0, 0, 1, 0, 1, 1, 1.0, 1.0, 1.0, 1.0,
+		offsetX, offsetY, 0, 0, 1, 0, 0, 1, 1.0, 1.0, 1.0, 1.0,
+		offsetX, height + offsetY, 0, 0, 1, 0, 0, 0, 1.0, 1.0, 1.0, 1.0,
 	}
 	indicies := []uint32{0, 1, 2, 3, 4, 5}
 	return CreateGeometry(indicies, verticies)
