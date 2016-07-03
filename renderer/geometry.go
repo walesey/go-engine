@@ -167,11 +167,9 @@ func CreateBoxWithOffset(width, height, offsetX, offsetY float32) *Geometry {
 		offsetX, height + offsetY, 0, 0, 1, 0, 0, 0, 1.0, 1.0, 1.0, 1.0,
 		width + offsetX, height + offsetY, 0, 0, 1, 0, 1, 0, 1.0, 1.0, 1.0, 1.0,
 		width + offsetX, offsetY, 0, 0, 1, 0, 1, 1, 1.0, 1.0, 1.0, 1.0,
-		width + offsetX, offsetY, 0, 0, 1, 0, 1, 1, 1.0, 1.0, 1.0, 1.0,
 		offsetX, offsetY, 0, 0, 1, 0, 0, 1, 1.0, 1.0, 1.0, 1.0,
-		offsetX, height + offsetY, 0, 0, 1, 0, 0, 0, 1.0, 1.0, 1.0, 1.0,
 	}
-	indicies := []uint32{0, 1, 2, 3, 4, 5}
+	indicies := []uint32{0, 1, 2, 2, 3, 0}
 	return CreateGeometry(indicies, verticies)
 }
 

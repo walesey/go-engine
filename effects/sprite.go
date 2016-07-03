@@ -44,7 +44,7 @@ func BoxFlipbook(geometry *renderer.Geometry, frame, framesX, framesY int) {
 	indexY := float32(framesY - (frame / framesY) - 1)
 	u1, u2 := frameSizeX*indexX, frameSizeX*(indexX+1.0)
 	v1, v2 := frameSizeY*indexY, frameSizeY*(indexY+1.0)
-	geometry.SetUVs(u1, v1, u2, v1, u2, v2, u2, v2, u1, v2, u1, v1)
+	geometry.SetUVs(u1, v1, u2, v1, u2, v2, u1, v2)
 }
 
 func (sprite *Sprite) Draw(r renderer.Renderer) {
