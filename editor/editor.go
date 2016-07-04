@@ -1,15 +1,19 @@
 package editor
 
 import (
+	"bytes"
+
 	"github.com/walesey/go-engine/actor"
 	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/controller"
 	"github.com/walesey/go-engine/editor/models"
+	"github.com/walesey/go-engine/effects"
 	"github.com/walesey/go-engine/engine"
 	"github.com/walesey/go-engine/glfwController"
 	"github.com/walesey/go-engine/opengl"
 	"github.com/walesey/go-engine/renderer"
 	"github.com/walesey/go-engine/ui"
+	"github.com/walesey/go-engine/util"
 	vmath "github.com/walesey/go-engine/vectormath"
 )
 
@@ -30,6 +34,7 @@ type Editor struct {
 	fileBrowserOpen       bool
 	fileBrowserController glfwController.Controller
 	mouseMode             string
+	selectSprite          renderer.Entity
 }
 
 func New() *Editor {
@@ -62,7 +67,7 @@ func (e *Editor) Start() {
 		}
 
 		//root node
-		e.gameEngine.AddSpatialTransparent(e.rootMapNode)
+		e.gameEngine.AddSpatial(e.rootMapNode)
 
 		//input/controller manager
 		e.controllerManager = glfwController.NewControllerManager(glRenderer.Window)
@@ -76,6 +81,9 @@ func (e *Editor) Start() {
 		e.controllerManager.AddController(mainController.(glfwController.Controller))
 		e.gameEngine.AddUpdatable(freeMoveActor)
 
+		e.initSelectSprite()
+		e.gameEngine.AddUpdatable(engine.UpdatableFunc(e.updateSelectSprite))
+
 		//editor controller
 		e.controllerManager.AddController(NewEditorController(e).(glfwController.Controller))
 
@@ -85,4 +93,24 @@ func (e *Editor) Start() {
 
 		e.setupUI()
 	})
+}
+
+func (e *Editor) initSelectSprite() {
+	img, _ := assets.DecodeImage(bytes.NewBuffer(util.Base64ToBytes(GeometryIconData)))
+	mat := assets.CreateMaterial(img, nil, nil, nil)
+	mat.LightingMode = renderer.MODE_UNLIT
+	mat.Transparency = renderer.TRANSPARENCY_EMISSIVE
+	mat.DepthTest = false
+	selectSprite := effects.CreateSprite(1, 1, 1, mat)
+	e.selectSprite = selectSprite
+	e.gameEngine.AddSpatialTransparent(selectSprite)
+}
+
+func (e *Editor) updateSelectSprite(dt float64) {
+	selectedModel, _ := e.overviewMenu.getSelectedNode(e.currentMap.Root)
+	if selectedModel != nil {
+		size := selectedModel.Translation.Subtract(e.gameEngine.Camera().GetTranslation()).Length() * 0.02
+		e.selectSprite.SetScale(vmath.Vector3{size, size, size})
+		e.selectSprite.SetTranslation(selectedModel.Translation)
+	}
 }

@@ -442,6 +442,10 @@ func (glRenderer *OpenglRenderer) DrawGeometry(geometry *renderer.Geometry) {
 		gl.Disable(gl.CULL_FACE)
 	}
 
+	//set depthbuffer modes
+	glRenderer.EnableDepthTest(geometry.Material.DepthTest)
+	glRenderer.EnableDepthMask(geometry.Material.DepthMask)
+
 	//set lighting mode
 	lightsUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("mode\x00"))
 	gl.Uniform1i(lightsUniform, geometry.Material.LightingMode)

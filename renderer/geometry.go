@@ -25,11 +25,18 @@ type Material struct {
 	loaded                                       bool
 	LightingMode                                 int32
 	Transparency                                 int
+	DepthTest, DepthMask                         bool
 	Diffuse, Normal, Specular, Roughness         image.Image
 }
 
 func CreateMaterial() *Material {
-	return &Material{loaded: false, LightingMode: MODE_LIT}
+	return &Material{
+		loaded:       false,
+		LightingMode: MODE_LIT,
+		Transparency: TRANSPARENCY_NON_EMISSIVE,
+		DepthTest:    true,
+		DepthMask:    true,
+	}
 }
 
 //Geometry
