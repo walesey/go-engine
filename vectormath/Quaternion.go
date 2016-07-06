@@ -23,6 +23,20 @@ func AngleAxis(angle float64, axis Vector3) Quaternion {
 func BetweenVectors(start, finish Vector3) Quaternion {
 	axis := finish.Cross(start).Normalize()
 	angle := start.AngleBetween(finish)
+	if finish.Dot(start) < 0 {
+		angle := start.MultiplyScalar(-1).AngleBetween(finish)
+		return AngleAxis(3.14-angle, axis)
+	}
+	return AngleAxis(angle, axis)
+}
+
+func BetweenVectorsFast(start, finish Vector3) Quaternion {
+	axis := finish.Cross(start).NormalizeFast()
+	angle := start.AngleBetweenFast(finish)
+	if finish.Dot(start) < 0 {
+		angle := start.MultiplyScalar(-1).AngleBetweenFast(finish)
+		return AngleAxis(3.14-angle, axis)
+	}
 	return AngleAxis(angle, axis)
 }
 

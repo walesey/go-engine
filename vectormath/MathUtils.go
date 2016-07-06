@@ -144,16 +144,22 @@ func RowMat3ColumnProduct(mat Matrix3, row, col Vector3) float64 {
 
 //FacingOrientation - return an orientation that always faces the given direction with rotation
 func FacingOrientation(rotation float64, direction, normal, tangent Vector3) Quaternion {
-	var betweenVectorsQ Quaternion
-	correctionAngle := 0.0
-	if direction.Dot(normal) >= 0 {
-		betweenVectorsQ = BetweenVectors(normal, direction)
-		correctionAngle = 3.14
-	} else {
-		betweenVectorsQ = BetweenVectors(normal, direction.MultiplyScalar(-1))
-		betweenVectorsQ = betweenVectorsQ.Multiply(AngleAxis(3.14, tangent))
-	}
-	angleQ := AngleAxis(rotation+correctionAngle, normal)
+	betweenVectorsQ := BetweenVectorsFast(normal, direction)
+	angleQ := AngleAxis(rotation, normal)
 	orientation := betweenVectorsQ.Multiply(angleQ)
 	return orientation
+}
+
+func FastSqrt(number float64) float64 {
+	return 1.0 / FastInvSqrt(number)
+}
+
+func FastInvSqrt(number float64) float64 {
+	x := float32(number)
+	xhalf := float32(0.5) * x
+	i := math.Float32bits(x)
+	i = 0x5f3759df - i>>1
+	x = math.Float32frombits(i)
+	x = x * (1.5 - (xhalf * x * x))
+	return float64(x)
 }

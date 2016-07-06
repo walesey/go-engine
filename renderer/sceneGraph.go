@@ -45,13 +45,10 @@ func (sceneGraph *SceneGraph) RenderScene(renderer Renderer) {
 	sceneGraph.buildBuckets(sceneGraph.transparentNode)
 	sceneGraph.sortBuckets(renderer)
 	//render buckets
-	renderer.EnableDepthMask(true)
 	sceneGraph.opaqueNode.Draw(renderer)
-	renderer.EnableDepthMask(false)
 	for _, entry := range sceneGraph.transparentBucket {
 		renderEntry(entry, renderer)
 	}
-	renderer.EnableDepthMask(true)
 }
 
 func renderEntry(entry bucketEntry, renderer Renderer) {

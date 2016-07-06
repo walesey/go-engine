@@ -46,6 +46,7 @@ func Particles(c *cli.Context) {
 	explosionMat := assets.CreateMaterial(explostionImg, nil, nil, nil)
 	explosionMat.LightingMode = renderer.MODE_UNLIT
 	explosionMat.Transparency = renderer.TRANSPARENCY_EMISSIVE
+	explosionMat.DepthMask = false
 	explosionParticles := effects.CreateParticleSystem(effects.ParticleSettings{
 		MaxParticles:        4,
 		ParticleEmitRate:    2,
@@ -75,6 +76,7 @@ func Particles(c *cli.Context) {
 	fireMat := assets.CreateMaterial(fireImg, nil, nil, nil)
 	fireMat.LightingMode = renderer.MODE_UNLIT
 	fireMat.Transparency = renderer.TRANSPARENCY_EMISSIVE
+	fireMat.DepthMask = false
 	fireParticles := effects.CreateParticleSystem(effects.ParticleSettings{
 		MaxParticles:        10,
 		ParticleEmitRate:    2,
@@ -103,6 +105,7 @@ func Particles(c *cli.Context) {
 	smokeImg, _ := assets.ImportImage("TestAssets/Smoke.png")
 	smokeMat := assets.CreateMaterial(smokeImg, nil, nil, nil)
 	smokeMat.LightingMode = renderer.MODE_UNLIT
+	smokeMat.DepthMask = false
 	smokeParticles := effects.CreateParticleSystem(effects.ParticleSettings{
 		MaxParticles:        38,
 		ParticleEmitRate:    15,

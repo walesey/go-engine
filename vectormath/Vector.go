@@ -27,6 +27,10 @@ func (v Vector2) Length() float64 {
 	return math.Sqrt(v.LengthSquared())
 }
 
+func (v Vector2) LengthFast() float64 {
+	return FastSqrt(v.LengthSquared())
+}
+
 func (v Vector2) Normalize() Vector2 {
 	if v.LengthSquared() > 0.99999 && v.LengthSquared() < 1.00001 {
 		return v
@@ -113,6 +117,10 @@ func (v Vector3) Length() float64 {
 	return math.Sqrt(v.LengthSquared())
 }
 
+func (v Vector3) LengthFast() float64 {
+	return FastSqrt(v.LengthSquared())
+}
+
 func (v Vector4) LengthSquared() float64 {
 	return (v.X * v.X) + (v.Y * v.Y) + (v.Z * v.Z) + (v.W * v.W)
 }
@@ -126,6 +134,10 @@ func (v Vector3) Normalize() Vector3 {
 		return v
 	}
 	return v.DivideScalar(v.Length())
+}
+
+func (v Vector3) NormalizeFast() Vector3 {
+	return v.DivideScalar(v.LengthFast())
 }
 
 func (v Vector3) Add(other Vector3) Vector3 {
@@ -182,6 +194,12 @@ func (v Vector3) Project(other Vector3) Vector3 {
 	return other.MultiplyScalar(projection)
 }
 
+func (v Vector3) ProjectFast(other Vector3) Vector3 {
+	other = other.NormalizeFast()
+	projection := v.Dot(other)
+	return other.MultiplyScalar(projection)
+}
+
 func (v Vector3) Cross(other Vector3) Vector3 {
 	return Vector3{
 		(other.Y * v.Z) - (other.Z * v.Y),
@@ -200,6 +218,10 @@ func (v Vector3) Dot(other Vector3) float64 {
 
 func (v Vector3) AngleBetween(other Vector3) float64 {
 	return math.Acos(v.Normalize().Dot(other.Normalize()))
+}
+
+func (v Vector3) AngleBetweenFast(other Vector3) float64 {
+	return math.Acos(v.NormalizeFast().Dot(other.NormalizeFast()))
 }
 
 func (v Vector3) ApproxEqual(other Vector3, epsilon float64) bool {
