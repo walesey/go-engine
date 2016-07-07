@@ -118,10 +118,10 @@ void main() {
 
 			directColor += ( brightness * directBRDF( LightDiff, LightSpec, worldLightDir, albedoValue, specularValue, tangentNormal, tangentReflectedEye) );
 
-	   	}
+		}
 
 		//directional lights
-	   	for (int i=0;i<MAX_LIGHTS;i++){
+		for (int i=0;i<MAX_LIGHTS;i++){
 
 			//light components
 			vec4 LightPos = directionalLights[(i*4)+LIGHT_POSITION];

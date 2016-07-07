@@ -30,16 +30,6 @@ func BetweenVectors(start, finish Vector3) Quaternion {
 	return AngleAxis(angle, axis)
 }
 
-func BetweenVectorsFast(start, finish Vector3) Quaternion {
-	axis := finish.Cross(start).NormalizeFast()
-	angle := start.AngleBetweenFast(finish)
-	if finish.Dot(start) < 0 {
-		angle := start.MultiplyScalar(-1).AngleBetweenFast(finish)
-		return AngleAxis(3.14-angle, axis)
-	}
-	return AngleAxis(angle, axis)
-}
-
 func (q Quaternion) Multiply(other Quaternion) Quaternion {
 	return Quaternion{
 		q.X*other.W + q.Y*other.Z - q.Z*other.Y + q.W*other.X,
