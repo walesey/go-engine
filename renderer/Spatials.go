@@ -138,7 +138,7 @@ func (node *Node) RelativePosition(n *Node) (vmath.Vector3, error) {
 	for _, child := range node.children {
 		if childNode, ok := child.(*Node); ok {
 			if rPost, err := childNode.RelativePosition(n); err == nil {
-				return rPost.Add(childNode.Translation), nil
+				return childNode.Transform.TransformCoordinate(rPost), nil
 			}
 		}
 	}

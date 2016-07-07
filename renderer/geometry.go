@@ -42,7 +42,7 @@ func CreateMaterial() *Material {
 //Geometry
 type Geometry struct {
 	VboId, IboId uint32
-	loadedLen    int
+	loaded       bool
 	VboDirty     bool
 	Indicies     []uint32
 	Verticies    []float32
@@ -58,7 +58,7 @@ func CreateGeometry(indicies []uint32, verticies []float32) *Geometry {
 		Indicies:     indicies,
 		Verticies:    verticies,
 		Material:     mat,
-		loadedLen:    -1,
+		loaded:       false,
 		CullBackface: true,
 	}
 }
@@ -77,12 +77,9 @@ func (geometry *Geometry) Draw(renderer Renderer) {
 }
 
 func (geometry *Geometry) load(renderer Renderer) {
-	if geometry.loadedLen < len(geometry.Verticies) && len(geometry.Indicies) != 0 && len(geometry.Verticies) != 0 {
-		if geometry.loadedLen >= 0 {
-			renderer.DestroyGeometry(geometry)
-		}
+	if !geometry.loaded && len(geometry.Indicies) != 0 && len(geometry.Verticies) != 0 {
 		renderer.CreateGeometry(geometry)
-		geometry.loadedLen = len(geometry.Verticies)
+		geometry.loaded = true
 	}
 	if !geometry.Material.loaded {
 		renderer.CreateMaterial(geometry.Material)
@@ -92,8 +89,10 @@ func (geometry *Geometry) load(renderer Renderer) {
 
 func (geometry *Geometry) Destroy(renderer Renderer) {
 	renderer.DestroyGeometry(geometry)
+	geometry.loaded = false
 	if geometry.Material != nil {
 		renderer.DestroyMaterial(geometry.Material)
+		geometry.Material.loaded = false
 	}
 }
 

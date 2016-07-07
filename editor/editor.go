@@ -110,7 +110,12 @@ func (e *Editor) updateSelectSprite(dt float64) {
 	selectedModel, _ := e.overviewMenu.getSelectedNode(e.currentMap.Root)
 	if selectedModel != nil {
 		size := selectedModel.Translation.Subtract(e.gameEngine.Camera().GetTranslation()).Length() * 0.02
-		e.selectSprite.SetScale(vmath.Vector3{size, size, size})
-		e.selectSprite.SetTranslation(selectedModel.Translation)
+		translation, err := e.rootMapNode.RelativePosition(selectedModel.GetNode())
+		if err == nil {
+			e.selectSprite.SetScale(vmath.Vector3{size, size, size})
+			e.selectSprite.SetTranslation(translation)
+		} else {
+			e.selectSprite.SetScale(vmath.Vector3{})
+		}
 	}
 }

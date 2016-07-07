@@ -120,9 +120,6 @@ func (glRenderer *OpenglRenderer) Start() {
 		panic(err)
 	}
 
-	version := gl.GoStr(gl.GetString(gl.VERSION))
-	fmt.Println("OpenGL version", version)
-
 	// Configure the vertex and fragment shaders
 	program, _ := newProgram(shaders.MainVert, shaders.MainFrag)
 	gl.UseProgram(program)

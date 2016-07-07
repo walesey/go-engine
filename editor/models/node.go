@@ -35,8 +35,7 @@ func (n *NodeModel) CopyShallow(nameGenerator func(name string) string) *NodeMod
 		Children:    make([]*NodeModel, len(n.Children)),
 	}
 	if n.Geometry != nil {
-		geom := *n.Geometry
-		copiedNode.Geometry = &geom
+		copiedNode.Geometry = n.Geometry
 	}
 	if n.Reference != nil {
 		ref := *n.Reference
