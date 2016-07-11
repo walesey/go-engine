@@ -48,6 +48,8 @@ type OpenglRenderer struct {
 	envMapLOD3Id               uint32
 	illuminanceMapId           uint32
 	modelUniform               int32
+	nbLights                   int32
+	nbDirectionalLights        int32
 	lights                     []float32
 	directionalLights          []float32
 	cameraLocation             vmath.Vector3
@@ -217,6 +219,10 @@ func (glRenderer *OpenglRenderer) mainLoop() {
 // BackGroundColor - set background color for the scene
 func (glRenderer *OpenglRenderer) BackGroundColor(r, g, b, a float32) {
 	gl.ClearColor(r, g, b, a)
+}
+
+func (glRenderer *OpenglRenderer) WindowDimensions() vmath.Vector2 {
+	return vmath.Vector2{X: float64(glRenderer.WindowWidth), Y: float64(glRenderer.WindowHeight)}
 }
 
 // Projection - camera projection
@@ -512,6 +518,9 @@ func (glRenderer *OpenglRenderer) CreateLight(ar, ag, ab, dr, dg, db, sr, sg, sb
 	lights := glRenderer.lights
 	if directional {
 		lights = glRenderer.directionalLights
+		glRenderer.nbDirectionalLights = int32(i + 1)
+	} else {
+		glRenderer.nbLights = int32(i + 1)
 	}
 
 	//position
@@ -542,10 +551,14 @@ func (glRenderer *OpenglRenderer) CreateLight(ar, ag, ab, dr, dg, db, sr, sg, sb
 	}
 	lightsUniform := gl.GetUniformLocation(glRenderer.program, gl.Str(uniformName))
 	gl.Uniform4fv(lightsUniform, (int32)(maxLights*16), &lights[0])
+	nbLightsUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("nbLights\x00"))
+	gl.Uniform1i(nbLightsUniform, glRenderer.nbLights)
+	nbLightsUniform = gl.GetUniformLocation(glRenderer.program, gl.Str("nbDirectionalLights\x00"))
+	gl.Uniform1i(nbLightsUniform, glRenderer.nbDirectionalLights)
 }
 
 func (glRenderer *OpenglRenderer) DestroyLight(i int) {
-
+	//TODO
 }
 
 func (glRenderer *OpenglRenderer) LockCursor(lock bool) {

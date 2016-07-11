@@ -17,6 +17,8 @@ var MainFrag = `
 uniform int mode;
 uniform bool useVertexColor;
 
+uniform int nbLights;
+uniform int nbDirectionalLights;
 uniform vec4 lights[ MAX_LIGHTS * 4 ];
 uniform vec4 directionalLights[ MAX_LIGHTS * 4 ];
 
@@ -102,7 +104,7 @@ void main() {
 		vec4 worldReflectedEye = vec4( tangentReflectedEye.xyz * inverseTBNMatrix , 1);
 
 		//point lights
-		for (int i=0;i<MAX_LIGHTS;i++){
+		for (int i=0;i<nbLights;i++){
 
 			//light components
 			vec4 LightPos = lights[(i*4)+LIGHT_POSITION];
@@ -121,7 +123,7 @@ void main() {
 		}
 
 		//directional lights
-		for (int i=0;i<MAX_LIGHTS;i++){
+		for (int i=0;i<nbDirectionalLights;i++){
 
 			//light components
 			vec4 LightPos = directionalLights[(i*4)+LIGHT_POSITION];

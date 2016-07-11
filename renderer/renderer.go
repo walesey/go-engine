@@ -1,6 +1,6 @@
 package renderer
 
-import "github.com/walesey/go-engine/vectormath"
+import vmath "github.com/walesey/go-engine/vectormath"
 
 type Uniform struct {
 	Name  string
@@ -18,10 +18,11 @@ type Renderer interface {
 	Render(callback func())
 	Start()
 	BackGroundColor(r, g, b, a float32)
+	WindowDimensions() vmath.Vector2
 	Projection(angle, near, far float32)
-	Camera(location, lookat, up vectormath.Vector3)
+	Camera(location, lookat, up vmath.Vector3)
 	Ortho()
-	CameraLocation() vectormath.Vector3
+	CameraLocation() vmath.Vector3
 	PopTransform()
 	PushTransform()
 	EnableDepthTest(depthTest bool)
@@ -32,7 +33,7 @@ type Renderer interface {
 	CreateMaterial(material *Material)
 	DestroyMaterial(material *Material)
 	DrawGeometry(geometry *Geometry)
-	CreateLight(ar, ag, ab, dr, dg, db, sr, sg, sb float32, directional bool, position vectormath.Vector3, i int)
+	CreateLight(ar, ag, ab, dr, dg, db, sr, sg, sb float32, directional bool, position vmath.Vector3, i int)
 	DestroyLight(i int)
 	ReflectionMap(cm *CubeMap)
 	CreatePostEffect(shader Shader)

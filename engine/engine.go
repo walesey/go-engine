@@ -22,6 +22,7 @@ type Engine interface {
 	RemoveUpdatable(updatable Updatable)
 	Sky(material *renderer.Material, size float64)
 	Camera() *renderer.Camera
+	Renderer() renderer.Renderer
 	SetFpsCap(FpsCap float64)
 	FPS() float64
 	InitFpsDial()
@@ -120,6 +121,10 @@ func (engine *EngineImpl) Sky(material *renderer.Material, size float64) {
 
 func (engine *EngineImpl) Camera() *renderer.Camera {
 	return engine.camera
+}
+
+func (engine *EngineImpl) Renderer() renderer.Renderer {
+	return engine.renderer
 }
 
 func (engine *EngineImpl) SetFpsCap(FpsCap float64) {
