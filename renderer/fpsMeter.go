@@ -13,7 +13,7 @@ type FPSMeter struct {
 }
 
 func CreateFPSMeter(sampleTime float64) *FPSMeter {
-	return &FPSMeter{start: time.Now(), frames: 0, sampleTime: sampleTime, FpsCap: 120}
+	return &FPSMeter{start: time.Now(), last: time.Now(), frames: 0, sampleTime: sampleTime, FpsCap: 120}
 }
 
 func (fps *FPSMeter) UpdateFPSMeter() float64 {

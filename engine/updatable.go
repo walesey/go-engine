@@ -16,6 +16,14 @@ func UpdatableFunc(update func(dt float64)) Updatable {
 	return &updatableImpl{update}
 }
 
+func UpdatableFanIn(updatables ...Updatable) Updatable {
+	return UpdatableFunc(func(dt float64) {
+		for _, u := range updatables {
+			u.Update(dt)
+		}
+	})
+}
+
 type UpdatableStore struct {
 	updatables []Updatable
 }
@@ -28,7 +36,9 @@ func NewUpdatableStore() *UpdatableStore {
 
 func (store *UpdatableStore) UpdateAll(dt float64) {
 	for _, updatable := range store.updatables {
-		updatable.Update(dt)
+		if updatable != nil {
+			updatable.Update(dt)
+		}
 	}
 }
 
