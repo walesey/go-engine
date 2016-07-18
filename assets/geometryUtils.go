@@ -5,7 +5,7 @@ import (
 	vmath "github.com/walesey/go-engine/vectormath"
 )
 
-// IntersectGeometry - returns a list of line segments resulting from the xy plane intersection of the geometry
+// IntersectGeometry - returns a list of line segments resulting from the xz plane intersection of the geometry
 func IntersectGeometry(geometry *renderer.Geometry) [][2]vmath.Vector2 {
 	segments := make([][2]vmath.Vector2, 0)
 	for i := 0; i < len(geometry.Indicies); i = i + 3 {

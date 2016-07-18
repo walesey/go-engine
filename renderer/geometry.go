@@ -142,16 +142,16 @@ func (geometry *Geometry) transformRange(transform Transform, from int) {
 	geometry.VboDirty = true
 }
 
-//load the verts/indicies of geometry into geom
-func (geometry *Geometry) Optimize(geom *Geometry, transform Transform) {
-	vertOffset := len(geom.Verticies)
-	indexOffset := len(geom.Indicies)
-	geom.Verticies = append(geom.Verticies, geometry.Verticies...)
-	geom.Indicies = append(geom.Indicies, geometry.Indicies...)
+//load the verts/indicies of geometry into destination Geometry
+func (geometry *Geometry) Optimize(destination *Geometry, transform Transform) {
+	vertOffset := len(destination.Verticies)
+	indexOffset := len(destination.Indicies)
+	destination.Verticies = append(destination.Verticies, geometry.Verticies...)
+	destination.Indicies = append(destination.Indicies, geometry.Indicies...)
 	for i, _ := range geometry.Indicies {
-		geom.Indicies[i+indexOffset] = geometry.Indicies[i] + uint32(vertOffset/VertexStride)
+		destination.Indicies[i+indexOffset] = geometry.Indicies[i] + uint32(vertOffset/VertexStride)
 	}
-	geom.transformRange(transform, vertOffset)
+	destination.transformRange(transform, vertOffset)
 	geometry.VboDirty = true
 }
 

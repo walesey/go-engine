@@ -8,39 +8,39 @@ import (
 )
 
 type ChipmonkSpace struct {
-	space *chipmunk.Space
+	Space *chipmunk.Space
 }
 
 func NewChipmonkSpace() *ChipmonkSpace {
 	return &ChipmonkSpace{
-		space: chipmunk.NewSpace(),
+		Space: chipmunk.NewSpace(),
 	}
 }
 
 func (cSpace *ChipmonkSpace) Update(dt float64) {
-	cSpace.space.Step(vect.Float(dt))
+	cSpace.Space.Step(vect.Float(dt))
 }
 
 func (cSpace *ChipmonkSpace) AddBody(body physicsAPI.PhysicsObject2D) {
 	cBody, ok := body.(*ChipmunkBody)
 	if ok {
-		cSpace.space.AddBody(cBody.Body)
+		cSpace.Space.AddBody(cBody.Body)
 	}
 }
 
 func (cSpace *ChipmonkSpace) RemoveBody(body physicsAPI.PhysicsObject2D) {
 	cBody, ok := body.(*ChipmunkBody)
 	if ok {
-		cSpace.space.RemoveBody(cBody.Body)
+		cSpace.Space.RemoveBody(cBody.Body)
 	}
 }
 
 func (cSpace *ChipmonkSpace) SetGravity(gravity vmath.Vector2) {
-	cSpace.space.Gravity = convertToVect(gravity)
+	cSpace.Space.Gravity = convertToVect(gravity)
 }
 
 func (cSpace *ChipmonkSpace) GetGravity() vmath.Vector2 {
-	return convertFromVect(cSpace.space.Gravity)
+	return convertFromVect(cSpace.Space.Gravity)
 }
 
 func convertFromVect(v vect.Vect) vmath.Vector2 {

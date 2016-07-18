@@ -1,8 +1,6 @@
 package renderer
 
-import (
-	vmath "github.com/walesey/go-engine/vectormath"
-)
+import vmath "github.com/walesey/go-engine/vectormath"
 
 //A camera is an Entity
 type Camera struct {
@@ -41,6 +39,14 @@ func (c *Camera) GetDirection() vmath.Vector3 {
 
 func (c *Camera) GetTranslation() vmath.Vector3 {
 	return c.translation
+}
+
+func (c *Camera) GetMouseVector(mouse vmath.Vector2) vmath.Vector3 {
+	cursorOffset := mouse.Divide(c.renderer.WindowDimensions()).Subtract(vmath.Vector2{0.5, 0.5})
+	horizontalAngle := cursorOffset.X * c.angle * 3.14 / 180.0
+	verticalAngle := cursorOffset.Y * c.angle * 3.14 / 180.0
+	direction := vmath.AngleAxis(verticalAngle, c.GetDirection().Cross(c.up).Normalize()).Apply(c.GetDirection())
+	return vmath.AngleAxis(-horizontalAngle, c.up).Apply(direction)
 }
 
 func (c *Camera) SetScale(scale vmath.Vector3) {} //na
