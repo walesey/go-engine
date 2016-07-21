@@ -1,6 +1,8 @@
 package examples
 
 import (
+	"image/color"
+
 	"github.com/walesey/go-engine/actor"
 	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/controller"
@@ -45,6 +47,27 @@ func Demo(c *cli.Context) {
 		mainController := controller.NewBasicMovementController(freeMoveActor, true)
 		controllerManager.AddController(mainController.(glfwController.Controller))
 		gameEngine.AddUpdatable(freeMoveActor)
+
+		customController := controller.CreateController()
+		controllerManager.AddController(customController.(glfwController.Controller))
+
+		mouse := vmath.Vector2{}
+		customController.BindAxisAction(func(xpos, ypos float64) {
+			mouse = vmath.Vector2{X: xpos, Y: ypos}
+		})
+
+		customController.BindAction(func() {
+			vector := camera.GetMouseVector(mouse)
+			rayGeom := renderer.CreateBeam(0.1, vector.MultiplyScalar(1000))
+			rayGeom.SetColor(color.RGBA{R: 255, G: 0, B: 0, A: 130})
+			mat := renderer.CreateMaterial()
+			mat.LightingMode = renderer.MODE_UNLIT
+			rayGeom.Material = mat
+			rayNode := renderer.CreateNode()
+			rayNode.Add(rayGeom)
+			rayNode.SetTranslation(camera.GetTranslation().Subtract(vmath.Vector3{Y: 0.2}))
+			gameEngine.AddSpatialTransparent(rayNode)
+		}, controller.KeyQ, controller.Press)
 
 		//Map loader
 		assetLoader := assets.NewLoader()

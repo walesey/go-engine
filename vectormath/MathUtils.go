@@ -149,3 +149,20 @@ func FacingOrientation(rotation float64, direction, normal, tangent Vector3) Qua
 	orientation := betweenVectorsQ.Multiply(angleQ)
 	return orientation
 }
+
+// TwoSegmentIntersect - find the intersection point of two line segments <p11-p12> and <p21-p22>
+func TwoSegmentIntersect(p11, p12, p21, p22 Vector2) (Vector2, error) {
+	p := p11
+	q := p21
+	r := p12.Subtract(p11)
+	s := p22.Subtract(p21)
+	if math.Abs(r.Cross(s)) < 0.0000001 {
+		return Vector2{}, fmt.Errorf("No intersections: lines parallel")
+	}
+	t := q.Subtract(p).Cross(s) / r.Cross(s)
+	u := p.Subtract(q).Cross(r) / s.Cross(r)
+	if t >= 0 && t <= 1 && u >= 0 && u <= 1 {
+		return p.Add(r.MultiplyScalar(t)), nil
+	}
+	return Vector2{}, fmt.Errorf("No intersections")
+}

@@ -4,7 +4,7 @@ import (
 	"image"
 	"image/color"
 
-	"github.com/walesey/go-engine/vectormath"
+	vmath "github.com/walesey/go-engine/vectormath"
 )
 
 const VertexStride = 12
@@ -96,8 +96,8 @@ func (geometry *Geometry) Destroy(renderer Renderer) {
 	}
 }
 
-func (geometry *Geometry) Centre() vectormath.Vector3 {
-	return vectormath.Vector3{0, 0, 0}
+func (geometry *Geometry) Centre() vmath.Vector3 {
+	return vmath.Vector3{0, 0, 0}
 }
 
 func (geometry *Geometry) ClearBuffers() {
@@ -122,12 +122,12 @@ func (geometry *Geometry) Transform(transform Transform) {
 
 func (geometry *Geometry) transformRange(transform Transform, from int) {
 	for i := from; i < len(geometry.Verticies); i = i + VertexStride {
-		v := transform.TransformCoordinate(vectormath.Vector3{
+		v := transform.TransformCoordinate(vmath.Vector3{
 			float64(geometry.Verticies[i]),
 			float64(geometry.Verticies[i+1]),
 			float64(geometry.Verticies[i+2]),
 		})
-		n := transform.TransformNormal(vectormath.Vector3{
+		n := transform.TransformNormal(vmath.Vector3{
 			float64(geometry.Verticies[i+3]),
 			float64(geometry.Verticies[i+4]),
 			float64(geometry.Verticies[i+5]),
@@ -181,4 +181,22 @@ func CreateBoxWithOffset(width, height, offsetX, offsetY float32) *Geometry {
 
 func CreateSkyBox() *Geometry {
 	return CreateGeometry(cubeIndicies, skyboxVerticies)
+}
+
+// CreateBeam - creates a square prism oriented along the vector
+func CreateBeam(width float64, vector vmath.Vector3) *Geometry {
+	direction := vector.Normalize()
+	geo := CreateBoxWithOffset(float32(width), float32(width), float32(-width*0.5), float32(-width*0.5))
+	geo2 := CreateBoxWithOffset(float32(width), float32(width), float32(-width*0.5), float32(-width*0.5))
+	facingTx := CreateTransform()
+	facingTx.From(vmath.Vector3{1, 1, 1}, vmath.Vector3{}, vmath.FacingOrientation(0, direction, vmath.Vector3{0, 0, 1}, vmath.Vector3{1, 0, 0}))
+	geo.Transform(facingTx)
+	facingTx.From(vmath.Vector3{1, 1, 1}, vector, vmath.FacingOrientation(0, direction, vmath.Vector3{0, 0, -1}, vmath.Vector3{1, 0, 0}))
+	geo2.Optimize(geo, facingTx)
+	geo.Indicies = append(geo.Indicies, 0, 1, 4, 4, 5, 0) //top
+	geo.Indicies = append(geo.Indicies, 1, 2, 7, 7, 4, 1) //side
+	geo.Indicies = append(geo.Indicies, 2, 3, 6, 6, 7, 2) //bottom
+	geo.Indicies = append(geo.Indicies, 3, 0, 5, 5, 6, 3) //side
+	geo.CullBackface = false
+	return geo
 }

@@ -88,6 +88,10 @@ func (v Vector2) DivideScalar(scalar float64) Vector2 {
 	}
 }
 
+func (v Vector2) Cross(other Vector2) float64 {
+	return v.X*other.Y - v.Y*other.X
+}
+
 func (v Vector2) Rotate(angle float64) Vector2 {
 	sn, cs := math.Sin(angle), math.Cos(angle)
 	return Vector2{
