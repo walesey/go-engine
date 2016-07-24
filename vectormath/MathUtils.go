@@ -166,3 +166,31 @@ func TwoSegmentIntersect(p11, p12, p21, p22 Vector2) (Vector2, error) {
 	}
 	return Vector2{}, fmt.Errorf("No intersections")
 }
+
+func SegmentCircleIntersect(radius float64, center, start, finish Vector2) (Vector2, error) {
+	d := finish.Subtract(start)
+	f := start.Subtract(center)
+
+	a := d.Dot(d)
+	b := f.MultiplyScalar(2).Dot(d)
+	c := f.Dot(f) - radius*radius
+	discriminant := b*b - 4*a*c
+
+	if discriminant < 0 {
+		return Vector2{}, fmt.Errorf("No intersection")
+	} else {
+		discriminant = math.Sqrt(discriminant)
+
+		t1 := (-b - discriminant) / (2 * a)
+		t2 := (-b + discriminant) / (2 * a)
+
+		if t1 >= 0 && t1 <= 1 {
+			return Vector2{X: start.X + t1*d.X, Y: start.Y + t1*d.Y}, nil
+		}
+		if t2 >= 0 && t2 <= 1 {
+			return Vector2{X: start.X + t2*d.X, Y: start.Y + t2*d.Y}, nil
+		}
+	}
+
+	return Vector2{}, fmt.Errorf("No intersections")
+}
