@@ -3,6 +3,7 @@ package examples
 import (
 	"image/color"
 
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/actor"
 	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/controller"
@@ -194,29 +195,29 @@ func Particles(c *cli.Context) {
 		glRenderer.ReflectionMap(cubeMap)
 
 		//post effects
-		// cell := renderer.Shader{
-		// 	Name: "shaders/cell/cellCoarse",
-		// }
-		// bloomHorizontal := renderer.Shader{
-		// 	Name: "shaders/bloom/bloomHorizontal",
-		// 	Uniforms: []renderer.Uniform{
-		// 		renderer.Uniform{"size", mgl32.Vec2{1900, 1000}},
-		// 		renderer.Uniform{"quality", 2.5},
-		// 		renderer.Uniform{"samples", 12},
-		// 		renderer.Uniform{"threshold", 0.995},
-		// 		renderer.Uniform{"intensity", 1.9},
-		// 	},
-		// }
-		// bloomVertical := renderer.Shader{
-		// 	Name: "shaders/bloom/bloomVertical",
-		// 	Uniforms: []renderer.Uniform{
-		// 		renderer.Uniform{"size", mgl32.Vec2{1900, 1000}},
-		// 		renderer.Uniform{"quality", 2.5},
-		// 		renderer.Uniform{"samples", 12},
-		// 		renderer.Uniform{"threshold", 0.995},
-		// 		renderer.Uniform{"intensity", 1.9},
-		// 	},
-		// }
+		cell := renderer.Shader{
+			Name: "shaders/cell/cellCoarse",
+		}
+		bloomHorizontal := renderer.Shader{
+			Name: "shaders/bloom/bloomHorizontal",
+			Uniforms: []renderer.Uniform{
+				renderer.Uniform{"size", mgl32.Vec2{1900, 1000}},
+				renderer.Uniform{"quality", 2.5},
+				renderer.Uniform{"samples", 12},
+				renderer.Uniform{"threshold", 0.995},
+				renderer.Uniform{"intensity", 0.9},
+			},
+		}
+		bloomVertical := renderer.Shader{
+			Name: "shaders/bloom/bloomVertical",
+			Uniforms: []renderer.Uniform{
+				renderer.Uniform{"size", mgl32.Vec2{1900, 1000}},
+				renderer.Uniform{"quality", 2.5},
+				renderer.Uniform{"samples", 12},
+				renderer.Uniform{"threshold", 0.995},
+				renderer.Uniform{"intensity", 0.9},
+			},
+		}
 
 		//input/controller manager
 		controllerManager := glfwController.NewControllerManager(glRenderer.Window)
@@ -242,23 +243,23 @@ func Particles(c *cli.Context) {
 		customController.BindAction(func() { freeMoveActor.Entity = explosionParticles }, controller.KeyE, controller.Press)
 		customController.BindAction(func() { freeMoveActor.Entity = birdSprite }, controller.KeyR, controller.Press)
 
-		// customController.BindAction(func() { //no post effects
-		// 	glRenderer.DestroyPostEffects(bloomVertical)
-		// 	glRenderer.DestroyPostEffects(bloomHorizontal)
-		// 	glRenderer.DestroyPostEffects(cell)
-		// }, controller.KeyA, controller.Press)
-		//
-		// customController.BindAction(func() { //bloom effect
-		// 	glRenderer.CreatePostEffect(bloomVertical)
-		// 	glRenderer.CreatePostEffect(bloomHorizontal)
-		// 	glRenderer.DestroyPostEffects(cell)
-		// }, controller.KeyS, controller.Press)
-		//
-		// customController.BindAction(func() { //cell effect
-		// 	glRenderer.DestroyPostEffects(bloomVertical)
-		// 	glRenderer.DestroyPostEffects(bloomHorizontal)
-		// 	glRenderer.CreatePostEffect(cell)
-		// }, controller.KeyD, controller.Press)
+		customController.BindAction(func() { //no post effects
+			glRenderer.DestroyPostEffects(bloomVertical)
+			glRenderer.DestroyPostEffects(bloomHorizontal)
+			glRenderer.DestroyPostEffects(cell)
+		}, controller.KeyA, controller.Press)
+
+		customController.BindAction(func() { //bloom effect
+			glRenderer.CreatePostEffect(bloomVertical)
+			glRenderer.CreatePostEffect(bloomHorizontal)
+			glRenderer.DestroyPostEffects(cell)
+		}, controller.KeyS, controller.Press)
+
+		customController.BindAction(func() { //cell effect
+			glRenderer.DestroyPostEffects(bloomVertical)
+			glRenderer.DestroyPostEffects(bloomHorizontal)
+			glRenderer.CreatePostEffect(cell)
+		}, controller.KeyD, controller.Press)
 	})
 
 	glRenderer.Update(func() {

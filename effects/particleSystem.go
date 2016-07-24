@@ -17,7 +17,7 @@ type ParticleSettings struct {
 	MaxTranslation, MinTranslation           vmath.Vector3
 	MaxStartVelocity, MinStartVelocity       vmath.Vector3
 	Acceleration                             vmath.Vector3
-	MaxAngularVelocity, MinAngularVelocity   vmath.Quaternion
+	MaxRotation, MinRotation                 float64
 	MaxRotationVelocity, MinRotationVelocity float64
 	BaseGeometry                             *renderer.Geometry
 	Material                                 *renderer.Material
@@ -126,6 +126,8 @@ func (ps *ParticleSystem) spawnParticle() {
 			ps.particles[i].active = true
 			randomNb := rand.Float64()
 			ps.particles[i].Life = ps.Settings.MaxLife*(1.0-randomNb) + ps.Settings.MinLife*randomNb
+			randomNb = rand.Float64()
+			ps.particles[i].Rotation = ps.Settings.MaxRotation*(1.0-randomNb) + ps.Settings.MinRotation*randomNb
 			ps.particles[i].LifeRemaining = ps.particles[i].Life
 			ps.particles[i].Translation = ps.Location.Add(randomVector(ps.Settings.MinTranslation, ps.Settings.MaxTranslation))
 			ps.particles[i].Velocity = randomVector(ps.Settings.MinStartVelocity, ps.Settings.MaxStartVelocity)

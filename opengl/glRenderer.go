@@ -198,8 +198,8 @@ func (glRenderer *OpenglRenderer) mainLoop() {
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 		glRenderer.onRender()
 	} else {
-
 		//Render to the first post effect buffer
+		gl.UseProgram(glRenderer.program)
 		gl.BindFramebuffer(gl.FRAMEBUFFER, glRenderer.postEffects[0].fboId)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 		glRenderer.onRender()
@@ -620,9 +620,9 @@ func newProgram(vertexShaderSource, fragmentShaderSource string) (uint32, error)
 
 func compileShader(source string, shaderType uint32) (uint32, error) {
 	shader := gl.CreateShader(shaderType)
-
-	csource := gl.Str(source)
-	gl.ShaderSource(shader, 1, &csource, nil)
+	csource, free := gl.Strs(source)
+	gl.ShaderSource(shader, 1, csource, nil)
+	free()
 	gl.CompileShader(shader)
 
 	var status int32
