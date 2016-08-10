@@ -15,6 +15,10 @@ func expectApproxEqual(t *testing.T, v1, v2 Vector3) {
 	assert.True(t, v1.ApproxEqual(v2, 0.001), fmt.Sprintf("Expect %v to approx equal %v", v1, v2))
 }
 
+func expectApproxEqualFloats(t *testing.T, f1, f2 float64) {
+	assert.True(t, ApproxEqual(f1, f2, 0.001), fmt.Sprintf("Expect %v to approx equal %v", f1, f2))
+}
+
 func TestRotate(t *testing.T) {
 	v := Vector2{1, 1}
 	rv := v.Rotate(1.57)
@@ -123,4 +127,18 @@ func TestDot(t *testing.T) {
 func TestApproxEqualVector(t *testing.T) {
 	assert.True(t, Vector3{2.7654, -2.7654, 0}.ApproxEqual(Vector3{2.7154, -2.7154, 0.09}, 0.1), "ApproxEqual")
 	assert.False(t, Vector3{2.7654, -2.7654, 0}.ApproxEqual(Vector3{2.7154, -2.7154, 0.09}, 0.01), "ApproxEqual")
+}
+
+func TestAngleBetween_Positive(t *testing.T) {
+	angle := Vector2{1, -1}.AngleBetween(Vector2{0, 1})
+	expectApproxEqualFloats(t, angle, 2.3562)
+	angle = Vector2{1, 1}.AngleBetween(Vector2{0, 1})
+	expectApproxEqualFloats(t, angle, 0.7854)
+}
+
+func TestAngleBetween_Negative(t *testing.T) {
+	angle := Vector2{-1, -1}.AngleBetween(Vector2{0, 1})
+	expectApproxEqualFloats(t, angle, 2.3562)
+	angle = Vector2{-1, 1}.AngleBetween(Vector2{0, 1})
+	expectApproxEqualFloats(t, angle, 0.7854)
 }

@@ -8,7 +8,8 @@ import (
 )
 
 type ChipmonkSpace struct {
-	Space *chipmunk.Space
+	Space       *chipmunk.Space
+	OnCollision func(shapeA, shapeB *chipmunk.Shape)
 }
 
 func NewChipmonkSpace() *ChipmonkSpace {
@@ -19,6 +20,15 @@ func NewChipmonkSpace() *ChipmonkSpace {
 
 func (cSpace *ChipmonkSpace) Update(dt float64) {
 	cSpace.Space.Step(vect.Float(dt))
+	if cSpace.OnCollision != nil {
+		for _, a := range cSpace.Space.Arbiters {
+			cSpace.OnCollision(a.ShapeA, a.ShapeB)
+		}
+	}
+}
+
+func (cSpace *ChipmonkSpace) SetOnCollision(onCollision func(shapeA, shapeB *chipmunk.Shape)) {
+	cSpace.OnCollision = onCollision
 }
 
 func (cSpace *ChipmonkSpace) AddBody(body physicsAPI.PhysicsObject2D) {
