@@ -223,6 +223,17 @@ func (c *Container) ElementById(id string) Element {
 	return nil
 }
 
+func (c *Container) TextElementById(id string) *TextElement {
+	container, ok := c.ElementById(id).(*Container)
+	if ok && container.GetNbChildren() > 0 {
+		textElement, ok := container.GetChild(0).(*TextElement)
+		if ok {
+			return textElement
+		}
+	}
+	return nil
+}
+
 func (c *Container) mouseMove(position vmath.Vector2) {
 	offsetPos := position.Subtract(c.offset)
 	c.Hitbox.MouseMove(offsetPos.Subtract(c.backgroundOffset))
