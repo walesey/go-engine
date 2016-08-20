@@ -67,8 +67,6 @@ func Particles(c *cli.Context) {
 		MaxStartVelocity:    vectormath.Vector3{0.2, 1.8, 0.2},
 		MinStartVelocity:    vectormath.Vector3{-0.2, 2.5, -0.2},
 		Acceleration:        vectormath.Vector3{0.0, 0.0, 0.0},
-		MaxAngularVelocity:  vectormath.IdentityQuaternion(),
-		MinAngularVelocity:  vectormath.IdentityQuaternion(),
 		MaxRotationVelocity: 0.0,
 		MinRotationVelocity: 0.0,
 	})
@@ -97,8 +95,6 @@ func Particles(c *cli.Context) {
 		MaxStartVelocity:    vectormath.Vector3{0.02, 0.02, 0.02},
 		MinStartVelocity:    vectormath.Vector3{-0.02, -0.02, -0.02},
 		Acceleration:        vectormath.Vector3{0.0, 0.0, 0.0},
-		MaxAngularVelocity:  vectormath.IdentityQuaternion(),
-		MinAngularVelocity:  vectormath.IdentityQuaternion(),
 		MaxRotationVelocity: 0.3,
 		MinRotationVelocity: -0.3,
 	})
@@ -126,8 +122,6 @@ func Particles(c *cli.Context) {
 		MaxStartVelocity:    vectormath.Vector3{0.2, 0.8, 0.2},
 		MinStartVelocity:    vectormath.Vector3{-0.2, 0.6, -0.2},
 		Acceleration:        vectormath.Vector3{0.0, 0.0, 0.0},
-		MaxAngularVelocity:  vectormath.IdentityQuaternion(),
-		MinAngularVelocity:  vectormath.IdentityQuaternion(),
 		MaxRotationVelocity: 0.0,
 		MinRotationVelocity: 0.0,
 	})
@@ -155,8 +149,6 @@ func Particles(c *cli.Context) {
 		MaxStartVelocity:    vectormath.Vector3{0.6, 0.3, 0.6},
 		MinStartVelocity:    vectormath.Vector3{-0.6, 0.5, -0.6},
 		Acceleration:        vectormath.Vector3{0.0, 0.0, 0.0},
-		MaxAngularVelocity:  vectormath.IdentityQuaternion(),
-		MinAngularVelocity:  vectormath.IdentityQuaternion(),
 		MaxRotationVelocity: 0.0,
 		MinRotationVelocity: 0.0,
 	})

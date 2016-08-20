@@ -59,12 +59,7 @@ func NewUiController(window *Window) controller.Controller {
 				tabCycle(window)
 			}
 		} else if !controlKey(key) {
-			keyString := string(byte(key))
-			if shift {
-				keyString = strings.ToUpper(keyString)
-			} else {
-				keyString = strings.ToLower(keyString)
-			}
+			keyString := convertKey(key, shift)
 			switch {
 			case key == controller.KeyBackspace:
 				keyString = "backspace"
@@ -81,4 +76,56 @@ func NewUiController(window *Window) controller.Controller {
 		}
 	})
 	return c
+}
+
+func convertKey(key controller.Key, shift bool) string {
+	keyString := strings.ToLower(string(byte(key)))
+	if shift {
+		keyString = strings.ToUpper(keyString)
+		switch {
+		case key == controller.Key1:
+			keyString = "!"
+		case key == controller.Key2:
+			keyString = "@"
+		case key == controller.Key3:
+			keyString = "#"
+		case key == controller.Key4:
+			keyString = "$"
+		case key == controller.Key5:
+			keyString = "%"
+		case key == controller.Key6:
+			keyString = "^"
+		case key == controller.Key7:
+			keyString = "&"
+		case key == controller.Key8:
+			keyString = "*"
+		case key == controller.Key9:
+			keyString = "("
+		case key == controller.Key0:
+			keyString = ")"
+		case key == controller.KeyMinus:
+			keyString = "_"
+		case key == controller.KeyEqual:
+			keyString = "+"
+		case key == controller.KeyLeftBracket:
+			keyString = "{"
+		case key == controller.KeyRightBracket:
+			keyString = "}"
+		case key == controller.KeyBackslash:
+			keyString = "|"
+		case key == controller.KeyGraveAccent:
+			keyString = "~"
+		case key == controller.KeySemicolon:
+			keyString = ":"
+		case key == controller.KeyApostrophe:
+			keyString = "\""
+		case key == controller.KeyComma:
+			keyString = "<"
+		case key == controller.KeyPeriod:
+			keyString = ">"
+		case key == controller.KeySlash:
+			keyString = "?"
+		}
+	}
+	return keyString
 }
