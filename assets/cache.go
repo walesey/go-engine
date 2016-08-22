@@ -2,6 +2,7 @@ package assets
 
 import (
 	"image"
+	"sync"
 
 	"github.com/walesey/go-engine/renderer"
 )
@@ -9,6 +10,7 @@ import (
 type AssetCache struct {
 	geometries map[string]*renderer.Geometry
 	images     map[string]image.Image
+	mutex      *sync.Mutex
 }
 
 var globalCache *AssetCache
@@ -25,7 +27,9 @@ func (ac *AssetCache) ImportObj(path string) (*renderer.Geometry, error) {
 		if err != nil {
 			return geometry, err
 		}
+		ac.mutex.Lock()
 		ac.geometries[path] = geometry
+		ac.mutex.Unlock()
 	}
 	return geometry, nil
 }
@@ -38,7 +42,9 @@ func (ac *AssetCache) ImportImage(path string) (image.Image, error) {
 		if err != nil {
 			return image, err
 		}
+		ac.mutex.Lock()
 		ac.images[path] = image
+		ac.mutex.Unlock()
 	}
 	return image, nil
 }
@@ -55,5 +61,6 @@ func NewAssetCache() *AssetCache {
 	return &AssetCache{
 		geometries: make(map[string]*renderer.Geometry),
 		images:     make(map[string]image.Image),
+		mutex:      &sync.Mutex{},
 	}
 }
