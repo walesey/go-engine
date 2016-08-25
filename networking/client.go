@@ -13,16 +13,20 @@ import (
 const clientPacketBufferSize = 100
 
 type Client struct {
-	token         string
-	conn          *net.UDPConn
-	packets       chan Packet
-	bytesSent     int64
-	bytesReceived int64
+	token                string
+	conn                 *net.UDPConn
+	packets              chan Packet
+	bytesSent            int64
+	bytesReceived        int64
+	bytesSentByEvent     map[string]int64
+	bytesReceivedByEvent map[string]int64
 }
 
 func NewClient() *Client {
 	return &Client{
-		packets: make(chan Packet, clientPacketBufferSize),
+		packets:              make(chan Packet, clientPacketBufferSize),
+		bytesSentByEvent:     make(map[string]int64),
+		bytesReceivedByEvent: make(map[string]int64),
 	}
 }
 
@@ -48,7 +52,6 @@ func (c *Client) Connect(addr string) {
 				continue
 			}
 
-			c.bytesReceived += int64(n)
 			dataBuf := bytes.NewBuffer(data[0:n])
 			gzipReader, err := gzip.NewReader(dataBuf)
 			if err != nil {
@@ -65,6 +68,7 @@ func (c *Client) Connect(addr string) {
 			}
 			c.token = packet.Token
 
+			c.updateBytesReceived(packet.Command, int64(n))
 			c.packets <- packet
 		}
 	}()
@@ -102,7 +106,7 @@ func (c *Client) WriteMessage(command string, args ...interface{}) {
 	}
 
 	gzipData := gzipBuf.Bytes()
-	c.bytesSent += int64(len(gzipData))
+	c.updateBytesSent(command, int64(len(gzipData)))
 	_, err = c.conn.Write(gzipData)
 	if err != nil {
 		fmt.Println("Error writing udp message: ", err)
@@ -120,4 +124,22 @@ func (c *Client) GetNextMessage() (Packet, bool) {
 
 func (c *Client) Close() {
 	c.conn.Close()
+}
+
+func (c *Client) updateBytesSent(event string, sent int64) {
+	c.bytesSent += sent
+	total, ok := c.bytesSentByEvent[event]
+	if !ok {
+		c.bytesSentByEvent[event], total = 0, 0
+	}
+	c.bytesSentByEvent[event] = sent + total
+}
+
+func (c *Client) updateBytesReceived(event string, sent int64) {
+	c.bytesReceived += sent
+	total, ok := c.bytesReceivedByEvent[event]
+	if !ok {
+		c.bytesReceivedByEvent[event], total = 0, 0
+	}
+	c.bytesReceivedByEvent[event] = sent + total
 }
