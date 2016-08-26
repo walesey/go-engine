@@ -3,11 +3,9 @@ package networking
 import (
 	"bytes"
 	"compress/gzip"
-	"encoding/gob"
 	"fmt"
+	"io/ioutil"
 	"net"
-
-	"github.com/walesey/go-engine/util"
 )
 
 const clientPacketBufferSize = 100
@@ -59,37 +57,36 @@ func (c *Client) Connect(addr string) {
 				continue
 			}
 
-			decoder := gob.NewDecoder(gzipReader)
-			var packet Packet
-			err = decoder.Decode(&packet)
+			data, err := ioutil.ReadAll(gzipReader)
+			if err != nil {
+				fmt.Println("Error unzipping udp packet: ", err)
+				continue
+			}
+
+			packet, err := Decode(data)
 			if err != nil {
 				fmt.Println("Error decoding udp packet: ", err)
 				continue
 			}
-			c.token = packet.Token
 
+			c.token = packet.Token
 			c.updateBytesReceived(packet.Command, int64(n))
 			c.packets <- packet
 		}
 	}()
 }
 
-func (c *Client) WriteMessage(command string, args ...interface{}) {
+func (c *Client) WriteMessage(command string, data []byte) {
 	packet := Packet{
 		Token:   c.token,
 		Command: command,
-		Args:    args,
+		Data:    data,
 	}
 
-	data, err := util.Serialize(packet)
-	if err != nil {
-		fmt.Println("Error Serializing udp message: ", err)
-		return
-	}
-
+	packetData := Encode(packet)
 	var gzipBuf bytes.Buffer
 	gzipWriter := gzip.NewWriter(&gzipBuf)
-	_, err = gzipWriter.Write(data)
+	_, err := gzipWriter.Write(packetData)
 	if err != nil {
 		fmt.Println("Error Gzip compressing udp message: ", err)
 		return
@@ -136,6 +133,7 @@ func (c *Client) updateBytesSent(event string, sent int64) {
 }
 
 func (c *Client) updateBytesReceived(event string, sent int64) {
+	fmt.Println("Received: ", sent)
 	c.bytesReceived += sent
 	total, ok := c.bytesReceivedByEvent[event]
 	if !ok {

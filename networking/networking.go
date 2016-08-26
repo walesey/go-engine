@@ -5,13 +5,13 @@ import "log"
 type Network struct {
 	client *Client
 	server *Server
-	events map[string]func(clientId string, args ...interface{})
+	events map[string]func(clientId string, data []byte)
 }
 
 func NewNetwork() *Network {
 	var network *Network
 	network = &Network{
-		events: make(map[string]func(clientId string, args ...interface{})),
+		events: make(map[string]func(clientId string, data []byte)),
 	}
 	return network
 }
@@ -26,70 +26,68 @@ func (n *Network) ConnectClient(addr string) {
 	n.KillServer()
 	n.client = NewClient()
 	n.client.Connect(addr)
-	n.client.WriteMessage("")
+	n.client.WriteMessage("", []byte{})
 }
 
 func (n *Network) Update(dt float64) {
 	if n.IsClient() {
-		// for packet, ok := n.client.GetNextMessage(); ok; {
-		if packet, ok := n.client.GetNextMessage(); ok {
-			n.CallEvent(packet.Command, packet.Token, packet.Args...)
+		for packet, ok := n.client.GetNextMessage(); ok; packet, ok = n.client.GetNextMessage() {
+			n.CallEvent(packet.Command, packet.Token, packet.Data)
 		}
 	} else if n.IsServer() {
 		n.server.Update(dt)
-		// for packet, ok := n.server.GetNextMessage(); ok; {
-		if packet, ok := n.server.GetNextMessage(); ok {
-			n.CallEvent(packet.Command, packet.Token, packet.Args...)
+		for packet, ok := n.server.GetNextMessage(); ok; packet, ok = n.server.GetNextMessage() {
+			n.CallEvent(packet.Command, packet.Token, packet.Data)
 		}
 	}
 }
 
-func (n *Network) CallEvent(name, clientId string, args ...interface{}) {
+func (n *Network) CallEvent(name, clientId string, data []byte) {
 	callback, ok := n.events[name]
 	if ok {
 		log.Printf("[NETWORK EVENT] %v clientId:%v", name, clientId)
-		callback(clientId, args...)
+		callback(clientId, data)
 	} else {
 		log.Printf("[NETWORK EVENT] ERROR: Unknown event: %v clientId:%v", name, clientId)
 	}
 }
 
 // RegisterEvent - register an event that will be triggered on clients and server.
-func (n *Network) RegisterEvent(name string, callback func(clientId string, args ...interface{})) {
+func (n *Network) RegisterEvent(name string, callback func(clientId string, data []byte)) {
 	n.events[name] = callback
 }
 
 // TriggerEvent - Trigger an event to run on a particular client.
 // If called on the client, this will trigger the event on the server.
-func (n *Network) TriggerEvent(name, clientId string, args ...interface{}) {
+func (n *Network) TriggerEvent(name, clientId string, data []byte) {
 	if n.IsClient() {
-		n.client.WriteMessage(name, args...)
+		n.client.WriteMessage(name, data)
 	}
 	if n.IsServer() {
-		n.server.WriteMessage(name, clientId, args...)
+		n.server.WriteMessage(name, clientId, data)
 	}
 }
 
 // BroadcastEvent - trigger an event on all clients.
 // If called on the client, this will trigger the event on the server.
-func (n *Network) BroadcastEvent(name string, args ...interface{}) {
+func (n *Network) BroadcastEvent(name string, data []byte) {
 	if n.IsClient() {
-		n.client.WriteMessage(name, args...)
+		n.client.WriteMessage(name, data)
 	}
 	if n.IsServer() {
-		n.server.BroadcastMessage(name, args...)
+		n.server.BroadcastMessage(name, data)
 	}
 }
 
 // CallOnServerAndClient - trigger an event on the server and on all client.
 // If called on the client, this will trigger the event on the client and on the server.
-func (n *Network) TriggerOnServerAndClients(name string, args ...interface{}) {
-	n.CallEvent(name, "", args...)
+func (n *Network) TriggerOnServerAndClients(name string, data []byte) {
+	n.CallEvent(name, "", data)
 	if n.IsClient() {
-		n.client.WriteMessage(name, args...)
+		n.client.WriteMessage(name, data)
 	}
 	if n.IsServer() {
-		n.server.BroadcastMessage(name, args...)
+		n.server.BroadcastMessage(name, data)
 	}
 }
 

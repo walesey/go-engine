@@ -3,31 +3,14 @@ package networking
 import (
 	"bytes"
 	"compress/gzip"
-	"encoding/gob"
 	"fmt"
+	"io/ioutil"
 	"net"
-
-	"github.com/walesey/go-engine/util"
-	vmath "github.com/walesey/go-engine/vectormath"
 )
 
 const serverPacketBufferSize = 1000
 const serverSessionBufferSize = 20
 const sessionTimeout = 10 * 60 // 10 minutes
-
-func init() {
-	gob.Register([]interface{}{})
-	gob.Register(vmath.Vector4{})
-	gob.Register(vmath.Vector3{})
-	gob.Register(vmath.Vector2{})
-	gob.Register(vmath.Quaternion{})
-}
-
-type Packet struct {
-	Token   string
-	Command string
-	Args    []interface{}
-}
 
 type Server struct {
 	conn           *net.UDPConn
@@ -46,7 +29,7 @@ func NewServer() *Server {
 		newSessions: make(chan *Session, serverSessionBufferSize),
 		packets:     make(chan Packet, clientPacketBufferSize),
 		onClientJoined: func(clientId string) {
-			server.WriteMessage("", clientId)
+			server.WriteMessage("", clientId, []byte{})
 		},
 	}
 	return server
@@ -82,11 +65,15 @@ func (s *Server) Listen(port int) {
 				continue
 			}
 
-			decoder := gob.NewDecoder(gzipReader)
-			var packet Packet
-			err = decoder.Decode(&packet)
+			data, err := ioutil.ReadAll(gzipReader)
 			if err != nil {
-				fmt.Println("Error decoding udp packet: ", err)
+				fmt.Println("Error unzipping udp packet: ", err)
+				continue
+			}
+
+			packet, err := Decode(data)
+			if err != nil {
+				fmt.Println("Error Decoding udp packet: ", err)
 				continue
 			}
 
@@ -99,24 +86,20 @@ func (s *Server) Listen(port int) {
 	}()
 }
 
-func (s *Server) WriteMessage(command string, token string, args ...interface{}) {
+func (s *Server) WriteMessage(command, token string, data []byte) {
 	session, ok := s.sessions[token]
-	if ok {
-		packet := Packet{
-			Token:   token,
-			Command: command,
-			Args:    args,
-		}
+	packet := Packet{
+		Token:   token,
+		Command: command,
+		Data:    data,
+	}
 
-		data, err := util.Serialize(packet)
-		if err != nil {
-			fmt.Println("Error Serializing udp message: ", err)
-			return
-		}
+	if ok {
+		data := Encode(packet)
 
 		var gzipBuf bytes.Buffer
 		gzipWriter := gzip.NewWriter(&gzipBuf)
-		_, err = gzipWriter.Write(data)
+		_, err := gzipWriter.Write(data)
 		if err != nil {
 			fmt.Println("Error Gzip compressing udp message: ", err)
 			return
@@ -141,9 +124,9 @@ func (s *Server) WriteMessage(command string, token string, args ...interface{})
 	}
 }
 
-func (s *Server) BroadcastMessage(command string, args ...interface{}) {
+func (s *Server) BroadcastMessage(command string, data []byte) {
 	for token, _ := range s.sessions {
-		s.WriteMessage(command, token, args...)
+		s.WriteMessage(token, command, data)
 	}
 }
 
