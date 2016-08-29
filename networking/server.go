@@ -126,7 +126,7 @@ func (s *Server) WriteMessage(command, token string, data []byte) {
 
 func (s *Server) BroadcastMessage(command string, data []byte) {
 	for token, _ := range s.sessions {
-		s.WriteMessage(token, command, data)
+		s.WriteMessage(command, token, data)
 	}
 }
 

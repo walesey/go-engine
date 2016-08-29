@@ -133,7 +133,6 @@ func (c *Client) updateBytesSent(event string, sent int64) {
 }
 
 func (c *Client) updateBytesReceived(event string, sent int64) {
-	fmt.Println("Received: ", sent)
 	c.bytesReceived += sent
 	total, ok := c.bytesReceivedByEvent[event]
 	if !ok {

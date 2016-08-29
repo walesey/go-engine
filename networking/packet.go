@@ -1,6 +1,9 @@
 package networking
 
-import "fmt"
+import (
+	"bytes"
+	"fmt"
+)
 
 type Packet struct {
 	Token   string
@@ -11,12 +14,13 @@ type Packet struct {
 func Encode(packet Packet) []byte {
 	tokenLen := len(packet.Token)
 	commandLen := len(packet.Command)
-	data := make([]byte, 2, 2+tokenLen+commandLen+len(packet.Data))
-	data[0] = byte(tokenLen)
-	data[1] = byte(commandLen)
-	data = append(data, []byte(packet.Token)...)
-	data = append(data, []byte(packet.Command)...)
-	return append(data, packet.Data...)
+	var data bytes.Buffer
+	data.WriteByte(byte(tokenLen))
+	data.WriteByte(byte(commandLen))
+	data.WriteString(packet.Token)
+	data.WriteString(packet.Command)
+	data.Write(packet.Data)
+	return data.Bytes()
 }
 
 func Decode(data []byte) (Packet, error) {
