@@ -1,7 +1,9 @@
-package examples
+package main
 
 import (
 	"fmt"
+	"os"
+	"runtime"
 	"time"
 
 	"github.com/walesey/go-engine/actor"
@@ -13,13 +15,21 @@ import (
 	"github.com/walesey/go-engine/opengl"
 	"github.com/walesey/go-engine/renderer"
 
-	"github.com/codegangsta/cli"
 	vmath "github.com/walesey/go-engine/vectormath"
 )
 
+func init() {
+	// GLFW event handling must run on the main OS thread
+	runtime.LockOSThread()
+	// Use all cpu cores
+	runtime.GOMAXPROCS(runtime.NumCPU())
+	//Set default glfw controller
+	controller.SetDefaultConstructor(glfwController.NewActionMap)
+}
+
 //
-func Network(c *cli.Context) {
-	server := len(c.Args()) > 0 && c.Args()[0] == "server"
+func main() {
+	server := len(os.Args) > 0 && os.Args[0] == "server"
 	var gameEngine engine.Engine
 	var glRenderer *opengl.OpenglRenderer
 	network := networking.NewNetwork()
