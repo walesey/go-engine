@@ -2,7 +2,6 @@ package examples
 
 import (
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/walesey/go-engine/actor"
@@ -39,42 +38,34 @@ func Network(c *cli.Context) {
 	}
 
 	//Networked Game events
-	network.RegisterEvent("spawn", func(clientId string, args ...interface{}) {
-		if len(args) > 1 {
-			id, ok0 := args[0].(string)
-			position, ok1 := args[1].(vmath.Vector3)
-			if ok0 && ok1 {
-				if network.IsServer() {
-					// gameEngine.AddUpdatableKey(id, nil)
-					fmt.Println(id)
-				}
-				if network.IsClient() {
-					geomMonkey, _ := assets.ImportObjCached("TestAssets/Files/physicsMonkey/phyMonkey.obj")
-					monkeyNode := renderer.CreateNode()
-					monkeyNode.Add(geomMonkey)
-					monkeyNode.SetTranslation(position)
-					gameEngine.AddSpatial(monkeyNode)
-				}
-			}
+	network.RegisterEvent("spawn", func(clientId string, data []byte) {
+		if network.IsServer() {
+			// gameEngine.AddUpdatableKey(id, nil)
+			fmt.Println(data)
+		}
+		if network.IsClient() {
+			geomMonkey, _ := assets.ImportObjCached("TestAssets/Files/physicsMonkey/phyMonkey.obj")
+			monkeyNode := renderer.CreateNode()
+			monkeyNode.Add(geomMonkey)
+			monkeyNode.SetTranslation(vmath.Vector3{})
+			gameEngine.AddSpatial(monkeyNode)
 		}
 	})
 
-	network.RegisterEvent("clientEvent", func(clientId string, args ...interface{}) {
+	network.RegisterEvent("clientEvent", func(clientId string, data []byte) {
 
 	})
 
 	gameEngine.AddUpdatable(network)
 	gameEngine.Start(func() {
-		fmt.Println("test1")
 		if network.IsServer() {
-			fmt.Println("test2")
 			ids := 0
 			position := vmath.Vector3{}
 			gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
 				fmt.Println("test3 ", ids)
 				ids++
 				position = position.Add(vmath.Vector3{5, 0, 0})
-				network.TriggerOnServerAndClients("spawn", strconv.Itoa(ids), position)
+				network.TriggerOnServerAndClients("spawn", []byte("test data"))
 				time.Sleep(1500 * time.Millisecond)
 			}))
 		}
@@ -107,7 +98,7 @@ func Network(c *cli.Context) {
 
 			//spawn objects
 			customController.BindAction(func() {
-				network.TriggerOnServerAndClients("clientEvent")
+				network.TriggerOnServerAndClients("clientEvent", []byte{})
 			}, controller.KeyR, controller.Press)
 		}
 	})
