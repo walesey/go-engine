@@ -7,6 +7,7 @@ import (
 	"image/draw"
 	"io/ioutil"
 	"log"
+	"runtime"
 	"strings"
 
 	"github.com/disintegration/imaging"
@@ -22,6 +23,11 @@ import (
 const (
 	maxLights int = 8
 )
+
+func init() {
+	// GLFW event handling must run on the main OS thread
+	runtime.LockOSThread()
+}
 
 //MultiplyAll - used to combine transformations
 func MultiplyAll(s util.Stack) mgl32.Mat4 {

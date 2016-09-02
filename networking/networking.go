@@ -17,13 +17,11 @@ func NewNetwork() *Network {
 }
 
 func (n *Network) StartServer(port int) {
-	n.KillClient()
 	n.server = NewServer()
 	n.server.Listen(port)
 }
 
 func (n *Network) ConnectClient(addr string) {
-	n.KillServer()
 	n.client = NewClient()
 	n.client.Connect(addr)
 	n.client.WriteMessage("", []byte{})

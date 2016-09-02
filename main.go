@@ -9,8 +9,6 @@ import (
 )
 
 func init() {
-	// GLFW event handling must run on the main OS thread
-	runtime.LockOSThread()
 	// Use all cpu cores
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	//Set default glfw controller
