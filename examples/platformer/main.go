@@ -3,6 +3,7 @@ package main
 import (
 	"image/color"
 	"runtime"
+	"time"
 
 	"github.com/vova616/chipmunk"
 	"github.com/vova616/chipmunk/vect"
@@ -26,6 +27,7 @@ type Character struct {
 	body       physicsAPI.PhysicsObject2D
 	sprite     *effects.Sprite
 	frameTimer float64
+	walking    bool
 }
 
 func (c *Character) Update(dt float64) {
@@ -73,6 +75,8 @@ func main() {
 		WindowHeight: 800,
 	}
 	gameEngine := engine.NewEngine(glRenderer)
+	gameEngine.InitFpsDial()
+	gameEngine.SetFpsCap(120)
 
 	// physics engine (Chipmonk)
 	physicsSpace := chipmunkPhysics.NewChipmonkSpace()
@@ -108,23 +112,22 @@ func main() {
 		physicsSpace.AddBody(terrainBody)
 
 		// create and manage a new particle system
-		spawnParticles := func(position vmath.Vector2) {
-			dust := dustParticles()
-			dust.SetTranslation(position.ToVector3())
-			n := renderer.CreateNode()
-			n.Add(dust)
-			gameEngine.AddOrtho(n)
+		spawnParticles := func(load func() *effects.ParticleSystem, position vmath.Vector2) *effects.ParticleSystem {
+			particles := load()
+			particles.SetTranslation(position.ToVector3())
+			gameEngine.AddOrtho(particles)
 			age := 0.0
 			gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
-				dust.Update(dt)
+				particles.Update(dt)
 				age += dt
 				if age >= 0.2 {
-					dust.DisableSpawning = true
+					particles.DisableSpawning = true
 				}
 				if age >= 10 {
-					gameEngine.RemoveOrtho(n, true)
+					gameEngine.RemoveOrtho(particles, true)
 				}
 			}))
+			return particles
 		}
 
 		// input/controller manager
@@ -153,9 +156,22 @@ func main() {
 		// Jump
 		customController.BindAction(func() {
 			character.body.SetVelocity(character.body.GetVelocity().Add(vmath.Vector2{Y: -300}))
-			// Jump particles
-			spawnParticles(character.body.GetPosition().Add(vmath.Vector2{Y: 0.5 * characterSize}))
+			spawnParticles(dustParticles, character.body.GetPosition().Add(vmath.Vector2{Y: 0.5 * characterSize}))
 		}, controller.KeySpace, controller.Press)
+
+		// shoot
+		customController.BindMouseAction(func() {
+			spawnParticles(majicParticles, character.body.GetPosition())
+		}, controller.MouseButtonLeft, controller.Press)
+
+		// create sparks when player collides with somthing
+		var collisionTimer time.Time
+		physicsSpace.SetOnCollision(func(shapeA, shapeB *chipmunk.Shape) {
+			if time.Since(collisionTimer) > 200*time.Millisecond {
+				spawnParticles(sparkParticles, character.body.GetPosition().Add(vmath.Vector2{Y: 0.5 * characterSize}))
+			}
+			collisionTimer = time.Now()
+		})
 	})
 }
 
@@ -163,29 +179,87 @@ func dustParticles() *effects.ParticleSystem {
 	img, _ := assets.ImportImageCached("resources/smoke.png")
 	material := assets.CreateMaterial(img, nil, nil, nil)
 	material.LightingMode = renderer.MODE_UNLIT
-	// material. = false
 	particleSystem := effects.CreateParticleSystem(effects.ParticleSettings{
-		MaxParticles:        5,
-		ParticleEmitRate:    20,
-		BaseGeometry:        renderer.CreateBox(float32(1), float32(1)),
-		Material:            material,
-		TotalFrames:         64,
-		FramesX:             8,
-		FramesY:             8,
-		MaxLife:             3.3,
-		MinLife:             2.7,
-		StartColor:          color.NRGBA{254, 254, 254, 120},
-		EndColor:            color.NRGBA{254, 254, 254, 0},
-		StartSize:           vmath.Vector2{40, 40}.ToVector3(),
-		EndSize:             vmath.Vector2{180, 180}.ToVector3(),
-		MinTranslation:      vmath.Vector2{-2, -2}.ToVector3(),
-		MaxTranslation:      vmath.Vector2{2, 2}.ToVector3(),
-		MinStartVelocity:    vmath.Vector2{-5.0, -5.0}.ToVector3(),
-		MaxStartVelocity:    vmath.Vector2{5.0, 5.0}.ToVector3(),
-		MaxRotation:         -3.14,
-		MinRotation:         3.14,
-		MaxRotationVelocity: 0.0,
-		MinRotationVelocity: 0.0,
+		MaxParticles:     5,
+		ParticleEmitRate: 20,
+		BaseGeometry:     renderer.CreateBox(float32(1), float32(1)),
+		Material:         material,
+		TotalFrames:      64,
+		FramesX:          8,
+		FramesY:          8,
+		MaxLife:          3.3,
+		MinLife:          2.7,
+		StartColor:       color.NRGBA{254, 254, 254, 120},
+		EndColor:         color.NRGBA{254, 254, 254, 0},
+		StartSize:        vmath.Vector2{40, 40}.ToVector3(),
+		EndSize:          vmath.Vector2{180, 180}.ToVector3(),
+		MinTranslation:   vmath.Vector2{-2, -2}.ToVector3(),
+		MaxTranslation:   vmath.Vector2{2, 2}.ToVector3(),
+		MinStartVelocity: vmath.Vector2{-5.0, -5.0}.ToVector3(),
+		MaxStartVelocity: vmath.Vector2{5.0, 5.0}.ToVector3(),
+		MaxRotation:      -3.14,
+		MinRotation:      3.14,
+	})
+	particleSystem.FaceCamera = false
+	return particleSystem
+}
+
+func majicParticles() *effects.ParticleSystem {
+	img, _ := assets.ImportImageCached("resources/majic.png")
+	material := assets.CreateMaterial(img, nil, nil, nil)
+	material.LightingMode = renderer.MODE_UNLIT
+	particleSystem := effects.CreateParticleSystem(effects.ParticleSettings{
+		MaxParticles:     300,
+		ParticleEmitRate: 700,
+		BaseGeometry:     renderer.CreateBox(float32(1), float32(1)),
+		Material:         material,
+		TotalFrames:      9,
+		FramesX:          3,
+		FramesY:          3,
+		MaxLife:          1.3,
+		MinLife:          0.7,
+		StartColor:       color.NRGBA{254, 254, 254, 254},
+		EndColor:         color.NRGBA{254, 254, 254, 254},
+		StartSize:        vmath.Vector2{10, 10}.ToVector3(),
+		EndSize:          vmath.Vector2{10, 10}.ToVector3(),
+		MinTranslation:   vmath.Vector2{-1, -1}.ToVector3(),
+		MaxTranslation:   vmath.Vector2{1, 1}.ToVector3(),
+		MinStartVelocity: vmath.Vector2{-170, -170}.ToVector3(),
+		MaxStartVelocity: vmath.Vector2{170, 170}.ToVector3(),
+		MaxRotation:      -3.14,
+		MinRotation:      3.14,
+	})
+	particleSystem.FaceCamera = false
+	return particleSystem
+}
+
+func sparkParticles() *effects.ParticleSystem {
+	img, _ := assets.ImportImageCached("resources/spark.png")
+	material := assets.CreateMaterial(img, nil, nil, nil)
+	material.LightingMode = renderer.MODE_UNLIT
+	particleSystem := effects.CreateParticleSystem(effects.ParticleSettings{
+		MaxParticles:     80,
+		ParticleEmitRate: 400,
+		BaseGeometry:     renderer.CreateBox(float32(1), float32(1)),
+		Material:         material,
+		TotalFrames:      1,
+		FramesX:          1,
+		FramesY:          1,
+		MaxLife:          3.3,
+		MinLife:          1.7,
+		StartColor:       color.NRGBA{254, 160, 90, 254},
+		EndColor:         color.NRGBA{254, 160, 90, 254},
+		StartSize:        vmath.Vector2{2, 2}.ToVector3(),
+		EndSize:          vmath.Vector2{2, 2}.ToVector3(),
+		MinTranslation:   vmath.Vector2{-5, -5}.ToVector3(),
+		MaxTranslation:   vmath.Vector2{5, 5}.ToVector3(),
+		MinStartVelocity: vmath.Vector2{-100, -100}.ToVector3(),
+		MaxStartVelocity: vmath.Vector2{100, 100}.ToVector3(),
+		Acceleration:     vmath.Vector2{Y: 400}.ToVector3(),
+		OnParticleUpdate: func(p *effects.Particle) {
+			p.Scale = p.Scale.Multiply(vmath.Vector2{X: 1 + p.Velocity.Length()*0.05, Y: 1}.ToVector3())
+			p.Orientation = vmath.BetweenVectors(vmath.Vector3{X: 1}, p.Velocity)
+		},
 	})
 	particleSystem.FaceCamera = false
 	return particleSystem

@@ -31,7 +31,6 @@ func main() {
 		WindowHeight: 800,
 	}
 	gameEngine := engine.NewEngine(glRenderer)
-	// enable fps meter
 	gameEngine.InitFpsDial()
 
 	gameEngine.Start(func() {
