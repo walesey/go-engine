@@ -55,9 +55,11 @@ vec4 vectorCap( vec4 vector, float cap ){
 	return vector;
 }
 
-vec4 directBRDF( vec4 LightDiff, vec4 LightSpec, vec4 LightDir, vec4 albedoValue, vec4 specularValue, vec4 tangentNormal, vec4 tangentReflectedEye){
+vec4 directBRDF( vec4 LightAmb, vec4 LightDiff, vec4 LightSpec, vec4 LightDir, vec4 albedoValue, vec4 specularValue, vec4 tangentNormal, vec4 tangentReflectedEye){
 	vec3 tangentLightDirection = LightDir.xyz * TBNMatrix;
 	tangentLightDirection = normalize( tangentLightDirection );
+
+	vec4 ambientOut = albedoValue * LightAmb;
 
 	float diffuseMultiplier = max(0.0, dot(tangentNormal.xyz, -tangentLightDirection));
 	vec4 diffuseOut = albedoValue * diffuseMultiplier * LightDiff;
@@ -65,7 +67,7 @@ vec4 directBRDF( vec4 LightDiff, vec4 LightSpec, vec4 LightDir, vec4 albedoValue
 	float specularMultiplier = pow( max(0.0, dot( tangentReflectedEye.xyz, -tangentLightDirection)), 2.0);
 	vec4 specularOut = vec4( specularValue.rgb, 1 ) * specularMultiplier * LightSpec;
 
-	return diffuseOut + specularOut;
+	return ambientOut + diffuseOut + specularOut;
 }
 
 void main() {
@@ -118,8 +120,7 @@ void main() {
 			float brightness = 1 / lightDistanceSQ;
 			worldLightDir = normalize( worldLightDir );
 
-			directColor += ( brightness * directBRDF( LightDiff, LightSpec, worldLightDir, albedoValue, specularValue, tangentNormal, tangentReflectedEye) );
-
+			directColor += ( brightness * directBRDF( LightAmb, LightDiff, LightSpec, worldLightDir, albedoValue, specularValue, tangentNormal, tangentReflectedEye) );
 		}
 
 		//directional lights
@@ -133,8 +134,7 @@ void main() {
 
 			vec4 worldLightDir = normalize( LightPos );
 
-			directColor += directBRDF( LightDiff, LightSpec, worldLightDir, albedoValue, specularValue, tangentNormal, tangentReflectedEye);
-
+			directColor += directBRDF( LightAmb, LightDiff, LightSpec, worldLightDir, albedoValue, specularValue, tangentNormal, tangentReflectedEye);
 		}
 
 		//indirect lighting
