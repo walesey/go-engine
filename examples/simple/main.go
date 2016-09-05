@@ -38,10 +38,10 @@ func main() {
 
 		//lighting
 		glRenderer.CreateLight(
-			0.0, 0.0, 0.0, //ambient
+			0.3, 0.3, 0.3, //ambient
 			0.5, 0.5, 0.5, //diffuse
 			0.7, 0.7, 0.7, //specular
-			true, vmath.Vector3{0.7, 0.2, 0.7}, //direction
+			false, vmath.Vector3{0.7, 0.2, 0.7}, //position
 			0, //index
 		)
 

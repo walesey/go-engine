@@ -23,7 +23,7 @@ func CreateSprite(totalFrames, framesX, framesY int, material *renderer.Material
 		location:    vectormath.Vector3{0, 0, 0},
 		scale:       vectormath.Vector3{1, 1, 1},
 		frame:       0,
-		FaceCamera:  true,
+		FaceCamera:  false,
 		totalFrames: totalFrames,
 		framesX:     framesX,
 		framesY:     framesY,

@@ -96,6 +96,10 @@ func (n *Network) ClientJoinedEvent(callback func(clientId string)) {
 	}
 }
 
+func (n *Network) ClientToken() string {
+	return n.client.token
+}
+
 func (n *Network) BytesSent() int64 {
 	if n.IsClient() {
 		return n.client.bytesSent

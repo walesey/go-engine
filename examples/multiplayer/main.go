@@ -57,13 +57,14 @@ func main() {
 		gameEngine = engine.NewEngine(glRenderer)
 		network.ConnectClient("127.0.0.1:1234")
 	}
+	gameEngine.AddUpdatable(network)
 
 	// map containing each player's entity
 	players := make(map[string]*Player)
 
 	//Networked Game events
 	network.ClientJoinedEvent(func(clientId string) {
-		fmt.Println("test ", clientId)
+		fmt.Println("client joined, clientId: ", clientId)
 		network.TriggerOnServerAndClients("spawn", []byte(clientId))
 		for _, player := range players {
 			network.TriggerEvent("spawn", clientId, []byte(player.clientId))
@@ -71,7 +72,6 @@ func main() {
 	})
 
 	network.RegisterEvent("spawn", func(clientId string, data []byte) {
-		fmt.Println("test")
 		player := &Player{clientId: string(data)}
 		players[clientId] = player
 		if network.IsClient() {
@@ -81,7 +81,8 @@ func main() {
 			boxGeometry.Material = renderer.CreateMaterial()
 			boxGeometry.SetColor(color.NRGBA{254, 0, 0, 254})
 			boxGeometry.CullBackface = false
-			player.node.SetOrientation(vmath.AngleAxis(1.57, vmath.Vector3{Z: 1}))
+			player.node.SetTranslation(vmath.Vector3{X: -20})
+			player.node.SetOrientation(vmath.AngleAxis(1.57, vmath.Vector3{Y: 1}))
 			player.node.Add(boxGeometry)
 			gameEngine.AddSpatial(player.node)
 		}
@@ -100,9 +101,10 @@ func main() {
 	// client setup
 	gameEngine.Start(func() {
 		if network.IsClient() {
+
 			//lighting
 			glRenderer.CreateLight(
-				0.0, 0.0, 0.0, //ambient
+				0.1, 0.1, 0.1, //ambient
 				0.5, 0.5, 0.5, //diffuse
 				0.7, 0.7, 0.7, //specular
 				true, vmath.Vector3{0.7, 0.7, 0.7}, //direction
@@ -118,21 +120,17 @@ func main() {
 			// input/controller manager
 			controllerManager := glfwController.NewControllerManager(glRenderer.Window)
 
-			// camera
-			camera := gameEngine.Camera()
-			camera.SetTranslation(vmath.Vector3{Y: 100})
+			// networked movement controls
+			move := func(velocity vmath.Vector3) {
+				network.TriggerOnServerAndClients("move", util.SerializeArgs(network.ClientToken(), velocity))
+			}
 
-			//lock the cursor
-			glRenderer.LockCursor(true)
-
-			// custom key bindings
 			customController := controller.CreateController()
 			controllerManager.AddController(customController.(glfwController.Controller))
-
-			// close window and exit on escape
-			customController.BindAction(func() {
-				glRenderer.Window.SetShouldClose(true)
-			}, controller.KeyEscape, controller.Press)
+			customController.BindAction(func() { move(vmath.Vector3{Y: 1}) }, controller.KeyW, controller.Press)
+			customController.BindAction(func() { move(vmath.Vector3{Z: 1}) }, controller.KeyA, controller.Press)
+			customController.BindAction(func() { move(vmath.Vector3{Y: -1}) }, controller.KeyS, controller.Press)
+			customController.BindAction(func() { move(vmath.Vector3{Z: -1}) }, controller.KeyD, controller.Press)
 		}
 	})
 }

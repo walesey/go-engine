@@ -1,11 +1,11 @@
 package main
 
 import (
-	"image/color"
 	"runtime"
 
 	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/controller"
+	"github.com/walesey/go-engine/effects"
 	"github.com/walesey/go-engine/engine"
 	"github.com/walesey/go-engine/glfwController"
 	"github.com/walesey/go-engine/opengl"
@@ -32,7 +32,7 @@ func main() {
 	gameEngine.Start(func() {
 
 		// Sky cubemap
-		skyImg, err := assets.ImportImage("resources/cubemap.png")
+		skyImg, err := assets.ImportImageCached("resources/cubemap.png")
 		if err == nil {
 			gameEngine.Sky(assets.CreateMaterial(skyImg, nil, nil, nil), 999999)
 		}
@@ -40,14 +40,25 @@ func main() {
 		// input/controller manager
 		// controllerManager := glfwController.NewControllerManager(glRenderer.Window)
 
-		// The player is a green box
-		boxGeometry := renderer.CreateBox(20, 20)
-		boxGeometry.Material = renderer.CreateMaterial()
-		boxGeometry.SetColor(color.NRGBA{0, 254, 0, 254})
-		boxGeometry.CullBackface = false
-		boxNode := renderer.CreateNode()
-		boxNode.SetTranslation(vmath.Vector2{X: 400, Y: 400}.ToVector3())
-		boxNode.Add(boxGeometry)
-		gameEngine.AddOrtho(boxNode)
+		// The player sprite
+		characterImg, _ := assets.ImportImageCached("resources/stickman.png")
+		characterMat := renderer.CreateMaterial()
+		characterMat.Diffuse = characterImg
+		characterMat.LightingMode = renderer.MODE_UNLIT
+		characterSprite := effects.CreateSprite(4, 4, 1, characterMat)
+		characterSprite.SetScale(vmath.Vector2{40, 40}.ToVector3())
+		characterSprite.SetTranslation(vmath.Vector2{X: 400, Y: 400}.ToVector3())
+		gameEngine.AddOrtho(characterSprite)
+
+		// character animation
+		timePerFrame := 0.3
+		var frameTimer float64
+		gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
+			frameTimer += dt
+			if frameTimer >= timePerFrame {
+				frameTimer -= timePerFrame
+				characterSprite.NextFrame()
+			}
+		}))
 	})
 }
