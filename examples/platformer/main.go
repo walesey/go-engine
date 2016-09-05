@@ -41,8 +41,7 @@ func (c *Character) Update(dt float64) {
 
 func NewCharacter() *Character {
 	characterImg, _ := assets.ImportImageCached("resources/stickman.png")
-	characterMat := renderer.CreateMaterial()
-	characterMat.Diffuse = characterImg
+	characterMat := assets.CreateMaterial(characterImg, nil, nil, nil)
 	characterMat.LightingMode = renderer.MODE_UNLIT
 	sprite := effects.CreateSprite(4, 4, 1, characterMat)
 	sprite.SetScale(vmath.Vector2{characterSize, characterSize}.ToVector3())
@@ -108,6 +107,26 @@ func main() {
 		terrainBody.Body.AddShape(segment)
 		physicsSpace.AddBody(terrainBody)
 
+		// create and manage a new particle system
+		spawnParticles := func(position vmath.Vector2) {
+			dust := dustParticles()
+			dust.SetTranslation(position.ToVector3())
+			n := renderer.CreateNode()
+			n.Add(dust)
+			gameEngine.AddOrtho(n)
+			age := 0.0
+			gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
+				dust.Update(dt)
+				age += dt
+				if age >= 0.2 {
+					dust.DisableSpawning = true
+				}
+				if age >= 10 {
+					gameEngine.RemoveOrtho(n, true)
+				}
+			}))
+		}
+
 		// input/controller manager
 		controllerManager := glfwController.NewControllerManager(glRenderer.Window)
 
@@ -133,8 +152,41 @@ func main() {
 
 		// Jump
 		customController.BindAction(func() {
-			character.body.SetVelocity(character.body.GetVelocity().Add(vmath.Vector2{Y: -400}))
+			character.body.SetVelocity(character.body.GetVelocity().Add(vmath.Vector2{Y: -300}))
+			// Jump particles
+			spawnParticles(character.body.GetPosition().Add(vmath.Vector2{Y: 0.5 * characterSize}))
 		}, controller.KeySpace, controller.Press)
-
 	})
+}
+
+func dustParticles() *effects.ParticleSystem {
+	img, _ := assets.ImportImageCached("resources/smoke.png")
+	material := assets.CreateMaterial(img, nil, nil, nil)
+	material.LightingMode = renderer.MODE_UNLIT
+	// material. = false
+	particleSystem := effects.CreateParticleSystem(effects.ParticleSettings{
+		MaxParticles:        5,
+		ParticleEmitRate:    20,
+		BaseGeometry:        renderer.CreateBox(float32(1), float32(1)),
+		Material:            material,
+		TotalFrames:         64,
+		FramesX:             8,
+		FramesY:             8,
+		MaxLife:             3.3,
+		MinLife:             2.7,
+		StartColor:          color.NRGBA{254, 254, 254, 120},
+		EndColor:            color.NRGBA{254, 254, 254, 0},
+		StartSize:           vmath.Vector2{40, 40}.ToVector3(),
+		EndSize:             vmath.Vector2{180, 180}.ToVector3(),
+		MinTranslation:      vmath.Vector2{-2, -2}.ToVector3(),
+		MaxTranslation:      vmath.Vector2{2, 2}.ToVector3(),
+		MinStartVelocity:    vmath.Vector2{-5.0, -5.0}.ToVector3(),
+		MaxStartVelocity:    vmath.Vector2{5.0, 5.0}.ToVector3(),
+		MaxRotation:         -3.14,
+		MinRotation:         3.14,
+		MaxRotationVelocity: 0.0,
+		MinRotationVelocity: 0.0,
+	})
+	particleSystem.FaceCamera = false
+	return particleSystem
 }

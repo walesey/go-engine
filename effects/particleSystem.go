@@ -28,6 +28,7 @@ type ParticleSettings struct {
 type ParticleSystem struct {
 	Location          vmath.Vector3
 	DisableSpawning   bool
+	FaceCamera        bool
 	Settings          ParticleSettings
 	geometry          *renderer.Geometry
 	particles         []*Particle
@@ -56,6 +57,7 @@ func CreateParticleSystem(settings ParticleSettings) *ParticleSystem {
 	geometry.CullBackface = false
 	ps := ParticleSystem{
 		Settings:          settings,
+		FaceCamera:        true,
 		geometry:          geometry,
 		particles:         make([]*Particle, settings.MaxParticles),
 		particleTransform: renderer.CreateTransform(),
@@ -153,7 +155,11 @@ func (ps *ParticleSystem) updateParticle(p *Particle, dt float64) {
 	p.Color = lerpColor(ps.Settings.EndColor, ps.Settings.StartColor, lifeRatio)
 	p.Frame = int((1.0 - lifeRatio) * float64(ps.Settings.TotalFrames))
 	//face the camera
-	p.Orientation = vmath.FacingOrientation(p.Rotation, ps.cameraPosition.Subtract(p.Translation), vmath.Vector3{0, 0, 1}, vmath.Vector3{-1, 0, 0})
+	if ps.FaceCamera {
+		p.Orientation = vmath.FacingOrientation(p.Rotation, ps.cameraPosition.Subtract(p.Translation), vmath.Vector3{0, 0, 1}, vmath.Vector3{-1, 0, 0})
+	} else {
+		p.Orientation = vmath.AngleAxis(p.Rotation, vmath.Vector3{Z: 1})
+	}
 	//is particle dead
 	if p.LifeRemaining <= 0 {
 		p.active = false
