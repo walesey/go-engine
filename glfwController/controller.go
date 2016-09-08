@@ -24,37 +24,51 @@ type MouseButtonAction struct {
 }
 
 type ActionMap struct {
-	keyActionList        []func(key controller.Key, action controller.Action)
-	keyActionMap         map[KeyAction]func()
-	mouseButtonActionMap map[MouseButtonAction]func()
+	keyAction            func(key controller.Key, action controller.Action)
+	mouseAction          func(button controller.MouseButton, action controller.Action)
+	keyActionMap         map[KeyAction][]func()
+	mouseButtonActionMap map[MouseButtonAction][]func()
 	axisActions          []func(xpos, ypos float64)
 	scrollActions        []func(xoffset, yoffset float64)
 }
 
 func NewActionMap() controller.Controller {
 	am := &ActionMap{
-		keyActionList:        make([]func(key controller.Key, action controller.Action), 0, 0),
-		keyActionMap:         make(map[KeyAction]func()),
-		mouseButtonActionMap: make(map[MouseButtonAction]func()),
+		keyAction:            func(key controller.Key, action controller.Action) {},
+		mouseAction:          func(button controller.MouseButton, action controller.Action) {},
+		keyActionMap:         make(map[KeyAction][]func()),
+		mouseButtonActionMap: make(map[MouseButtonAction][]func()),
 		axisActions:          make([]func(xpos, ypos float64), 0, 0),
 		scrollActions:        make([]func(xoffset, yoffset float64), 0, 0),
 	}
 	return am
 }
 
-//Bindings
-func (am *ActionMap) BindAction(function func(), key controller.Key, action controller.Action) {
-	ka := KeyAction{key, action}
-	am.keyActionMap[ka] = function
+func (am *ActionMap) SetKeyAction(function func(key controller.Key, action controller.Action)) {
+	am.keyAction = function
 }
 
-func (am *ActionMap) BindKeyAction(function func(key controller.Key, action controller.Action)) {
-	am.keyActionList = append(am.keyActionList, function)
+func (am *ActionMap) SetMouseAction(function func(button controller.MouseButton, action controller.Action)) {
+	am.mouseAction = function
+}
+
+//Bindings
+func (am *ActionMap) BindKeyAction(function func(), key controller.Key, action controller.Action) {
+	ka := KeyAction{key, action}
+	if m, ok := am.keyActionMap[ka]; ok {
+		am.keyActionMap[ka] = append(m, function)
+	} else {
+		am.keyActionMap[ka] = []func(){function}
+	}
 }
 
 func (am *ActionMap) BindMouseAction(function func(), button controller.MouseButton, action controller.Action) {
 	mba := MouseButtonAction{button, action}
-	am.mouseButtonActionMap[mba] = function
+	if m, ok := am.mouseButtonActionMap[mba]; ok {
+		am.mouseButtonActionMap[mba] = append(m, function)
+	} else {
+		am.mouseButtonActionMap[mba] = []func(){function}
+	}
 }
 
 func (am *ActionMap) BindAxisAction(function func(xpos, ypos float64)) {
@@ -67,19 +81,22 @@ func (am *ActionMap) BindScrollAction(function func(xoffset, yoffset float64)) {
 
 //Callbacks
 func (am *ActionMap) KeyCallback(window *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
+	am.keyAction(getKey(key), getAction(action))
 	ka := KeyAction{getKey(key), getAction(action)}
-	if am.keyActionMap[ka] != nil {
-		am.keyActionMap[ka]()
-	}
-	for _, function := range am.keyActionList {
-		function(getKey(key), getAction(action))
+	if m, ok := am.keyActionMap[ka]; ok {
+		for _, function := range m {
+			function()
+		}
 	}
 }
 
 func (am *ActionMap) MouseButtonCallback(window *glfw.Window, button glfw.MouseButton, action glfw.Action, mods glfw.ModifierKey) {
+	am.mouseAction(getMouseButton(button), getAction(action))
 	mba := MouseButtonAction{getMouseButton(button), getAction(action)}
-	if am.mouseButtonActionMap[mba] != nil {
-		am.mouseButtonActionMap[mba]()
+	if m, ok := am.mouseButtonActionMap[mba]; ok {
+		for _, function := range m {
+			function()
+		}
 	}
 }
 

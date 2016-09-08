@@ -48,7 +48,7 @@ func (e *Editor) setupUI() {
 	e.initOverviewMenu()
 	e.gameEngine.InitFpsDial()
 
-	e.customController.BindAction(func() {
+	e.customController.BindKeyAction(func() {
 		if e.mainMenuOpen {
 			e.mainMenuOpen = false
 			e.closeMainMenu()

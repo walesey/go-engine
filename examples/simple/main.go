@@ -86,7 +86,7 @@ func main() {
 		controllerManager.AddController(customController.(glfwController.Controller))
 
 		// close window and exit on escape
-		customController.BindAction(func() {
+		customController.BindKeyAction(func() {
 			glRenderer.Window.SetShouldClose(true)
 		}, controller.KeyEscape, controller.Press)
 	})

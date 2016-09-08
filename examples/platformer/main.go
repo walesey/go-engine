@@ -138,23 +138,23 @@ func main() {
 		controllerManager.AddController(customController.(glfwController.Controller))
 
 		// Walk
-		customController.BindAction(func() {
+		customController.BindKeyAction(func() {
 			character.body.SetVelocity(vmath.Vector2{X: -200, Y: character.body.GetVelocity().Y})
 		}, controller.KeyA, controller.Press)
-		customController.BindAction(func() {
+		customController.BindKeyAction(func() {
 			character.body.SetVelocity(vmath.Vector2{X: 200, Y: character.body.GetVelocity().Y})
 		}, controller.KeyD, controller.Press)
 
 		//Stop walking
-		customController.BindAction(func() {
+		customController.BindKeyAction(func() {
 			character.body.SetVelocity(vmath.Vector2{Y: character.body.GetVelocity().Y})
 		}, controller.KeyA, controller.Release)
-		customController.BindAction(func() {
+		customController.BindKeyAction(func() {
 			character.body.SetVelocity(vmath.Vector2{Y: character.body.GetVelocity().Y})
 		}, controller.KeyD, controller.Release)
 
 		// Jump
-		customController.BindAction(func() {
+		customController.BindKeyAction(func() {
 			character.body.SetVelocity(character.body.GetVelocity().Add(vmath.Vector2{Y: -300}))
 			spawnParticles(dustParticles, character.body.GetPosition().Add(vmath.Vector2{Y: 0.5 * characterSize}))
 		}, controller.KeySpace, controller.Press)

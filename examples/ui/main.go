@@ -34,36 +34,52 @@ func main() {
 
 		// input/controller manager
 		controllerManager := glfwController.NewControllerManager(glRenderer.Window)
-		uiController := controller.CreateController()
-		controllerManager.AddController(uiController.(glfwController.Controller))
 
-		createWindow(uiController, populateContent)
+		// create a window with a content container
+		window, content := createWindow(controllerManager)
+
+		// populate content and set window tab order
+		window.Tabs = populateContent(content)
+
+		// Add the window to the engine
+		gameEngine.AddOrtho(window)
+
+		// render all window content
+		window.Render()
 	})
 }
 
-func createWindow(uiController controller.Controller, populate func(c *ui.Container) []ui.Activatable) {
-	// Create a ui window with a click and drag tab
-	window := ui.NewWindow()
-	mainContainer := ui.NewContainer()
-	window.SetElement(mainContainer)
+func createWindow(controllerManager *glfwController.ControllerManager) (window *ui.Window, content *ui.Container) {
+	// Create window with size and position
+	window = ui.NewWindow()
+	window.SetScale(vmath.Vector2{X: 300}.ToVector3())
+	window.SetTranslation(vmath.Vector2{X: 50, Y: 50}.ToVector3())
 
+	// create a click and drag tab
 	tab := ui.NewContainer()
 	tab.SetBackgroundColor(70, 70, 170, 255)
 	tab.SetHeight(40)
 
-	content := ui.NewContainer()
+	// create a content container
+	content = ui.NewContainer()
 	content.SetBackgroundColor(200, 200, 200, 255)
 	content.SetPadding(ui.NewMargin(10))
 
+	// Add all the containers to the window
+	mainContainer := ui.NewContainer()
 	mainContainer.AddChildren(tab, content)
+	window.SetElement(mainContainer)
+
+	// create uiController
+	uiController := ui.NewUiController(window)
+	controllerManager.AddController(uiController.(glfwController.Controller))
 	ui.ClickAndDragWindow(window, tab.Hitbox, uiController)
 
 	// Make sure all text fields get deselected on click
 	uiController.BindMouseAction(func() {
 		ui.DeactivateAllTextElements(content)
 	}, controller.MouseButton1, controller.Press)
-
-	window.Tabs = populate(content)
+	return
 }
 
 func populateContent(c *ui.Container) []ui.Activatable {
@@ -73,20 +89,21 @@ func populateContent(c *ui.Container) []ui.Activatable {
 	// example image element
 	img, _ := assets.ImportImageCached("resources/cubemap.png")
 	imageElement := ui.NewImageElement(img)
+	imageElement.SetWidth(200)
 
 	// example text field
-	text := ui.NewTextElement("", color.Black, 16, nil)
-	text.SetPlaceholder("this is a placeholder")
-	tf := textField(text)
+	tf := ui.NewTextElement("", color.Black, 16, nil)
+	tf.SetPlaceholder("this is a placeholder")
 
-	passwordText := ui.NewTextElement("", color.Black, 16, nil)
-	passwordText.SetHidden(true)
-	passwordTf := textField(passwordText)
+	// example hidden text field
+	passwordTf := ui.NewTextElement("", color.Black, 16, nil)
+	passwordTf.SetHidden(true)
 
 	// example button
 	button := ui.NewContainer()
 	button.SetBackgroundColor(160, 0, 0, 254)
 	button.SetPadding(ui.NewMargin(20))
+
 	// button on click event
 	button.Hitbox.AddOnClick(func(button int, release bool, position vmath.Vector2) {
 		if release {
@@ -95,6 +112,7 @@ func populateContent(c *ui.Container) []ui.Activatable {
 			textElement.SetText("click").SetTextColor(color.NRGBA{0, 254, 0, 254}).ReRender()
 		}
 	})
+
 	// button on hover event
 	button.Hitbox.AddOnHover(func() {
 		button.SetBackgroundColor(210, 100, 100, 254)
@@ -104,15 +122,15 @@ func populateContent(c *ui.Container) []ui.Activatable {
 	})
 
 	// add everything to the content container
-	c.AddChildren(textElement, imageElement, tf, passwordTf, button)
+	c.AddChildren(textElement, imageElement, textField(tf), textField(passwordTf), button)
 
 	// return everything that should be included in the Tabs order
-	return []ui.Activatable{text, passwordText}
+	return []ui.Activatable{tf, passwordTf}
 }
 
 func textField(textElem *ui.TextElement) *ui.Container {
 	tf := ui.NewContainer()
-	tf.SetHeight(16)
+	tf.SetHeight(26)
 	tf.SetBackgroundColor(200, 200, 200, 254)
 	tf.Hitbox.AddOnClick(func(button int, release bool, position vmath.Vector2) {
 		if !release {

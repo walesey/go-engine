@@ -127,10 +127,10 @@ func main() {
 
 			customController := controller.CreateController()
 			controllerManager.AddController(customController.(glfwController.Controller))
-			customController.BindAction(func() { move(vmath.Vector3{Y: 1}) }, controller.KeyW, controller.Press)
-			customController.BindAction(func() { move(vmath.Vector3{Z: 1}) }, controller.KeyA, controller.Press)
-			customController.BindAction(func() { move(vmath.Vector3{Y: -1}) }, controller.KeyS, controller.Press)
-			customController.BindAction(func() { move(vmath.Vector3{Z: -1}) }, controller.KeyD, controller.Press)
+			customController.BindKeyAction(func() { move(vmath.Vector3{Y: 1}) }, controller.KeyW, controller.Press)
+			customController.BindKeyAction(func() { move(vmath.Vector3{Z: 1}) }, controller.KeyA, controller.Press)
+			customController.BindKeyAction(func() { move(vmath.Vector3{Y: -1}) }, controller.KeyS, controller.Press)
+			customController.BindKeyAction(func() { move(vmath.Vector3{Z: -1}) }, controller.KeyD, controller.Press)
 		}
 	})
 }

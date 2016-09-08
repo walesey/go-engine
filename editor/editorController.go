@@ -29,19 +29,19 @@ func NewEditorController(e *Editor) controller.Controller {
 	c.BindAxisAction(doMouseMove)
 	c.BindMouseAction(func() { mouseDown = true }, controller.MouseButtonRight, controller.Press)
 	c.BindMouseAction(func() { mouseDown = false }, controller.MouseButtonRight, controller.Release)
-	c.BindAction(func() { axisLock = vmath.Vector3{1, 0, 0} }, controller.KeyX, controller.Press)
-	c.BindAction(func() { axisLock = vmath.Vector3{0, 1, 0} }, controller.KeyY, controller.Press)
-	c.BindAction(func() { axisLock = vmath.Vector3{0, 0, 1} }, controller.KeyZ, controller.Press)
+	c.BindKeyAction(func() { axisLock = vmath.Vector3{1, 0, 0} }, controller.KeyX, controller.Press)
+	c.BindKeyAction(func() { axisLock = vmath.Vector3{0, 1, 0} }, controller.KeyY, controller.Press)
+	c.BindKeyAction(func() { axisLock = vmath.Vector3{0, 0, 1} }, controller.KeyZ, controller.Press)
 
-	c.BindAction(func() {
+	c.BindKeyAction(func() {
 		e.mouseMode = "scale"
 		axisLock = vmath.Vector3{1, 1, 1}
 	}, controller.KeyT, controller.Press)
-	c.BindAction(func() {
+	c.BindKeyAction(func() {
 		e.mouseMode = "translate"
 		axisLock = vmath.Vector3{1, 0, 0}
 	}, controller.KeyG, controller.Press)
-	c.BindAction(func() {
+	c.BindKeyAction(func() {
 		e.mouseMode = "rotate"
 		axisLock = vmath.Vector3{0, 1, 0}
 	}, controller.KeyR, controller.Press)

@@ -51,9 +51,9 @@ func NewUiController(window *Window) controller.Controller {
 	c.BindMouseAction(func() { window.mouseClick(5, true) }, controller.MouseButton5, controller.Release)
 
 	var shift bool
-	c.BindAction(func() { shift = true }, controller.KeyLeftShift, controller.Press)
-	c.BindAction(func() { shift = false }, controller.KeyLeftShift, controller.Release)
-	c.BindKeyAction(func(key controller.Key, action controller.Action) {
+	c.BindKeyAction(func() { shift = true }, controller.KeyLeftShift, controller.Press)
+	c.BindKeyAction(func() { shift = false }, controller.KeyLeftShift, controller.Release)
+	c.SetKeyAction(func(key controller.Key, action controller.Action) {
 		if key == controller.KeyTab {
 			if action == controller.Press {
 				tabCycle(window)
