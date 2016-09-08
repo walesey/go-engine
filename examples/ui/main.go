@@ -10,6 +10,7 @@ import (
 	"github.com/walesey/go-engine/glfwController"
 	"github.com/walesey/go-engine/opengl"
 	"github.com/walesey/go-engine/ui"
+	vmath "github.com/walesey/go-engine/vectormath"
 )
 
 func init() {
@@ -36,11 +37,11 @@ func main() {
 		uiController := controller.CreateController()
 		controllerManager.AddController(uiController.(glfwController.Controller))
 
-		createWindow(populateContent)
+		createWindow(uiController, populateContent)
 	})
 }
 
-func createWindow(populate func(c *ui.Container) []Activatable) {
+func createWindow(uiController controller.Controller, populate func(c *ui.Container) []ui.Activatable) {
 	// Create a ui window with a click and drag tab
 	window := ui.NewWindow()
 	mainContainer := ui.NewContainer()
@@ -65,29 +66,22 @@ func createWindow(populate func(c *ui.Container) []Activatable) {
 	window.Tabs = populate(content)
 }
 
-func populateContent(c *ui.Container) []Activatable {
+func populateContent(c *ui.Container) []ui.Activatable {
 	// example text title
 	textElement := ui.NewTextElement("UI EXAMPLE!", color.Black, 16, nil)
 
 	// example image element
-	skyImg, _ := assets.ImportImageCached("resources/cubemap.png")
+	img, _ := assets.ImportImageCached("resources/cubemap.png")
 	imageElement := ui.NewImageElement(img)
 
-	// onClickHandler for text fields
-	activateOnClick := func(button int, release bool, position vmath.Vector2) {
-		if !release {
-			textField.Activate()
-		}
-	}
-
 	// example text field
-	textField := ui.NewTextElement("", color.Black, 16, nil)
-	textField.SetPlaceholder("this is a placeholder")
-	textField.Hitbox.AddOnClick(activateOnClick)
+	text := ui.NewTextElement("", color.Black, 16, nil)
+	text.SetPlaceholder("this is a placeholder")
+	tf := textField(text)
 
-	passwordField := ui.NewTextElement("", color.Black, 16, nil)
-	passwordField.SetHidden(true)
-	passwordField.Hitbox.AddOnClick(activateOnClick)
+	passwordText := ui.NewTextElement("", color.Black, 16, nil)
+	passwordText.SetHidden(true)
+	passwordTf := textField(passwordText)
 
 	// example button
 	button := ui.NewContainer()
@@ -110,8 +104,20 @@ func populateContent(c *ui.Container) []Activatable {
 	})
 
 	// add everything to the content container
-	c.AddChildren(textElement, imageElement, textField, passwordField, button)
+	c.AddChildren(textElement, imageElement, tf, passwordTf, button)
 
 	// return everything that should be included in the Tabs order
-	return []Activatable{textField, passwordField}
+	return []ui.Activatable{text, passwordText}
+}
+
+func textField(textElem *ui.TextElement) *ui.Container {
+	tf := ui.NewContainer()
+	tf.SetHeight(16)
+	tf.SetBackgroundColor(200, 200, 200, 254)
+	tf.Hitbox.AddOnClick(func(button int, release bool, position vmath.Vector2) {
+		if !release {
+			textElem.Activate()
+		}
+	})
+	return tf
 }
