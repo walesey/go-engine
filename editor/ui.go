@@ -120,9 +120,5 @@ func (e *Editor) defaultWindow() (window *ui.Window, container *ui.Container, ta
 	mainContainer.AddChildren(tab, container)
 	ui.ClickAndDragWindow(window, tab.Hitbox, e.customController)
 
-	e.customController.BindMouseAction(func() {
-		ui.DeactivateAllTextElements(container)
-	}, controller.MouseButton1, controller.Press)
-
 	return
 }

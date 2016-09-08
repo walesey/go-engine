@@ -50,7 +50,7 @@ func renderNode(container *Container, node *html.Node, styles *css.Stylesheet, a
 			text := nextNode.Data
 			text = strings.TrimSpace(text)
 			if len(text) > 0 {
-				createText(text, nextNode.Parent, container, styles, assets)
+				createTextElem(text, nextNode.Parent, container, styles, assets)
 			}
 		} else {
 			// Create a container
@@ -59,14 +59,14 @@ func renderNode(container *Container, node *html.Node, styles *css.Stylesheet, a
 			container.AddChildren(newContainer)
 
 			//Parse other html tag types
-			var textField *TextElement
+			var textField *TextField
 			var imageElement *ImageElement
 			tagType := nextNode.DataAtom.String()
 			switch {
 			case tagType == "input":
 				inputType := getAttribute(nextNode, "type")
 				if inputType == "text" || inputType == "password" {
-					textField = createText("", nextNode, newContainer, styles, assets)
+					textField = createTextField("", nextNode, newContainer, styles, assets)
 					textField.SetHidden(inputType == "password")
 					activatables = append(activatables, textField)
 					newContainer.Hitbox.AddOnClick(func(button int, release bool, position vmath.Vector2) {
@@ -246,8 +246,19 @@ func applyStyles(container *Container, styles map[string]string, assets HtmlAsse
 	}
 }
 
-func createText(text string, node *html.Node, container *Container, styles *css.Stylesheet, assets HtmlAssets) *TextElement {
+func createTextElem(text string, node *html.Node, container *Container, styles *css.Stylesheet, assets HtmlAssets) *TextElement {
 	textElement := NewTextElement(text, color.Black, 16, assets.fontMap["default"])
+	createText(textElement, node, container, styles, assets)
+	return textElement
+}
+
+func createTextField(text string, node *html.Node, container *Container, styles *css.Stylesheet, assets HtmlAssets) *TextField {
+	textField := NewTextField(text, color.Black, 16, assets.fontMap["default"])
+	createText(textField.text, node, container, styles, assets)
+	return textField
+}
+
+func createText(textElement *TextElement, node *html.Node, container *Container, styles *css.Stylesheet, assets HtmlAssets) {
 	textElement.SetAlign(LEFT_ALIGN)
 	textStyles := getStyles(styles, node, "")
 	applyTextStyles(textElement, textStyles, assets)
@@ -283,7 +294,6 @@ func createText(text string, node *html.Node, container *Container, styles *css.
 		})
 	}
 	container.AddChildren(textElement)
-	return textElement
 }
 
 func applyDefaultTextStyles(textField *TextElement, assets HtmlAssets) {

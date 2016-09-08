@@ -113,6 +113,9 @@ func (w *Window) mouseMove(position vmath.Vector2) {
 
 func (w *Window) mouseClick(button int, release bool) {
 	if w.element != nil {
+		if !release {
+			deactivateAllTextFields(w.element)
+		}
 		w.element.mouseClick(button, release, w.mousePos)
 	}
 }
@@ -120,6 +123,19 @@ func (w *Window) mouseClick(button int, release bool) {
 func (w *Window) keyClick(key string, release bool) {
 	if w.element != nil {
 		w.element.keyClick(key, release)
+	}
+}
+
+func deactivateAllTextFields(elem Element) {
+	if container, ok := elem.(*Container); ok {
+		for i := 0; i < container.GetNbChildren(); i++ {
+			child := container.GetChild(i)
+			deactivateAllTextFields(child)
+			text, ok := child.(*TextField)
+			if ok {
+				text.Deactivate()
+			}
+		}
 	}
 }
 

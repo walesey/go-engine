@@ -75,10 +75,6 @@ func createWindow(controllerManager *glfwController.ControllerManager) (window *
 	controllerManager.AddController(uiController.(glfwController.Controller))
 	ui.ClickAndDragWindow(window, tab.Hitbox, uiController)
 
-	// Make sure all text fields get deselected on click
-	uiController.BindMouseAction(func() {
-		ui.DeactivateAllTextElements(content)
-	}, controller.MouseButton1, controller.Press)
 	return
 }
 
@@ -92,12 +88,14 @@ func populateContent(c *ui.Container) []ui.Activatable {
 	imageElement.SetWidth(200)
 
 	// example text field
-	tf := ui.NewTextElement("", color.Black, 16, nil)
+	tf := ui.NewTextField("", color.Black, 16, nil)
 	tf.SetPlaceholder("this is a placeholder")
+	tf.SetMargin(ui.Margin{10, 0, 10, 0})
 
 	// example hidden text field
-	passwordTf := ui.NewTextElement("", color.Black, 16, nil)
+	passwordTf := ui.NewTextField("", color.Black, 16, nil)
 	passwordTf.SetHidden(true)
+	passwordTf.SetMargin(ui.Margin{0, 0, 10, 0})
 
 	// example button
 	button := ui.NewContainer()
@@ -122,20 +120,8 @@ func populateContent(c *ui.Container) []ui.Activatable {
 	})
 
 	// add everything to the content container
-	c.AddChildren(textElement, imageElement, textField(tf), textField(passwordTf), button)
+	c.AddChildren(textElement, imageElement, tf, passwordTf, button)
 
 	// return everything that should be included in the Tabs order
 	return []ui.Activatable{tf, passwordTf}
-}
-
-func textField(textElem *ui.TextElement) *ui.Container {
-	tf := ui.NewContainer()
-	tf.SetHeight(26)
-	tf.SetBackgroundColor(200, 200, 200, 254)
-	tf.Hitbox.AddOnClick(func(button int, release bool, position vmath.Vector2) {
-		if !release {
-			textElem.Activate()
-		}
-	})
-	return tf
 }

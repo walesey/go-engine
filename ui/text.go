@@ -44,7 +44,6 @@ func LoadFont(fontData []byte) (*truetype.Font, error) {
 type TextElement struct {
 	id                 string
 	node               *renderer.Node
-	cursor             *renderer.Node
 	img                *ImageElement
 	width, height      float64
 	text               string
@@ -54,11 +53,7 @@ type TextElement struct {
 	textFont           *truetype.Font
 	textAlign          int
 	size, offset       vmath.Vector2
-	active             bool
 	hidden             bool
-	cursorPos          int
-	onFocusHandlers    []func()
-	onBlurHandlers     []func()
 	onKeyPressHandlers []func(key string, release bool)
 	dirty              bool
 }
@@ -147,7 +142,6 @@ func (te *TextElement) GetHiddenText() string {
 
 func (te *TextElement) SetText(text string) *TextElement {
 	te.text = text
-	te.cursorPos = len(text)
 	te.dirty = true
 	return te
 }
@@ -193,30 +187,6 @@ func (te *TextElement) SetHidden(hidden bool) *TextElement {
 	return te
 }
 
-func (te *TextElement) Active() bool {
-	return te.active
-}
-
-func (te *TextElement) Activate() {
-	if !te.active {
-		te.active = true
-		for _, handler := range te.onFocusHandlers {
-			handler()
-		}
-		te.ReRender()
-	}
-}
-
-func (te *TextElement) Deactivate() {
-	if te.active {
-		te.active = false
-		for _, handler := range te.onBlurHandlers {
-			handler()
-		}
-		te.ReRender()
-	}
-}
-
 func (te *TextElement) Render(size, offset vmath.Vector2) vmath.Vector2 {
 	useWidth := size.X
 	useHeight := size.Y
@@ -240,25 +210,11 @@ func (te *TextElement) Render(size, offset vmath.Vector2) vmath.Vector2 {
 	if te.textAlign == RIGHT_ALIGN {
 		te.img.Render(size, offset.Add(vmath.Vector2{size.X - renderSize.X, 0}))
 	}
-	te.RenderCursor()
 	return renderSize
 }
 
 func (te *TextElement) ReRender() {
 	te.Render(te.size, te.offset)
-}
-
-func (te *TextElement) RenderCursor() {
-	c := te.getContext()
-	text := te.GetHiddenText()
-	cursorTranslation, _ := c.StringDimensions(string([]byte(text)[:te.cursorPos]))
-	xPos := int(cursorTranslation.X >> 6)
-	te.cursor.SetTranslation(vmath.Vector2{float64(xPos), 0}.ToVector3())
-	if te.active {
-		te.cursor.SetScale(vmath.Vector2{te.textSize, te.textSize}.ToVector3())
-	} else {
-		te.cursor.SetScale(vmath.Vector2{0, 0}.ToVector3())
-	}
 }
 
 func (te *TextElement) Spatial() renderer.Spatial {
@@ -278,48 +234,11 @@ func (te *TextElement) mouseClick(button int, release bool, position vmath.Vecto
 }
 
 func (te *TextElement) keyClick(key string, release bool) {
-	if te.active && !release {
-		textBytes := []byte(te.text)
-		if key == "backspace" {
-			if len(textBytes) > 0 && te.cursorPos > 0 {
-				cursorPos := te.cursorPos
-				newText := append(textBytes[:cursorPos-1], textBytes[cursorPos:]...)
-				te.SetText(string(newText))
-				te.cursorPos = cursorPos - 1
-			}
-		} else if key == "leftArrow" {
-			if te.cursorPos > 0 {
-				te.cursorPos--
-			}
-		} else if key == "rightArrow" {
-			if te.cursorPos < len(te.text) {
-				te.cursorPos++
-			}
-		} else {
-			insertText := []rune(key)
-			newText := []rune(te.text)
-			newText = append(newText[:te.cursorPos], append(insertText, newText[te.cursorPos:]...)...)
-			cursorPos := te.cursorPos
-			te.SetText(string(newText))
-			te.cursorPos = cursorPos + 1
-		}
-		for _, handler := range te.onKeyPressHandlers {
-			handler(key, release)
-		}
-		te.ReRender()
-	}
+	te.img.keyClick(key, release)
 }
 
 func (te *TextElement) SetAlign(align int) {
 	te.textAlign = align
-}
-
-func (te *TextElement) AddOnFocus(handler func()) {
-	te.onFocusHandlers = append(te.onFocusHandlers, handler)
-}
-
-func (te *TextElement) AddOnBlur(handler func()) {
-	te.onBlurHandlers = append(te.onBlurHandlers, handler)
 }
 
 func (te *TextElement) AddOnKeyPress(handler func(key string, release bool)) {
@@ -329,18 +248,9 @@ func (te *TextElement) AddOnKeyPress(handler func(key string, release bool)) {
 func NewTextElement(text string, textColor color.Color, textSize float64, textFont *truetype.Font) *TextElement {
 	img := NewImageElement(image.NewAlpha(image.Rect(0, 0, 1, 1)))
 	node := renderer.CreateNode()
-	cursor := renderer.CreateBoxWithOffset(0.07, 1.1, 0, 0.1)
-	mat := renderer.CreateMaterial()
-	mat.LightingMode = renderer.MODE_UNLIT
-	cursor.Material = mat
-	cursor.SetColor(color.NRGBA{0, 0, 0, 255})
-	cursorNode := renderer.CreateNode()
-	cursorNode.Add(cursor)
-	node.Add(cursorNode)
 	node.Add(img.Spatial())
 	textElem := &TextElement{
 		img:       img,
-		cursor:    cursorNode,
 		node:      node,
 		text:      text,
 		textColor: textColor,
