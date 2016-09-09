@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"fmt"
 	"image/color"
 	"runtime"
 
@@ -13,6 +15,12 @@ import (
 	vmath "github.com/walesey/go-engine/vectormath"
 )
 
+/*
+This example renders 2 windows
+The left window uses the ui API (func populateContent)
+The right window uses the html/css parser (func htmlContent)
+Both are exactly the same but show the 2 methods
+*/
 func init() {
 	// Use all cpu cores
 	runtime.GOMAXPROCS(runtime.NumCPU())
@@ -35,25 +43,32 @@ func main() {
 		// input/controller manager
 		controllerManager := glfwController.NewControllerManager(glRenderer.Window)
 
-		// create a window with a content container
-		window, content := createWindow(controllerManager)
+		// create windows with content containers
+		window1, content1 := createWindow(controllerManager)
+		window2, content2 := createWindow(controllerManager)
 
 		// populate content and set window tab order
-		window.Tabs = populateContent(content)
+		window1.Tabs = populateContent(content1)
+		window2.Tabs = htmlContent(content2)
 
-		// Add the window to the engine
-		gameEngine.AddOrtho(window)
+		// position windows
+		window1.SetTranslation(vmath.Vector2{X: 50, Y: 50}.ToVector3())
+		window2.SetTranslation(vmath.Vector2{X: 450, Y: 50}.ToVector3())
 
-		// render all window content
-		window.Render()
+		// Add the windows to the engine
+		gameEngine.AddOrtho(window1)
+		gameEngine.AddOrtho(window2)
+
+		// render all windows
+		window1.Render()
+		window2.Render()
 	})
 }
 
 func createWindow(controllerManager *glfwController.ControllerManager) (window *ui.Window, content *ui.Container) {
-	// Create window with size and position
+	// Create window with size
 	window = ui.NewWindow()
 	window.SetScale(vmath.Vector2{X: 300}.ToVector3())
-	window.SetTranslation(vmath.Vector2{X: 50, Y: 50}.ToVector3())
 
 	// create a click and drag tab
 	tab := ui.NewContainer()
@@ -90,11 +105,13 @@ func populateContent(c *ui.Container) []ui.Activatable {
 	// example text field
 	tf := ui.NewTextField("", color.Black, 16, nil)
 	tf.SetPlaceholder("this is a placeholder")
+	tf.SetBackgroundColor(255, 255, 255, 255)
 	tf.SetMargin(ui.Margin{10, 0, 10, 0})
 
 	// example hidden text field
 	passwordTf := ui.NewTextField("", color.Black, 16, nil)
 	passwordTf.SetHidden(true)
+	passwordTf.SetBackgroundColor(255, 255, 255, 255)
 	passwordTf.SetMargin(ui.Margin{0, 0, 10, 0})
 
 	// example button
@@ -124,4 +141,63 @@ func populateContent(c *ui.Container) []ui.Activatable {
 
 	// return everything that should be included in the Tabs order
 	return []ui.Activatable{tf, passwordTf}
+}
+
+func htmlContent(c *ui.Container) []ui.Activatable {
+
+	html := bytes.NewBufferString(`
+		<body>
+			<div class=content>
+				<h1 id=heading>UI EXAMPLE!</h1>
+				<img src=testImage></img>
+				<input type=text></input>
+				<input type=password></input>
+				<button onclick=clickButton></button>
+			<div>
+		</body>
+	`)
+
+	css := bytes.NewBufferString(`
+		.content img {
+			width: 200;
+		}
+
+		.content input {
+			background-color: #fff;
+			margin: 10 0 0 0;
+		}
+
+		.content button {
+			padding: 20;
+			margin: 10 0 0 0;
+			background-color: #a00;
+		}
+		
+		.content button:hover {
+			background-color: #e99;
+		}
+	`)
+
+	// create assets
+	htmlAssets := ui.NewHtmlAssets()
+
+	// image
+	img, _ := assets.ImportImageCached("resources/cubemap.png")
+	htmlAssets.AddImage("testImage", img)
+
+	// button click callback
+	htmlAssets.AddCallback("clickButton", func(element ui.Element, args ...interface{}) {
+		if len(args) >= 2 && !args[1].(bool) { // on release
+			c.TextElementById("heading").SetText("release").SetTextColor(color.NRGBA{254, 0, 0, 254}).ReRender()
+		} else {
+			c.TextElementById("heading").SetText("press").SetTextColor(color.NRGBA{0, 254, 0, 254}).ReRender()
+		}
+	})
+
+	activatables, err := ui.LoadHTML(c, html, css, htmlAssets)
+	if err != nil {
+		fmt.Println("Error loading html: ", err)
+	}
+
+	return activatables
 }

@@ -16,14 +16,17 @@ func controlKey(key controller.Key) bool {
 		key == controller.KeyRightShift
 }
 
-func tabCycle(window *Window) {
+func tabCycle(window *Window, increment int) {
 	for i, tab := range window.Tabs {
 		if tab.Active() {
 			tab.Deactivate()
-			if (i + 1) >= len(window.Tabs) {
+			next := i + increment
+			if next >= len(window.Tabs) {
 				window.Tabs[0].Activate()
+			} else if next < 0 {
+				window.Tabs[len(window.Tabs)-1].Activate()
 			} else {
-				window.Tabs[i+1].Activate()
+				window.Tabs[next].Activate()
 			}
 			return
 		}
@@ -36,7 +39,7 @@ func tabCycle(window *Window) {
 func NewUiController(window *Window) controller.Controller {
 	c := controller.CreateController()
 	doMouseMove := func(xpos, ypos float64) {
-		window.mouseMove(vmath.Vector2{xpos, ypos})
+		window.mouseMove(vmath.Vector2{X: xpos, Y: ypos})
 	}
 	c.BindAxisAction(doMouseMove)
 	c.BindMouseAction(func() { window.mouseClick(1, false) }, controller.MouseButton1, controller.Press)
@@ -56,7 +59,11 @@ func NewUiController(window *Window) controller.Controller {
 	c.SetKeyAction(func(key controller.Key, action controller.Action) {
 		if key == controller.KeyTab {
 			if action == controller.Press {
-				tabCycle(window)
+				if shift {
+					tabCycle(window, -1)
+				} else {
+					tabCycle(window, 1)
+				}
 			}
 		} else if !controlKey(key) {
 			keyString := convertKey(key, shift)

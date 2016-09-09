@@ -231,7 +231,7 @@ func NewTextField(text string, textColor color.Color, textSize float64, textFont
 			tf.Activate()
 		}
 	})
-	tf.SetBackgroundColor(255, 255, 255, 255)
+	tf.SetBackgroundColor(0, 0, 0, 0)
 	tf.SetHeight(textSize * 1.5)
 	tf.SetPadding(NewMargin(2))
 	return tf

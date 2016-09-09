@@ -96,9 +96,11 @@ func (w *Window) ElementById(id string) Element {
 func (w *Window) TextElementById(id string) *TextElement {
 	container, ok := w.ElementById(id).(*Container)
 	if ok && container.GetNbChildren() > 0 {
-		textElement, ok := container.GetChild(0).(*TextElement)
-		if ok {
+		if textElement, ok := container.GetChild(0).(*TextElement); ok {
 			return textElement
+		}
+		if textField, ok := container.GetChild(0).(*TextField); ok {
+			return textField.text
 		}
 	}
 	return nil

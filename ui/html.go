@@ -248,12 +248,14 @@ func applyStyles(container *Container, styles map[string]string, assets HtmlAsse
 
 func createTextElem(text string, node *html.Node, container *Container, styles *css.Stylesheet, assets HtmlAssets) *TextElement {
 	textElement := NewTextElement(text, color.Black, 16, assets.fontMap["default"])
+	container.AddChildren(textElement)
 	createText(textElement, node, container, styles, assets)
 	return textElement
 }
 
 func createTextField(text string, node *html.Node, container *Container, styles *css.Stylesheet, assets HtmlAssets) *TextField {
 	textField := NewTextField(text, color.Black, 16, assets.fontMap["default"])
+	container.AddChildren(textField)
 	createText(textField.text, node, container, styles, assets)
 	return textField
 }
@@ -293,7 +295,6 @@ func createText(textElement *TextElement, node *html.Node, container *Container,
 			updateState()
 		})
 	}
-	container.AddChildren(textElement)
 }
 
 func applyDefaultTextStyles(textField *TextElement, assets HtmlAssets) {
