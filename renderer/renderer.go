@@ -23,6 +23,7 @@ type Renderer interface {
 	Camera(location, lookat, up vmath.Vector3)
 	Ortho()
 	CameraLocation() vmath.Vector3
+	FrustrumContainsSphere(radius float64) bool
 	PopTransform()
 	PushTransform()
 	EnableDepthTest(depthTest bool)

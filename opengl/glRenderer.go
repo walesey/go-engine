@@ -47,6 +47,7 @@ type OpenglRenderer struct {
 	WindowTitle                string
 	Window                     *glfw.Window
 	matStack                   util.Stack
+	modelMat                   mgl32.Mat4
 	program                    uint32
 	envMapId                   uint32
 	envMapLOD1Id               uint32
@@ -59,6 +60,12 @@ type OpenglRenderer struct {
 	lights                     []float32
 	directionalLights          []float32
 	cameraLocation             vmath.Vector3
+	cameraUp                   vmath.Vector3
+	cameraLookAt               vmath.Vector3
+	cameraAngle                float32
+	cameraNear                 float32
+	cameraFar                  float32
+	tlv, trv, blv, brv         vmath.Vector3
 	postEffectVbo              uint32
 	postEffects                []postEffect
 }
@@ -236,6 +243,10 @@ func (glRenderer *OpenglRenderer) Projection(angle, near, far float32) {
 	projection := mgl32.Perspective(mgl32.DegToRad(angle), float32(glRenderer.WindowWidth)/float32(glRenderer.WindowHeight), near, far)
 	projectionUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("projection\x00"))
 	gl.UniformMatrix4fv(projectionUniform, 1, false, &projection[0])
+	glRenderer.cameraAngle = angle
+	glRenderer.cameraNear = near
+	glRenderer.cameraFar = far
+	glRenderer.updateCameraVectors()
 }
 
 // Ortho - set orthogonal rendering mode
@@ -254,6 +265,39 @@ func (glRenderer *OpenglRenderer) Camera(location, lookat, up vmath.Vector3) {
 	cameraUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("camera\x00"))
 	gl.UniformMatrix4fv(cameraUniform, 1, false, &camera[0])
 	glRenderer.cameraLocation = location
+	glRenderer.cameraLookAt = lookat
+	glRenderer.cameraUp = up
+	glRenderer.updateCameraVectors()
+}
+
+func (glRenderer *OpenglRenderer) updateCameraVectors() {
+	window := glRenderer.WindowDimensions()
+	modelview := mgl32.LookAtV(convertVector(glRenderer.cameraLocation), convertVector(glRenderer.cameraLookAt), convertVector(glRenderer.cameraUp))
+	projection := mgl32.Perspective(mgl32.DegToRad(float32(glRenderer.cameraAngle)), float32(window.X)/float32(window.Y), float32(glRenderer.cameraNear), float32(glRenderer.cameraFar))
+	v, _ := mgl32.UnProject(mgl32.Vec3{0, 0, 0.5}, modelview, projection, 0, 0, int(window.X), int(window.Y))
+	glRenderer.tlv = vmath.Vector3{X: float64(v.X()), Y: float64(v.Y()), Z: float64(v.Z())}.Subtract(glRenderer.cameraLocation).Normalize()
+	v, _ = mgl32.UnProject(mgl32.Vec3{float32(window.X), 0, 0.5}, modelview, projection, 0, 0, int(window.X), int(window.Y))
+	glRenderer.trv = vmath.Vector3{X: float64(v.X()), Y: float64(v.Y()), Z: float64(v.Z())}.Subtract(glRenderer.cameraLocation).Normalize()
+	v, _ = mgl32.UnProject(mgl32.Vec3{0, float32(window.Y), 0.5}, modelview, projection, 0, 0, int(window.X), int(window.Y))
+	glRenderer.blv = vmath.Vector3{X: float64(v.X()), Y: float64(v.Y()), Z: float64(v.Z())}.Subtract(glRenderer.cameraLocation).Normalize()
+	v, _ = mgl32.UnProject(mgl32.Vec3{float32(window.X), float32(window.Y), 0.5}, modelview, projection, 0, 0, int(window.X), int(window.Y))
+	glRenderer.brv = vmath.Vector3{X: float64(v.X()), Y: float64(v.Y()), Z: float64(v.Z())}.Subtract(glRenderer.cameraLocation).Normalize()
+}
+
+// FrustrumContainsSphere - calculates if a sphere is at least partially within the camera frustrum
+func (glRenderer *OpenglRenderer) FrustrumContainsSphere(radius float64) bool {
+	p := mgl32.TransformCoordinate(mgl32.Vec3{}, glRenderer.modelMat)
+	point := vmath.Vector3{X: float64(p.X()), Y: float64(p.Y()), Z: float64(p.Z())}
+	r := mgl32.TransformCoordinate(mgl32.Vec3{float32(radius)}, glRenderer.modelMat).Sub(p).Len()
+	delta := point.Subtract(glRenderer.cameraLocation)
+	if point.ApproxEqual(glRenderer.cameraLocation, 0.00001) {
+		delta = vmath.Vector3{X: 1}
+	}
+	return delta.Dot(glRenderer.tlv.Cross(glRenderer.trv)) >= -float64(r) &&
+		delta.Dot(glRenderer.trv.Cross(glRenderer.brv)) >= -float64(r) &&
+		delta.Dot(glRenderer.brv.Cross(glRenderer.blv)) >= -float64(r) &&
+		delta.Dot(glRenderer.blv.Cross(glRenderer.tlv)) >= -float64(r) &&
+		float32(delta.LengthSquared()) < (glRenderer.cameraFar+r)*(glRenderer.cameraFar+r)
 }
 
 // CameraLocation - get location of the camera
@@ -278,6 +322,7 @@ func (glRenderer *OpenglRenderer) ApplyTransform(transform renderer.Transform) {
 	glRenderer.matStack.Push(tx)
 	model := MultiplyAll(glRenderer.matStack)
 	gl.UniformMatrix4fv(glRenderer.modelUniform, 1, false, &model[0])
+	glRenderer.modelMat = model
 }
 
 func (glRenderer *OpenglRenderer) EnableDepthTest(depthTest bool) {

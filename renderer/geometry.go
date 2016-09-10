@@ -41,13 +41,15 @@ func CreateMaterial() *Material {
 
 //Geometry
 type Geometry struct {
-	VboId, IboId uint32
-	loaded       bool
-	VboDirty     bool
-	Indicies     []uint32
-	Verticies    []float32
-	Material     *Material
-	CullBackface bool
+	VboId, IboId    uint32
+	loaded          bool
+	VboDirty        bool
+	Indicies        []uint32
+	Verticies       []float32
+	Material        *Material
+	CullBackface    bool
+	FrustrumCulling bool
+	boundingRadius  float64
 }
 
 //vericies format : x,y,z,   nx,ny,nz,   u,v,  r,g,b,a
@@ -55,11 +57,12 @@ type Geometry struct {
 func CreateGeometry(indicies []uint32, verticies []float32) *Geometry {
 	mat := CreateMaterial()
 	return &Geometry{
-		Indicies:     indicies,
-		Verticies:    verticies,
-		Material:     mat,
-		loaded:       false,
-		CullBackface: true,
+		Indicies:        indicies,
+		Verticies:       verticies,
+		Material:        mat,
+		loaded:          false,
+		CullBackface:    true,
+		FrustrumCulling: true,
 	}
 }
 
@@ -73,11 +76,14 @@ func (geometry *Geometry) Copy() *Geometry {
 
 func (geometry *Geometry) Draw(renderer Renderer) {
 	geometry.load(renderer)
-	renderer.DrawGeometry(geometry)
+	if !geometry.FrustrumCulling || renderer.FrustrumContainsSphere(geometry.boundingRadius) {
+		renderer.DrawGeometry(geometry)
+	}
 }
 
 func (geometry *Geometry) load(renderer Renderer) {
 	if !geometry.loaded && len(geometry.Indicies) != 0 && len(geometry.Verticies) != 0 {
+		geometry.boundingRadius = geometry.MaximalPointFromGeometry().Length()
 		renderer.CreateGeometry(geometry)
 		geometry.loaded = true
 	}
@@ -113,7 +119,7 @@ func (geometry *Geometry) SetColor(color color.Color) {
 		geometry.Verticies[i+2] = float32(b) / 65535.0
 		geometry.Verticies[i+3] = float32(a) / 65535.0
 	}
-	geometry.VboDirty = true
+	geometry.updateGeometry()
 }
 
 func (geometry *Geometry) Transform(transform Transform) {
@@ -139,7 +145,7 @@ func (geometry *Geometry) transformRange(transform Transform, from int) {
 		geometry.Verticies[i+4] = float32(n.Y)
 		geometry.Verticies[i+5] = float32(n.Z)
 	}
-	geometry.VboDirty = true
+	geometry.updateGeometry()
 }
 
 //load the verts/indicies of geometry into destination Geometry
@@ -152,7 +158,7 @@ func (geometry *Geometry) Optimize(destination *Geometry, transform Transform) {
 		destination.Indicies[i+indexOffset] = geometry.Indicies[i] + uint32(vertOffset/VertexStride)
 	}
 	destination.transformRange(transform, vertOffset)
-	geometry.VboDirty = true
+	geometry.updateGeometry()
 }
 
 func (geometry *Geometry) SetUVs(uvs ...float32) {
@@ -160,7 +166,34 @@ func (geometry *Geometry) SetUVs(uvs ...float32) {
 		geometry.Verticies[((i/2)*VertexStride)+6] = uvs[i]
 		geometry.Verticies[((i/2)*VertexStride)+7] = uvs[i+1]
 	}
+	geometry.updateGeometry()
+}
+
+func (geometry *Geometry) updateGeometry() {
+	geometry.boundingRadius = geometry.MaximalPointFromGeometry().Length()
 	geometry.VboDirty = true
+}
+
+// Gets the furthest point from the origin in this geometry
+func (geometry *Geometry) MaximalPointFromGeometry() vmath.Vector3 {
+	var longestSq float64
+	var longest *vmath.Vector3
+	for i := 0; i < len(geometry.Indicies); i = i + 1 {
+		index := geometry.Indicies[i]
+		v := vmath.Vector3{
+			X: float64(geometry.Verticies[index*VertexStride]),
+			Y: float64(geometry.Verticies[index*VertexStride+1]),
+			Z: float64(geometry.Verticies[index*VertexStride+2]),
+		}
+		if longest == nil || v.LengthSquared() > longestSq {
+			longestSq = v.LengthSquared()
+			longest = &v
+		}
+	}
+	if longest != nil {
+		return *longest
+	}
+	return vmath.Vector3{}
 }
 
 //Primitives
