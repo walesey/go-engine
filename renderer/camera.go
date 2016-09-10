@@ -34,8 +34,7 @@ func (c *Camera) Ortho() {
 }
 
 func (c *Camera) Perspective() {
-	c.renderer.Projection(float32(c.angle), float32(c.near), float32(c.far))
-	c.renderer.Camera(c.translation, c.lookat, c.up)
+	c.renderer.Perspective(c.translation, c.lookat, c.up, float32(c.angle), float32(c.near), float32(c.far))
 }
 
 func (c *Camera) GetDirection() vmath.Vector3 {

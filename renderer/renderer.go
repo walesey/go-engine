@@ -19,8 +19,7 @@ type Renderer interface {
 	Start()
 	BackGroundColor(r, g, b, a float32)
 	WindowDimensions() vmath.Vector2
-	Projection(angle, near, far float32)
-	Camera(location, lookat, up vmath.Vector3)
+	Perspective(location, lookat, up vmath.Vector3, angle, near, far float32)
 	Ortho()
 	CameraLocation() vmath.Vector3
 	FrustrumContainsSphere(radius float64) bool

@@ -65,6 +65,7 @@ type OpenglRenderer struct {
 	cameraAngle                float32
 	cameraNear                 float32
 	cameraFar                  float32
+	cameraOrtho                bool
 	tlv, trv, blv, brv         vmath.Vector3
 	postEffectVbo              uint32
 	postEffects                []postEffect
@@ -238,17 +239,6 @@ func (glRenderer *OpenglRenderer) WindowDimensions() vmath.Vector2 {
 	return vmath.Vector2{X: float64(glRenderer.WindowWidth), Y: float64(glRenderer.WindowHeight)}
 }
 
-// Projection - camera projection
-func (glRenderer *OpenglRenderer) Projection(angle, near, far float32) {
-	projection := mgl32.Perspective(mgl32.DegToRad(angle), float32(glRenderer.WindowWidth)/float32(glRenderer.WindowHeight), near, far)
-	projectionUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("projection\x00"))
-	gl.UniformMatrix4fv(projectionUniform, 1, false, &projection[0])
-	glRenderer.cameraAngle = angle
-	glRenderer.cameraNear = near
-	glRenderer.cameraFar = far
-	glRenderer.updateCameraVectors()
-}
-
 // Ortho - set orthogonal rendering mode
 func (glRenderer *OpenglRenderer) Ortho() {
 	projection := mgl32.Ortho2D(0, float32(glRenderer.WindowWidth), float32(glRenderer.WindowHeight), 0)
@@ -257,16 +247,24 @@ func (glRenderer *OpenglRenderer) Ortho() {
 	camera := mgl32.Ident4()
 	cameraUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("camera\x00"))
 	gl.UniformMatrix4fv(cameraUniform, 1, false, &camera[0])
+	glRenderer.cameraOrtho = true
 }
 
 // Camera - camera settings
-func (glRenderer *OpenglRenderer) Camera(location, lookat, up vmath.Vector3) {
+func (glRenderer *OpenglRenderer) Perspective(location, lookat, up vmath.Vector3, angle, near, far float32) {
+	projection := mgl32.Perspective(mgl32.DegToRad(angle), float32(glRenderer.WindowWidth)/float32(glRenderer.WindowHeight), near, far)
+	projectionUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("projection\x00"))
+	gl.UniformMatrix4fv(projectionUniform, 1, false, &projection[0])
 	camera := mgl32.LookAtV(convertVector(location), convertVector(lookat), convertVector(up))
 	cameraUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("camera\x00"))
 	gl.UniformMatrix4fv(cameraUniform, 1, false, &camera[0])
+	glRenderer.cameraAngle = angle
+	glRenderer.cameraNear = near
+	glRenderer.cameraFar = far
 	glRenderer.cameraLocation = location
 	glRenderer.cameraLookAt = lookat
 	glRenderer.cameraUp = up
+	glRenderer.cameraOrtho = false
 	glRenderer.updateCameraVectors()
 }
 
@@ -286,6 +284,9 @@ func (glRenderer *OpenglRenderer) updateCameraVectors() {
 
 // FrustrumContainsSphere - calculates if a sphere is at least partially within the camera frustrum
 func (glRenderer *OpenglRenderer) FrustrumContainsSphere(radius float64) bool {
+	if glRenderer.cameraOrtho {
+		return true
+	}
 	p := mgl32.TransformCoordinate(mgl32.Vec3{}, glRenderer.modelMat)
 	point := vmath.Vector3{X: float64(p.X()), Y: float64(p.Y()), Z: float64(p.Z())}
 	r := mgl32.TransformCoordinate(mgl32.Vec3{float32(radius)}, glRenderer.modelMat).Sub(p).Len()
