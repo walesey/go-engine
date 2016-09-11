@@ -12,7 +12,7 @@ func TestEncode(t *testing.T) {
 		Command: "testCommand",
 		Data:    []byte("test Data"),
 	}
-	expectedData := []byte{byte(len(packet.Token)), byte(len(packet.Command))}
+	expectedData := []byte{byte(len(packet.Token)), byte(len(packet.Command)), byte(len(packet.Data))}
 	expectedData = append(expectedData, []byte(packet.Token)...)
 	expectedData = append(expectedData, []byte(packet.Command)...)
 	expectedData = append(expectedData, packet.Data...)
@@ -26,12 +26,13 @@ func TestDecode(t *testing.T) {
 		Command: "testCommand",
 		Data:    []byte("test Data"),
 	}
-	data := []byte{byte(len(expectedPacket.Token)), byte(len(expectedPacket.Command))}
+	data := []byte{byte(len(expectedPacket.Token)), byte(len(expectedPacket.Command)), byte(len(expectedPacket.Data))}
 	data = append(data, []byte(expectedPacket.Token)...)
 	data = append(data, []byte(expectedPacket.Command)...)
 	data = append(data, expectedPacket.Data...)
 
-	packet, err := Decode(data)
+	packet, err, i := Decode(data, 0)
 	assert.Nil(t, err, "decode should not return an error")
+	assert.EqualValues(t, len(data), i, "Decode should return the correct read index")
 	assert.EqualValues(t, expectedPacket, packet, "Decode packet didn't work")
 }
