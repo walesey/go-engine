@@ -22,6 +22,8 @@ func SerializeArgs(args ...interface{}) []byte {
 			Float64bytes(&buf, v)
 		case vmath.Vector2:
 			Vector2bytes(&buf, v)
+		case vmath.Vector3:
+			Vector3bytes(&buf, v)
 		case bool:
 			buf.WriteByte(BoolByte(v))
 		default:

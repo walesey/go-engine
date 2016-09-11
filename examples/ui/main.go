@@ -93,7 +93,7 @@ func createWindow(controllerManager *glfwController.ControllerManager) (window *
 	return
 }
 
-func populateContent(c *ui.Container) []ui.Activatable {
+func populateContent(content *ui.Container) []ui.Activatable {
 	// example text title
 	textElement := ui.NewTextElement("UI EXAMPLE!", color.Black, 16, nil)
 
@@ -137,20 +137,19 @@ func populateContent(c *ui.Container) []ui.Activatable {
 	})
 
 	// add everything to the content container
-	c.AddChildren(textElement, imageElement, tf, passwordTf, button)
+	content.AddChildren(textElement, imageElement, tf, passwordTf, button)
 
 	// return everything that should be included in the Tabs order
 	return []ui.Activatable{tf, passwordTf}
 }
 
-func htmlContent(c *ui.Container) []ui.Activatable {
-
+func htmlContent(content *ui.Container) []ui.Activatable {
 	html := bytes.NewBufferString(`
 		<body>
 			<div class=content>
 				<h1 id=heading>UI EXAMPLE!</h1>
 				<img src=testImage></img>
-				<input type=text></input>
+				<input type=text placeholder="this is a placeholder"></input>
 				<input type=password></input>
 				<button onclick=clickButton></button>
 			<div>
@@ -188,13 +187,14 @@ func htmlContent(c *ui.Container) []ui.Activatable {
 	// button click callback
 	htmlAssets.AddCallback("clickButton", func(element ui.Element, args ...interface{}) {
 		if len(args) >= 2 && !args[1].(bool) { // on release
-			c.TextElementById("heading").SetText("release").SetTextColor(color.NRGBA{254, 0, 0, 254}).ReRender()
+			content.TextElementById("heading").SetText("release").SetTextColor(color.NRGBA{254, 0, 0, 254}).ReRender()
 		} else {
-			c.TextElementById("heading").SetText("press").SetTextColor(color.NRGBA{0, 254, 0, 254}).ReRender()
+			content.TextElementById("heading").SetText("press").SetTextColor(color.NRGBA{0, 254, 0, 254}).ReRender()
 		}
 	})
 
-	activatables, err := ui.LoadHTML(c, html, css, htmlAssets)
+	// Render the html/css code to the content container
+	activatables, err := ui.LoadHTML(content, html, css, htmlAssets)
 	if err != nil {
 		fmt.Println("Error loading html: ", err)
 	}

@@ -63,15 +63,18 @@ func (c *Client) Connect(addr string) {
 				continue
 			}
 
-			packet, err := Decode(data)
-			if err != nil {
-				fmt.Println("Error decoding udp packet: ", err)
-				continue
-			}
+			var packet Packet
+			for i := 0; i < len(data); {
+				packet, err, i = Decode(data, i)
+				if err != nil {
+					fmt.Println("Error decoding udp packet: ", err)
+					continue
+				}
 
-			c.token = packet.Token
-			c.updateBytesReceived(packet.Command, int64(n))
-			c.packets <- packet
+				c.token = packet.Token
+				c.updateBytesReceived(packet.Command, int64(n))
+				c.packets <- packet
+			}
 		}
 	}()
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
+	"time"
 )
 
 const serverPacketBufferSize = 1000
@@ -13,13 +14,15 @@ const serverSessionBufferSize = 20
 const sessionTimeout = 10 * 60 // 10 minutes
 
 type Server struct {
-	conn           *net.UDPConn
-	sessions       map[string]*Session
-	newSessions    chan *Session
-	packets        chan Packet
-	onClientJoined func(clientId string)
-	bytesSent      int64
-	bytesReceived  int64
+	conn                  *net.UDPConn
+	sessions              map[string]*Session
+	newSessions           chan *Session
+	packets               chan Packet
+	onClientJoined        func(clientId string)
+	writeTimer            time.Time
+	bufferedWriteDuration time.Duration
+	bytesSent             int64
+	bytesReceived         int64
 }
 
 func NewServer() *Server {
@@ -31,6 +34,8 @@ func NewServer() *Server {
 		onClientJoined: func(clientId string) {
 			server.WriteMessage("", clientId, []byte{})
 		},
+		writeTimer:            time.Now(),
+		bufferedWriteDuration: 50 * time.Millisecond,
 	}
 	return server
 }
@@ -71,30 +76,32 @@ func (s *Server) Listen(port int) {
 				continue
 			}
 
-			packet, err := Decode(data)
-			if err != nil {
-				fmt.Println("Error Decoding udp packet: ", err)
-				continue
-			}
+			var packet Packet
+			for i := 0; i < len(data); {
+				packet, err, i = Decode(data, i)
+				if err != nil {
+					fmt.Println("Error Decoding udp packet: ", err)
+					continue
+				}
 
-			if len(packet.Token) == 0 {
-				s.newSessions <- NewSession(addr)
-			}
+				if len(packet.Token) == 0 {
+					s.newSessions <- NewSession(addr)
+				}
 
-			s.packets <- packet
+				s.packets <- packet
+			}
 		}
 	}()
 }
 
 func (s *Server) WriteMessage(command, token string, data []byte) {
-	session, ok := s.sessions[token]
-	packet := Packet{
-		Token:   token,
-		Command: command,
-		Data:    data,
-	}
+	if session, ok := s.sessions[token]; ok {
+		packet := Packet{
+			Token:   token,
+			Command: command,
+			Data:    data,
+		}
 
-	if ok {
 		data := Encode(packet)
 
 		var gzipBuf bytes.Buffer
@@ -116,10 +123,8 @@ func (s *Server) WriteMessage(command, token string, data []byte) {
 		}
 
 		gzipData := gzipBuf.Bytes()
-		s.bytesSent += int64(len(gzipData))
-		s.conn.WriteToUDP(gzipData, session.addr)
-		if err != nil {
-			fmt.Println("Error Writing udp message: ", err)
+		if _, err := session.packetBuffer.Write(gzipData); err != nil {
+			fmt.Println("Error Writing udp message to session buffer: ", err)
 		}
 	}
 }
@@ -143,12 +148,37 @@ func (s *Server) Update(dt float64) {
 	default:
 	}
 
+	// write all buffered messages
+	if time.Since(s.writeTimer) > s.bufferedWriteDuration {
+		s.writeTimer = time.Now()
+		s.FlushAllWriteBuffers()
+	}
+
 	// check for session timeouts
 	for token, session := range s.sessions {
 		if session.idleTime > sessionTimeout {
 			delete(s.sessions, token)
 		}
 		session.idleTime = session.idleTime + dt
+	}
+}
+
+// FlushAllWriteBuffers - send all buffered messages immediately for all sessions
+func (s *Server) FlushAllWriteBuffers() {
+	for token := range s.sessions {
+		s.FlushWriteBuffer(token)
+	}
+}
+
+// FlushWriteBuffer - send all buffered messages immediately
+func (s *Server) FlushWriteBuffer(token string) {
+	if session, ok := s.sessions[token]; ok {
+		data := session.packetBuffer.Bytes()
+		if len(data) > 0 {
+			s.bytesSent += int64(len(data))
+			s.conn.WriteToUDP(data, session.addr)
+			session.packetBuffer.Reset()
+		}
 	}
 }
 

@@ -7,7 +7,6 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/controller"
 	"github.com/walesey/go-engine/engine"
 	"github.com/walesey/go-engine/glfwController"
@@ -19,15 +18,27 @@ import (
 	vmath "github.com/walesey/go-engine/vectormath"
 )
 
+/*
+	This is an example of a client/server multiplayer game
+	To run the server use: go run main.go server
+	To run a client use: go run main.go
+*/
+
+var serverPort = 1234
+var serverAddr = "127.0.0.1"
+var startingPosition = vmath.Vector2{X: 20, Y: 20}
+
 type Player struct {
-	clientId string
+	clientId string // id of the client associated with this player
 	node     *renderer.Node
-	velocity vmath.Vector3
+	position vmath.Vector2
+	velocity vmath.Vector2
 }
 
-// Player is an object that moves around with a certain velocity
+// Update the players position based on it's velocity
 func (p *Player) Update(dt float64) {
-	p.node.SetTranslation(p.node.Translation.Add(p.velocity.MultiplyScalar(dt)))
+	p.position = p.position.Add(p.velocity.MultiplyScalar(dt))
+	p.node.SetTranslation(p.position.ToVector3())
 }
 
 func init() {
@@ -37,7 +48,6 @@ func init() {
 	controller.SetDefaultConstructor(glfwController.NewActionMap)
 }
 
-//
 func main() {
 	server := len(os.Args) > 1 && os.Args[1] == "server"
 	var gameEngine engine.Engine
@@ -47,7 +57,7 @@ func main() {
 	// Start server or connect to server
 	if server {
 		gameEngine = engine.NewHeadlessEngine()
-		network.StartServer(1234)
+		network.StartServer(serverPort)
 	} else {
 		glRenderer = &opengl.OpenglRenderer{
 			WindowTitle:  "Networking example",
@@ -55,7 +65,7 @@ func main() {
 			WindowHeight: 800,
 		}
 		gameEngine = engine.NewEngine(glRenderer)
-		network.ConnectClient("127.0.0.1:1234")
+		network.ConnectClient(fmt.Sprintf("%v:%v", serverAddr, serverPort))
 	}
 	gameEngine.AddUpdatable(network)
 
@@ -65,36 +75,59 @@ func main() {
 	//Networked Game events
 	network.ClientJoinedEvent(func(clientId string) {
 		fmt.Println("client joined, clientId: ", clientId)
-		network.TriggerOnServerAndClients("spawn", []byte(clientId))
+		network.TriggerOnServerAndClients("spawn", util.SerializeArgs(clientId, startingPosition))
 		for _, player := range players {
-			network.TriggerEvent("spawn", clientId, []byte(player.clientId))
+			network.TriggerEvent("spawn", clientId, util.SerializeArgs(player.clientId, player.position))
 		}
 	})
 
 	network.RegisterEvent("spawn", func(clientId string, data []byte) {
-		player := &Player{clientId: string(data)}
-		players[clientId] = player
-		if network.IsClient() {
-			gameEngine.AddUpdatable(player)
+		buf := bytes.NewBuffer(data)
+		playerID := util.Stringfrombytes(buf)
+		position := util.Vector2frombytes(buf)
+		if _, ok := players[playerID]; !ok {
+			player := &Player{clientId: playerID}
+			players[player.clientId] = player
 			player.node = renderer.CreateNode()
-			boxGeometry := renderer.CreateBox(1, 1)
-			boxGeometry.Material = renderer.CreateMaterial()
-			boxGeometry.SetColor(color.NRGBA{254, 0, 0, 254})
-			boxGeometry.CullBackface = false
-			player.node.SetTranslation(vmath.Vector3{X: -20})
-			player.node.SetOrientation(vmath.AngleAxis(1.57, vmath.Vector3{Y: 1}))
-			player.node.Add(boxGeometry)
-			gameEngine.AddSpatial(player.node)
+			player.position = position
+			gameEngine.AddUpdatable(player)
+			if network.IsClient() {
+				boxGeometry := renderer.CreateBox(30, 30)
+				boxGeometry.Material = renderer.CreateMaterial()
+				boxGeometry.Material.LightingMode = renderer.MODE_UNLIT
+				boxGeometry.SetColor(color.NRGBA{254, 0, 0, 254})
+				player.node.Add(boxGeometry)
+				gameEngine.AddOrtho(player.node)
+			}
 		}
 	})
 
 	network.RegisterEvent("move", func(clientId string, data []byte) {
 		buf := bytes.NewBuffer(data)
-		position := util.Vector3frombytes(buf)
-		velocity := util.Vector3frombytes(buf)
-		if player, ok := players[clientId]; ok {
-			player.node.SetTranslation(position)
+		playerID := util.Stringfrombytes(buf)
+		velocity := util.Vector2frombytes(buf)
+		if network.IsServer() && clientId != playerID {
+			return // client is only allowed to control the player assigned to them.
+		}
+		if player, ok := players[playerID]; ok {
 			player.velocity = velocity
+			if network.IsServer() {
+				network.BroadcastEvent("updatePlayer", util.SerializeArgs(playerID, player.position, player.velocity))
+				network.FlushAllWriteBuffers()
+			}
+		}
+	})
+
+	network.RegisterEvent("updatePlayer", func(clientId string, data []byte) {
+		if network.IsClient() { // This is a server to client update only
+			buf := bytes.NewBuffer(data)
+			playerID := util.Stringfrombytes(buf)
+			position := util.Vector2frombytes(buf)
+			velocity := util.Vector2frombytes(buf)
+			if player, ok := players[playerID]; ok {
+				player.position = position
+				player.velocity = velocity
+			}
 		}
 	})
 
@@ -102,35 +135,24 @@ func main() {
 	gameEngine.Start(func() {
 		if network.IsClient() {
 
-			//lighting
-			glRenderer.CreateLight(
-				0.1, 0.1, 0.1, //ambient
-				0.5, 0.5, 0.5, //diffuse
-				0.7, 0.7, 0.7, //specular
-				true, vmath.Vector3{0.7, 0.7, 0.7}, //direction
-				0, //index
-			)
-
-			// Sky cubemap
-			skyImg, err := assets.ImportImage("resources/cubemap.png")
-			if err == nil {
-				gameEngine.Sky(assets.CreateMaterial(skyImg, nil, nil, nil), 999999)
-			}
-
 			// input/controller manager
 			controllerManager := glfwController.NewControllerManager(glRenderer.Window)
 
 			// networked movement controls
-			move := func(velocity vmath.Vector3) {
+			move := func(velocity vmath.Vector2) {
 				network.TriggerOnServerAndClients("move", util.SerializeArgs(network.ClientToken(), velocity))
 			}
 
 			customController := controller.CreateController()
 			controllerManager.AddController(customController.(glfwController.Controller))
-			customController.BindKeyAction(func() { move(vmath.Vector3{Y: 1}) }, controller.KeyW, controller.Press)
-			customController.BindKeyAction(func() { move(vmath.Vector3{Z: 1}) }, controller.KeyA, controller.Press)
-			customController.BindKeyAction(func() { move(vmath.Vector3{Y: -1}) }, controller.KeyS, controller.Press)
-			customController.BindKeyAction(func() { move(vmath.Vector3{Z: -1}) }, controller.KeyD, controller.Press)
+			customController.BindKeyAction(func() { move(vmath.Vector2{Y: -100}) }, controller.KeyW, controller.Press)
+			customController.BindKeyAction(func() { move(vmath.Vector2{X: -100}) }, controller.KeyA, controller.Press)
+			customController.BindKeyAction(func() { move(vmath.Vector2{Y: 100}) }, controller.KeyS, controller.Press)
+			customController.BindKeyAction(func() { move(vmath.Vector2{X: 100}) }, controller.KeyD, controller.Press)
+			customController.BindKeyAction(func() { move(vmath.Vector2{}) }, controller.KeyW, controller.Release)
+			customController.BindKeyAction(func() { move(vmath.Vector2{}) }, controller.KeyA, controller.Release)
+			customController.BindKeyAction(func() { move(vmath.Vector2{}) }, controller.KeyS, controller.Release)
+			customController.BindKeyAction(func() { move(vmath.Vector2{}) }, controller.KeyD, controller.Release)
 		}
 	})
 }

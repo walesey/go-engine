@@ -484,7 +484,7 @@ func (glRenderer *OpenglRenderer) DrawGeometry(geometry *renderer.Geometry) {
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, geometry.IboId)
 
 	//update buffers
-	if geometry.VboDirty {
+	if geometry.VboDirty && len(geometry.Verticies) > 0 && len(geometry.Indicies) > 0 {
 		gl.BufferData(gl.ARRAY_BUFFER, len(geometry.Verticies)*4, gl.Ptr(geometry.Verticies), gl.DYNAMIC_DRAW)
 		gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(geometry.Indicies)*4, gl.Ptr(geometry.Indicies), gl.DYNAMIC_DRAW)
 		geometry.VboDirty = false

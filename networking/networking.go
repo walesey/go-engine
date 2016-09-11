@@ -1,6 +1,9 @@
 package networking
 
-import "log"
+import (
+	"log"
+	"time"
+)
 
 type Network struct {
 	client *Client
@@ -43,7 +46,7 @@ func (n *Network) Update(dt float64) {
 func (n *Network) CallEvent(name, clientId string, data []byte) {
 	callback, ok := n.events[name]
 	if ok {
-		log.Printf("[NETWORK EVENT] %v clientId:%v", name, clientId)
+		// log.Printf("[NETWORK EVENT] %v clientId:%v", name, clientId)
 		callback(clientId, data)
 	} else {
 		log.Printf("[NETWORK EVENT] ERROR: Unknown event: %v clientId:%v", name, clientId)
@@ -98,6 +101,24 @@ func (n *Network) ClientJoinedEvent(callback func(clientId string)) {
 
 func (n *Network) ClientToken() string {
 	return n.client.token
+}
+
+func (n *Network) SetWriteBufferDuration(dur time.Duration) {
+	if n.IsServer() {
+		n.server.bufferedWriteDuration = dur
+	}
+}
+
+func (n *Network) FlushAllWriteBuffers() {
+	if n.IsServer() {
+		n.server.FlushAllWriteBuffers()
+	}
+}
+
+func (n *Network) FlushWriteBuffer(clientId string) {
+	if n.IsServer() {
+		n.server.FlushWriteBuffer(clientId)
+	}
 }
 
 func (n *Network) BytesSent() int64 {
