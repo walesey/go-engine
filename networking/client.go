@@ -57,22 +57,23 @@ func (c *Client) Connect(addr string) {
 				continue
 			}
 
-			data, err := ioutil.ReadAll(gzipReader)
+			unzipped, err := ioutil.ReadAll(gzipReader)
 			if err != nil {
 				fmt.Println("Error unzipping udp packet: ", err)
 				continue
 			}
 
 			var packet Packet
-			for i := 0; i < len(data); {
-				packet, err, i = Decode(data, i)
+			for i := 0; i < len(unzipped); {
+				j := i
+				packet, err, i = Decode(unzipped, i)
 				if err != nil {
 					fmt.Println("Error decoding udp packet: ", err)
 					continue
 				}
+				c.updateBytesReceived(packet.Command, int64(i-j))
 
 				c.token = packet.Token
-				c.updateBytesReceived(packet.Command, int64(n))
 				c.packets <- packet
 			}
 		}

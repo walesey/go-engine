@@ -11,21 +11,24 @@ import (
 )
 
 func SerializeArgs(args ...interface{}) []byte {
-	var buf bytes.Buffer
+	buf := new(bytes.Buffer)
 	for _, arg := range args {
 		switch v := arg.(type) {
 		case string:
-			Stringbytes(&buf, v)
+			Stringbytes(buf, v)
 		case int:
-			buf.WriteByte(byte(v))
+			UInt32Bytes(buf, uint32(v))
 		case float64:
-			Float64bytes(&buf, v)
+			Float64bytes(buf, v)
 		case vmath.Vector2:
-			Vector2bytes(&buf, v)
+			Vector2bytes(buf, v)
 		case vmath.Vector3:
-			Vector3bytes(&buf, v)
+			Vector3bytes(buf, v)
 		case bool:
 			buf.WriteByte(BoolByte(v))
+		case []byte:
+			UInt32Bytes(buf, uint32(len(v)))
+			buf.Write(v)
 		default:
 			fmt.Println("Unknown typed used in SerializeArgs")
 		}
@@ -59,6 +62,18 @@ func Float64bytes(w io.Writer, float float64) {
 	bits := math.Float64bits(float)
 	var bytes [8]byte
 	binary.LittleEndian.PutUint64(bytes[:], bits)
+	w.Write(bytes[:])
+}
+
+func UInt32frombytes(r io.Reader) uint32 {
+	var bytes [4]byte
+	r.Read(bytes[:])
+	return binary.LittleEndian.Uint32(bytes[:])
+}
+
+func UInt32Bytes(w io.Writer, i uint32) {
+	var bytes [4]byte
+	binary.LittleEndian.PutUint32(bytes[:], i)
 	w.Write(bytes[:])
 }
 

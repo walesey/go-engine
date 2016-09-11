@@ -70,15 +70,15 @@ func (s *Server) Listen(port int) {
 				continue
 			}
 
-			data, err := ioutil.ReadAll(gzipReader)
+			unzipped, err := ioutil.ReadAll(gzipReader)
 			if err != nil {
 				fmt.Println("Error unzipping udp packet: ", err)
 				continue
 			}
 
 			var packet Packet
-			for i := 0; i < len(data); {
-				packet, err, i = Decode(data, i)
+			for i := 0; i < len(unzipped); {
+				packet, err, i = Decode(unzipped, i)
 				if err != nil {
 					fmt.Println("Error Decoding udp packet: ", err)
 					continue
