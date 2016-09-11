@@ -102,28 +102,7 @@ func (s *Server) WriteMessage(command, token string, data []byte) {
 			Data:    data,
 		}
 
-		data := Encode(packet)
-
-		var gzipBuf bytes.Buffer
-		gzipWriter := gzip.NewWriter(&gzipBuf)
-		_, err := gzipWriter.Write(data)
-		if err != nil {
-			fmt.Println("Error Gzip compressing udp message: ", err)
-			return
-		}
-
-		if err := gzipWriter.Flush(); err != nil {
-			fmt.Println("Error Flushing Gzip writer for udp message: ", err)
-			return
-		}
-
-		if err := gzipWriter.Close(); err != nil {
-			fmt.Println("Error Closing Gzip writer for udp message: ", err)
-			return
-		}
-
-		gzipData := gzipBuf.Bytes()
-		if _, err := session.packetBuffer.Write(gzipData); err != nil {
+		if _, err := session.packetBuffer.Write(Encode(packet)); err != nil {
 			fmt.Println("Error Writing udp message to session buffer: ", err)
 		}
 	}
@@ -175,8 +154,27 @@ func (s *Server) FlushWriteBuffer(token string) {
 	if session, ok := s.sessions[token]; ok {
 		data := session.packetBuffer.Bytes()
 		if len(data) > 0 {
-			s.bytesSent += int64(len(data))
-			s.conn.WriteToUDP(data, session.addr)
+			var gzipBuf bytes.Buffer
+			gzipWriter := gzip.NewWriter(&gzipBuf)
+			_, err := gzipWriter.Write(data)
+			if err != nil {
+				fmt.Println("Error Gzip compressing udp message: ", err)
+				return
+			}
+
+			if err := gzipWriter.Flush(); err != nil {
+				fmt.Println("Error Flushing Gzip writer for udp message: ", err)
+				return
+			}
+
+			if err := gzipWriter.Close(); err != nil {
+				fmt.Println("Error Closing Gzip writer for udp message: ", err)
+				return
+			}
+
+			gzipData := gzipBuf.Bytes()
+			s.bytesSent += int64(len(gzipData))
+			s.conn.WriteToUDP(gzipData, session.addr)
 			session.packetBuffer.Reset()
 		}
 	}
