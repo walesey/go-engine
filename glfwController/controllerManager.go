@@ -25,14 +25,14 @@ func (c *ControllerManager) MouseButtonCallback(window *glfw.Window, button glfw
 //Mouse movement callback
 func (c *ControllerManager) CursorPosCallback(window *glfw.Window, xpos, ypos float64) {
 	for _, cont := range c.controllerList {
-		cont.CursorPosCallback(window, xpos, ypos)
+		cont.CursorPosCallback(window, float32(xpos), float32(ypos))
 	}
 }
 
 //Mouse scrollwheel callback
 func (c *ControllerManager) ScrollCallback(window *glfw.Window, xoffset, yoffset float64) {
 	for _, cont := range c.controllerList {
-		cont.ScrollCallback(window, xoffset, yoffset)
+		cont.ScrollCallback(window, float32(xoffset), float32(yoffset))
 	}
 }
 

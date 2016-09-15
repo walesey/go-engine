@@ -4,9 +4,9 @@ import (
 	"image"
 	"image/color"
 
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/libs/freetype/truetype"
 	"github.com/walesey/go-engine/renderer"
-	vmath "github.com/walesey/go-engine/vectormath"
 )
 
 type TextField struct {
@@ -19,7 +19,7 @@ type TextField struct {
 	onBlurHandlers  []func()
 }
 
-func (tf *TextField) Render(size, offset vmath.Vector2) vmath.Vector2 {
+func (tf *TextField) Render(size, offset mgl32.Vec2) mgl32.Vec2 {
 	renderSize := tf.container.Render(size, offset)
 	tf.RenderCursor()
 	return renderSize
@@ -35,11 +35,11 @@ func (tf *TextField) RenderCursor() {
 	text := tf.GetHiddenText()
 	cursorTranslation, _ := c.StringDimensions(string([]byte(text)[:tf.cursorPos]))
 	xPos := int(cursorTranslation.X >> 6)
-	tf.cursor.SetTranslation(vmath.Vector2{float64(xPos), 0}.ToVector3())
+	tf.cursor.SetTranslation(mgl32.Vec2{float32(xPos), 0}.Vec3(0))
 	if tf.active {
-		tf.cursor.SetScale(vmath.Vector2{tf.text.textSize, tf.text.textSize}.ToVector3())
+		tf.cursor.SetScale(mgl32.Vec2{tf.text.textSize, tf.text.textSize}.Vec3(0))
 	} else {
-		tf.cursor.SetScale(vmath.Vector2{0, 0}.ToVector3())
+		tf.cursor.SetScale(mgl32.Vec2{0, 0}.Vec3(0))
 	}
 }
 
@@ -51,11 +51,11 @@ func (tf *TextField) GetId() string {
 	return tf.container.GetId()
 }
 
-func (tf *TextField) mouseMove(position vmath.Vector2) {
+func (tf *TextField) mouseMove(position mgl32.Vec2) {
 	tf.container.mouseMove(position)
 }
 
-func (tf *TextField) mouseClick(button int, release bool, position vmath.Vector2) {
+func (tf *TextField) mouseClick(button int, release bool, position mgl32.Vec2) {
 	tf.container.mouseClick(button, release, position)
 }
 
@@ -128,7 +128,7 @@ func (tf *TextField) SetFont(textFont *truetype.Font) *TextField {
 	return tf
 }
 
-func (tf *TextField) SetTextSize(textSize float64) *TextField {
+func (tf *TextField) SetTextSize(textSize float32) *TextField {
 	tf.text.SetTextSize(textSize)
 	return tf
 }
@@ -138,7 +138,7 @@ func (tf *TextField) SetTextColor(textColor color.Color) *TextField {
 	return tf
 }
 
-func (tf *TextField) SetWidth(width float64) {
+func (tf *TextField) SetWidth(width float32) {
 	tf.container.SetWidth(width)
 }
 
@@ -146,7 +146,7 @@ func (tf *TextField) UsePercentWidth(usePercent bool) {
 	tf.container.UsePercentHeight(usePercent)
 }
 
-func (tf *TextField) SetHeight(height float64) {
+func (tf *TextField) SetHeight(height float32) {
 	tf.container.SetHeight(height)
 }
 
@@ -211,7 +211,7 @@ func (tf *TextField) AddOnKeyPress(handler func(key string, release bool)) {
 	tf.AddOnKeyPress(handler)
 }
 
-func NewTextField(text string, textColor color.Color, textSize float64, textFont *truetype.Font) *TextField {
+func NewTextField(text string, textColor color.Color, textSize float32, textFont *truetype.Font) *TextField {
 	cursor := renderer.CreateBoxWithOffset(0.07, 1.1, 0, 0.1)
 	mat := renderer.CreateMaterial()
 	mat.LightingMode = renderer.MODE_UNLIT
@@ -226,7 +226,7 @@ func NewTextField(text string, textColor color.Color, textSize float64, textFont
 	}
 	tf.text.node.Add(cursorNode)
 	tf.container.AddChildren(tf.text)
-	tf.GetHitbox().AddOnClick(func(button int, release bool, position vmath.Vector2) {
+	tf.GetHitbox().AddOnClick(func(button int, release bool, position mgl32.Vec2) {
 		if !release {
 			tf.Activate()
 		}

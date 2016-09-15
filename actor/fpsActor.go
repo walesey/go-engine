@@ -1,22 +1,20 @@
 package actor
 
 import (
-	"fmt"
-
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/physics/physicsAPI"
 	"github.com/walesey/go-engine/renderer"
-	vmath "github.com/walesey/go-engine/vectormath"
 )
 
 //an actor that can move around bound by physics (gravity), can jump, can walk/run
 type FPSActor struct {
 	Entity                  renderer.Entity
 	Character               physicsAPI.CharacterController
-	MoveSpeed, SprintSpeed  float64
-	LookSpeed               float64
-	lookPitch, lookAngle    float64
-	forwardMove, strafeMove float64
-	walkDirection           vmath.Vector3
+	MoveSpeed, SprintSpeed  float32
+	LookSpeed               float32
+	lookPitch, lookAngle    float32
+	forwardMove, strafeMove float32
+	walkDirection           mgl32.Vec3
 }
 
 func NewFPSActor(entity renderer.Entity, character physicsAPI.CharacterController) *FPSActor {
@@ -31,23 +29,23 @@ func NewFPSActor(entity renderer.Entity, character physicsAPI.CharacterControlle
 
 func (actor *FPSActor) Update(dt float64) {
 	// orientation
-	vertRot := vmath.AngleAxis(actor.lookAngle, vmath.Vector3{0, 1, 0})
-	axis := vertRot.Apply(vmath.Vector3{1, 0, 0}).Cross(vmath.Vector3{0, 1, 0})
-	horzRot := vmath.AngleAxis(actor.lookPitch, axis)
-	orientation := horzRot.Multiply(vertRot)
+	vertRot := mgl32.QuatRotate(actor.lookAngle, mgl32.Vec3{0, 1, 0})
+	axis := vertRot.Rotate(mgl32.Vec3{1, 0, 0}).Cross(mgl32.Vec3{0, 1, 0})
+	horzRot := mgl32.QuatRotate(actor.lookPitch, axis)
+	orientation := horzRot.Mul(vertRot)
 	actor.Entity.SetOrientation(orientation)
 
 	// walking direction
 	if actor.Character.OnGround() {
-		actor.walkDirection = orientation.Apply(vmath.Vector3{actor.forwardMove, 0, actor.strafeMove})
+		actor.walkDirection = orientation.Rotate(mgl32.Vec3{actor.forwardMove, 0, actor.strafeMove})
 	}
 	actor.Character.SetWalkDirection(actor.walkDirection)
 	actor.Entity.SetTranslation(actor.Character.GetPosition())
 }
 
-func (actor *FPSActor) Look(dx, dy float64) {
+func (actor *FPSActor) Look(dx, dy float32) {
 	actor.lookAngle = actor.lookAngle - actor.LookSpeed*dx
-	actor.lookPitch = actor.lookPitch + actor.LookSpeed*dy
+	actor.lookPitch = actor.lookPitch - actor.LookSpeed*dy
 	if actor.lookPitch > 1.5 {
 		actor.lookPitch = 1.5
 	}
@@ -90,7 +88,6 @@ func (actor *FPSActor) StopStrafingRight() {
 
 func (actor *FPSActor) Jump() {
 	if actor.Character.CanJump() {
-		fmt.Println()
 		actor.Character.Jump()
 	}
 }

@@ -1,10 +1,10 @@
 package chipmunkPhysics
 
 import (
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/vova616/chipmunk"
 	"github.com/vova616/chipmunk/vect"
 	"github.com/walesey/go-engine/physics/physicsAPI"
-	vmath "github.com/walesey/go-engine/vectormath"
 )
 
 type ChipmonkSpace struct {
@@ -45,18 +45,18 @@ func (cSpace *ChipmonkSpace) RemoveBody(body physicsAPI.PhysicsObject2D) {
 	}
 }
 
-func (cSpace *ChipmonkSpace) SetGravity(gravity vmath.Vector2) {
+func (cSpace *ChipmonkSpace) SetGravity(gravity mgl32.Vec2) {
 	cSpace.Space.Gravity = convertToVect(gravity)
 }
 
-func (cSpace *ChipmonkSpace) GetGravity() vmath.Vector2 {
+func (cSpace *ChipmonkSpace) GetGravity() mgl32.Vec2 {
 	return convertFromVect(cSpace.Space.Gravity)
 }
 
-func convertFromVect(v vect.Vect) vmath.Vector2 {
-	return vmath.Vector2{X: float64(v.X), Y: float64(v.Y)}
+func convertFromVect(v vect.Vect) mgl32.Vec2 {
+	return mgl32.Vec2{float32(v.X), float32(v.Y)}
 }
 
-func convertToVect(v vmath.Vector2) vect.Vect {
-	return vect.Vect{X: vect.Float(v.X), Y: vect.Float(v.Y)}
+func convertToVect(v mgl32.Vec2) vect.Vect {
+	return vect.Vect{X: vect.Float(v.X()), Y: vect.Float(v.Y())}
 }

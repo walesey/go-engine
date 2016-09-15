@@ -3,13 +3,14 @@ package renderer
 import (
 	"sort"
 
-	"github.com/walesey/go-engine/util"
+	"github.com/go-gl/mathgl/mgl32"
+	"github.com/go-gl/mathgl/mgl32/matstack"
 )
 
 type SceneGraph struct {
 	opaqueNode        *Node
 	transparentNode   *Node
-	matStack          util.Stack
+	txStack           *matstack.TransformStack
 	transparentBucket bucketEntries
 }
 
@@ -18,7 +19,7 @@ func CreateSceneGraph() *SceneGraph {
 	sceneGraph := &SceneGraph{
 		opaqueNode:      CreateNode(),
 		transparentNode: CreateNode(),
-		matStack:        util.CreateStack(),
+		txStack:         matstack.NewTransformStack(),
 	}
 	return sceneGraph
 }
@@ -52,16 +53,15 @@ func (sceneGraph *SceneGraph) RenderScene(renderer Renderer) {
 }
 
 func renderEntry(entry bucketEntry, renderer Renderer) {
-	renderer.PushTransform()
-	renderer.ApplyTransform(entry.transform)
+	renderer.PushTransform(entry.transform)
 	entry.spatial.Draw(renderer)
 	renderer.PopTransform()
 }
 
 type bucketEntry struct {
 	spatial     Spatial
-	transform   Transform
-	cameraDelta float64
+	transform   mgl32.Mat4
+	cameraDelta float32
 }
 
 type bucketEntries []bucketEntry
@@ -79,31 +79,21 @@ func (slice bucketEntries) Swap(i, j int) {
 }
 
 func (sceneGraph *SceneGraph) buildBuckets(node *Node) {
-	sceneGraph.matStack.Push(node.Transform)
-	tx := ApplyAll(sceneGraph.matStack)
+	sceneGraph.txStack.Push(node.Transform)
 	for _, child := range node.children {
 		nextNode, found := child.(*Node)
 		if found {
 			sceneGraph.buildBuckets(nextNode)
 		} else {
-			sceneGraph.transparentBucket = append(sceneGraph.transparentBucket, bucketEntry{spatial: child, transform: tx})
+			sceneGraph.transparentBucket = append(sceneGraph.transparentBucket, bucketEntry{spatial: child, transform: sceneGraph.txStack.Peek()})
 		}
 	}
-	sceneGraph.matStack.Pop()
+	sceneGraph.txStack.Pop()
 }
 
 func (sceneGraph *SceneGraph) sortBuckets(renderer Renderer) {
 	for index, entry := range sceneGraph.transparentBucket {
-		sceneGraph.transparentBucket[index].cameraDelta = entry.transform.TransformCoordinate(entry.spatial.Centre()).Subtract(renderer.CameraLocation()).LengthSquared()
+		sceneGraph.transparentBucket[index].cameraDelta = mgl32.TransformCoordinate(entry.spatial.Centre(), entry.transform).Sub(renderer.CameraLocation()).Len()
 	}
 	sort.Sort(sceneGraph.transparentBucket)
-}
-
-//used to combine transformations
-func ApplyAll(s util.Stack) Transform {
-	result := CreateTransform()
-	for i := 0; i < s.Len(); i++ {
-		result.ApplyTransform(s.Get(i).(Transform))
-	}
-	return result
 }

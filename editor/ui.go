@@ -5,12 +5,12 @@ import (
 	"os"
 	"strings"
 
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/controller"
 	"github.com/walesey/go-engine/glfwController"
 	"github.com/walesey/go-engine/ui"
 	"github.com/walesey/go-engine/util"
-	vmath "github.com/walesey/go-engine/vectormath"
 )
 
 func (e *Editor) setupUI() {
@@ -93,8 +93,8 @@ func (e *Editor) openMainMenu() {
 		})
 
 		window, container, _ := e.defaultWindow()
-		window.SetTranslation(vmath.Vector3{200, 200, 1})
-		window.SetScale(vmath.Vector3{400, 0, 1})
+		window.SetTranslation(mgl32.Vec3{200, 200, 1})
+		window.SetScale(mgl32.Vec3{400, 0, 1})
 
 		ui.LoadHTML(container, strings.NewReader(mainMenuHtml), strings.NewReader(globalCss), e.uiAssets)
 		window.Render()

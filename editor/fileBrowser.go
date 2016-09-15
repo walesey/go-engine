@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/glfwController"
 	"github.com/walesey/go-engine/ui"
-	vmath "github.com/walesey/go-engine/vectormath"
 )
 
 const maxFileDisplayed = 37
@@ -65,8 +65,8 @@ func (e *Editor) openFileBrowser(heading string, callback func(filePath string),
 		})
 
 		window, container, _ := e.defaultWindow()
-		window.SetTranslation(vmath.Vector3{100, 100, 1})
-		window.SetScale(vmath.Vector3{800, 0, 1})
+		window.SetTranslation(mgl32.Vec3{100, 100, 1})
+		window.SetScale(mgl32.Vec3{800, 0, 1})
 
 		e.fileBrowserController = ui.NewUiController(window).(glfwController.Controller)
 		window.Tabs, _ = ui.LoadHTML(container, strings.NewReader(fileBrowserHtml), strings.NewReader(globalCss), e.uiAssets)

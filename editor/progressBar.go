@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/glfwController"
 	"github.com/walesey/go-engine/ui"
-	vmath "github.com/walesey/go-engine/vectormath"
 )
 
 func (e *Editor) closeProgressBar() {
@@ -16,8 +16,8 @@ func (e *Editor) closeProgressBar() {
 func (e *Editor) openProgressBar() {
 	if e.progressBar == nil {
 		window := ui.NewWindow()
-		window.SetTranslation(vmath.Vector3{500, 0, 0})
-		window.SetScale(vmath.Vector3{330, 0, 1})
+		window.SetTranslation(mgl32.Vec3{500, 0, 0})
+		window.SetScale(mgl32.Vec3{330, 0, 1})
 
 		container := ui.NewContainer()
 		container.SetBackgroundColor(200, 200, 200, 255)

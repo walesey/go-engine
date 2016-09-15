@@ -10,7 +10,6 @@ test:
 	go test github.com/walesey/go-engine/physics/physicsAPI
 	go test github.com/walesey/go-engine/ui
 	go test github.com/walesey/go-engine/util
-	go test github.com/walesey/go-engine/vectormath
 
 coverage:
 	mkdir -p $(COVER_DIR)
@@ -23,7 +22,6 @@ coverage:
 	go test github.com/walesey/go-engine/physics/physicsAPI -coverprofile=$(COVER_DIR)/physics.cover.out && \
 	go test github.com/walesey/go-engine/ui -coverprofile=$(COVER_DIR)/ui.cover.out && \
 	go test github.com/walesey/go-engine/util -coverprofile=$(COVER_DIR)/util.cover.out && \
-	go test github.com/walesey/go-engine/vectormath -coverprofile=$(COVER_DIR)/vectormath.cover.out && \
 		rm -f $(COVER_DIR)/coverage.out && \
 		echo 'mode: set' > $(COVER_DIR)/coverage.out && \
 		cat $(COVER_DIR)/*.cover.out | sed '/mode: set/d' >> $(COVER_DIR)/coverage.out && \

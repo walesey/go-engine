@@ -9,8 +9,8 @@ type Controller interface {
 	controller.Controller
 	KeyCallback(window *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey)
 	MouseButtonCallback(window *glfw.Window, button glfw.MouseButton, action glfw.Action, mods glfw.ModifierKey)
-	CursorPosCallback(window *glfw.Window, xpos, ypos float64)
-	ScrollCallback(window *glfw.Window, xoffset, yoffset float64)
+	CursorPosCallback(window *glfw.Window, xpos, ypos float32)
+	ScrollCallback(window *glfw.Window, xoffset, yoffset float32)
 }
 
 type KeyAction struct {
@@ -28,8 +28,8 @@ type ActionMap struct {
 	mouseAction          func(button controller.MouseButton, action controller.Action)
 	keyActionMap         map[KeyAction][]func()
 	mouseButtonActionMap map[MouseButtonAction][]func()
-	axisActions          []func(xpos, ypos float64)
-	scrollActions        []func(xoffset, yoffset float64)
+	axisActions          []func(xpos, ypos float32)
+	scrollActions        []func(xoffset, yoffset float32)
 }
 
 func NewActionMap() controller.Controller {
@@ -38,8 +38,8 @@ func NewActionMap() controller.Controller {
 		mouseAction:          func(button controller.MouseButton, action controller.Action) {},
 		keyActionMap:         make(map[KeyAction][]func()),
 		mouseButtonActionMap: make(map[MouseButtonAction][]func()),
-		axisActions:          make([]func(xpos, ypos float64), 0, 0),
-		scrollActions:        make([]func(xoffset, yoffset float64), 0, 0),
+		axisActions:          make([]func(xpos, ypos float32), 0, 0),
+		scrollActions:        make([]func(xoffset, yoffset float32), 0, 0),
 	}
 	return am
 }
@@ -71,11 +71,11 @@ func (am *ActionMap) BindMouseAction(function func(), button controller.MouseBut
 	}
 }
 
-func (am *ActionMap) BindAxisAction(function func(xpos, ypos float64)) {
+func (am *ActionMap) BindAxisAction(function func(xpos, ypos float32)) {
 	am.axisActions = append(am.axisActions, function)
 }
 
-func (am *ActionMap) BindScrollAction(function func(xoffset, yoffset float64)) {
+func (am *ActionMap) BindScrollAction(function func(xoffset, yoffset float32)) {
 	am.scrollActions = append(am.scrollActions, function)
 }
 
@@ -100,13 +100,13 @@ func (am *ActionMap) MouseButtonCallback(window *glfw.Window, button glfw.MouseB
 	}
 }
 
-func (am *ActionMap) CursorPosCallback(window *glfw.Window, xpos, ypos float64) {
+func (am *ActionMap) CursorPosCallback(window *glfw.Window, xpos, ypos float32) {
 	for _, action := range am.axisActions {
 		action(xpos, ypos)
 	}
 }
 
-func (am *ActionMap) ScrollCallback(window *glfw.Window, xoffset, yoffset float64) {
+func (am *ActionMap) ScrollCallback(window *glfw.Window, xoffset, yoffset float32) {
 	for _, action := range am.scrollActions {
 		action(xoffset, yoffset)
 	}

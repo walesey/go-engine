@@ -3,27 +3,26 @@ package effects
 import (
 	"image/color"
 
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/renderer"
-	"github.com/walesey/go-engine/vectormath"
+	"github.com/walesey/go-engine/util"
 )
 
 type Sprite struct {
 	node                                 *renderer.Node
 	geometry                             *renderer.Geometry
-	transform                            renderer.Transform
-	location, scale                      vectormath.Vector3
-	Rotation                             float64
+	location, scale                      mgl32.Vec3
+	Rotation                             float32
 	FaceCamera                           bool
 	frame, totalFrames, framesX, framesY int
 }
 
 func CreateSprite(totalFrames, framesX, framesY int, material *renderer.Material) *Sprite {
 	sprite := Sprite{
-		transform:   renderer.CreateTransform(),
-		location:    vectormath.Vector3{0, 0, 0},
-		scale:       vectormath.Vector3{1, 1, 1},
+		location:    mgl32.Vec3{0, 0, 0},
+		scale:       mgl32.Vec3{1, 1, 1},
 		frame:       0,
-		FaceCamera:  false,
+		FaceCamera:  true,
 		totalFrames: totalFrames,
 		framesX:     framesX,
 		framesY:     framesY,
@@ -49,8 +48,8 @@ func BoxFlipbook(geometry *renderer.Geometry, frame, framesX, framesY int) {
 
 func (sprite *Sprite) Draw(r renderer.Renderer) {
 	if sprite.FaceCamera {
-		orientation := vectormath.FacingOrientation(sprite.Rotation, r.CameraLocation().Subtract(sprite.location), vectormath.Vector3{0, 0, 1}, vectormath.Vector3{-1, 0, 0})
-		sprite.node.Transform.From(sprite.scale, sprite.location, orientation)
+		orientation := util.FacingOrientation(sprite.Rotation, r.CameraLocation().Sub(sprite.location), mgl32.Vec3{0, 0, 1}, mgl32.Vec3{-1, 0, 0})
+		sprite.node.SetOrientation(orientation)
 	}
 	sprite.node.Draw(r)
 }
@@ -59,7 +58,7 @@ func (sprite *Sprite) Destroy(renderer renderer.Renderer) {
 	sprite.node.Destroy(renderer)
 }
 
-func (sprite *Sprite) Centre() vectormath.Vector3 {
+func (sprite *Sprite) Centre() mgl32.Vec3 {
 	return sprite.location
 }
 
@@ -75,20 +74,20 @@ func (sprite *Sprite) SetColor(color color.NRGBA) {
 	sprite.geometry.SetColor(color)
 }
 
-func (sprite *Sprite) Optimize(geometry *renderer.Geometry, transform renderer.Transform) {
+func (sprite *Sprite) Optimize(geometry *renderer.Geometry, transform mgl32.Mat4) {
 	sprite.geometry.Optimize(geometry, transform)
 }
 
-func (sprite *Sprite) SetTranslation(translation vectormath.Vector3) {
+func (sprite *Sprite) SetTranslation(translation mgl32.Vec3) {
 	sprite.location = translation
 	sprite.node.SetTranslation(translation)
 }
 
-func (sprite *Sprite) SetScale(scale vectormath.Vector3) {
+func (sprite *Sprite) SetScale(scale mgl32.Vec3) {
 	sprite.scale = scale
 	sprite.node.SetScale(scale)
 }
 
-func (sprite *Sprite) SetOrientation(orientation vectormath.Quaternion) {
+func (sprite *Sprite) SetOrientation(orientation mgl32.Quat) {
 	sprite.node.SetOrientation(orientation)
 }

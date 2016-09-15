@@ -1,7 +1,7 @@
 package physicsAPI
 
 type ConstraintSolver interface {
-	SolveGroup(stepTime float64, constraints *[]Constraint)
+	SolveGroup(stepTime float32, constraints *[]Constraint)
 }
 
 type Constraint interface{}

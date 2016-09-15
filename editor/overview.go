@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/editor/models"
 	"github.com/walesey/go-engine/glfwController"
 	"github.com/walesey/go-engine/ui"
-	vmath "github.com/walesey/go-engine/vectormath"
 )
 
 var uniqueIdCounter int
@@ -88,8 +88,8 @@ func (e *Editor) initOverviewMenu() {
 	})
 
 	window, container, _ := e.defaultWindow()
-	window.SetTranslation(vmath.Vector3{10, 10, 1})
-	window.SetScale(vmath.Vector3{500, 0, 1})
+	window.SetTranslation(mgl32.Vec3{10, 10, 1})
+	window.SetScale(mgl32.Vec3{500, 0, 1})
 
 	e.controllerManager.AddController(ui.NewUiController(window).(glfwController.Controller))
 	ui.LoadHTML(container, strings.NewReader(overviewMenuHtml), strings.NewReader(globalCss), e.uiAssets)
@@ -166,9 +166,9 @@ func (e *Editor) resetGroup() {
 			selectedNode.SetTranslation(node.Translation)
 			selectedNode.SetOrientation(node.Orientation)
 		}
-		node.Scale = vmath.Vector3{1, 1, 1}
-		node.Translation = vmath.Vector3{}
-		node.Orientation = vmath.IdentityQuaternion()
+		node.Scale = mgl32.Vec3{1, 1, 1}
+		node.Translation = mgl32.Vec3{}
+		node.Orientation = mgl32.QuatIdent()
 	}
 }
 

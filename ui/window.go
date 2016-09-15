@@ -3,8 +3,8 @@ package ui
 import (
 	"image/color"
 
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/renderer"
-	vmath "github.com/walesey/go-engine/vectormath"
 )
 
 type Activatable interface {
@@ -17,8 +17,8 @@ type Window struct {
 	node, elementNode, background *renderer.Node
 	backgroundBox                 *renderer.Geometry
 	element                       Element
-	size, position                vmath.Vector2
-	mousePos                      vmath.Vector2
+	size, position                mgl32.Vec2
+	mousePos                      mgl32.Vec2
 	Tabs                          []Activatable
 }
 
@@ -30,26 +30,26 @@ func (w *Window) Destroy(renderer renderer.Renderer) {
 	w.node.Destroy(renderer)
 }
 
-func (w *Window) Centre() vmath.Vector3 {
+func (w *Window) Centre() mgl32.Vec3 {
 	return w.node.Centre()
 }
 
-func (w *Window) Optimize(geometry *renderer.Geometry, transform renderer.Transform) {
+func (w *Window) Optimize(geometry *renderer.Geometry, transform mgl32.Mat4) {
 	w.node.Optimize(geometry, transform)
 }
 
-func (w *Window) SetScale(scale vmath.Vector3) {
+func (w *Window) SetScale(scale mgl32.Vec3) {
 	w.background.SetScale(scale)
-	w.size = vmath.Vector2{scale.X, scale.Y}
+	w.size = scale.Vec2()
 	w.Render()
 }
 
-func (w *Window) SetTranslation(translation vmath.Vector3) {
+func (w *Window) SetTranslation(translation mgl32.Vec3) {
 	w.node.SetTranslation(translation)
-	w.position = translation.ToVector2()
+	w.position = translation.Vec2()
 }
 
-func (w *Window) SetOrientation(orientation vmath.Quaternion) {
+func (w *Window) SetOrientation(orientation mgl32.Quat) {
 	w.node.SetOrientation(orientation)
 }
 
@@ -68,15 +68,15 @@ func (w *Window) SetElement(element Element) {
 
 func (w *Window) Render() {
 	if w.element != nil {
-		size := w.element.Render(w.size, vmath.Vector2{0, 0})
-		width, height := w.size.X, w.size.Y
-		if size.X > width {
-			width = size.X
+		size := w.element.Render(w.size, mgl32.Vec2{0, 0})
+		width, height := w.size.X(), w.size.Y()
+		if size.X() > width {
+			width = size.X()
 		}
-		if size.Y > height {
-			height = size.Y
+		if size.Y() > height {
+			height = size.Y()
 		}
-		w.background.SetScale(vmath.Vector2{width, height}.ToVector3())
+		w.background.SetScale(mgl32.Vec2{width, height}.Vec3(0))
 	}
 }
 
@@ -106,8 +106,8 @@ func (w *Window) TextElementById(id string) *TextElement {
 	return nil
 }
 
-func (w *Window) mouseMove(position vmath.Vector2) {
-	w.mousePos = position.Subtract(w.position)
+func (w *Window) mouseMove(position mgl32.Vec2) {
+	w.mousePos = position.Sub(w.position)
 	if w.element != nil {
 		w.element.mouseMove(w.mousePos)
 	}
@@ -158,7 +158,7 @@ func NewWindow() *Window {
 		backgroundBox: box,
 		background:    background,
 		elementNode:   elementNode,
-		size:          vmath.Vector2{500, 1},
+		size:          mgl32.Vec2{500, 1},
 		Tabs:          []Activatable{},
 	}
 }

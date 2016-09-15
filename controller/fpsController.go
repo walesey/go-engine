@@ -1,7 +1,7 @@
 package controller
 
 type FPSActor interface {
-	Look(dx, dy float64)
+	Look(dx, dy float32)
 	StartMovingForward()
 	StartMovingBackward()
 	StartStrafingLeft()
@@ -20,8 +20,8 @@ type FPSActor interface {
 
 func NewFPSController(actor FPSActor) Controller {
 	c := CreateController()
-	x, y := 0.0, 0.0
-	doLook := func(xpos, ypos float64) {
+	var x, y float32 = 0.0, 0.0
+	doLook := func(xpos, ypos float32) {
 		actor.Look(xpos-x, ypos-y)
 		x, y = xpos, ypos
 	}

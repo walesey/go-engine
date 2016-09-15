@@ -4,21 +4,22 @@ import (
 	"image/color"
 	"math/rand"
 
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/renderer"
-	vmath "github.com/walesey/go-engine/vectormath"
+	"github.com/walesey/go-engine/util"
 )
 
 type ParticleSettings struct {
 	MaxParticles                             int
-	ParticleEmitRate                         float64
-	MaxLife, MinLife                         float64
-	StartSize, EndSize                       vmath.Vector3
+	ParticleEmitRate                         float32
+	MaxLife, MinLife                         float32
+	StartSize, EndSize                       mgl32.Vec3
 	StartColor, EndColor                     color.NRGBA
-	MaxTranslation, MinTranslation           vmath.Vector3
-	MaxStartVelocity, MinStartVelocity       vmath.Vector3
-	Acceleration                             vmath.Vector3
-	MaxRotation, MinRotation                 float64
-	MaxRotationVelocity, MinRotationVelocity float64
+	MaxTranslation, MinTranslation           mgl32.Vec3
+	MaxStartVelocity, MinStartVelocity       mgl32.Vec3
+	Acceleration                             mgl32.Vec3
+	MaxRotation, MinRotation                 float32
+	MaxRotationVelocity, MinRotationVelocity float32
 	BaseGeometry                             *renderer.Geometry
 	Material                                 *renderer.Material
 	TotalFrames, FramesX, FramesY            int
@@ -26,27 +27,26 @@ type ParticleSettings struct {
 }
 
 type ParticleSystem struct {
-	Location          vmath.Vector3
-	DisableSpawning   bool
-	FaceCamera        bool
-	Settings          ParticleSettings
-	geometry          *renderer.Geometry
-	particles         []*Particle
-	particleTransform renderer.Transform
-	life              float64
-	cameraPosition    vmath.Vector3
+	Location        mgl32.Vec3
+	DisableSpawning bool
+	FaceCamera      bool
+	Settings        ParticleSettings
+	geometry        *renderer.Geometry
+	particles       []*Particle
+	life            float32
+	cameraPosition  mgl32.Vec3
 }
 
 type Particle struct {
 	active              bool
 	geometry            *renderer.Geometry
-	Life, LifeRemaining float64
-	Scale               vmath.Vector3
-	Translation         vmath.Vector3
-	Orientation         vmath.Quaternion
-	Rotation            float64
-	Velocity            vmath.Vector3
-	RotationVelocity    float64
+	Life, LifeRemaining float32
+	Scale               mgl32.Vec3
+	Translation         mgl32.Vec3
+	Orientation         mgl32.Quat
+	Rotation            float32
+	Velocity            mgl32.Vec3
+	RotationVelocity    float32
 	Color               color.Color
 	Frame               int
 }
@@ -56,11 +56,10 @@ func CreateParticleSystem(settings ParticleSettings) *ParticleSystem {
 	geometry.Material = settings.Material
 	geometry.CullBackface = false
 	ps := ParticleSystem{
-		Settings:          settings,
-		FaceCamera:        true,
-		geometry:          geometry,
-		particles:         make([]*Particle, settings.MaxParticles),
-		particleTransform: renderer.CreateTransform(),
+		Settings:   settings,
+		FaceCamera: true,
+		geometry:   geometry,
+		particles:  make([]*Particle, settings.MaxParticles),
 	}
 	ps.initParitcles()
 	return &ps
@@ -83,22 +82,22 @@ func (ps *ParticleSystem) Destroy(renderer renderer.Renderer) {
 	ps.geometry.Destroy(renderer)
 }
 
-func (ps *ParticleSystem) Centre() vmath.Vector3 {
+func (ps *ParticleSystem) Centre() mgl32.Vec3 {
 	return ps.Location
 }
 
-func (ps *ParticleSystem) Optimize(geometry *renderer.Geometry, transform renderer.Transform) {
+func (ps *ParticleSystem) Optimize(geometry *renderer.Geometry, transform mgl32.Mat4) {
 	ps.geometry.Optimize(geometry, transform)
 }
 
-func (ps *ParticleSystem) SetCameraLocation(cameraLocation vmath.Vector3) {
+func (ps *ParticleSystem) SetCameraLocation(cameraLocation mgl32.Vec3) {
 	ps.cameraPosition = cameraLocation
 }
 
 func (ps *ParticleSystem) Update(dt float64) {
 	//number of new particles to spawn
 	previousLife := ps.life
-	ps.life = ps.life + dt
+	ps.life = ps.life + float32(dt)
 	previouseSpawnCount := int(previousLife * ps.Settings.ParticleEmitRate)
 	newSpawnCount := int(ps.life * ps.Settings.ParticleEmitRate)
 	spawnCount := newSpawnCount - previouseSpawnCount
@@ -126,15 +125,15 @@ func (ps *ParticleSystem) spawnParticle() {
 		if !particle.active {
 			//spawn partice
 			ps.particles[i].active = true
-			randomNb := rand.Float64()
+			randomNb := rand.Float32()
 			ps.particles[i].Life = ps.Settings.MaxLife*(1.0-randomNb) + ps.Settings.MinLife*randomNb
-			randomNb = rand.Float64()
+			randomNb = rand.Float32()
 			ps.particles[i].Rotation = ps.Settings.MaxRotation*(1.0-randomNb) + ps.Settings.MinRotation*randomNb
 			ps.particles[i].LifeRemaining = ps.particles[i].Life
 			ps.particles[i].Translation = ps.Location.Add(randomVector(ps.Settings.MinTranslation, ps.Settings.MaxTranslation))
 			ps.particles[i].Velocity = randomVector(ps.Settings.MinStartVelocity, ps.Settings.MaxStartVelocity)
 			// ps.particles[i].angularVelocity = ps.Settings.MaxStartVelocity.Slerp( ps.Settings.MinStartVelocity, rand.Float64() )
-			randomNb = rand.Float64()
+			randomNb = rand.Float32()
 			ps.particles[i].RotationVelocity = ps.Settings.MaxRotationVelocity*(1.0-randomNb) + ps.Settings.MinRotationVelocity*randomNb
 			break
 		}
@@ -144,21 +143,21 @@ func (ps *ParticleSystem) spawnParticle() {
 
 func (ps *ParticleSystem) updateParticle(p *Particle, dt float64) {
 	//set translation
-	p.Translation = p.Translation.Add(p.Velocity.MultiplyScalar(dt))
-	p.Velocity = p.Velocity.Add(ps.Settings.Acceleration.MultiplyScalar(dt))
+	p.Translation = p.Translation.Add(p.Velocity.Mul(float32(dt)))
+	p.Velocity = p.Velocity.Add(ps.Settings.Acceleration.Mul(float32(dt)))
 	//set orientation / rotation
-	p.Rotation = p.Rotation + (p.RotationVelocity * dt)
-	p.LifeRemaining = p.LifeRemaining - dt
+	p.Rotation = p.Rotation + (p.RotationVelocity * float32(dt))
+	p.LifeRemaining = p.LifeRemaining - float32(dt)
 	// set valuew based on life remaining
 	lifeRatio := p.LifeRemaining / p.Life
-	p.Scale = ps.Settings.EndSize.Lerp(ps.Settings.StartSize, lifeRatio)
+	p.Scale = util.Vec3Lerp(ps.Settings.EndSize, ps.Settings.StartSize, lifeRatio)
 	p.Color = lerpColor(ps.Settings.EndColor, ps.Settings.StartColor, lifeRatio)
-	p.Frame = int((1.0 - lifeRatio) * float64(ps.Settings.TotalFrames))
+	p.Frame = int((1.0 - lifeRatio) * float32(ps.Settings.TotalFrames))
 	//face the camera
 	if ps.FaceCamera {
-		p.Orientation = vmath.FacingOrientation(p.Rotation, ps.cameraPosition.Subtract(p.Translation), vmath.Vector3{0, 0, 1}, vmath.Vector3{-1, 0, 0})
+		p.Orientation = util.FacingOrientation(p.Rotation, ps.cameraPosition.Sub(p.Translation), mgl32.Vec3{0, 0, 1}, mgl32.Vec3{-1, 0, 0})
 	} else {
-		p.Orientation = vmath.AngleAxis(p.Rotation, vmath.Vector3{Z: 1})
+		p.Orientation = mgl32.QuatRotate(p.Rotation, mgl32.Vec3{0, 0, 1})
 	}
 	//is particle dead
 	if p.LifeRemaining <= 0 {
@@ -175,28 +174,28 @@ func (ps *ParticleSystem) loadParticle(p *Particle) {
 	//set flipbook uv
 	BoxFlipbook(p.geometry, p.Frame, ps.Settings.FramesX, ps.Settings.FramesY)
 	//rotate and move
-	ps.particleTransform.From(p.Scale, p.Translation, p.Orientation)
+	particleTransform := util.Mat4From(p.Scale, p.Translation, p.Orientation)
 	//add geometry to particle system
-	p.geometry.Optimize(ps.geometry, ps.particleTransform)
+	p.geometry.Optimize(ps.geometry, particleTransform)
 }
 
 //sets the location where the particles with be emitted from
-func (ps *ParticleSystem) SetTranslation(translation vmath.Vector3) {
+func (ps *ParticleSystem) SetTranslation(translation mgl32.Vec3) {
 	ps.Location = translation
 }
 
-func (ps *ParticleSystem) SetScale(scale vmath.Vector3)                {} //na
-func (ps *ParticleSystem) SetOrientation(orientation vmath.Quaternion) {} //na
+func (ps *ParticleSystem) SetScale(scale mgl32.Vec3)             {} //na
+func (ps *ParticleSystem) SetOrientation(orientation mgl32.Quat) {} //na
 
-func lerpColor(color1, color2 color.NRGBA, amount float64) color.NRGBA {
-	r := int(float64(color1.R)*(1.0-amount)) + int(float64(color2.R)*amount)
-	g := int(float64(color1.G)*(1.0-amount)) + int(float64(color2.G)*amount)
-	b := int(float64(color1.B)*(1.0-amount)) + int(float64(color2.B)*amount)
-	a := int(float64(color1.A)*(1.0-amount)) + int(float64(color2.A)*amount)
+func lerpColor(color1, color2 color.NRGBA, amount float32) color.NRGBA {
+	r := int(float32(color1.R)*(1.0-amount)) + int(float32(color2.R)*amount)
+	g := int(float32(color1.G)*(1.0-amount)) + int(float32(color2.G)*amount)
+	b := int(float32(color1.B)*(1.0-amount)) + int(float32(color2.B)*amount)
+	a := int(float32(color1.A)*(1.0-amount)) + int(float32(color2.A)*amount)
 	return color.NRGBA{uint8(r), uint8(g), uint8(b), uint8(a)}
 }
 
-func randomVector(min, max vmath.Vector3) vmath.Vector3 {
-	r1, r2, r3 := rand.Float64(), rand.Float64(), rand.Float64()
-	return vmath.Vector3{min.X*(1.0-r1) + max.X*r1, min.Y*(1.0-r2) + max.Y*r2, min.Z*(1.0-r3) + max.Z*r3}
+func randomVector(min, max mgl32.Vec3) mgl32.Vec3 {
+	r1, r2, r3 := rand.Float32(), rand.Float32(), rand.Float32()
+	return mgl32.Vec3{min.X()*(1.0-r1) + max.X()*r1, min.Y()*(1.0-r2) + max.Y()*r2, min.Z()*(1.0-r3) + max.Z()*r3}
 }

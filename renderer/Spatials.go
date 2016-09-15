@@ -3,48 +3,48 @@ package renderer
 import (
 	"fmt"
 
-	vmath "github.com/walesey/go-engine/vectormath"
+	"github.com/go-gl/mathgl/mgl32"
+	"github.com/walesey/go-engine/util"
 )
 
 //A Spatial is something that can be Drawn by a Renderer
 type Spatial interface {
 	Draw(renderer Renderer)
 	Destroy(renderer Renderer)
-	Centre() vmath.Vector3
-	Optimize(geometry *Geometry, transform Transform)
+	Centre() mgl32.Vec3
+	Optimize(geometry *Geometry, transform mgl32.Mat4)
 }
 
 //An Entity is something that can be scaled, positioned and rotated (orientation)
 type Entity interface {
-	SetScale(scale vmath.Vector3)
-	SetTranslation(translation vmath.Vector3)
-	SetOrientation(orientation vmath.Quaternion)
+	SetScale(scale mgl32.Vec3)
+	SetTranslation(translation mgl32.Vec3)
+	SetOrientation(orientation mgl32.Quat)
 }
 
 //Node
 type Node struct {
 	children    []Spatial
 	deleted     []Spatial
-	Transform   Transform
-	Scale       vmath.Vector3
-	Translation vmath.Vector3
-	Orientation vmath.Quaternion
+	Transform   mgl32.Mat4
+	Scale       mgl32.Vec3
+	Translation mgl32.Vec3
+	Orientation mgl32.Quat
 }
 
 func CreateNode() *Node {
-	return &Node{
+	node := &Node{
 		children:    make([]Spatial, 0, 0),
 		deleted:     make([]Spatial, 0, 0),
-		Transform:   CreateTransform(),
-		Scale:       vmath.Vector3{1, 1, 1},
-		Translation: vmath.Vector3{0, 0, 0},
-		Orientation: vmath.IdentityQuaternion(),
+		Translation: mgl32.Vec3{0, 0, 0},
+		Orientation: mgl32.QuatIdent(),
 	}
+	node.SetScale(mgl32.Vec3{1, 1, 1})
+	return node
 }
 
 func (node *Node) Draw(renderer Renderer) {
-	renderer.PushTransform()
-	renderer.ApplyTransform(node.Transform)
+	renderer.PushTransform(node.Transform)
 	for _, child := range node.children {
 		child.Draw(renderer)
 	}
@@ -66,7 +66,7 @@ func (node *Node) cleanupDeleted(renderer Renderer) {
 	node.deleted = node.deleted[:0]
 }
 
-func (node *Node) Centre() vmath.Vector3 {
+func (node *Node) Centre() mgl32.Vec3 {
 	return node.Translation
 }
 
@@ -95,24 +95,24 @@ func (node *Node) RemoveAll(destroy bool) {
 	node.children = node.children[:0]
 }
 
-func (node *Node) SetScale(scale vmath.Vector3) {
+func (node *Node) SetScale(scale mgl32.Vec3) {
 	node.Scale = scale
-	node.Transform.From(node.Scale, node.Translation, node.Orientation)
+	node.Transform = util.Mat4From(node.Scale, node.Translation, node.Orientation)
 }
 
-func (node *Node) SetTranslation(translation vmath.Vector3) {
+func (node *Node) SetTranslation(translation mgl32.Vec3) {
 	node.Translation = translation
-	node.Transform.From(node.Scale, node.Translation, node.Orientation)
+	node.Transform = util.Mat4From(node.Scale, node.Translation, node.Orientation)
 }
 
-func (node *Node) SetOrientation(orientation vmath.Quaternion) {
+func (node *Node) SetOrientation(orientation mgl32.Quat) {
 	node.Orientation = orientation
-	node.Transform.From(node.Scale, node.Translation, node.Orientation)
+	node.Transform = util.Mat4From(node.Scale, node.Translation, node.Orientation)
 }
 
-func (node *Node) SetRotation(angle float64, axis vmath.Vector3) {
-	node.Orientation = vmath.AngleAxis(angle, axis)
-	node.Transform.From(node.Scale, node.Translation, node.Orientation)
+func (node *Node) SetRotation(angle float32, axis mgl32.Vec3) {
+	node.Orientation = mgl32.QuatRotate(angle, axis)
+	node.Transform = util.Mat4From(node.Scale, node.Translation, node.Orientation)
 }
 
 func (node *Node) OptimizeNode() *Geometry {
@@ -122,25 +122,23 @@ func (node *Node) OptimizeNode() *Geometry {
 	return geometry
 }
 
-func (node *Node) Optimize(geometry *Geometry, transform Transform) {
-	newTransform := CreateTransform()
-	newTransform.Set(transform)
-	newTransform.ApplyTransform(node.Transform)
+func (node *Node) Optimize(geometry *Geometry, transform mgl32.Mat4) {
+	newTransform := transform.Mul4(node.Transform)
 	for _, child := range node.children {
 		child.Optimize(geometry, newTransform)
 	}
 }
 
-func (node *Node) RelativePosition(n *Node) (vmath.Vector3, error) {
+func (node *Node) RelativePosition(n *Node) (mgl32.Vec3, error) {
 	if node == n {
-		return vmath.Vector3{}, nil
+		return mgl32.Vec3{}, nil
 	}
 	for _, child := range node.children {
 		if childNode, ok := child.(*Node); ok {
 			if rPost, err := childNode.RelativePosition(n); err == nil {
-				return childNode.Transform.TransformCoordinate(rPost), nil
+				return mgl32.TransformCoordinate(rPost, childNode.Transform), nil
 			}
 		}
 	}
-	return vmath.Vector3{}, fmt.Errorf("Node not found")
+	return mgl32.Vec3{}, fmt.Errorf("Node not found")
 }

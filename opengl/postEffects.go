@@ -6,7 +6,6 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/renderer"
-	"github.com/walesey/go-engine/vectormath"
 )
 
 type postEffect struct {
@@ -122,9 +121,6 @@ func (glRenderer *OpenglRenderer) renderPostEffect(pe postEffect) {
 		case mgl32.Vec4:
 			vec := uniform.Value.(mgl32.Vec4)
 			gl.Uniform4f(uniformLocation, vec[0], vec[1], vec[2], vec[3])
-		case vectormath.Vector3:
-			vec := uniform.Value.(vectormath.Vector3)
-			gl.Uniform3f(uniformLocation, float32(vec.X), float32(vec.Y), float32(vec.Z))
 		}
 	}
 

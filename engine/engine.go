@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"image/color"
 
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/renderer"
 	"github.com/walesey/go-engine/ui"
-	vmath "github.com/walesey/go-engine/vectormath"
 )
 
 // Engine is a wrapper for all the go-engine boilerblate code.
@@ -20,7 +20,7 @@ type Engine interface {
 	RemoveOrtho(spatial renderer.Spatial, destroy bool)
 	AddUpdatable(updatable Updatable)
 	RemoveUpdatable(updatable Updatable)
-	Sky(material *renderer.Material, size float64)
+	Sky(material *renderer.Material, size float32)
 	Camera() *renderer.Camera
 	Renderer() renderer.Renderer
 	SetFpsCap(FpsCap float64)
@@ -103,7 +103,7 @@ func (engine *EngineImpl) RemoveUpdatable(updatable Updatable) {
 	engine.updatableStore.Remove(updatable)
 }
 
-func (engine *EngineImpl) Sky(material *renderer.Material, size float64) {
+func (engine *EngineImpl) Sky(material *renderer.Material, size float32) {
 	if engine.sceneGraph != nil {
 		geom := renderer.CreateSkyBox()
 		geom.Material = material
@@ -111,8 +111,8 @@ func (engine *EngineImpl) Sky(material *renderer.Material, size float64) {
 		geom.CullBackface = false
 		skyNode := renderer.CreateNode()
 		skyNode.Add(geom)
-		skyNode.SetRotation(1.57, vmath.Vector3{0, 1, 0})
-		skyNode.SetScale(vmath.Vector3{1, 1, 1}.MultiplyScalar(size))
+		skyNode.SetRotation(1.57, mgl32.Vec3{0, 1, 0})
+		skyNode.SetScale(mgl32.Vec3{1, 1, 1}.Mul(size))
 		engine.AddSpatial(skyNode)
 		cubeMap := renderer.CreateCubemap(material.Diffuse)
 		engine.renderer.ReflectionMap(cubeMap)
@@ -137,8 +137,8 @@ func (engine *EngineImpl) FPS() float64 {
 
 func (engine *EngineImpl) InitFpsDial() {
 	window := ui.NewWindow()
-	window.SetTranslation(vmath.Vector3{10, 10, 1})
-	window.SetScale(vmath.Vector3{400, 0, 1})
+	window.SetTranslation(mgl32.Vec3{10, 10, 1})
+	window.SetScale(mgl32.Vec3{400, 0, 1})
 	window.SetBackgroundColor(0, 0, 0, 0)
 
 	container := ui.NewContainer()

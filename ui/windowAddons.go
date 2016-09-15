@@ -1,24 +1,24 @@
 package ui
 
 import (
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/controller"
-	vmath "github.com/walesey/go-engine/vectormath"
 )
 
 func ClickAndDragWindow(window *Window, hitbox Hitbox, c controller.Controller) {
 	grabbed := false
-	grabOffset := vmath.Vector2{}
-	hitbox.AddOnClick(func(button int, release bool, position vmath.Vector2) {
+	grabOffset := mgl32.Vec2{}
+	hitbox.AddOnClick(func(button int, release bool, position mgl32.Vec2) {
 		grabOffset = position
 		grabbed = !release
 	})
 	c.BindMouseAction(func() {
 		grabbed = false
 	}, controller.MouseButton1, controller.Release)
-	c.BindAxisAction(func(xpos, ypos float64) {
+	c.BindAxisAction(func(xpos, ypos float32) {
 		if grabbed {
-			position := vmath.Vector2{xpos, ypos}
-			window.SetTranslation(position.Subtract(grabOffset).ToVector3())
+			position := mgl32.Vec2{xpos, ypos}
+			window.SetTranslation(position.Sub(grabOffset).Vec3(0))
 		}
 	})
 }

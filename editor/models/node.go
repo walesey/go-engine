@@ -1,19 +1,19 @@
 package editorModels
 
 import (
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/renderer"
-	vmath "github.com/walesey/go-engine/vectormath"
 )
 
 type NodeModel struct {
-	Id          string           `json:"id"`
-	Classes     []string         `json:"classes"`
-	Scale       vmath.Vector3    `json:"scale"`
-	Translation vmath.Vector3    `json:"translation"`
-	Orientation vmath.Quaternion `json:"orientation"`
-	Geometry    *string          `json:"geometry"`
-	Reference   *string          `json:"reference"`
-	Children    []*NodeModel     `json:"children"`
+	Id          string       `json:"id"`
+	Classes     []string     `json:"classes"`
+	Scale       mgl32.Vec3   `json:"scale"`
+	Translation mgl32.Vec3   `json:"translation"`
+	Orientation mgl32.Quat   `json:"orientation"`
+	Geometry    *string      `json:"geometry"`
+	Reference   *string      `json:"reference"`
+	Children    []*NodeModel `json:"children"`
 	node        *renderer.Node
 }
 
@@ -55,9 +55,9 @@ func (n *NodeModel) Copy(nameGenerator func(name string) string) *NodeModel {
 func NewNodeModel(id string) *NodeModel {
 	return &NodeModel{
 		Id:          id,
-		Scale:       vmath.Vector3{1, 1, 1},
-		Translation: vmath.Vector3{},
-		Orientation: vmath.IdentityQuaternion(),
+		Scale:       mgl32.Vec3{1, 1, 1},
+		Translation: mgl32.Vec3{},
+		Orientation: mgl32.QuatIdent(),
 		Children:    make([]*NodeModel, 0),
 	}
 }

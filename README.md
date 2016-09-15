@@ -24,7 +24,6 @@ uses go-gl which requires opengl.
 * engine - package Is the high level engine interface that handles a lot of boilerplate stuff.
 * controller - package Is the api for keyboard/mouse/joystick controllers. (see examples/simple/main.go)
 * assets - asset management for images and obj files.
-* vectormath - package contains useful vector math functions and types used throughout the engine.
 
 ## Important Interfaces and Structs
 * renderer.Entity (interface) - anything that can be moved, rotated and scaled. (eg. Camera/Node/ParticleEmitter)
@@ -34,7 +33,5 @@ uses go-gl which requires opengl.
 * renderer.Material (struct) - used for texturing a geometry.
 * renderer.Camera (struct) - The main object used to interact with the camera.
 * controller.Controller (interface) - Can have (mouse/keyboard...) events bound to.
-* vectormath.Vector3 (struct) - used to describe position in 3D space (X,Y,Z)
-* vectormath.Quaternion (struct) - used to describe orientation in 3D space (X,Y,Z,W)
 * engine.Engine (interface) - The main game engine interface
 * engine.Updatable (interface) - anything that can be updated every game simulation step.

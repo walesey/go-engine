@@ -4,7 +4,8 @@ import (
 	"image"
 	"image/color"
 
-	vmath "github.com/walesey/go-engine/vectormath"
+	"github.com/go-gl/mathgl/mgl32"
+	"github.com/walesey/go-engine/util"
 )
 
 const VertexStride = 12
@@ -49,7 +50,7 @@ type Geometry struct {
 	Material        *Material
 	CullBackface    bool
 	FrustrumCulling bool
-	boundingRadius  float64
+	boundingRadius  float32
 }
 
 //vericies format : x,y,z,   nx,ny,nz,   u,v,  r,g,b,a
@@ -83,7 +84,7 @@ func (geometry *Geometry) Draw(renderer Renderer) {
 
 func (geometry *Geometry) load(renderer Renderer) {
 	if !geometry.loaded && len(geometry.Indicies) != 0 && len(geometry.Verticies) != 0 {
-		geometry.boundingRadius = geometry.MaximalPointFromGeometry().Length()
+		geometry.boundingRadius = geometry.MaximalPointFromGeometry().Len()
 		renderer.CreateGeometry(geometry)
 		geometry.loaded = true
 	}
@@ -102,8 +103,8 @@ func (geometry *Geometry) Destroy(renderer Renderer) {
 	}
 }
 
-func (geometry *Geometry) Centre() vmath.Vector3 {
-	return vmath.Vector3{0, 0, 0}
+func (geometry *Geometry) Centre() mgl32.Vec3 {
+	return mgl32.Vec3{0, 0, 0}
 }
 
 func (geometry *Geometry) ClearBuffers() {
@@ -122,34 +123,34 @@ func (geometry *Geometry) SetColor(color color.Color) {
 	geometry.updateGeometry()
 }
 
-func (geometry *Geometry) Transform(transform Transform) {
+func (geometry *Geometry) Transform(transform mgl32.Mat4) {
 	geometry.transformRange(transform, 0)
 }
 
-func (geometry *Geometry) transformRange(transform Transform, from int) {
+func (geometry *Geometry) transformRange(transform mgl32.Mat4, from int) {
 	for i := from; i < len(geometry.Verticies); i = i + VertexStride {
-		v := transform.TransformCoordinate(vmath.Vector3{
-			float64(geometry.Verticies[i]),
-			float64(geometry.Verticies[i+1]),
-			float64(geometry.Verticies[i+2]),
-		})
-		n := transform.TransformNormal(vmath.Vector3{
-			float64(geometry.Verticies[i+3]),
-			float64(geometry.Verticies[i+4]),
-			float64(geometry.Verticies[i+5]),
-		})
-		geometry.Verticies[i] = float32(v.X)
-		geometry.Verticies[i+1] = float32(v.Y)
-		geometry.Verticies[i+2] = float32(v.Z)
-		geometry.Verticies[i+3] = float32(n.X)
-		geometry.Verticies[i+4] = float32(n.Y)
-		geometry.Verticies[i+5] = float32(n.Z)
+		v := mgl32.TransformCoordinate(mgl32.Vec3{
+			geometry.Verticies[i],
+			geometry.Verticies[i+1],
+			geometry.Verticies[i+2],
+		}, transform)
+		n := mgl32.TransformNormal(mgl32.Vec3{
+			geometry.Verticies[i+3],
+			geometry.Verticies[i+4],
+			geometry.Verticies[i+5],
+		}, transform)
+		geometry.Verticies[i] = v.X()
+		geometry.Verticies[i+1] = v.Y()
+		geometry.Verticies[i+2] = v.Z()
+		geometry.Verticies[i+3] = n.X()
+		geometry.Verticies[i+4] = n.Y()
+		geometry.Verticies[i+5] = n.Z()
 	}
 	geometry.updateGeometry()
 }
 
 //load the verts/indicies of geometry into destination Geometry
-func (geometry *Geometry) Optimize(destination *Geometry, transform Transform) {
+func (geometry *Geometry) Optimize(destination *Geometry, transform mgl32.Mat4) {
 	vertOffset := len(destination.Verticies)
 	indexOffset := len(destination.Indicies)
 	destination.Verticies = append(destination.Verticies, geometry.Verticies...)
@@ -170,30 +171,30 @@ func (geometry *Geometry) SetUVs(uvs ...float32) {
 }
 
 func (geometry *Geometry) updateGeometry() {
-	geometry.boundingRadius = geometry.MaximalPointFromGeometry().Length()
+	geometry.boundingRadius = geometry.MaximalPointFromGeometry().Len()
 	geometry.VboDirty = true
 }
 
 // Gets the furthest point from the origin in this geometry
-func (geometry *Geometry) MaximalPointFromGeometry() vmath.Vector3 {
-	var longestSq float64
-	var longest *vmath.Vector3
+func (geometry *Geometry) MaximalPointFromGeometry() mgl32.Vec3 {
+	var longestSq float32
+	var longest *mgl32.Vec3
 	for i := 0; i < len(geometry.Indicies); i = i + 1 {
 		index := geometry.Indicies[i]
-		v := vmath.Vector3{
-			X: float64(geometry.Verticies[index*VertexStride]),
-			Y: float64(geometry.Verticies[index*VertexStride+1]),
-			Z: float64(geometry.Verticies[index*VertexStride+2]),
+		v := mgl32.Vec3{
+			geometry.Verticies[index*VertexStride],
+			geometry.Verticies[index*VertexStride+1],
+			geometry.Verticies[index*VertexStride+2],
 		}
-		if longest == nil || v.LengthSquared() > longestSq {
-			longestSq = v.LengthSquared()
+		if longest == nil || util.Vec3LenSq(v) > longestSq {
+			longestSq = util.Vec3LenSq(v)
 			longest = &v
 		}
 	}
 	if longest != nil {
 		return *longest
 	}
-	return vmath.Vector3{}
+	return mgl32.Vec3{}
 }
 
 //Primitives
@@ -217,14 +218,13 @@ func CreateSkyBox() *Geometry {
 }
 
 // CreateBeam - creates a square prism oriented along the vector
-func CreateBeam(width float64, vector vmath.Vector3) *Geometry {
+func CreateBeam(width float64, vector mgl32.Vec3) *Geometry {
 	direction := vector.Normalize()
 	geo := CreateBoxWithOffset(float32(width), float32(width), float32(-width*0.5), float32(-width*0.5))
 	geo2 := CreateBoxWithOffset(float32(width), float32(width), float32(-width*0.5), float32(-width*0.5))
-	facingTx := CreateTransform()
-	facingTx.From(vmath.Vector3{1, 1, 1}, vmath.Vector3{}, vmath.FacingOrientation(0, direction, vmath.Vector3{0, 0, 1}, vmath.Vector3{1, 0, 0}))
+	facingTx := util.Mat4From(mgl32.Vec3{1, 1, 1}, mgl32.Vec3{}, util.FacingOrientation(0, direction, mgl32.Vec3{0, 0, 1}, mgl32.Vec3{1, 0, 0}))
 	geo.Transform(facingTx)
-	facingTx.From(vmath.Vector3{1, 1, 1}, vector, vmath.FacingOrientation(0, direction, vmath.Vector3{0, 0, -1}, vmath.Vector3{1, 0, 0}))
+	facingTx = util.Mat4From(mgl32.Vec3{1, 1, 1}, vector, util.FacingOrientation(0, direction, mgl32.Vec3{0, 0, -1}, mgl32.Vec3{1, 0, 0}))
 	geo2.Optimize(geo, facingTx)
 	geo.Indicies = append(geo.Indicies, 0, 1, 4, 4, 5, 0) //top
 	geo.Indicies = append(geo.Indicies, 1, 2, 7, 7, 4, 1) //side

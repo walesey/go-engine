@@ -12,7 +12,8 @@ import (
 
 	"github.com/aymerick/douceur/css"
 	"github.com/aymerick/douceur/parser"
-	vmath "github.com/walesey/go-engine/vectormath"
+	"github.com/go-gl/mathgl/mgl32"
+
 	"golang.org/x/net/html"
 )
 
@@ -69,7 +70,7 @@ func renderNode(container *Container, node *html.Node, styles *css.Stylesheet, a
 					textField = createTextField("", nextNode, newContainer, styles, assets)
 					textField.SetHidden(inputType == "password")
 					activatables = append(activatables, textField)
-					newContainer.Hitbox.AddOnClick(func(button int, release bool, position vmath.Vector2) {
+					newContainer.Hitbox.AddOnClick(func(button int, release bool, position mgl32.Vec2) {
 						if !release {
 							textField.Activate()
 						}
@@ -131,7 +132,7 @@ func renderNode(container *Container, node *html.Node, styles *css.Stylesheet, a
 				})
 			}
 			if len(activeStyles) > 0 {
-				newContainer.Hitbox.AddOnClick(func(button int, release bool, position vmath.Vector2) {
+				newContainer.Hitbox.AddOnClick(func(button int, release bool, position mgl32.Vec2) {
 					active = !release
 					updateState()
 				})
@@ -143,7 +144,7 @@ func renderNode(container *Container, node *html.Node, styles *css.Stylesheet, a
 				case attr.Key == "onclick":
 					callback, ok := assets.callbackMap[attr.Val]
 					if ok {
-						newContainer.Hitbox.AddOnClick(func(button int, release bool, position vmath.Vector2) {
+						newContainer.Hitbox.AddOnClick(func(button int, release bool, position mgl32.Vec2) {
 							callback(newContainer, button, release, position)
 						})
 					}
@@ -290,7 +291,7 @@ func createText(textElement *TextElement, node *html.Node, container *Container,
 		})
 	}
 	if len(activeTextStyles) > 0 {
-		container.Hitbox.AddOnClick(func(button int, release bool, position vmath.Vector2) {
+		container.Hitbox.AddOnClick(func(button int, release bool, position mgl32.Vec2) {
 			active = !release
 			updateState()
 		})
@@ -329,20 +330,24 @@ func applyTextStyles(textField *TextElement, textStyles map[string]string, asset
 	}
 }
 
-func parseDimensions(dimensionsStr string) (values []float64, units []string) {
+func parseDimensions(dimensionsStr string) (values []float32, units []string) {
 	dimensions := strings.Fields(dimensionsStr)
-	values = make([]float64, len(dimensions))
+	values = make([]float32, len(dimensions))
 	units = make([]string, len(dimensions))
 	for i, dimension := range dimensions {
 		var err error
+		var v float64
 		if strings.HasSuffix(dimension, "px") {
-			values[i], err = strconv.ParseFloat(strings.Replace(dimension, "px", "", 1), 64)
+			v, err = strconv.ParseFloat(strings.Replace(dimension, "px", "", 1), 32)
+			values[i] = float32(v)
 			units[i] = "px"
 		} else if strings.HasSuffix(dimension, "%") {
-			values[i], err = strconv.ParseFloat(strings.Replace(dimension, "%", "", 1), 64)
+			v, err = strconv.ParseFloat(strings.Replace(dimension, "%", "", 1), 32)
+			values[i] = float32(v)
 			units[i] = "%"
 		} else {
-			values[i], err = strconv.ParseFloat(dimension, 64)
+			v, err = strconv.ParseFloat(dimension, 32)
+			values[i] = float32(v)
 			units[i] = "px"
 		}
 		if err != nil {

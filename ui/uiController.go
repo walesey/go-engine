@@ -3,8 +3,8 @@ package ui
 import (
 	"strings"
 
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/controller"
-	vmath "github.com/walesey/go-engine/vectormath"
 )
 
 func controlKey(key controller.Key) bool {
@@ -38,8 +38,8 @@ func tabCycle(window *Window, increment int) {
 
 func NewUiController(window *Window) controller.Controller {
 	c := controller.CreateController()
-	doMouseMove := func(xpos, ypos float64) {
-		window.mouseMove(vmath.Vector2{X: xpos, Y: ypos})
+	doMouseMove := func(xpos, ypos float32) {
+		window.mouseMove(mgl32.Vec2{xpos, ypos})
 	}
 	c.BindAxisAction(doMouseMove)
 	c.BindMouseAction(func() { window.mouseClick(1, false) }, controller.MouseButton1, controller.Press)

@@ -4,12 +4,12 @@ import (
 	"image"
 	"image/color"
 
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/renderer"
-	vmath "github.com/walesey/go-engine/vectormath"
 )
 
 type Margin struct {
-	Top, Right, Bottom, Left float64
+	Top, Right, Bottom, Left float32
 }
 
 type MarginPercentages struct {
@@ -19,7 +19,7 @@ type MarginPercentages struct {
 type Container struct {
 	id               string
 	Hitbox           Hitbox
-	width, height    float64
+	width, height    float32
 	percentWidth     bool
 	percentHeight    bool
 	margin, padding  Margin
@@ -29,55 +29,55 @@ type Container struct {
 	elementsNode     *renderer.Node
 	background       *renderer.Node
 	backgroundBox    *renderer.Geometry
-	size, offset     vmath.Vector2
-	backgroundOffset vmath.Vector2
-	elementsOffset   vmath.Vector2
+	size, offset     mgl32.Vec2
+	backgroundOffset mgl32.Vec2
+	elementsOffset   mgl32.Vec2
 	children         []Element
 }
 
-func (c *Container) Render(size, offset vmath.Vector2) vmath.Vector2 {
+func (c *Container) Render(size, offset mgl32.Vec2) mgl32.Vec2 {
 	c.size, c.offset = size, offset
-	padding := convertMargin(c.padding, c.paddingPercent, size.X)
-	margin := convertMargin(c.margin, c.marginPercent, size.X)
-	sizeMinusMargins := size.Subtract(vmath.Vector2{
+	padding := convertMargin(c.padding, c.paddingPercent, size.X())
+	margin := convertMargin(c.margin, c.marginPercent, size.X())
+	sizeMinusMargins := size.Sub(mgl32.Vec2{
 		margin.Left + margin.Right + padding.Left + padding.Right,
 		margin.Top + margin.Bottom + padding.Top + padding.Bottom,
 	})
-	containerSize := &sizeMinusMargins
+	containerSize := sizeMinusMargins
 	if c.width > 0 {
-		containerSize.X = c.getWidth(size.X) - padding.Left - padding.Right
+		containerSize[0] = c.getWidth(size.X()) - padding.Left - padding.Right
 	}
 	if c.height > 0 {
-		containerSize.Y = c.getHeight(size.X) - padding.Top - padding.Bottom
+		containerSize[1] = c.getHeight(size.X()) - padding.Top - padding.Bottom
 	}
-	var width, height, highest float64 = 0, 0, 0
+	var width, height, highest float32 = 0, 0, 0
 	for _, child := range c.children {
-		childSize := child.Render(*containerSize, vmath.Vector2{width, height})
-		width += childSize.X
-		if width > containerSize.X {
+		childSize := child.Render(containerSize, mgl32.Vec2{width, height})
+		width += childSize.X()
+		if width > containerSize.X() {
 			height += highest
 			highest = 0
-			childSize = child.Render(*containerSize, vmath.Vector2{0, height})
-			width = childSize.X
+			childSize = child.Render(containerSize, mgl32.Vec2{0, height})
+			width = childSize.X()
 		}
-		if childSize.Y > highest {
-			highest = childSize.Y
+		if childSize.Y() > highest {
+			highest = childSize.Y()
 		}
 	}
 	height += highest
-	if vmath.ApproxEqual(c.height, 0, 0.001) {
-		containerSize.Y = height
+	if mgl32.FloatEqual(c.height, 0) {
+		containerSize[1] = height
 	}
 	//offsets and sizes
-	c.backgroundOffset = vmath.Vector2{margin.Left, margin.Top}
-	c.elementsOffset = vmath.Vector2{margin.Left + padding.Left, margin.Top + padding.Top}
-	backgroundSize := containerSize.Add(vmath.Vector2{padding.Left + padding.Right, padding.Top + padding.Bottom})
-	totalSize := backgroundSize.Add(vmath.Vector2{margin.Left + margin.Right, margin.Top + margin.Bottom})
+	c.backgroundOffset = mgl32.Vec2{margin.Left, margin.Top}
+	c.elementsOffset = mgl32.Vec2{margin.Left + padding.Left, margin.Top + padding.Top}
+	backgroundSize := containerSize.Add(mgl32.Vec2{padding.Left + padding.Right, padding.Top + padding.Bottom})
+	totalSize := backgroundSize.Add(mgl32.Vec2{margin.Left + margin.Right, margin.Top + margin.Bottom})
 
-	c.background.SetScale(backgroundSize.ToVector3())
-	c.background.SetTranslation(c.backgroundOffset.ToVector3())
-	c.elementsNode.SetTranslation(c.elementsOffset.ToVector3())
-	c.node.SetTranslation(c.offset.ToVector3())
+	c.background.SetScale(backgroundSize.Vec3(0))
+	c.background.SetTranslation(c.backgroundOffset.Vec3(0))
+	c.elementsNode.SetTranslation(c.elementsOffset.Vec3(0))
+	c.node.SetTranslation(c.offset.Vec3(0))
 	c.Hitbox.SetSize(backgroundSize)
 	return totalSize
 }
@@ -86,7 +86,7 @@ func (c *Container) ReRender() {
 	c.Render(c.size, c.offset)
 }
 
-func convertMargin(margin Margin, percentages MarginPercentages, parentWidth float64) Margin {
+func convertMargin(margin Margin, percentages MarginPercentages, parentWidth float32) Margin {
 	result := &Margin{margin.Top, margin.Right, margin.Bottom, margin.Left}
 	if percentages.Bottom {
 		result.Bottom = parentWidth * margin.Bottom / 100.0
@@ -107,7 +107,7 @@ func (c *Container) Spatial() renderer.Spatial {
 	return c.node
 }
 
-func (c *Container) SetWidth(width float64) {
+func (c *Container) SetWidth(width float32) {
 	c.width = width
 }
 
@@ -115,14 +115,14 @@ func (c *Container) UsePercentWidth(usePercent bool) {
 	c.percentWidth = usePercent
 }
 
-func (c *Container) getWidth(parentWidth float64) float64 {
+func (c *Container) getWidth(parentWidth float32) float32 {
 	if c.percentWidth {
 		return parentWidth * c.width / 100.0
 	}
 	return c.width
 }
 
-func (c *Container) SetHeight(height float64) {
+func (c *Container) SetHeight(height float32) {
 	c.height = height
 }
 
@@ -130,7 +130,7 @@ func (c *Container) UsePercentHeight(usePercent bool) {
 	c.percentHeight = usePercent
 }
 
-func (c *Container) getHeight(parentWidth float64) float64 {
+func (c *Container) getHeight(parentWidth float32) float32 {
 	if c.percentHeight {
 		return parentWidth * c.height / 100.0
 	}
@@ -234,19 +234,19 @@ func (c *Container) TextElementById(id string) *TextElement {
 	return nil
 }
 
-func (c *Container) mouseMove(position vmath.Vector2) {
-	offsetPos := position.Subtract(c.offset)
-	c.Hitbox.MouseMove(offsetPos.Subtract(c.backgroundOffset))
+func (c *Container) mouseMove(position mgl32.Vec2) {
+	offsetPos := position.Sub(c.offset)
+	c.Hitbox.MouseMove(offsetPos.Sub(c.backgroundOffset))
 	for _, child := range c.children {
-		child.mouseMove(offsetPos.Subtract(c.elementsOffset))
+		child.mouseMove(offsetPos.Sub(c.elementsOffset))
 	}
 }
 
-func (c *Container) mouseClick(button int, release bool, position vmath.Vector2) {
-	offsetPos := position.Subtract(c.offset)
-	c.Hitbox.MouseClick(button, release, offsetPos.Subtract(c.backgroundOffset))
+func (c *Container) mouseClick(button int, release bool, position mgl32.Vec2) {
+	offsetPos := position.Sub(c.offset)
+	c.Hitbox.MouseClick(button, release, offsetPos.Sub(c.backgroundOffset))
 	for _, child := range c.children {
-		child.mouseClick(button, release, offsetPos.Subtract(c.elementsOffset))
+		child.mouseClick(button, release, offsetPos.Sub(c.elementsOffset))
 	}
 }
 
@@ -256,7 +256,7 @@ func (c *Container) keyClick(key string, release bool) {
 	}
 }
 
-func NewMargin(margin float64) Margin {
+func NewMargin(margin float32) Margin {
 	return Margin{margin, margin, margin, margin}
 }
 

@@ -1,7 +1,7 @@
 package controller
 
 type BasicMovementActor interface {
-	Look(dx, dy float64)
+	Look(dx, dy float32)
 	StartMovingUp()
 	StartMovingDown()
 	StartMovingRight()
@@ -14,9 +14,9 @@ type BasicMovementActor interface {
 
 func NewBasicMovementController(actor BasicMovementActor, useDrag bool) Controller {
 	c := CreateController()
-	x, y := 0.0, 0.0
+	var x, y float32 = 0.0, 0.0
 	drag := false
-	doLook := func(xpos, ypos float64) {
+	doLook := func(xpos, ypos float32) {
 		if drag || !useDrag {
 			actor.Look(xpos-x, ypos-y)
 		}

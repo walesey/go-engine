@@ -7,7 +7,7 @@ import (
 	"io"
 	"math"
 
-	vmath "github.com/walesey/go-engine/vectormath"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 func SerializeArgs(args ...interface{}) []byte {
@@ -18,11 +18,13 @@ func SerializeArgs(args ...interface{}) []byte {
 			Stringbytes(buf, v)
 		case int:
 			UInt32Bytes(buf, uint32(v))
+		case float32:
+			Float32bytes(buf, v)
 		case float64:
 			Float64bytes(buf, v)
-		case vmath.Vector2:
+		case mgl32.Vec2:
 			Vector2bytes(buf, v)
-		case vmath.Vector3:
+		case mgl32.Vec3:
 			Vector3bytes(buf, v)
 		case bool:
 			buf.WriteByte(BoolByte(v))
@@ -65,6 +67,21 @@ func Float64bytes(w io.Writer, float float64) {
 	w.Write(bytes[:])
 }
 
+func Float32frombytes(r io.Reader) float32 {
+	var bytes [4]byte
+	r.Read(bytes[:])
+	bits := binary.LittleEndian.Uint32(bytes[:])
+	float := math.Float32frombits(bits)
+	return float
+}
+
+func Float32bytes(w io.Writer, float float32) {
+	bits := math.Float32bits(float)
+	var bytes [4]byte
+	binary.LittleEndian.PutUint32(bytes[:], bits)
+	w.Write(bytes[:])
+}
+
 func UInt32frombytes(r io.Reader) uint32 {
 	var bytes [4]byte
 	r.Read(bytes[:])
@@ -77,28 +94,28 @@ func UInt32Bytes(w io.Writer, i uint32) {
 	w.Write(bytes[:])
 }
 
-func Vector2frombytes(r io.Reader) vmath.Vector2 {
-	x := Float64frombytes(r)
-	y := Float64frombytes(r)
-	return vmath.Vector2{X: x, Y: y}
+func Vector2frombytes(r io.Reader) mgl32.Vec2 {
+	x := Float32frombytes(r)
+	y := Float32frombytes(r)
+	return mgl32.Vec2{x, y}
 }
 
-func Vector2bytes(w io.Writer, vector vmath.Vector2) {
-	Float64bytes(w, vector.X)
-	Float64bytes(w, vector.Y)
+func Vector2bytes(w io.Writer, vector mgl32.Vec2) {
+	Float32bytes(w, vector.X())
+	Float32bytes(w, vector.Y())
 }
 
-func Vector3frombytes(r io.Reader) vmath.Vector3 {
-	x := Float64frombytes(r)
-	y := Float64frombytes(r)
-	z := Float64frombytes(r)
-	return vmath.Vector3{X: x, Y: y, Z: z}
+func Vector3frombytes(r io.Reader) mgl32.Vec3 {
+	x := Float32frombytes(r)
+	y := Float32frombytes(r)
+	z := Float32frombytes(r)
+	return mgl32.Vec3{x, y, z}
 }
 
-func Vector3bytes(w io.Writer, vector vmath.Vector3) {
-	Float64bytes(w, vector.X)
-	Float64bytes(w, vector.Y)
-	Float64bytes(w, vector.Z)
+func Vector3bytes(w io.Writer, vector mgl32.Vec3) {
+	Float32bytes(w, vector.X())
+	Float32bytes(w, vector.Y())
+	Float32bytes(w, vector.Z())
 }
 
 func BoolFromByte(b byte) bool {

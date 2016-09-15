@@ -1,24 +1,24 @@
 package physicsAPI
 
-import vmath "github.com/walesey/go-engine/vectormath"
+import "github.com/go-gl/mathgl/mgl32"
 
 type CharacterController interface {
 	Delete()
-	Warp(position vmath.Vector3)
+	Warp(position mgl32.Vec3)
 	Jump()
-	SetWalkDirection(dir vmath.Vector3)
-	SetVelocityForTimeInterval(speed vmath.Vector3, time float64)
+	SetWalkDirection(dir mgl32.Vec3)
+	SetVelocityForTimeInterval(speed mgl32.Vec3, time float32)
 
 	SetUpAxis(axis int)
-	SetFallSpeed(speed float64)
-	SetJumpSpeed(speed float64)
-	SetMaxJumpHeight(height float64)
-	SetGravity(gravity float64)
-	SetMaxSlope(radian float64)
+	SetFallSpeed(speed float32)
+	SetJumpSpeed(speed float32)
+	SetMaxJumpHeight(height float32)
+	SetGravity(gravity float32)
+	SetMaxSlope(radian float32)
 
-	GetPosition() vmath.Vector3
+	GetPosition() mgl32.Vec3
 	CanJump() bool
-	GetGravity() float64
-	GetMaxSlope() float64
+	GetGravity() float32
+	GetMaxSlope() float32
 	OnGround() bool
 }

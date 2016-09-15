@@ -3,6 +3,7 @@ package editor
 import (
 	"bytes"
 
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/actor"
 	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/controller"
@@ -14,7 +15,6 @@ import (
 	"github.com/walesey/go-engine/renderer"
 	"github.com/walesey/go-engine/ui"
 	"github.com/walesey/go-engine/util"
-	vmath "github.com/walesey/go-engine/vectormath"
 )
 
 type Editor struct {
@@ -58,7 +58,7 @@ func (e *Editor) Start() {
 
 	e.gameEngine.Start(func() {
 		//lighting
-		e.renderer.CreateLight(0.0, 0.0, 0.0, 0.5, 0.5, 0.5, 0.7, 0.7, 0.7, true, vmath.Vector3{0.5, -1, 0.3}, 0)
+		e.renderer.CreateLight(0.0, 0.0, 0.0, 0.5, 0.5, 0.5, 0.7, 0.7, 0.7, true, mgl32.Vec3{0.5, -1, 0.3}, 0)
 
 		//Sky
 		skyImg, err := assets.ImportImage("TestAssets/Files/skybox/cubemap.png")
@@ -109,13 +109,13 @@ func (e *Editor) initSelectSprite() {
 func (e *Editor) updateSelectSprite(dt float64) {
 	selectedModel, _ := e.overviewMenu.getSelectedNode(e.currentMap.Root)
 	if selectedModel != nil {
-		size := selectedModel.Translation.Subtract(e.gameEngine.Camera().GetTranslation()).Length() * 0.02
+		size := selectedModel.Translation.Sub(e.gameEngine.Camera().GetTranslation()).Len() * 0.02
 		translation, err := e.rootMapNode.RelativePosition(selectedModel.GetNode())
 		if err == nil {
-			e.selectSprite.SetScale(vmath.Vector3{size, size, size})
+			e.selectSprite.SetScale(mgl32.Vec3{size, size, size})
 			e.selectSprite.SetTranslation(translation)
 		} else {
-			e.selectSprite.SetScale(vmath.Vector3{})
+			e.selectSprite.SetScale(mgl32.Vec3{})
 		}
 	}
 }

@@ -14,10 +14,10 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/go-gl/mathgl/mgl32/matstack"
 	"github.com/walesey/go-engine/renderer"
 	"github.com/walesey/go-engine/shaders"
 	"github.com/walesey/go-engine/util"
-	vmath "github.com/walesey/go-engine/vectormath"
 )
 
 const (
@@ -29,16 +29,6 @@ func init() {
 	runtime.LockOSThread()
 }
 
-//MultiplyAll - used to combine transformations
-func MultiplyAll(s util.Stack) mgl32.Mat4 {
-	result := mgl32.Ident4()
-	for i := 0; i < s.Len(); i++ {
-		tx := s.Get(i).(*renderer.GlTransform)
-		result = result.Mul4(tx.Mat)
-	}
-	return result
-}
-
 // OpenglRenderer - opengl implementation
 type OpenglRenderer struct {
 	onInit, onUpdate, onRender func()
@@ -46,8 +36,7 @@ type OpenglRenderer struct {
 	FullScreen                 bool
 	WindowTitle                string
 	Window                     *glfw.Window
-	matStack                   util.Stack
-	modelMat                   mgl32.Mat4
+	transformStack             *matstack.TransformStack
 	program                    uint32
 	envMapId                   uint32
 	envMapLOD1Id               uint32
@@ -59,14 +48,14 @@ type OpenglRenderer struct {
 	nbDirectionalLights        int32
 	lights                     []float32
 	directionalLights          []float32
-	cameraLocation             vmath.Vector3
-	cameraUp                   vmath.Vector3
-	cameraLookAt               vmath.Vector3
+	cameraLocation             mgl32.Vec3
+	cameraUp                   mgl32.Vec3
+	cameraLookAt               mgl32.Vec3
 	cameraAngle                float32
 	cameraNear                 float32
 	cameraFar                  float32
 	cameraOrtho                bool
-	tlv, trv, blv, brv         vmath.Vector3
+	tlv, trv, blv, brv         mgl32.Vec3
 	postEffectVbo              uint32
 	postEffects                []postEffect
 }
@@ -141,15 +130,10 @@ func (glRenderer *OpenglRenderer) Start() {
 	gl.UseProgram(program)
 	glRenderer.program = program
 
-	//create mat stack for push pop stack
-	matStack := util.CreateStack()
-	glRenderer.matStack = matStack
-	glRenderer.PushTransform()
-	model := mgl32.Ident4()
-
 	//set shader uniforms
+	glRenderer.transformStack = matstack.NewTransformStack()
 	glRenderer.modelUniform = gl.GetUniformLocation(program, gl.Str("model\x00"))
-	gl.UniformMatrix4fv(glRenderer.modelUniform, 1, false, &model[0])
+	glRenderer.PushTransform(mgl32.Ident4())
 
 	textureUniform := gl.GetUniformLocation(program, gl.Str("diffuse\x00"))
 	gl.Uniform1i(textureUniform, 0)
@@ -235,8 +219,8 @@ func (glRenderer *OpenglRenderer) BackGroundColor(r, g, b, a float32) {
 	gl.ClearColor(r, g, b, a)
 }
 
-func (glRenderer *OpenglRenderer) WindowDimensions() vmath.Vector2 {
-	return vmath.Vector2{X: float64(glRenderer.WindowWidth), Y: float64(glRenderer.WindowHeight)}
+func (glRenderer *OpenglRenderer) WindowDimensions() mgl32.Vec2 {
+	return mgl32.Vec2{float32(glRenderer.WindowWidth), float32(glRenderer.WindowHeight)}
 }
 
 // Ortho - set orthogonal rendering mode
@@ -251,11 +235,11 @@ func (glRenderer *OpenglRenderer) Ortho() {
 }
 
 // Camera - camera settings
-func (glRenderer *OpenglRenderer) Perspective(location, lookat, up vmath.Vector3, angle, near, far float32) {
+func (glRenderer *OpenglRenderer) Perspective(location, lookat, up mgl32.Vec3, angle, near, far float32) {
 	projection := mgl32.Perspective(mgl32.DegToRad(angle), float32(glRenderer.WindowWidth)/float32(glRenderer.WindowHeight), near, far)
 	projectionUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("projection\x00"))
 	gl.UniformMatrix4fv(projectionUniform, 1, false, &projection[0])
-	camera := mgl32.LookAtV(convertVector(location), convertVector(lookat), convertVector(up))
+	camera := mgl32.LookAtV(location, lookat, up)
 	cameraUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("camera\x00"))
 	gl.UniformMatrix4fv(cameraUniform, 1, false, &camera[0])
 	glRenderer.cameraAngle = angle
@@ -270,60 +254,53 @@ func (glRenderer *OpenglRenderer) Perspective(location, lookat, up vmath.Vector3
 
 func (glRenderer *OpenglRenderer) updateCameraVectors() {
 	window := glRenderer.WindowDimensions()
-	modelview := mgl32.LookAtV(convertVector(glRenderer.cameraLocation), convertVector(glRenderer.cameraLookAt), convertVector(glRenderer.cameraUp))
-	projection := mgl32.Perspective(mgl32.DegToRad(float32(glRenderer.cameraAngle)), float32(window.X)/float32(window.Y), float32(glRenderer.cameraNear), float32(glRenderer.cameraFar))
-	v, _ := mgl32.UnProject(mgl32.Vec3{0, 0, 0.5}, modelview, projection, 0, 0, int(window.X), int(window.Y))
-	glRenderer.tlv = vmath.Vector3{X: float64(v.X()), Y: float64(v.Y()), Z: float64(v.Z())}.Subtract(glRenderer.cameraLocation).Normalize()
-	v, _ = mgl32.UnProject(mgl32.Vec3{float32(window.X), 0, 0.5}, modelview, projection, 0, 0, int(window.X), int(window.Y))
-	glRenderer.trv = vmath.Vector3{X: float64(v.X()), Y: float64(v.Y()), Z: float64(v.Z())}.Subtract(glRenderer.cameraLocation).Normalize()
-	v, _ = mgl32.UnProject(mgl32.Vec3{0, float32(window.Y), 0.5}, modelview, projection, 0, 0, int(window.X), int(window.Y))
-	glRenderer.blv = vmath.Vector3{X: float64(v.X()), Y: float64(v.Y()), Z: float64(v.Z())}.Subtract(glRenderer.cameraLocation).Normalize()
-	v, _ = mgl32.UnProject(mgl32.Vec3{float32(window.X), float32(window.Y), 0.5}, modelview, projection, 0, 0, int(window.X), int(window.Y))
-	glRenderer.brv = vmath.Vector3{X: float64(v.X()), Y: float64(v.Y()), Z: float64(v.Z())}.Subtract(glRenderer.cameraLocation).Normalize()
+	modelview := mgl32.LookAtV(glRenderer.cameraLocation, glRenderer.cameraLookAt, glRenderer.cameraUp)
+	projection := mgl32.Perspective(mgl32.DegToRad(glRenderer.cameraAngle), window.X()/window.Y(), glRenderer.cameraNear, glRenderer.cameraFar)
+	v, _ := mgl32.UnProject(mgl32.Vec3{0, 0, 0.5}, modelview, projection, 0, 0, int(window.X()), int(window.Y()))
+	glRenderer.tlv = v.Sub(glRenderer.cameraLocation).Normalize()
+	v, _ = mgl32.UnProject(mgl32.Vec3{window.X(), 0, 0.5}, modelview, projection, 0, 0, int(window.X()), int(window.Y()))
+	glRenderer.trv = v.Sub(glRenderer.cameraLocation).Normalize()
+	v, _ = mgl32.UnProject(mgl32.Vec3{0, window.Y(), 0.5}, modelview, projection, 0, 0, int(window.X()), int(window.Y()))
+	glRenderer.blv = v.Sub(glRenderer.cameraLocation).Normalize()
+	v, _ = mgl32.UnProject(mgl32.Vec3{window.X(), window.Y(), 0.5}, modelview, projection, 0, 0, int(window.X()), int(window.Y()))
+	glRenderer.brv = v.Sub(glRenderer.cameraLocation).Normalize()
 }
 
 // FrustrumContainsSphere - calculates if a sphere is at least partially within the camera frustrum
-func (glRenderer *OpenglRenderer) FrustrumContainsSphere(radius float64) bool {
+func (glRenderer *OpenglRenderer) FrustrumContainsSphere(radius float32) bool {
 	if glRenderer.cameraOrtho {
 		return true
 	}
-	p := mgl32.TransformCoordinate(mgl32.Vec3{}, glRenderer.modelMat)
-	point := vmath.Vector3{X: float64(p.X()), Y: float64(p.Y()), Z: float64(p.Z())}
-	r := mgl32.TransformCoordinate(mgl32.Vec3{float32(radius)}, glRenderer.modelMat).Sub(p).Len()
-	delta := point.Subtract(glRenderer.cameraLocation)
-	if point.ApproxEqual(glRenderer.cameraLocation, 0.00001) {
-		delta = vmath.Vector3{X: 1}
+	model := glRenderer.transformStack.Peek()
+	point := mgl32.TransformCoordinate(mgl32.Vec3{}, model)
+	r := mgl32.TransformCoordinate(mgl32.Vec3{radius, 0, 0}, model).Sub(point).Len()
+	delta := point.Sub(glRenderer.cameraLocation)
+	if point.ApproxEqual(glRenderer.cameraLocation) {
+		delta = mgl32.Vec3{1, 0, 0}
 	}
-	return delta.Dot(glRenderer.tlv.Cross(glRenderer.trv)) >= -float64(r) &&
-		delta.Dot(glRenderer.trv.Cross(glRenderer.brv)) >= -float64(r) &&
-		delta.Dot(glRenderer.brv.Cross(glRenderer.blv)) >= -float64(r) &&
-		delta.Dot(glRenderer.blv.Cross(glRenderer.tlv)) >= -float64(r) &&
-		float32(delta.LengthSquared()) < (glRenderer.cameraFar+r)*(glRenderer.cameraFar+r)
+	return delta.Dot(glRenderer.tlv.Cross(glRenderer.trv)) <= r &&
+		delta.Dot(glRenderer.trv.Cross(glRenderer.brv)) <= r &&
+		delta.Dot(glRenderer.brv.Cross(glRenderer.blv)) <= r &&
+		delta.Dot(glRenderer.blv.Cross(glRenderer.tlv)) <= r &&
+		util.Vec3LenSq(delta) < (glRenderer.cameraFar+r)*(glRenderer.cameraFar+r)
+	return true
 }
 
 // CameraLocation - get location of the camera
-func (glRenderer *OpenglRenderer) CameraLocation() vmath.Vector3 {
+func (glRenderer *OpenglRenderer) CameraLocation() mgl32.Vec3 {
 	return glRenderer.cameraLocation
 }
 
-// PushTransform - add transform to the stack
-func (glRenderer *OpenglRenderer) PushTransform() {
-	glRenderer.matStack.Push(&renderer.GlTransform{mgl32.Ident4()})
+func (glRenderer *OpenglRenderer) PushTransform(transform mgl32.Mat4) {
+	glRenderer.transformStack.Push(transform)
+	model := glRenderer.transformStack.Peek()
+	gl.UniformMatrix4fv(glRenderer.modelUniform, 1, false, &model[0])
 }
 
 func (glRenderer *OpenglRenderer) PopTransform() {
-	glRenderer.matStack.Pop()
-	model := MultiplyAll(glRenderer.matStack)
+	glRenderer.transformStack.Pop()
+	model := glRenderer.transformStack.Peek()
 	gl.UniformMatrix4fv(glRenderer.modelUniform, 1, false, &model[0])
-}
-
-func (glRenderer *OpenglRenderer) ApplyTransform(transform renderer.Transform) {
-	tx := glRenderer.matStack.Pop().(*renderer.GlTransform)
-	tx.ApplyTransform(transform)
-	glRenderer.matStack.Push(tx)
-	model := MultiplyAll(glRenderer.matStack)
-	gl.UniformMatrix4fv(glRenderer.modelUniform, 1, false, &model[0])
-	glRenderer.modelMat = model
 }
 
 func (glRenderer *OpenglRenderer) EnableDepthTest(depthTest bool) {
@@ -506,7 +483,7 @@ func (glRenderer *OpenglRenderer) DrawGeometry(geometry *renderer.Geometry) {
 	gl.Uniform1i(lightsUniform, geometry.Material.LightingMode)
 
 	//world camera position
-	cam := convertVector(glRenderer.CameraLocation())
+	cam := glRenderer.CameraLocation()
 	worldCamPosUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("worldCamPos\x00"))
 	gl.Uniform4f(worldCamPosUniform, cam[0], cam[1], cam[2], 0)
 
@@ -566,7 +543,7 @@ func (glRenderer *OpenglRenderer) DrawGeometry(geometry *renderer.Geometry) {
 }
 
 // ambient, diffuse and specular light values ( i is the light index )
-func (glRenderer *OpenglRenderer) CreateLight(ar, ag, ab, dr, dg, db, sr, sg, sb float32, directional bool, position vmath.Vector3, i int) {
+func (glRenderer *OpenglRenderer) CreateLight(ar, ag, ab, dr, dg, db, sr, sg, sb float32, directional bool, position mgl32.Vec3, i int) {
 	lights := glRenderer.lights
 	if directional {
 		lights = glRenderer.directionalLights
@@ -576,9 +553,9 @@ func (glRenderer *OpenglRenderer) CreateLight(ar, ag, ab, dr, dg, db, sr, sg, sb
 	}
 
 	//position
-	lights[(i * 16)] = (float32)(position.X)
-	lights[(i*16)+1] = (float32)(position.Y)
-	lights[(i*16)+2] = (float32)(position.Z)
+	lights[(i * 16)] = position.X()
+	lights[(i*16)+1] = position.Y()
+	lights[(i*16)+2] = position.Z()
 	lights[(i*16)+3] = 1
 	//ambient
 	lights[(i*16)+4] = ar
@@ -690,8 +667,4 @@ func compileShader(source string, shaderType uint32) (uint32, error) {
 	}
 
 	return shader, nil
-}
-
-func convertVector(v vmath.Vector3) mgl32.Vec3 {
-	return mgl32.Vec3{float32(v.X), float32(v.Y), float32(v.Z)}
 }

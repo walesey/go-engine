@@ -8,6 +8,7 @@ import (
 	"github.com/walesey/go-engine/actor"
 	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/controller"
+	"github.com/walesey/go-engine/effects"
 	"github.com/walesey/go-engine/engine"
 	"github.com/walesey/go-engine/glfwController"
 	"github.com/walesey/go-engine/opengl"
@@ -25,29 +26,22 @@ func init() {
 func main() {
 
 	glRenderer := &opengl.OpenglRenderer{
-		WindowTitle:  "Simple",
-		WindowWidth:  800,
-		WindowHeight: 800,
+		WindowTitle: "Particles",
+		FullScreen:  true,
 	}
 	gameEngine := engine.NewEngine(glRenderer)
 	gameEngine.InitFpsDial()
 
 	gameEngine.Start(func() {
 
-		//lighting
-		glRenderer.CreateLight(
-			0.3, 0.3, 0.3, //ambient
-			0.5, 0.5, 0.5, //diffuse
-			0.7, 0.7, 0.7, //specular
-			false, mgl32.Vec3{0.7, 0.2, 0.7}, //position
-			0, //index
-		)
-
-		// Sky cubemap
-		skyImg, err := assets.ImportImage("resources/cubemap.png")
-		if err == nil {
-			gameEngine.Sky(assets.CreateMaterial(skyImg, nil, nil, nil), 999999)
-		}
+		// add particle effects
+		fire := fireParticles()
+		fire.Location = mgl32.Vec3{3, 0, 0}
+		gameEngine.AddSpatialTransparent(fire)
+		gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
+			fire.SetCameraLocation(gameEngine.Camera().GetTranslation())
+			fire.Update(dt)
+		}))
 
 		// input/controller manager
 		controllerManager := glfwController.NewControllerManager(glRenderer.Window)
@@ -63,23 +57,6 @@ func main() {
 		//lock the cursor
 		glRenderer.LockCursor(true)
 
-		// Create a red box geometry, attach to a node, add the node to the scenegraph
-		boxGeometry := renderer.CreateBox(10, 10)
-		boxGeometry.Material = renderer.CreateMaterial()
-		boxGeometry.SetColor(color.NRGBA{254, 0, 0, 254})
-		boxGeometry.CullBackface = false
-		boxNode := renderer.CreateNode()
-		boxNode.SetTranslation(mgl32.Vec3{30, 0})
-		boxNode.Add(boxGeometry)
-		gameEngine.AddSpatial(boxNode)
-
-		// make the box spin
-		var angle float32
-		gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
-			angle += float32(dt)
-			boxNode.SetOrientation(mgl32.QuatRotate(angle, mgl32.Vec3{0, 1, 0}))
-		}))
-
 		// custom key bindings
 		customController := controller.CreateController()
 		controllerManager.AddController(customController.(glfwController.Controller))
@@ -88,5 +65,35 @@ func main() {
 		customController.BindKeyAction(func() {
 			glRenderer.Window.SetShouldClose(true)
 		}, controller.KeyEscape, controller.Press)
+	})
+}
+
+func fireParticles() *effects.ParticleSystem {
+	img, _ := assets.ImportImageCached("resources/fire.png")
+	material := assets.CreateMaterial(img, nil, nil, nil)
+	material.LightingMode = renderer.MODE_EMIT
+	material.Transparency = renderer.TRANSPARENCY_EMISSIVE
+	material.DepthMask = false
+	return effects.CreateParticleSystem(effects.ParticleSettings{
+		MaxParticles:     12,
+		ParticleEmitRate: 2,
+		BaseGeometry:     renderer.CreateBox(float32(1), float32(1)),
+		Material:         material,
+		TotalFrames:      36,
+		FramesX:          6,
+		FramesY:          6,
+		MaxLife:          1.5,
+		MinLife:          2.5,
+		StartColor:       color.NRGBA{254, 54, 0, 255},
+		EndColor:         color.NRGBA{254, 100, 20, 200},
+		StartSize:        mgl32.Vec3{0.3, 0.3, 0.3},
+		EndSize:          mgl32.Vec3{0.9, 0.9, 0.9},
+		MinTranslation:   mgl32.Vec3{-0.1, 0.1, -0.1},
+		MaxTranslation:   mgl32.Vec3{0.1, 0.1, 0.1},
+		MinStartVelocity: mgl32.Vec3{-0.02, -0.02, -0.02},
+		MaxStartVelocity: mgl32.Vec3{0.02, 0.02, 0.02},
+		Acceleration:     mgl32.Vec3{0.0, 0.0, 0.0},
+		MinRotation:      3.0,
+		MaxRotation:      3.6,
 	})
 }

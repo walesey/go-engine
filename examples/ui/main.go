@@ -6,13 +6,13 @@ import (
 	"image/color"
 	"runtime"
 
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/controller"
 	"github.com/walesey/go-engine/engine"
 	"github.com/walesey/go-engine/glfwController"
 	"github.com/walesey/go-engine/opengl"
 	"github.com/walesey/go-engine/ui"
-	vmath "github.com/walesey/go-engine/vectormath"
 )
 
 /*
@@ -52,8 +52,8 @@ func main() {
 		window2.Tabs = htmlContent(content2)
 
 		// position windows
-		window1.SetTranslation(vmath.Vector2{X: 50, Y: 50}.ToVector3())
-		window2.SetTranslation(vmath.Vector2{X: 450, Y: 50}.ToVector3())
+		window1.SetTranslation(mgl32.Vec2{50, 50}.Vec3(0))
+		window2.SetTranslation(mgl32.Vec2{450, 50}.Vec3(0))
 
 		// Add the windows to the engine
 		gameEngine.AddOrtho(window1)
@@ -68,7 +68,7 @@ func main() {
 func createWindow(controllerManager *glfwController.ControllerManager) (window *ui.Window, content *ui.Container) {
 	// Create window with size
 	window = ui.NewWindow()
-	window.SetScale(vmath.Vector2{X: 300}.ToVector3())
+	window.SetScale(mgl32.Vec2{300, 0}.Vec3(0))
 
 	// create a click and drag tab
 	tab := ui.NewContainer()
@@ -120,7 +120,7 @@ func populateContent(content *ui.Container) []ui.Activatable {
 	button.SetPadding(ui.NewMargin(20))
 
 	// button on click event
-	button.Hitbox.AddOnClick(func(button int, release bool, position vmath.Vector2) {
+	button.Hitbox.AddOnClick(func(button int, release bool, position mgl32.Vec2) {
 		if release {
 			textElement.SetText("release").SetTextColor(color.NRGBA{254, 0, 0, 254}).ReRender()
 		} else {

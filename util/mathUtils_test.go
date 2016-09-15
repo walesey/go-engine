@@ -1,4 +1,4 @@
-package vectormath
+package util
 
 import (
 	"testing"

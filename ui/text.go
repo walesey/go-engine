@@ -10,10 +10,11 @@ import (
 	"strings"
 
 	"github.com/disintegration/imaging"
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/libs/freetype"
 	"github.com/walesey/go-engine/libs/freetype/truetype"
 	"github.com/walesey/go-engine/renderer"
-	vmath "github.com/walesey/go-engine/vectormath"
+
 	"golang.org/x/image/font"
 )
 
@@ -45,14 +46,14 @@ type TextElement struct {
 	id                 string
 	node               *renderer.Node
 	img                *ImageElement
-	width, height      float64
+	width, height      float32
 	text               string
 	placeholder        string
 	textColor          color.Color
-	textSize           float64
+	textSize           float32
 	textFont           *truetype.Font
 	textAlign          int
-	size, offset       vmath.Vector2
+	size, offset       mgl32.Vec2
 	hidden             bool
 	onKeyPressHandlers []func(key string, release bool)
 	dirty              bool
@@ -62,13 +63,13 @@ func (te *TextElement) getContext() *freetype.Context {
 	c := freetype.NewContext()
 	c.SetDPI(75)
 	c.SetFont(te.textFont)
-	c.SetFontSize(te.textSize)
+	c.SetFontSize(float64(te.textSize))
 	c.SetSrc(image.NewUniform(te.textColor))
 	c.SetHinting(font.HintingNone)
 	return c
 }
 
-func (te *TextElement) updateImage(size vmath.Vector2) {
+func (te *TextElement) updateImage(size mgl32.Vec2) {
 	// Initialize the context.
 	bg := image.Transparent
 	c := te.getContext()
@@ -82,7 +83,7 @@ func (te *TextElement) updateImage(size vmath.Vector2) {
 	}
 
 	// Establish image dimensions and do word wrap
-	textHeight := c.PointToFixed(te.textSize)
+	textHeight := c.PointToFixed(float64(te.textSize))
 	var width int
 	var height int = int(textHeight >> 6)
 	words := strings.Split(text, " ")
@@ -92,7 +93,7 @@ func (te *TextElement) updateImage(size vmath.Vector2) {
 		wordWithSpace := fmt.Sprintf("%v ", word)
 		dimensions, _ := c.StringDimensions(wordWithSpace)
 		width += int(dimensions.X >> 6)
-		if width > int(size.X) {
+		if width > int(size.X()) {
 			width = int(dimensions.X >> 6)
 			height += int(dimensions.Y>>6) + 1
 			lines = append(lines, "")
@@ -104,7 +105,7 @@ func (te *TextElement) updateImage(size vmath.Vector2) {
 		height = int(te.height)
 	}
 
-	rgba := image.NewRGBA(image.Rect(0, 0, int(size.X), height+int(textHeight>>6)/3))
+	rgba := image.NewRGBA(image.Rect(0, 0, int(size.X()), height+int(textHeight>>6)/3))
 	draw.Draw(rgba, rgba.Bounds(), bg, image.ZP, draw.Src)
 	c.SetClip(rgba.Bounds())
 	c.SetDst(rgba)
@@ -121,8 +122,8 @@ func (te *TextElement) updateImage(size vmath.Vector2) {
 	}
 
 	te.img.SetImage(imaging.FlipV(rgba))
-	te.img.SetWidth(float64(rgba.Bounds().Size().X))
-	te.img.SetHeight(float64(rgba.Bounds().Size().Y))
+	te.img.SetWidth(float32(rgba.Bounds().Size().X))
+	te.img.SetHeight(float32(rgba.Bounds().Size().Y))
 }
 
 func (te *TextElement) GetText() string {
@@ -158,7 +159,7 @@ func (te *TextElement) SetFont(textFont *truetype.Font) *TextElement {
 	return te
 }
 
-func (te *TextElement) SetTextSize(textSize float64) *TextElement {
+func (te *TextElement) SetTextSize(textSize float32) *TextElement {
 	te.textSize = textSize
 	te.dirty = true
 	return te
@@ -170,13 +171,13 @@ func (te *TextElement) SetTextColor(textColor color.Color) *TextElement {
 	return te
 }
 
-func (te *TextElement) SetWidth(width float64) *TextElement {
+func (te *TextElement) SetWidth(width float32) *TextElement {
 	te.width = width
 	te.dirty = true
 	return te
 }
 
-func (te *TextElement) SetHeight(height float64) *TextElement {
+func (te *TextElement) SetHeight(height float32) *TextElement {
 	te.height = height
 	te.dirty = true
 	return te
@@ -187,16 +188,16 @@ func (te *TextElement) SetHidden(hidden bool) *TextElement {
 	return te
 }
 
-func (te *TextElement) Render(size, offset vmath.Vector2) vmath.Vector2 {
-	useWidth := size.X
-	useHeight := size.Y
+func (te *TextElement) Render(size, offset mgl32.Vec2) mgl32.Vec2 {
+	useWidth := size.X()
+	useHeight := size.Y()
 	if te.width > 0 {
 		useWidth = te.width
 	}
 	if te.height > 0 {
 		useHeight = te.height
 	}
-	useSize := vmath.Vector2{useWidth, useHeight}
+	useSize := mgl32.Vec2{useWidth, useHeight}
 	te.size = useSize
 	te.offset = offset
 	if te.dirty {
@@ -205,10 +206,10 @@ func (te *TextElement) Render(size, offset vmath.Vector2) vmath.Vector2 {
 	te.dirty = false
 	renderSize := te.img.Render(size, offset)
 	if te.textAlign == CENTER_ALIGN {
-		te.img.Render(size, offset.Add(vmath.Vector2{(size.X - renderSize.X) * 0.5, 0}))
+		te.img.Render(size, offset.Add(mgl32.Vec2{(size.X() - renderSize.X()) * 0.5, 0}))
 	}
 	if te.textAlign == RIGHT_ALIGN {
-		te.img.Render(size, offset.Add(vmath.Vector2{size.X - renderSize.X, 0}))
+		te.img.Render(size, offset.Add(mgl32.Vec2{size.X() - renderSize.X(), 0}))
 	}
 	return renderSize
 }
@@ -225,11 +226,11 @@ func (te *TextElement) GetId() string {
 	return te.id
 }
 
-func (te *TextElement) mouseMove(position vmath.Vector2) {
+func (te *TextElement) mouseMove(position mgl32.Vec2) {
 	te.img.mouseMove(position)
 }
 
-func (te *TextElement) mouseClick(button int, release bool, position vmath.Vector2) {
+func (te *TextElement) mouseClick(button int, release bool, position mgl32.Vec2) {
 	te.img.mouseClick(button, release, position)
 }
 
@@ -245,7 +246,7 @@ func (te *TextElement) AddOnKeyPress(handler func(key string, release bool)) {
 	te.onKeyPressHandlers = append(te.onKeyPressHandlers, handler)
 }
 
-func NewTextElement(text string, textColor color.Color, textSize float64, textFont *truetype.Font) *TextElement {
+func NewTextElement(text string, textColor color.Color, textSize float32, textFont *truetype.Font) *TextElement {
 	img := NewImageElement(image.NewAlpha(image.Rect(0, 0, 1, 1)))
 	node := renderer.CreateNode()
 	node.Add(img.Spatial())

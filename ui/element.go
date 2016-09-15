@@ -1,16 +1,16 @@
 package ui
 
 import (
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/renderer"
-	vmath "github.com/walesey/go-engine/vectormath"
 )
 
 type Element interface {
-	Render(size, offset vmath.Vector2) vmath.Vector2
+	Render(size, offset mgl32.Vec2) mgl32.Vec2
 	ReRender()
 	Spatial() renderer.Spatial
 	GetId() string
-	mouseMove(position vmath.Vector2)
-	mouseClick(button int, release bool, position vmath.Vector2)
+	mouseMove(position mgl32.Vec2)
+	mouseClick(button int, release bool, position mgl32.Vec2)
 	keyClick(key string, release bool)
 }

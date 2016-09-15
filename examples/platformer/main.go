@@ -5,6 +5,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/vova616/chipmunk"
 	"github.com/vova616/chipmunk/vect"
 	"github.com/walesey/go-engine/assets"
@@ -16,7 +17,6 @@ import (
 	"github.com/walesey/go-engine/physics/chipmunk"
 	"github.com/walesey/go-engine/physics/physicsAPI"
 	"github.com/walesey/go-engine/renderer"
-	vmath "github.com/walesey/go-engine/vectormath"
 )
 
 const characterSize = 40.0
@@ -31,7 +31,7 @@ type Character struct {
 }
 
 func (c *Character) Update(dt float64) {
-	c.sprite.SetTranslation(c.body.GetPosition().ToVector3())
+	c.sprite.SetTranslation(c.body.GetPosition().Vec3(0))
 
 	// character animation
 	c.frameTimer += dt
@@ -46,8 +46,9 @@ func NewCharacter() *Character {
 	characterMat := assets.CreateMaterial(characterImg, nil, nil, nil)
 	characterMat.LightingMode = renderer.MODE_UNLIT
 	sprite := effects.CreateSprite(4, 4, 1, characterMat)
-	sprite.SetScale(vmath.Vector2{characterSize, characterSize}.ToVector3())
-	sprite.SetTranslation(vmath.Vector2{X: 400, Y: 400}.ToVector3())
+	sprite.FaceCamera = false
+	sprite.SetScale(mgl32.Vec2{characterSize, characterSize}.Vec3(0))
+	sprite.SetTranslation(mgl32.Vec2{400, 400}.Vec3(0))
 
 	body := chipmunkPhysics.NewChipmunkBody(1, 1)
 	circle := chipmunk.NewCircle(vect.Vector_Zero, float32(characterSize*0.5))
@@ -80,7 +81,7 @@ func main() {
 
 	// physics engine (Chipmonk)
 	physicsSpace := chipmunkPhysics.NewChipmonkSpace()
-	physicsSpace.SetGravity(vmath.Vector2{Y: 400})
+	physicsSpace.SetGravity(mgl32.Vec2{0, 400})
 	gameEngine.AddUpdatable(physicsSpace)
 
 	gameEngine.Start(func() {
@@ -93,7 +94,7 @@ func main() {
 
 		// The player object
 		character := NewCharacter()
-		character.body.SetPosition(vmath.Vector2{400, 400})
+		character.body.SetPosition(mgl32.Vec2{400, 400})
 
 		// Add the character to all the things
 		physicsSpace.AddBody(character.body)
@@ -112,9 +113,9 @@ func main() {
 		physicsSpace.AddBody(terrainBody)
 
 		// create and manage a new particle system
-		spawnParticles := func(load func() *effects.ParticleSystem, position vmath.Vector2) *effects.ParticleSystem {
+		spawnParticles := func(load func() *effects.ParticleSystem, position mgl32.Vec2) *effects.ParticleSystem {
 			particles := load()
-			particles.SetTranslation(position.ToVector3())
+			particles.SetTranslation(position.Vec3(0))
 			gameEngine.AddOrtho(particles)
 			age := 0.0
 			gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
@@ -139,24 +140,24 @@ func main() {
 
 		// Walk
 		customController.BindKeyAction(func() {
-			character.body.SetVelocity(vmath.Vector2{X: -200, Y: character.body.GetVelocity().Y})
+			character.body.SetVelocity(mgl32.Vec2{-200, character.body.GetVelocity().Y()})
 		}, controller.KeyA, controller.Press)
 		customController.BindKeyAction(func() {
-			character.body.SetVelocity(vmath.Vector2{X: 200, Y: character.body.GetVelocity().Y})
+			character.body.SetVelocity(mgl32.Vec2{200, character.body.GetVelocity().Y()})
 		}, controller.KeyD, controller.Press)
 
 		//Stop walking
 		customController.BindKeyAction(func() {
-			character.body.SetVelocity(vmath.Vector2{Y: character.body.GetVelocity().Y})
+			character.body.SetVelocity(mgl32.Vec2{0, character.body.GetVelocity().Y()})
 		}, controller.KeyA, controller.Release)
 		customController.BindKeyAction(func() {
-			character.body.SetVelocity(vmath.Vector2{Y: character.body.GetVelocity().Y})
+			character.body.SetVelocity(mgl32.Vec2{0, character.body.GetVelocity().Y()})
 		}, controller.KeyD, controller.Release)
 
 		// Jump
 		customController.BindKeyAction(func() {
-			character.body.SetVelocity(character.body.GetVelocity().Add(vmath.Vector2{Y: -300}))
-			spawnParticles(dustParticles, character.body.GetPosition().Add(vmath.Vector2{Y: 0.5 * characterSize}))
+			character.body.SetVelocity(character.body.GetVelocity().Add(mgl32.Vec2{0, -300}))
+			spawnParticles(dustParticles, character.body.GetPosition().Add(mgl32.Vec2{0, 0.5 * characterSize}))
 		}, controller.KeySpace, controller.Press)
 
 		// shoot
@@ -168,7 +169,7 @@ func main() {
 		var collisionTimer time.Time
 		physicsSpace.SetOnCollision(func(shapeA, shapeB *chipmunk.Shape) {
 			if time.Since(collisionTimer) > 200*time.Millisecond {
-				spawnParticles(sparkParticles, character.body.GetPosition().Add(vmath.Vector2{Y: 0.5 * characterSize}))
+				spawnParticles(sparkParticles, character.body.GetPosition().Add(mgl32.Vec2{0, 0.5 * characterSize}))
 			}
 			collisionTimer = time.Now()
 		})
@@ -191,12 +192,12 @@ func dustParticles() *effects.ParticleSystem {
 		MinLife:          2.7,
 		StartColor:       color.NRGBA{254, 254, 254, 120},
 		EndColor:         color.NRGBA{254, 254, 254, 0},
-		StartSize:        vmath.Vector2{40, 40}.ToVector3(),
-		EndSize:          vmath.Vector2{180, 180}.ToVector3(),
-		MinTranslation:   vmath.Vector2{-2, -2}.ToVector3(),
-		MaxTranslation:   vmath.Vector2{2, 2}.ToVector3(),
-		MinStartVelocity: vmath.Vector2{-5.0, -5.0}.ToVector3(),
-		MaxStartVelocity: vmath.Vector2{5.0, 5.0}.ToVector3(),
+		StartSize:        mgl32.Vec2{40, 40}.Vec3(0),
+		EndSize:          mgl32.Vec2{180, 180}.Vec3(0),
+		MinTranslation:   mgl32.Vec2{-2, -2}.Vec3(0),
+		MaxTranslation:   mgl32.Vec2{2, 2}.Vec3(0),
+		MinStartVelocity: mgl32.Vec2{-5.0, -5.0}.Vec3(0),
+		MaxStartVelocity: mgl32.Vec2{5.0, 5.0}.Vec3(0),
 		MaxRotation:      -3.14,
 		MinRotation:      3.14,
 	})
@@ -220,12 +221,12 @@ func majicParticles() *effects.ParticleSystem {
 		MinLife:          0.7,
 		StartColor:       color.NRGBA{254, 254, 254, 254},
 		EndColor:         color.NRGBA{254, 254, 254, 254},
-		StartSize:        vmath.Vector2{10, 10}.ToVector3(),
-		EndSize:          vmath.Vector2{10, 10}.ToVector3(),
-		MinTranslation:   vmath.Vector2{-1, -1}.ToVector3(),
-		MaxTranslation:   vmath.Vector2{1, 1}.ToVector3(),
-		MinStartVelocity: vmath.Vector2{-170, -170}.ToVector3(),
-		MaxStartVelocity: vmath.Vector2{170, 170}.ToVector3(),
+		StartSize:        mgl32.Vec2{10, 10}.Vec3(0),
+		EndSize:          mgl32.Vec2{10, 10}.Vec3(0),
+		MinTranslation:   mgl32.Vec2{-1, -1}.Vec3(0),
+		MaxTranslation:   mgl32.Vec2{1, 1}.Vec3(0),
+		MinStartVelocity: mgl32.Vec2{-170, -170}.Vec3(0),
+		MaxStartVelocity: mgl32.Vec2{170, 170}.Vec3(0),
 		MaxRotation:      -3.14,
 		MinRotation:      3.14,
 	})
@@ -249,16 +250,16 @@ func sparkParticles() *effects.ParticleSystem {
 		MinLife:          1.7,
 		StartColor:       color.NRGBA{254, 160, 90, 254},
 		EndColor:         color.NRGBA{254, 160, 90, 254},
-		StartSize:        vmath.Vector2{2, 2}.ToVector3(),
-		EndSize:          vmath.Vector2{2, 2}.ToVector3(),
-		MinTranslation:   vmath.Vector2{-5, -5}.ToVector3(),
-		MaxTranslation:   vmath.Vector2{5, 5}.ToVector3(),
-		MinStartVelocity: vmath.Vector2{-100, -100}.ToVector3(),
-		MaxStartVelocity: vmath.Vector2{100, 100}.ToVector3(),
-		Acceleration:     vmath.Vector2{Y: 400}.ToVector3(),
+		StartSize:        mgl32.Vec2{2, 2}.Vec3(0),
+		EndSize:          mgl32.Vec2{2, 2}.Vec3(0),
+		MinTranslation:   mgl32.Vec2{-5, -5}.Vec3(0),
+		MaxTranslation:   mgl32.Vec2{5, 5}.Vec3(0),
+		MinStartVelocity: mgl32.Vec2{-100, -100}.Vec3(0),
+		MaxStartVelocity: mgl32.Vec2{100, 100}.Vec3(0),
+		Acceleration:     mgl32.Vec2{0, 400}.Vec3(0),
 		OnParticleUpdate: func(p *effects.Particle) {
-			p.Scale = p.Scale.Multiply(vmath.Vector2{X: 1 + p.Velocity.Length()*0.05, Y: 1}.ToVector3())
-			p.Orientation = vmath.BetweenVectors(vmath.Vector3{X: 1}, p.Velocity)
+			p.Scale[0] = p.Scale[0] * (1 + p.Velocity.Len()*0.05)
+			p.Orientation = mgl32.QuatBetweenVectors(mgl32.Vec3{1, 0, 0}, p.Velocity)
 		},
 	})
 	particleSystem.FaceCamera = false

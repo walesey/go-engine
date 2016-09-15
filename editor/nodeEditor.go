@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/editor/models"
 	"github.com/walesey/go-engine/glfwController"
 	"github.com/walesey/go-engine/ui"
-	vmath "github.com/walesey/go-engine/vectormath"
 )
 
 func (e *Editor) closeNodeEditor() {
@@ -19,8 +19,8 @@ func (e *Editor) closeNodeEditor() {
 
 func (e *Editor) openNodeEditor(node *editorModels.NodeModel, callback func()) {
 	window, container, _ := e.defaultWindow()
-	window.SetTranslation(vmath.Vector3{100, 100, 1})
-	window.SetScale(vmath.Vector3{500, 0, 1})
+	window.SetTranslation(mgl32.Vec3{100, 100, 1})
+	window.SetScale(mgl32.Vec3{500, 0, 1})
 	uiController := ui.NewUiController(window).(glfwController.Controller)
 
 	e.uiAssets.AddCallback("nodeEditorOk", func(element ui.Element, args ...interface{}) {

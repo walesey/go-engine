@@ -3,8 +3,8 @@ package ui
 import (
 	"image"
 
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/renderer"
-	vmath "github.com/walesey/go-engine/vectormath"
 )
 
 type ImageElement struct {
@@ -12,29 +12,29 @@ type ImageElement struct {
 	Hitbox        Hitbox
 	percentWidth  bool
 	percentHeight bool
-	width, height float64
-	rotation      float64
-	size, offset  vmath.Vector2
+	width, height float32
+	rotation      float32
+	size, offset  mgl32.Vec2
 	node          *renderer.Node
 	img           image.Image
 }
 
-func (ie *ImageElement) Render(size, offset vmath.Vector2) vmath.Vector2 {
+func (ie *ImageElement) Render(size, offset mgl32.Vec2) mgl32.Vec2 {
 	ie.size, ie.offset = size, offset
-	width, height := ie.getWidth(size.X), ie.getHeight(size.X)
+	width, height := ie.getWidth(size.X()), ie.getHeight(size.X())
 	if ie.img != nil {
 		if width <= 0 && height <= 0 {
-			width = float64(ie.img.Bounds().Size().X)
-			height = float64(ie.img.Bounds().Size().Y)
+			width = float32(ie.img.Bounds().Size().X)
+			height = float32(ie.img.Bounds().Size().Y)
 		} else if width <= 0 {
-			width = height * float64(ie.img.Bounds().Size().X) / float64(ie.img.Bounds().Size().Y)
+			width = height * float32(ie.img.Bounds().Size().X) / float32(ie.img.Bounds().Size().Y)
 		} else if height <= 0 {
-			height = width * float64(ie.img.Bounds().Size().Y) / float64(ie.img.Bounds().Size().X)
+			height = width * float32(ie.img.Bounds().Size().Y) / float32(ie.img.Bounds().Size().X)
 		}
 	}
-	imgSize := vmath.Vector2{float64(width), float64(height)}
-	ie.node.SetScale(imgSize.ToVector3())
-	ie.node.SetTranslation(offset.ToVector3())
+	imgSize := mgl32.Vec2{width, height}
+	ie.node.SetScale(imgSize.Vec3(0))
+	ie.node.SetTranslation(offset.Vec3(0))
 	ie.offset = offset
 	ie.Hitbox.SetSize(imgSize)
 	return imgSize
@@ -52,7 +52,7 @@ func (ie *ImageElement) GetId() string {
 	return ie.id
 }
 
-func (ie *ImageElement) SetWidth(width float64) {
+func (ie *ImageElement) SetWidth(width float32) {
 	ie.width = width
 }
 
@@ -60,7 +60,7 @@ func (ie *ImageElement) UsePercentWidth(usePercent bool) {
 	ie.percentWidth = usePercent
 }
 
-func (ie *ImageElement) SetHeight(height float64) {
+func (ie *ImageElement) SetHeight(height float32) {
 	ie.height = height
 }
 
@@ -68,21 +68,21 @@ func (ie *ImageElement) UsePercentHeight(usePercent bool) {
 	ie.percentHeight = usePercent
 }
 
-func (ie *ImageElement) getWidth(parentWidth float64) float64 {
+func (ie *ImageElement) getWidth(parentWidth float32) float32 {
 	if ie.percentWidth {
 		return parentWidth * ie.width / 100.0
 	}
 	return ie.width
 }
 
-func (ie *ImageElement) getHeight(parentWidth float64) float64 {
+func (ie *ImageElement) getHeight(parentWidth float32) float32 {
 	if ie.percentHeight {
 		return parentWidth * ie.height / 100.0
 	}
 	return ie.height
 }
 
-func (ie *ImageElement) SetRotation(rotation float64) {
+func (ie *ImageElement) SetRotation(rotation float32) {
 	ie.rotation = rotation
 }
 
@@ -97,13 +97,13 @@ func (ie *ImageElement) SetImage(img image.Image) {
 	ie.node.Add(box)
 }
 
-func (ie *ImageElement) mouseMove(position vmath.Vector2) {
-	offsetPos := position.Subtract(ie.offset)
+func (ie *ImageElement) mouseMove(position mgl32.Vec2) {
+	offsetPos := position.Sub(ie.offset)
 	ie.Hitbox.MouseMove(offsetPos)
 }
 
-func (ie *ImageElement) mouseClick(button int, release bool, position vmath.Vector2) {
-	offsetPos := position.Subtract(ie.offset)
+func (ie *ImageElement) mouseClick(button int, release bool, position mgl32.Vec2) {
+	offsetPos := position.Sub(ie.offset)
 	ie.Hitbox.MouseClick(button, release, offsetPos)
 }
 

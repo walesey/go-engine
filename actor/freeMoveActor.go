@@ -1,17 +1,17 @@
 package actor
 
 import (
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/renderer"
-	"github.com/walesey/go-engine/vectormath"
 )
 
 //an actor that can move around freely in space
 type FreeMoveActor struct {
 	Entity                  renderer.Entity
-	Location                vectormath.Vector3
-	forwardMove, strafeMove float64
-	lookPitch, lookAngle    float64
-	MoveSpeed, LookSpeed    float64
+	Location                mgl32.Vec3
+	forwardMove, strafeMove float32
+	lookPitch, lookAngle    float32
+	MoveSpeed, LookSpeed    float32
 }
 
 func NewFreeMoveActor(entity renderer.Entity) *FreeMoveActor {
@@ -27,21 +27,21 @@ func NewFreeMoveActor(entity renderer.Entity) *FreeMoveActor {
 func (actor *FreeMoveActor) Update(dt float64) {
 
 	//orientation
-	vertRot := vectormath.AngleAxis(actor.lookAngle, vectormath.Vector3{0, 1, 0})
-	axis := vertRot.Apply(vectormath.Vector3{1, 0, 0}).Cross(vectormath.Vector3{0, 1, 0})
-	horzRot := vectormath.AngleAxis(actor.lookPitch, axis)
-	orientation := horzRot.Multiply(vertRot)
-	velocity := orientation.Apply(vectormath.Vector3{actor.forwardMove, 0, actor.strafeMove})
-	actor.Location = actor.Location.Add(velocity.MultiplyScalar(dt))
+	vertRot := mgl32.QuatRotate(actor.lookAngle, mgl32.Vec3{0, 1, 0})
+	axis := vertRot.Rotate(mgl32.Vec3{1, 0, 0}).Cross(mgl32.Vec3{0, 1, 0})
+	horzRot := mgl32.QuatRotate(actor.lookPitch, axis)
+	orientation := horzRot.Mul(vertRot)
+	velocity := orientation.Rotate(mgl32.Vec3{actor.forwardMove, 0, actor.strafeMove})
+	actor.Location = actor.Location.Add(velocity.Mul(float32(dt)))
 
 	//update entity
 	actor.Entity.SetTranslation(actor.Location)
 	actor.Entity.SetOrientation(orientation)
 }
 
-func (actor *FreeMoveActor) Look(dx, dy float64) {
+func (actor *FreeMoveActor) Look(dx, dy float32) {
 	actor.lookAngle = actor.lookAngle - actor.LookSpeed*dx
-	actor.lookPitch = actor.lookPitch + actor.LookSpeed*dy
+	actor.lookPitch = actor.lookPitch - actor.LookSpeed*dy
 	if actor.lookPitch > 1.5 {
 		actor.lookPitch = 1.5
 	}

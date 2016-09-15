@@ -7,6 +7,7 @@ import (
 	"os"
 	"runtime"
 
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/controller"
 	"github.com/walesey/go-engine/engine"
 	"github.com/walesey/go-engine/glfwController"
@@ -14,8 +15,6 @@ import (
 	"github.com/walesey/go-engine/opengl"
 	"github.com/walesey/go-engine/renderer"
 	"github.com/walesey/go-engine/util"
-
-	vmath "github.com/walesey/go-engine/vectormath"
 )
 
 /*
@@ -26,19 +25,19 @@ import (
 
 var serverPort = 1234
 var serverAddr = "127.0.0.1"
-var startingPosition = vmath.Vector2{X: 20, Y: 20}
+var startingPosition = mgl32.Vec2{20, 20}
 
 type Player struct {
 	clientId string // id of the client associated with this player
 	node     *renderer.Node
-	position vmath.Vector2
-	velocity vmath.Vector2
+	position mgl32.Vec2
+	velocity mgl32.Vec2
 }
 
 // Update the players position based on it's velocity
 func (p *Player) Update(dt float64) {
-	p.position = p.position.Add(p.velocity.MultiplyScalar(dt))
-	p.node.SetTranslation(p.position.ToVector3())
+	p.position = p.position.Add(p.velocity.Mul(float32(dt)))
+	p.node.SetTranslation(p.position.Vec3(0))
 }
 
 func init() {
@@ -139,20 +138,20 @@ func main() {
 			controllerManager := glfwController.NewControllerManager(glRenderer.Window)
 
 			// networked movement controls
-			move := func(velocity vmath.Vector2) {
+			move := func(velocity mgl32.Vec2) {
 				network.TriggerOnServerAndClients("move", util.SerializeArgs(network.ClientToken(), velocity))
 			}
 
 			customController := controller.CreateController()
 			controllerManager.AddController(customController.(glfwController.Controller))
-			customController.BindKeyAction(func() { move(vmath.Vector2{Y: -100}) }, controller.KeyW, controller.Press)
-			customController.BindKeyAction(func() { move(vmath.Vector2{X: -100}) }, controller.KeyA, controller.Press)
-			customController.BindKeyAction(func() { move(vmath.Vector2{Y: 100}) }, controller.KeyS, controller.Press)
-			customController.BindKeyAction(func() { move(vmath.Vector2{X: 100}) }, controller.KeyD, controller.Press)
-			customController.BindKeyAction(func() { move(vmath.Vector2{}) }, controller.KeyW, controller.Release)
-			customController.BindKeyAction(func() { move(vmath.Vector2{}) }, controller.KeyA, controller.Release)
-			customController.BindKeyAction(func() { move(vmath.Vector2{}) }, controller.KeyS, controller.Release)
-			customController.BindKeyAction(func() { move(vmath.Vector2{}) }, controller.KeyD, controller.Release)
+			customController.BindKeyAction(func() { move(mgl32.Vec2{0, -100}) }, controller.KeyW, controller.Press)
+			customController.BindKeyAction(func() { move(mgl32.Vec2{-100, 0}) }, controller.KeyA, controller.Press)
+			customController.BindKeyAction(func() { move(mgl32.Vec2{0, 100}) }, controller.KeyS, controller.Press)
+			customController.BindKeyAction(func() { move(mgl32.Vec2{100, 0}) }, controller.KeyD, controller.Press)
+			customController.BindKeyAction(func() { move(mgl32.Vec2{}) }, controller.KeyW, controller.Release)
+			customController.BindKeyAction(func() { move(mgl32.Vec2{}) }, controller.KeyA, controller.Release)
+			customController.BindKeyAction(func() { move(mgl32.Vec2{}) }, controller.KeyS, controller.Release)
+			customController.BindKeyAction(func() { move(mgl32.Vec2{}) }, controller.KeyD, controller.Release)
 		}
 	})
 }
