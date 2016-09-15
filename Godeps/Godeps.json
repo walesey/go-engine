@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/walesey/go-engine",
-	"GoVersion": "go1.6",
+	"GoVersion": "go1.7",
 	"GodepVersion": "v74",
 	"Packages": [
 		"./..."
@@ -21,11 +21,6 @@
 			"Rev": "7176f146738114e7386d4f915a0bbf55945e22c9"
 		},
 		{
-			"ImportPath": "github.com/codegangsta/cli",
-			"Comment": "v1.17.0-77-gb438abf",
-			"Rev": "b438abf775124d32be72016935a9553dbffe8473"
-		},
-		{
 			"ImportPath": "github.com/davecgh/go-spew/spew",
 			"Rev": "5215b55f46b2b919f50a1df0eaa5886afe4e3b3d"
 		},
@@ -43,6 +38,11 @@
 		},
 		{
 			"ImportPath": "github.com/go-gl/mathgl/mgl32",
+			"Comment": "Go1.2.2-113-g4051097",
+			"Rev": "40510979b0b281f0fdb879958e0416f38f0f3504"
+		},
+		{
+			"ImportPath": "github.com/go-gl/mathgl/mgl32/matstack",
 			"Comment": "Go1.2.2-113-g4051097",
 			"Rev": "40510979b0b281f0fdb879958e0416f38f0f3504"
 		},
