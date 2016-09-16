@@ -20,7 +20,16 @@ func Vec3Lerp(start, end mgl32.Vec3, amount float32) mgl32.Vec3 {
 }
 
 func Vec2Cross(v1, v2 mgl32.Vec2) float32 {
-	return v1.X()*v2.Y() - v1.Y()*v2.X()
+	return v1[0]*v2[1] - v1[1]*v2[0]
+}
+
+func Vec2Rotate(v mgl32.Vec2, angle float32) mgl32.Vec2 {
+	sn, cs := float32(math.Sin(float64(angle))), float32(math.Cos(float64(angle)))
+	return mgl32.Vec2{v[0]*cs - v[1]*sn, v[0]*sn + v[1]*cs}
+}
+
+func Vec2AngleBetween(v1, v2 mgl32.Vec2) float32 {
+	return float32(math.Acos(float64(v1.Normalize().Dot(v2.Normalize()))))
 }
 
 func Mat4From(scale, translation mgl32.Vec3, orientation mgl32.Quat) mgl32.Mat4 {

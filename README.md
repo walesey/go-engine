@@ -1,7 +1,5 @@
 # GoEngine
 
-A Simple Rendering and scene graph library for Golang.
-
 [![Build Status](https://travis-ci.org/walesey/go-engine.svg?branch=master)](https://travis-ci.org/walesey/go-engine)
 
 ## Features
@@ -15,8 +13,10 @@ A Simple Rendering and scene graph library for Golang.
 * multiplayer networking library
 
 ## Instructions
-Example programs can be found in examples/*
-uses go-gl which requires opengl.
+
+Example programs can be found in `examples/*`.
+
+Go-Engine uses go-gl which requires opengl.
 
 ## Core Packages
 * renderer - package contains common renderer interface and scenegraph implementation.

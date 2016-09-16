@@ -218,10 +218,10 @@ func CreateSkyBox() *Geometry {
 }
 
 // CreateBeam - creates a square prism oriented along the vector
-func CreateBeam(width float64, vector mgl32.Vec3) *Geometry {
+func CreateBeam(width float32, vector mgl32.Vec3) *Geometry {
 	direction := vector.Normalize()
-	geo := CreateBoxWithOffset(float32(width), float32(width), float32(-width*0.5), float32(-width*0.5))
-	geo2 := CreateBoxWithOffset(float32(width), float32(width), float32(-width*0.5), float32(-width*0.5))
+	geo := CreateBoxWithOffset(width, width, -width*0.5, -width*0.5)
+	geo2 := CreateBoxWithOffset(width, width, -width*0.5, -width*0.5)
 	facingTx := util.Mat4From(mgl32.Vec3{1, 1, 1}, mgl32.Vec3{}, util.FacingOrientation(0, direction, mgl32.Vec3{0, 0, 1}, mgl32.Vec3{1, 0, 0}))
 	geo.Transform(facingTx)
 	facingTx = util.Mat4From(mgl32.Vec3{1, 1, 1}, vector, util.FacingOrientation(0, direction, mgl32.Vec3{0, 0, -1}, mgl32.Vec3{1, 0, 0}))
