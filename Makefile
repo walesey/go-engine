@@ -1,6 +1,7 @@
 COVER_DIR = cover
 
 test:
+	go get ./...
 	go test github.com/walesey/go-engine/actor
 	go test github.com/walesey/go-engine/assets
 	go test github.com/walesey/go-engine/controller
@@ -13,6 +14,7 @@ test:
 
 coverage:
 	mkdir -p $(COVER_DIR)
+	go get ./...
 	go test github.com/walesey/go-engine/actor -coverprofile=$(COVER_DIR)/actor.cover.out && \
 	go test github.com/walesey/go-engine/assets -coverprofile=$(COVER_DIR)/assets.cover.out && \
 	go test github.com/walesey/go-engine/controller -coverprofile=$(COVER_DIR)/controller.cover.out && \
@@ -27,11 +29,3 @@ coverage:
 		cat $(COVER_DIR)/*.cover.out | sed '/mode: set/d' >> $(COVER_DIR)/coverage.out && \
 		go tool cover -html=$(COVER_DIR)/coverage.out -o=$(COVER_DIR)/coverage.html && \
 		rm $(COVER_DIR)/*.cover.out
-
-updateGodeps:
-	mkdir -p tmp/
-	mv vendor/github.com/go-gl/glfw/v3.1/glfw/glfw tmp/glfw && \
-	mv vendor/ tmp/vendor_old && \
-	mv Godeps/ tmp/Godeps_old && \
-	godep save ./... && \
-	mv tmp/glfw/ vendor/github.com/go-gl/glfw/v3.1/glfw/glfw
