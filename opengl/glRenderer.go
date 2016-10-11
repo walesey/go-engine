@@ -1,14 +1,10 @@
 package opengl
 
 import (
-	"errors"
-	"fmt"
 	"image"
 	"image/draw"
-	"io/ioutil"
 	"log"
 	"runtime"
-	"strings"
 
 	"github.com/disintegration/imaging"
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -126,7 +122,9 @@ func (glRenderer *OpenglRenderer) Start() {
 	}
 
 	// Configure the vertex and fragment shaders
-	program, _ := newProgram(shaders.MainVert, shaders.MainFrag)
+	vertShader, _ := compileShader(shaders.MainVert, gl.VERTEX_SHADER)
+	fragShader, _ := compileShader(shaders.MainFrag, gl.FRAGMENT_SHADER)
+	program, _ := newProgram(vertShader, fragShader)
 	gl.UseProgram(program)
 	glRenderer.program = program
 
@@ -592,79 +590,4 @@ func (glRenderer *OpenglRenderer) DestroyLight(i int) {
 
 func (glRenderer *OpenglRenderer) LockCursor(lock bool) {
 	glRenderer.Window.SetInputMode(glfw.CursorMode, glfw.CursorDisabled)
-}
-
-func programFromFile(vertFilePath, fragFilePath string) uint32 {
-	bufVert, err := ioutil.ReadFile(vertFilePath)
-	if err != nil {
-		panic(err)
-	}
-	vertexShader := string(bufVert) + "\x00"
-	bufFrag, err := ioutil.ReadFile(fragFilePath)
-	if err != nil {
-		panic(err)
-	}
-	fragmentShader := string(bufFrag) + "\x00"
-	program, err := newProgram(vertexShader, fragmentShader)
-	if err != nil {
-		panic(err)
-	}
-	return program
-}
-
-func newProgram(vertexShaderSource, fragmentShaderSource string) (uint32, error) {
-	vertexShader, err := compileShader(vertexShaderSource, gl.VERTEX_SHADER)
-	if err != nil {
-		return 0, err
-	}
-
-	fragmentShader, err := compileShader(fragmentShaderSource, gl.FRAGMENT_SHADER)
-	if err != nil {
-		return 0, err
-	}
-
-	program := gl.CreateProgram()
-
-	gl.AttachShader(program, vertexShader)
-	gl.AttachShader(program, fragmentShader)
-	gl.LinkProgram(program)
-
-	var status int32
-	gl.GetProgramiv(program, gl.LINK_STATUS, &status)
-	if status == gl.FALSE {
-		var logLength int32
-		gl.GetProgramiv(program, gl.INFO_LOG_LENGTH, &logLength)
-
-		log := strings.Repeat("\x00", int(logLength+1))
-		gl.GetProgramInfoLog(program, logLength, nil, gl.Str(log))
-
-		return 0, errors.New(fmt.Sprintf("failed to link program: %v", log))
-	}
-
-	gl.DeleteShader(vertexShader)
-	gl.DeleteShader(fragmentShader)
-
-	return program, nil
-}
-
-func compileShader(source string, shaderType uint32) (uint32, error) {
-	shader := gl.CreateShader(shaderType)
-	csource, free := gl.Strs(source)
-	gl.ShaderSource(shader, 1, csource, nil)
-	free()
-	gl.CompileShader(shader)
-
-	var status int32
-	gl.GetShaderiv(shader, gl.COMPILE_STATUS, &status)
-	if status == gl.FALSE {
-		var logLength int32
-		gl.GetShaderiv(shader, gl.INFO_LOG_LENGTH, &logLength)
-
-		log := strings.Repeat("\x00", int(logLength+1))
-		gl.GetShaderInfoLog(shader, logLength, nil, gl.Str(log))
-
-		return 0, fmt.Errorf("failed to compile %v: %v", source, log)
-	}
-
-	return shader, nil
 }

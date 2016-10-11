@@ -37,7 +37,7 @@ func (glRenderer *OpenglRenderer) CreatePostEffect(shader renderer.Shader) {
 
 	//Create program
 	shaderName := shader.Name
-	program := programFromFile(shaderName+".vert", shaderName+".frag")
+	program, _ := programFromFile(shaderName+".vert", shaderName+".frag")
 	gl.UseProgram(program)
 
 	//Create Texture
