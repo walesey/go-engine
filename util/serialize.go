@@ -27,7 +27,7 @@ func SerializeArgs(args ...interface{}) []byte {
 		case mgl32.Vec3:
 			Vector3bytes(buf, v)
 		case bool:
-			buf.WriteByte(BoolByte(v))
+			BoolBytes(buf, v)
 		case []byte:
 			UInt32Bytes(buf, uint32(len(v)))
 			buf.Write(v)
@@ -118,13 +118,16 @@ func Vector3bytes(w io.Writer, vector mgl32.Vec3) {
 	Float32bytes(w, vector.Z())
 }
 
-func BoolFromByte(b byte) bool {
-	return b == 1
+func BoolFromBytes(r io.Reader) bool {
+	var bytes [1]byte
+	r.Read(bytes[:])
+	return bytes[0] == 1
 }
 
-func BoolByte(b bool) byte {
+func BoolBytes(w io.Writer, b bool) {
 	if b {
-		return 1
+		w.Write([]byte{1})
+	} else {
+		w.Write([]byte{0})
 	}
-	return 0
 }
