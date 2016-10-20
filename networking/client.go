@@ -28,17 +28,17 @@ func NewClient() *Client {
 	}
 }
 
-func (c *Client) Connect(addr string) {
+func (c *Client) Connect(addr string) error {
 	serverAddr, err := net.ResolveUDPAddr("udp", addr)
 	if err != nil {
 		fmt.Println("Error resolving server udp address: ", err)
-		return
+		return err
 	}
 
 	c.conn, err = net.DialUDP("udp", nil, serverAddr)
 	if err != nil {
 		fmt.Println("Error connecting to udp server address: ", err)
-		return
+		return err
 	}
 
 	data := make([]byte, 65500)
@@ -78,6 +78,7 @@ func (c *Client) Connect(addr string) {
 			}
 		}
 	}()
+	return nil
 }
 
 func (c *Client) WriteMessage(command string, data []byte) {

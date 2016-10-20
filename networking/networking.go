@@ -24,10 +24,13 @@ func (n *Network) StartServer(port int) {
 	n.server.Listen(port)
 }
 
-func (n *Network) ConnectClient(addr string) {
+func (n *Network) ConnectClient(addr string) error {
 	n.client = NewClient()
-	n.client.Connect(addr)
+	if err := n.client.Connect(addr); err != nil {
+		return err
+	}
 	n.client.WriteMessage("", []byte{})
+	return nil
 }
 
 func (n *Network) Update(dt float64) {

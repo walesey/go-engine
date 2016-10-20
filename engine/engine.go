@@ -27,6 +27,7 @@ type Engine interface {
 	FPS() float64
 	InitFpsDial()
 	Update()
+	End()
 }
 
 type EngineImpl struct {
@@ -150,13 +151,14 @@ func (engine *EngineImpl) InitFpsDial() {
 	engine.AddUpdatable(UpdatableFunc(func(dt float64) {
 		fps := engine.FPS()
 		text.SetText(fmt.Sprintf("%v", int(fps)))
-		if fps < 20 {
+		switch {
+		case fps < 20:
 			text.SetTextColor(color.RGBA{255, 0, 0, 255})
-		} else if fps < 30 {
+		case fps < 30:
 			text.SetTextColor(color.RGBA{255, 90, 0, 255})
-		} else if fps < 50 {
+		case fps < 50:
 			text.SetTextColor(color.RGBA{255, 255, 0, 255})
-		} else {
+		default:
 			text.SetTextColor(color.RGBA{0, 255, 0, 255})
 		}
 		text.ReRender()
@@ -166,9 +168,13 @@ func (engine *EngineImpl) InitFpsDial() {
 	engine.AddOrtho(window)
 }
 
+func (engine *EngineImpl) End() {
+
+}
+
 func NewEngine(r renderer.Renderer) Engine {
 	fpsMeter := renderer.CreateFPSMeter(1.0)
-	fpsMeter.FpsCap = 60
+	fpsMeter.FpsCap = 144
 
 	sceneGraph := renderer.CreateSceneGraph()
 	orthoNode := renderer.CreateNode()
@@ -188,7 +194,7 @@ func NewEngine(r renderer.Renderer) Engine {
 func NewHeadlessEngine() Engine {
 	updatableStore := NewUpdatableStore()
 	fpsMeter := renderer.CreateFPSMeter(1.0)
-	fpsMeter.FpsCap = 60
+	fpsMeter.FpsCap = 144
 
 	return &EngineImpl{
 		fpsMeter:       fpsMeter,

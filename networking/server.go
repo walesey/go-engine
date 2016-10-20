@@ -193,6 +193,7 @@ func (s *Server) GetNextMessage() (Packet, bool) {
 }
 
 func (s *Server) Close() {
+	s.FlushAllWriteBuffers()
 	s.conn.Close()
 	s.conn = nil
 }
