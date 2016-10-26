@@ -40,6 +40,7 @@ type OpenglRenderer struct {
 	envMapLOD3Id               uint32
 	illuminanceMapId           uint32
 	modelUniform               int32
+	modelNormalUniform         int32
 	nbLights                   int32
 	nbDirectionalLights        int32
 	lights                     []float32
@@ -131,6 +132,7 @@ func (glRenderer *OpenglRenderer) Start() {
 	//set shader uniforms
 	glRenderer.transformStack = matstack.NewTransformStack()
 	glRenderer.modelUniform = gl.GetUniformLocation(program, gl.Str("model\x00"))
+	glRenderer.modelNormalUniform = gl.GetUniformLocation(program, gl.Str("modelNormal\x00"))
 	glRenderer.PushTransform(mgl32.Ident4())
 
 	textureUniform := gl.GetUniformLocation(program, gl.Str("diffuse\x00"))
@@ -232,7 +234,7 @@ func (glRenderer *OpenglRenderer) Ortho() {
 	glRenderer.cameraOrtho = true
 }
 
-// Camera - camera settings
+// Perspective - set Perspective camera mode
 func (glRenderer *OpenglRenderer) Perspective(location, lookat, up mgl32.Vec3, angle, near, far float32) {
 	projection := mgl32.Perspective(mgl32.DegToRad(angle), float32(glRenderer.WindowWidth)/float32(glRenderer.WindowHeight), near, far)
 	projectionUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("projection\x00"))
@@ -292,13 +294,17 @@ func (glRenderer *OpenglRenderer) CameraLocation() mgl32.Vec3 {
 func (glRenderer *OpenglRenderer) PushTransform(transform mgl32.Mat4) {
 	glRenderer.transformStack.Push(transform)
 	model := glRenderer.transformStack.Peek()
+	modelNormal := model.Inv().Transpose()
 	gl.UniformMatrix4fv(glRenderer.modelUniform, 1, false, &model[0])
+	gl.UniformMatrix4fv(glRenderer.modelNormalUniform, 1, false, &modelNormal[0])
 }
 
 func (glRenderer *OpenglRenderer) PopTransform() {
 	glRenderer.transformStack.Pop()
 	model := glRenderer.transformStack.Peek()
+	modelNormal := model.Inv().Transpose()
 	gl.UniformMatrix4fv(glRenderer.modelUniform, 1, false, &model[0])
+	gl.UniformMatrix4fv(glRenderer.modelNormalUniform, 1, false, &modelNormal[0])
 }
 
 func (glRenderer *OpenglRenderer) EnableDepthTest(depthTest bool) {

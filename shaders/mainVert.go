@@ -7,6 +7,7 @@ uniform vec4 worldCamPos;
 uniform mat4 projection;
 uniform mat4 camera;
 uniform mat4 model;
+uniform mat4 modelNormal;
 
 in vec3 vert;
 in vec3 normal;
@@ -24,7 +25,6 @@ out vec3 tangentEyeDirection;
 void main() {
 	worldVertex = model * vec4(vert, 1);
 	gl_Position = projection * camera * worldVertex;
-	mat4 modelNormal = transpose(inverse(model));
 	worldNormal = (modelNormal * vec4(normal,1)).xyz;
 	vec3 tangent = cross(normal, normal + vec3(-1));
 	vec3 bitangent = cross(normal, tangent);

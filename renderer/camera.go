@@ -6,7 +6,7 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-//A camera is an Entity
+// The camera Entity
 type Camera struct {
 	renderer                Renderer
 	translation, lookat, up mgl32.Vec3

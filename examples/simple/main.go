@@ -2,6 +2,7 @@ package main
 
 import (
 	"image/color"
+	"math"
 	"runtime"
 
 	"github.com/go-gl/mathgl/mgl32"
@@ -12,6 +13,7 @@ import (
 	"github.com/walesey/go-engine/glfwController"
 	"github.com/walesey/go-engine/opengl"
 	"github.com/walesey/go-engine/renderer"
+	"github.com/walesey/go-engine/util"
 )
 
 func init() {
@@ -34,14 +36,13 @@ func main() {
 
 	gameEngine.Start(func() {
 
-		//lighting
-		glRenderer.CreateLight(
-			0.3, 0.3, 0.3, //ambient
-			0.5, 0.5, 0.5, //diffuse
-			0.7, 0.7, 0.7, //specular
-			false, mgl32.Vec3{0.7, 0.2, 0.7}, //position
-			0, //index
-		)
+		light := renderer.CreateLight()
+		light.Directional = true
+		light.Ambient = [3]float32{0.3, 0.3, 0.3}
+		light.Diffuse = [3]float32{0.5, 0.5, 0.5}
+		light.Specular = [3]float32{0.7, 0.7, 0.7}
+		light.SetOrientation(util.FacingOrientation(0, mgl32.Vec3{1, 1, -1}, mgl32.Vec3{1, 0, 0}, mgl32.Vec3{0, 1, 0}))
+		gameEngine.AddLight(light)
 
 		// Sky cubemap
 		skyImg, err := assets.ImportImage("resources/cubemap.png")
@@ -74,10 +75,11 @@ func main() {
 		gameEngine.AddSpatial(boxNode)
 
 		// make the box spin
-		var angle float32
+		var angle float64
 		gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
-			angle += float32(dt)
-			boxNode.SetOrientation(mgl32.QuatRotate(angle, mgl32.Vec3{0, 1, 0}))
+			angle += dt
+			q := mgl32.QuatRotate(float32(angle), mgl32.Vec3{0, 1, 0})
+			boxNode.SetOrientation(q)
 		}))
 
 		// custom key bindings

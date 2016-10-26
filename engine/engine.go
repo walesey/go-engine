@@ -20,6 +20,8 @@ type Engine interface {
 	RemoveOrtho(spatial renderer.Spatial, destroy bool)
 	AddUpdatable(updatable Updatable)
 	RemoveUpdatable(updatable Updatable)
+	AddLight(light *renderer.Light)
+	RemoveLight(light *renderer.Light)
 	Sky(material *renderer.Material, size float32)
 	Camera() *renderer.Camera
 	Renderer() renderer.Renderer
@@ -27,7 +29,6 @@ type Engine interface {
 	FPS() float64
 	InitFpsDial()
 	Update()
-	End()
 }
 
 type EngineImpl struct {
@@ -37,6 +38,7 @@ type EngineImpl struct {
 	orthoNode      *renderer.Node
 	camera         *renderer.Camera
 	updatableStore *UpdatableStore
+	lights         []*renderer.Light
 }
 
 func (engine *EngineImpl) Start(Init func()) {
@@ -56,6 +58,15 @@ func (engine *EngineImpl) Start(Init func()) {
 func (engine *EngineImpl) Update() {
 	dt := engine.fpsMeter.UpdateFPSMeter()
 	engine.updatableStore.UpdateAll(dt)
+	engine.updateLights()
+}
+
+func (engine *EngineImpl) updateLights() {
+	if engine.lights != nil && engine.renderer != nil {
+		for i, light := range engine.lights {
+			light.Render(engine.renderer, i+1)
+		}
+	}
 }
 
 func (engine *EngineImpl) Render() {
@@ -102,6 +113,21 @@ func (engine *EngineImpl) AddUpdatable(updatable Updatable) {
 
 func (engine *EngineImpl) RemoveUpdatable(updatable Updatable) {
 	engine.updatableStore.Remove(updatable)
+}
+
+func (engine *EngineImpl) AddLight(light *renderer.Light) {
+	engine.lights = append(engine.lights, light)
+}
+
+func (engine *EngineImpl) RemoveLight(light *renderer.Light) {
+	for i, l := range engine.lights {
+		if light == l {
+			engine.lights[i] = engine.lights[len(engine.lights)-1]
+			engine.lights[len(engine.lights)-1] = nil
+			engine.lights = engine.lights[:len(engine.lights)-1]
+			break
+		}
+	}
 }
 
 func (engine *EngineImpl) Sky(material *renderer.Material, size float32) {
@@ -168,10 +194,6 @@ func (engine *EngineImpl) InitFpsDial() {
 	engine.AddOrtho(window)
 }
 
-func (engine *EngineImpl) End() {
-
-}
-
 func NewEngine(r renderer.Renderer) Engine {
 	fpsMeter := renderer.CreateFPSMeter(1.0)
 	fpsMeter.FpsCap = 144
@@ -186,6 +208,7 @@ func NewEngine(r renderer.Renderer) Engine {
 		sceneGraph:     sceneGraph,
 		orthoNode:      orthoNode,
 		updatableStore: updatableStore,
+		lights:         []*renderer.Light{},
 		renderer:       r,
 		camera:         camera,
 	}
