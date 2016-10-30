@@ -1,16 +1,20 @@
 # GoEngine
 
+Go engine is a simple game engine intended for 2D or 3D games.
+This project is currently in progress and it is likely to change significantly over the next year or so.
+
 [![Build Status](https://travis-ci.org/walesey/go-engine.svg?branch=master)](https://travis-ci.org/walesey/go-engine)
 
+
 ## Features
-* OpenGL renderer.
+* OpenGL renderer
 * Obj importer
 * Lighting Engine
 * Particle System
 * UI system
 * Controller system (mouse, keyboard, joystick)
-* Map editor
-* multiplayer networking library
+* Multiplayer networking library (event driven)
+
 
 ## Instructions
 
