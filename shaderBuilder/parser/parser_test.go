@@ -3,17 +3,18 @@ package parser
 import (
 	"bytes"
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"regexp"
 )
 
-func TestGenerator(t *testing.T) {
-	inFd, err := os.Open("./test/test.glsl")
-	assert.NoError(t, err)
-	defer inFd.Close()
+func fixNewLines(str string) string {
+	re := regexp.MustCompile(`[\n|\r]+`)
+	return re.ReplaceAllString(str, "\n")
+}
 
+func TestGenerator(t *testing.T) {
 	expectedFragFd, err := os.Open("./test/expected.frag")
 	assert.NoError(t, err)
 	defer expectedFragFd.Close()
@@ -22,17 +23,16 @@ func TestGenerator(t *testing.T) {
 	assert.NoError(t, err)
 	defer expectedVertFd.Close()
 
+	shaderPath := "./test/test.glsl"
 	frag := new(bytes.Buffer)
 	vert := new(bytes.Buffer)
-	New(inFd, frag, vert, nil).Parse()
+	err = ParseFile(shaderPath, frag, vert, nil)
 
 	expectedFrag := new(bytes.Buffer)
 	expectedFrag.ReadFrom(expectedFragFd)
-	expectedFragStr := strings.Replace(expectedFrag.String(), "\r", "", -1)
-	assert.Equal(t, strings.Trim(expectedFragStr, " \n"), strings.Trim(frag.String(), " \n"))
+	assert.Equal(t, fixNewLines(expectedFrag.String()), fixNewLines(frag.String()))
 
 	expectedVert := new(bytes.Buffer)
 	expectedVert.ReadFrom(expectedVertFd)
-	expectedVertStr := strings.Replace(expectedVert.String(), "\r", "", -1)
-	assert.Equal(t, strings.Trim(expectedVertStr, " \n"), strings.Trim(vert.String(), " \n"))
+	assert.Equal(t, fixNewLines(expectedVert.String()), fixNewLines(vert.String()))
 }

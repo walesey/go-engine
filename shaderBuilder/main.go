@@ -14,16 +14,10 @@ func main() {
 		srcFile = os.Args[1]
 	}
 
-	src, err := os.Open(srcFile)
-	if err != nil {
-		panic(err)
-	}
-
-	frag := new(bytes.Buffer)
-	vert := new(bytes.Buffer)
-	parser.New(src, frag, vert, nil).Parse()
-	fmt.Print("#frag")
-	fmt.Print(frag.String())
-	fmt.Print("#vert")
-	fmt.Print(vert.String())
+	vert, frag := new(bytes.Buffer),new(bytes.Buffer)
+	parser.ParseFile(srcFile, frag, vert, nil)
+	fmt.Println("#vert")
+	fmt.Println(vert.String())
+	fmt.Println("#frag")
+	fmt.Println(frag.String())
 }

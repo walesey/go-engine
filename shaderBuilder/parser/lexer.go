@@ -4,40 +4,42 @@ import "bytes"
 
 const eof = rune(0)
 
-func (self *Parser) scan() (tkn Token, literal string) {
-	self.read()
+func (p *Parser) scan() (tkn Token, literal string) {
+	p.read()
 
-	if isWhitespace(self.chr) {
-		tkn, literal = self.scanWhitespace()
+	if isWhitespace(p.chr) {
+		tkn, literal = p.scanWhitespace()
 		return
-	} else if isLetter(self.chr) {
-		tkn, literal = self.scanIdentifier()
+	} else if isLetter(p.chr) {
+		tkn, literal = p.scanIdentifier()
 		return
 	}
 
-	switch self.chr {
+	switch p.chr {
 	case eof:
 		tkn, literal = EOF, ""
 	case '#':
-		tkn, literal = HASH, string(self.chr)
+		tkn, literal = HASH, string(p.chr)
+	case '"':
+		tkn, literal = STRING, p.scanString()
 	default:
-		tkn, literal = UNKNOWN, string(self.chr)
+		tkn, literal = UNKNOWN, string(p.chr)
 	}
 
 	return
 }
 
-func (self *Parser) read() {
-	chr, _, err := self.in.ReadRune()
+func (p *Parser) read() {
+	chr, _, err := p.in.ReadRune()
 	if err != nil {
-		self.chr = eof
+		p.chr = eof
 	} else {
-		self.chr = chr
+		p.chr = chr
 	}
 }
 
-func (self *Parser) unread() {
-	_ = self.in.UnreadRune()
+func (p *Parser) unread() {
+	_ = p.in.UnreadRune()
 }
 
 func isWhitespace(ch rune) bool {
@@ -56,18 +58,18 @@ func isIdentifierRune(ch rune) bool {
 	return isLetter(ch) || isDigit(ch) || ch == '_'
 }
 
-func (self *Parser) scanWhitespace() (tkn Token, literal string) {
+func (p *Parser) scanWhitespace() (tkn Token, literal string) {
 	var buf bytes.Buffer
-	buf.WriteRune(self.chr)
+	buf.WriteRune(p.chr)
 
 	for {
-		if self.read(); self.chr == eof {
+		if p.read(); p.chr == eof {
 			break
-		} else if !isWhitespace(self.chr) {
-			self.unread()
+		} else if !isWhitespace(p.chr) {
+			p.unread()
 			break
 		} else {
-			buf.WriteRune(self.chr)
+			buf.WriteRune(p.chr)
 		}
 	}
 
@@ -75,28 +77,39 @@ func (self *Parser) scanWhitespace() (tkn Token, literal string) {
 	return
 }
 
-func (self *Parser) scanIdentifier() (tkn Token, literal string) {
+func (p *Parser) scanIdentifier() (tkn Token, literal string) {
 	var buf bytes.Buffer
-	buf.WriteRune(self.chr)
+	buf.WriteRune(p.chr)
 
 	for {
-		if self.read(); self.chr == eof {
+		if p.read(); p.chr == eof {
 			break
-		} else if !isIdentifierRune(self.chr) {
-			self.unread()
+		} else if !isIdentifierRune(p.chr) {
+			p.unread()
 			break
 		} else {
-			buf.WriteRune(self.chr)
+			buf.WriteRune(p.chr)
 		}
 	}
 
 	tkn, literal = IDENTIFIER, buf.String()
 
 	// is it a keyword
-	switch literal {
-	case "INCLUDE":
-		tkn = INCLUDE
-	}
+	tkn = checkKeyword(literal)
 
 	return
+}
+
+func (p *Parser) scanString() string {
+	var buf bytes.Buffer
+
+	for {
+		if p.read(); p.chr == eof || p.chr == '"' {
+			break
+		} else {
+			buf.WriteRune(p.chr)
+		}
+	}
+
+	return buf.String()
 }
