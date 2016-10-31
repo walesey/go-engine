@@ -3,11 +3,11 @@
 #include "includeTest.glsl"
 
 void main() {
-  #vert
+#vert
   gl_Position = vertFunc();
-  #endvert
+#endvert
 
-  #frag
+#frag
   gl_FragColor = fragFunc();
-  #endfrag
+#endfrag
 }

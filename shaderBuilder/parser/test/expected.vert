@@ -11,3 +11,4 @@ vec4 fragFunc() {
 void main() {
   gl_Position = vertFunc();
 }
+
