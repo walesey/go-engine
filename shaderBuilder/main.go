@@ -19,7 +19,11 @@ func main() {
 		panic(err)
 	}
 
-	out := new(bytes.Buffer)
-	parser.New(src, out).Parse()
-	fmt.Print(out.String())
+	frag := new(bytes.Buffer)
+	vert := new(bytes.Buffer)
+	parser.New(src, frag, vert, nil).Parse()
+	fmt.Print("#frag")
+	fmt.Print(frag.String())
+	fmt.Print("#vert")
+	fmt.Print(vert.String())
 }

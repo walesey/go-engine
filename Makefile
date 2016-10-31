@@ -8,6 +8,7 @@ testintall:
 	go get -t github.com/walesey/go-engine/engine
 	go get -t github.com/walesey/go-engine/networking
 	go get -t github.com/walesey/go-engine/physics/physicsAPI
+	go get -t github.com/walesey/go-engine/shaderBuilder/parser
 	go get -t github.com/walesey/go-engine/ui
 	go get -t github.com/walesey/go-engine/util
 
@@ -19,6 +20,7 @@ test: testintall
 	go test github.com/walesey/go-engine/engine
 	go test github.com/walesey/go-engine/networking
 	go test github.com/walesey/go-engine/physics/physicsAPI
+	go test github.com/walesey/go-engine/shaderBuilder/parser
 	go test github.com/walesey/go-engine/ui
 	go test github.com/walesey/go-engine/util
 
@@ -31,6 +33,7 @@ coverage: testintall
 	go test github.com/walesey/go-engine/engine -coverprofile=$(COVER_DIR)/engine.cover.out && \
 	go test github.com/walesey/go-engine/networking -coverprofile=$(COVER_DIR)/networking.cover.out && \
 	go test github.com/walesey/go-engine/physics/physicsAPI -coverprofile=$(COVER_DIR)/physics.cover.out && \
+	go test github.com/walesey/go-engine/shaderBuilder/parser -coverprofile=$(COVER_DIR)/shaderBuilderParser.cover.out && \
 	go test github.com/walesey/go-engine/ui -coverprofile=$(COVER_DIR)/ui.cover.out && \
 	go test github.com/walesey/go-engine/util -coverprofile=$(COVER_DIR)/util.cover.out && \
 		rm -f $(COVER_DIR)/coverage.out && \
