@@ -10,7 +10,7 @@ import (
 )
 
 type Parser struct {
-	in *bufio.Reader
+	in   *bufio.Reader
 	path string
 
 	fragOut, vertOut, geoOut io.Writer
@@ -22,24 +22,24 @@ type Parser struct {
 	frag, vert, geo bool
 }
 
-func New(src io.Reader, path string, frag, vert, geo io.Writer) *Parser {
+func New(src io.Reader, path string, vert, frag, geo io.Writer) *Parser {
 	return &Parser{
 		in:      bufio.NewReader(src),
-		path: path,
+		path:    path,
 		fragOut: frag,
 		vertOut: vert,
 		geoOut:  geo,
 	}
 }
 
-func ParseFile(path string, frag, vert, geo io.Writer) error {
+func ParseFile(path string, vert, frag, geo io.Writer) error {
 	src, err := os.Open(path)
 	if err != nil {
 		return err
 	}
 	defer src.Close()
 
-	New(src, path, frag, vert, geo).Parse()
+	New(src, path, vert, frag, geo).Parse()
 	return nil
 }
 
@@ -93,7 +93,7 @@ func (p *Parser) parseHashInclude() {
 	if p.token == WHITESPACE {
 		p.next()
 	}
-	
+
 	if p.token != STRING {
 		p.unexpectedError()
 		return
@@ -106,7 +106,7 @@ func (p *Parser) parseHashInclude() {
 		return
 	}
 	defer src.Close()
-	
+
 	fragBuf, vertBuf, geoBuf := new(bytes.Buffer), new(bytes.Buffer), new(bytes.Buffer)
 	New(src, includePath, fragBuf, vertBuf, geoBuf).Parse()
 	p.writeFrag(fragBuf.Bytes())

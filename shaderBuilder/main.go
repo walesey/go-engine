@@ -14,10 +14,21 @@ func main() {
 		srcFile = os.Args[1]
 	}
 
-	vert, frag := new(bytes.Buffer),new(bytes.Buffer)
-	parser.ParseFile(srcFile, frag, vert, nil)
-	fmt.Println("#vert")
-	fmt.Println(vert.String())
-	fmt.Println("#frag")
-	fmt.Println(frag.String())
+	mode := "vert"
+	if len(os.Args) >= 3 {
+		mode = os.Args[2]
+	}
+
+	out := new(bytes.Buffer)
+	switch mode {
+	case "vert":
+		parser.ParseFile(srcFile, out, nil, nil)
+	case "frag":
+		parser.ParseFile(srcFile, nil, out, nil)
+	case "geo":
+		parser.ParseFile(srcFile, nil, nil, out)
+	default:
+		panic("Invalid shader type: " + mode)
+	}
+	fmt.Println(out.String())
 }

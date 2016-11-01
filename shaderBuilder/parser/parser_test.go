@@ -26,7 +26,7 @@ func TestGenerator(t *testing.T) {
 	shaderPath := "./test/test.glsl"
 	frag := new(bytes.Buffer)
 	vert := new(bytes.Buffer)
-	err = ParseFile(shaderPath, frag, vert, nil)
+	err = ParseFile(shaderPath, vert, frag, nil)
 
 	expectedFrag := new(bytes.Buffer)
 	expectedFrag.ReadFrom(expectedFragFd)
