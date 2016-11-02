@@ -139,9 +139,9 @@ func (glRenderer *OpenglRenderer) Start() {
 	gl.Uniform1i(textureUniform, 0)
 	textureUniform = gl.GetUniformLocation(program, gl.Str("normal\x00"))
 	gl.Uniform1i(textureUniform, 1)
-	textureUniform = gl.GetUniformLocation(program, gl.Str("specular\x00"))
-	gl.Uniform1i(textureUniform, 2)
 	textureUniform = gl.GetUniformLocation(program, gl.Str("roughness\x00"))
+	gl.Uniform1i(textureUniform, 3)
+	textureUniform = gl.GetUniformLocation(program, gl.Str("metalness\x00"))
 	gl.Uniform1i(textureUniform, 3)
 	textureUniform = gl.GetUniformLocation(program, gl.Str("environmentMap\x00"))
 	gl.Uniform1i(textureUniform, 4)
@@ -350,11 +350,11 @@ func (glRenderer *OpenglRenderer) CreateMaterial(material *renderer.Material) {
 	if material.Normal != nil {
 		material.NormalId = glRenderer.newTexture(material.Normal, gl.TEXTURE1)
 	}
-	if material.Specular != nil {
-		material.SpecularId = glRenderer.newTexture(material.Specular, gl.TEXTURE2)
-	}
 	if material.Roughness != nil {
-		material.RoughnessId = glRenderer.newTexture(material.Roughness, gl.TEXTURE3)
+		material.RoughnessId = glRenderer.newTexture(material.Roughness, gl.TEXTURE2)
+	}
+	if material.Metalness != nil {
+		material.MetalnessId = glRenderer.newTexture(material.Metalness, gl.TEXTURE3)
 	}
 }
 
@@ -362,8 +362,8 @@ func (glRenderer *OpenglRenderer) CreateMaterial(material *renderer.Material) {
 func (glRenderer *OpenglRenderer) DestroyMaterial(material *renderer.Material) {
 	gl.DeleteTextures(1, &material.DiffuseId)
 	gl.DeleteTextures(1, &material.NormalId)
-	gl.DeleteTextures(1, &material.SpecularId)
 	gl.DeleteTextures(1, &material.RoughnessId)
+	gl.DeleteTextures(1, &material.MetalnessId)
 }
 
 //setup Texture
@@ -522,9 +522,10 @@ func (glRenderer *OpenglRenderer) DrawGeometry(geometry *renderer.Geometry) {
 	gl.ActiveTexture(gl.TEXTURE1)
 	gl.BindTexture(gl.TEXTURE_2D, geometry.Material.NormalId)
 	gl.ActiveTexture(gl.TEXTURE2)
-	gl.BindTexture(gl.TEXTURE_2D, geometry.Material.SpecularId)
-	gl.ActiveTexture(gl.TEXTURE3)
 	gl.BindTexture(gl.TEXTURE_2D, geometry.Material.RoughnessId)
+	gl.ActiveTexture(gl.TEXTURE3)
+	gl.BindTexture(gl.TEXTURE_2D, geometry.Material.MetalnessId)
+
 	gl.ActiveTexture(gl.TEXTURE4)
 	gl.BindTexture(gl.TEXTURE_CUBE_MAP, glRenderer.envMapId)
 	gl.ActiveTexture(gl.TEXTURE5)

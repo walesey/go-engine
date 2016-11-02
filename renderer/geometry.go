@@ -22,12 +22,13 @@ const (
 )
 
 type Material struct {
-	DiffuseId, NormalId, SpecularId, RoughnessId uint32
-	loaded                                       bool
-	LightingMode                                 int32
-	Transparency                                 int
-	DepthTest, DepthMask                         bool
-	Diffuse, Normal, Specular, Roughness         image.Image
+	DiffuseId, NormalId, RoughnessId, MetalnessId uint32
+
+	loaded                                          bool
+	LightingMode                                    int32
+	Transparency                                    int
+	DepthTest, DepthMask                            bool
+	Diffuse, Normal, Roughness, Metalness image.Image
 }
 
 func CreateMaterial() *Material {

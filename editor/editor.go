@@ -61,7 +61,7 @@ func (e *Editor) Start() {
 		e.renderer.CreateLight(0.0, 0.0, 0.0, 0.5, 0.5, 0.5, 0.7, 0.7, 0.7, true, mgl32.Vec3{0.5, -1, 0.3}, 0)
 
 		//Sky
-		skyImg, err := assets.ImportImage("TestAssets/Files/skybox/cubemap.png")
+		skyImg, err := assets.ImportImage("resources/cubemap.png")
 		if err == nil {
 			e.gameEngine.Sky(assets.CreateMaterial(skyImg, nil, nil, nil), 999999)
 		}

@@ -13,7 +13,5 @@ vec4 fragFunc() {
 }
 
 void main() {
-
-
   gl_FragColor = fragFunc();
 }

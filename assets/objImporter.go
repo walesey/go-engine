@@ -22,10 +22,11 @@ type objData struct {
 }
 
 type mtlData struct {
-	Name                                      string
-	Ns, Ka, Kd, Ks, Ni, D                     float32
-	Illum                                     int
-	Map_Kd, Map_Disp, Map_Spec, Map_Roughness image.Image
+	Name                  string
+	Ns, Ka, Kd, Ks, Ni, D float32
+	Illum                 int
+
+	Map_Kd, Map_Disp, Map_Roughness, Map_Metalness image.Image
 }
 
 //imports an obj from a filePath and return a Geometry
@@ -76,7 +77,7 @@ func ImportObj(filePath string) (*renderer.Geometry, error) {
 
 	geometry := renderer.CreateGeometry(obj.Indicies, obj.Vertices)
 	if mtlErr == nil && obj.Mtl != nil {
-		geometry.Material = CreateMaterial(obj.Mtl.Map_Kd, obj.Mtl.Map_Disp, obj.Mtl.Map_Spec, obj.Mtl.Map_Roughness)
+		geometry.Material = CreateMaterial(obj.Mtl.Map_Kd, obj.Mtl.Map_Disp, obj.Mtl.Map_Roughness, obj.Mtl.Map_Metalness)
 	}
 
 	if err = scanner.Err(); err != nil {
@@ -87,12 +88,12 @@ func ImportObj(filePath string) (*renderer.Geometry, error) {
 }
 
 // Create material object from image files
-func CreateMaterial(diffuse, normal, specular, roughness image.Image) *renderer.Material {
+func CreateMaterial(diffuse, normal, roughness, metalness image.Image) *renderer.Material {
 	mat := renderer.CreateMaterial()
 	mat.Diffuse = diffuse
 	mat.Normal = normal
-	mat.Specular = specular
 	mat.Roughness = roughness
+	mat.Metalness = metalness
 	return mat
 }
 
@@ -199,10 +200,10 @@ func importMTL(filePath, fileName string) (*mtlData, error) {
 				mtl.Map_Kd, err = ImportImage(filePath + tokens[1])
 			} else if dataType == "map_Disp" {
 				mtl.Map_Disp, err = ImportImage(filePath + tokens[1])
-			} else if dataType == "map_Spec" {
-				mtl.Map_Spec, err = ImportImage(filePath + tokens[1])
 			} else if dataType == "map_Roughness" {
 				mtl.Map_Roughness, err = ImportImage(filePath + tokens[1])
+			} else if dataType == "map_Metalness" {
+				mtl.Map_Metalness, err = ImportImage(filePath + tokens[1])
 			}
 			if err != nil {
 				log.Printf("Error parsing mtl data %v: %v\n", dataType, err)

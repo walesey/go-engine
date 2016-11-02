@@ -2,7 +2,6 @@ package main
 
 import (
 	"image/color"
-	"math"
 	"runtime"
 
 	"github.com/go-gl/mathgl/mgl32"

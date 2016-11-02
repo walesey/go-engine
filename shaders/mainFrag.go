@@ -25,8 +25,8 @@ uniform vec4 directionalLights[ MAX_LIGHTS * 4 ];
 //material
 uniform sampler2D diffuse;
 uniform sampler2D normal;
-uniform sampler2D specular;
 uniform sampler2D roughness;
+uniform sampler2D metalness;
 uniform samplerCube environmentMap;
 uniform samplerCube environmentMapLOD1;
 uniform samplerCube environmentMapLOD2;
@@ -55,14 +55,14 @@ vec4 vectorCap( vec4 vector, float cap ){
 	return vector;
 }
 
-vec4 directBRDF( vec4 LightAmb, vec4 LightDiff, vec4 LightSpec, vec4 LightDir, vec4 albedoValue, vec4 specularValue, vec4 tangentNormal, vec4 tangentReflectedEye){
+vec4 directBRDF( vec4 LightAmb, vec4 LightDiff, vec4 LightSpec, vec4 LightDir, vec4 diffuseValue, vec4 specularValue, vec4 tangentNormal, vec4 tangentReflectedEye){
 	vec3 tangentLightDirection = LightDir.xyz * TBNMatrix;
 	tangentLightDirection = normalize( tangentLightDirection );
 
-	vec4 ambientOut = albedoValue * LightAmb;
+	vec4 ambientOut = diffuseValue * LightAmb;
 
 	float diffuseMultiplier = max(0.0, dot(tangentNormal.xyz, -tangentLightDirection));
-	vec4 diffuseOut = albedoValue * diffuseMultiplier * LightDiff;
+	vec4 diffuseOut = diffuseValue * diffuseMultiplier * LightDiff;
 
 	float specularMultiplier = pow( max(0.0, dot( tangentReflectedEye.xyz, -tangentLightDirection)), 2.0);
 	vec4 specularOut = vec4( specularValue.rgb, 1 ) * specularMultiplier * LightSpec;
@@ -83,11 +83,13 @@ void main() {
 		albedoValue = fragColor;
 	}
 	vec4 normalValue = texture(normal, textCoord);
-	vec4 specularValue = texture(specular, textCoord);
-	vec4 roughnessValue = texture(roughness, textCoord);
-	float roughnessMagnitude = roughnessValue.r;
-	float metalness = roughnessValue.g;
+	float roughnessValue = texture(roughness, textCoord).r;
+	float metalnessValue = texture(metalness, textCoord).r;
 	float alphaValue = albedoValue.a;
+
+	//metalness - if metal use albedo value as spec value 
+	vec4 specularValue = mix( vec4(0.04), albedoValue, metalnessValue);
+	vec4 diffuseValue = (1.0-metalnessValue) * albedoValue;
 
 	vec4 finalColor = vec4(0,0,0,1);
 	vec4 directColor = vec4(0,0,0,1);
@@ -120,7 +122,7 @@ void main() {
 			float brightness = 1 / lightDistanceSQ;
 			worldLightDir = normalize( worldLightDir );
 
-			directColor += ( brightness * directBRDF( LightAmb, LightDiff, LightSpec, worldLightDir, albedoValue, specularValue, tangentNormal, tangentReflectedEye) );
+			directColor += ( brightness * directBRDF( LightAmb, LightDiff, LightSpec, worldLightDir, diffuseValue, specularValue, tangentNormal, tangentReflectedEye) );
 		}
 
 		//directional lights
@@ -134,43 +136,44 @@ void main() {
 
 			vec4 worldLightDir = normalize( LightPos );
 
-			directColor += directBRDF( LightAmb, LightDiff, LightSpec, worldLightDir, albedoValue, specularValue, tangentNormal, tangentReflectedEye);
+			directColor += directBRDF( LightAmb, LightDiff, LightSpec, worldLightDir, diffuseValue, specularValue, tangentNormal, tangentReflectedEye);
 		}
 
 		//indirect lighting
 		vec4 indirectDiffuse = texture(illuminanceMap, worldReflectedEye.xyz);
 		vec4 indirectSpecular = vec4(0,0,0,1);
-		if (roughnessMagnitude < 0.1){
+		if (roughnessValue < 0.1){
 			indirectSpecular = texture(environmentMap, worldReflectedEye.xyz);
-		} else if (roughnessMagnitude < 0.3){
+		} else if (roughnessValue < 0.3){
 			indirectSpecular = texture(environmentMapLOD1, worldReflectedEye.xyz);
-		} else if (roughnessMagnitude < 0.7){
+		} else if (roughnessValue < 0.6){
 			indirectSpecular = texture(environmentMapLOD2, worldReflectedEye.xyz);
-		} else {
+		} else if (roughnessValue < 0.8){
 			indirectSpecular = texture(environmentMapLOD3, worldReflectedEye.xyz);
+		} else {
+			indirectSpecular = texture(illuminanceMap, worldReflectedEye.xyz);
 		}
 
-		//freznel effect
-		float reflectivity = max(metalness, pow((1.0-dot(-tangentEyeDirection, tangentNormal.xyz)), 2));
+		float freznel = pow((1.0-dot(-tangentEyeDirection, tangentNormal.xyz)), 2);
 		//blend indirect light types
-		indirectColor += (1.0-metalness) * albedoValue  * indirectDiffuse;
-		indirectColor += reflectivity * specularValue * indirectSpecular;
+		indirectColor += (diffuseValue - vec4(freznel)) * indirectDiffuse;
+		indirectColor += (specularValue + vec4(freznel)) * indirectSpecular;
 
-		finalColor += (1.0-metalness) * directColor;
+		// finalColor += directColor;
 		finalColor += indirectColor;
 
-		finalColor.a = alphaValue + (alphaValue * reflectivity);
+		finalColor.a = alphaValue + (alphaValue * freznel);
 
 		finalColor = vectorCap(finalColor, 0.99);
 	}
 
 	if (mode == MODE_UNLIT){
-		finalColor = albedoValue;
+		finalColor = diffuseValue;
 		finalColor = vectorCap(finalColor, 0.99);
 	}
 
 	if (mode == MODE_EMIT){
-		finalColor = albedoValue;
+		finalColor = diffuseValue;
 	}
 
 	//final output
