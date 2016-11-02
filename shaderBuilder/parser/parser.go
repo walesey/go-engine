@@ -3,6 +3,7 @@ package parser
 import (
 	"bufio"
 	"bytes"
+	"crypto/md5"
 	"fmt"
 	"io"
 	"os"
@@ -10,8 +11,9 @@ import (
 )
 
 type Parser struct {
-	in   *bufio.Reader
-	path string
+	in       *bufio.Reader
+	path     string
+	includes map[string]bool
 
 	fragOut, vertOut, geoOut io.Writer
 
@@ -24,11 +26,12 @@ type Parser struct {
 
 func New(src io.Reader, path string, vert, frag, geo io.Writer) *Parser {
 	return &Parser{
-		in:      bufio.NewReader(src),
-		path:    path,
-		fragOut: frag,
-		vertOut: vert,
-		geoOut:  geo,
+		in:       bufio.NewReader(src),
+		path:     path,
+		fragOut:  frag,
+		vertOut:  vert,
+		includes: make(map[string]bool),
+		geoOut:   geo,
 	}
 }
 
@@ -108,10 +111,19 @@ func (p *Parser) parseHashInclude() {
 	defer src.Close()
 
 	fragBuf, vertBuf, geoBuf := new(bytes.Buffer), new(bytes.Buffer), new(bytes.Buffer)
-	New(src, includePath, fragBuf, vertBuf, geoBuf).Parse()
-	p.writeFrag(fragBuf.Bytes())
-	p.writeVert(vertBuf.Bytes())
-	p.writeGeo(geoBuf.Bytes())
+	parser := New(src, includePath, fragBuf, vertBuf, geoBuf)
+	parser.includes = p.includes
+	parser.Parse()
+
+	fragData, vertData, geoData := fragBuf.Bytes(), vertBuf.Bytes(), geoBuf.Bytes()
+	fragHash, vertHash, geoHash := md5.Sum(fragData), md5.Sum(vertData), md5.Sum(geoData)
+	hash := fmt.Sprint(string(fragHash[:]), string(vertHash[:]), string(geoHash[:]))
+	if _, ok := p.includes[hash]; !ok {
+		p.writeFrag(fragData)
+		p.writeVert(vertData)
+		p.writeGeo(geoData)
+	}
+	p.includes[hash] = true
 }
 
 func (p *Parser) parseHashVert() {
