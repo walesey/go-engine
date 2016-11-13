@@ -213,9 +213,7 @@ func (tf *TextField) AddOnKeyPress(handler func(key string, release bool)) {
 
 func NewTextField(text string, textColor color.Color, textSize float32, textFont *truetype.Font) *TextField {
 	cursor := renderer.CreateBoxWithOffset(0.07, 1.1, 0, 0.1)
-	mat := renderer.CreateMaterial()
-	mat.LightingMode = renderer.MODE_UNLIT
-	cursor.Material = mat
+	cursor.Material = renderer.NewMaterial()
 	cursor.SetColor(color.NRGBA{0, 0, 0, 255})
 	cursorNode := renderer.CreateNode()
 	cursorNode.Add(cursor)

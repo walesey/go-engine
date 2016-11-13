@@ -1,6 +1,7 @@
 package opengl
 
 import (
+	"fmt"
 	"image"
 	"image/draw"
 	"log"
@@ -10,14 +11,7 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
 	"github.com/go-gl/mathgl/mgl32"
-	"github.com/go-gl/mathgl/mgl32/matstack"
 	"github.com/walesey/go-engine/renderer"
-	"github.com/walesey/go-engine/shaders"
-	"github.com/walesey/go-engine/util"
-)
-
-const (
-	maxLights int = 8
 )
 
 func init() {
@@ -32,27 +26,7 @@ type OpenglRenderer struct {
 	FullScreen                 bool
 	WindowTitle                string
 	Window                     *glfw.Window
-	transformStack             *matstack.TransformStack
-	program                    uint32
-	envMapId                   uint32
-	envMapLOD1Id               uint32
-	envMapLOD2Id               uint32
-	envMapLOD3Id               uint32
-	illuminanceMapId           uint32
-	modelUniform               int32
-	modelNormalUniform         int32
-	nbLights                   int32
-	nbDirectionalLights        int32
-	lights                     []float32
-	directionalLights          []float32
-	cameraLocation             mgl32.Vec3
-	cameraUp                   mgl32.Vec3
-	cameraLookAt               mgl32.Vec3
-	cameraAngle                float32
-	cameraNear                 float32
-	cameraFar                  float32
-	cameraOrtho                bool
-	tlv, trv, blv, brv         mgl32.Vec3
+	camera                     *renderer.Camera
 	postEffectVbo              uint32
 	postEffects                []postEffect
 }
@@ -67,19 +41,20 @@ func NewOpenglRenderer(WindowTitle string, WindowWidth, WindowHeight int, FullSc
 	}
 }
 
-//Init -
-func (glRenderer *OpenglRenderer) Init(callback func()) {
+func (glRenderer *OpenglRenderer) SetInit(callback func()) {
 	glRenderer.onInit = callback
 }
 
-//Update -
-func (glRenderer *OpenglRenderer) Update(callback func()) {
+func (glRenderer *OpenglRenderer) SetUpdate(callback func()) {
 	glRenderer.onUpdate = callback
 }
 
-//Render -
-func (glRenderer *OpenglRenderer) Render(callback func()) {
+func (glRenderer *OpenglRenderer) SetRender(callback func()) {
 	glRenderer.onRender = callback
+}
+
+func (glRenderer *OpenglRenderer) SetCamera(camera *renderer.Camera) {
+	glRenderer.camera = camera
 }
 
 //Start -
@@ -122,40 +97,6 @@ func (glRenderer *OpenglRenderer) Start() {
 		panic(err)
 	}
 
-	// Configure the vertex and fragment shaders
-	vertShader, _ := compileShader(shaders.MainVert, gl.VERTEX_SHADER)
-	fragShader, _ := compileShader(shaders.MainFrag, gl.FRAGMENT_SHADER)
-	program, _ := newProgram(vertShader, fragShader)
-	gl.UseProgram(program)
-	glRenderer.program = program
-
-	//set shader uniforms
-	glRenderer.transformStack = matstack.NewTransformStack()
-	glRenderer.modelUniform = gl.GetUniformLocation(program, gl.Str("model\x00"))
-	glRenderer.modelNormalUniform = gl.GetUniformLocation(program, gl.Str("modelNormal\x00"))
-	glRenderer.PushTransform(mgl32.Ident4())
-
-	textureUniform := gl.GetUniformLocation(program, gl.Str("diffuse\x00"))
-	gl.Uniform1i(textureUniform, 0)
-	textureUniform = gl.GetUniformLocation(program, gl.Str("normal\x00"))
-	gl.Uniform1i(textureUniform, 1)
-	textureUniform = gl.GetUniformLocation(program, gl.Str("roughness\x00"))
-	gl.Uniform1i(textureUniform, 3)
-	textureUniform = gl.GetUniformLocation(program, gl.Str("metalness\x00"))
-	gl.Uniform1i(textureUniform, 3)
-	textureUniform = gl.GetUniformLocation(program, gl.Str("environmentMap\x00"))
-	gl.Uniform1i(textureUniform, 4)
-	textureUniform = gl.GetUniformLocation(program, gl.Str("environmentMapLOD1\x00"))
-	gl.Uniform1i(textureUniform, 5)
-	textureUniform = gl.GetUniformLocation(program, gl.Str("environmentMapLOD2\x00"))
-	gl.Uniform1i(textureUniform, 6)
-	textureUniform = gl.GetUniformLocation(program, gl.Str("environmentMapLOD3\x00"))
-	gl.Uniform1i(textureUniform, 7)
-	textureUniform = gl.GetUniformLocation(program, gl.Str("illuminanceMap\x00"))
-	gl.Uniform1i(textureUniform, 8)
-
-	gl.BindFragDataLocation(program, 0, gl.Str("outputColor\x00"))
-
 	var vao uint32
 	gl.GenVertexArrays(1, &vao)
 	gl.BindVertexArray(vao)
@@ -168,10 +109,6 @@ func (glRenderer *OpenglRenderer) Start() {
 	gl.Enable(gl.CULL_FACE)
 	gl.CullFace(gl.BACK)
 	gl.ClearColor(0.0, 0.0, 0.0, 1.0)
-
-	//setup Lights
-	glRenderer.lights = make([]float32, maxLights*16, maxLights*16)
-	glRenderer.directionalLights = make([]float32, maxLights*16, maxLights*16)
 
 	glRenderer.initPostEffects()
 
@@ -192,12 +129,13 @@ func (glRenderer *OpenglRenderer) Start() {
 
 func (glRenderer *OpenglRenderer) mainLoop() {
 	glRenderer.onUpdate()
+	glRenderer.enableDepthTest(true)
+	glRenderer.enableDepthMask(true)
 	if len(glRenderer.postEffects) == 0 {
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 		glRenderer.onRender()
 	} else {
 		//Render to the first post effect buffer
-		gl.UseProgram(glRenderer.program)
 		gl.BindFramebuffer(gl.FRAMEBUFFER, glRenderer.postEffects[0].fboId)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 		glRenderer.onRender()
@@ -223,91 +161,7 @@ func (glRenderer *OpenglRenderer) WindowDimensions() mgl32.Vec2 {
 	return mgl32.Vec2{float32(glRenderer.WindowWidth), float32(glRenderer.WindowHeight)}
 }
 
-// Ortho - set orthogonal rendering mode
-func (glRenderer *OpenglRenderer) Ortho() {
-	projection := mgl32.Ortho2D(0, float32(glRenderer.WindowWidth), float32(glRenderer.WindowHeight), 0)
-	projectionUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("projection\x00"))
-	gl.UniformMatrix4fv(projectionUniform, 1, false, &projection[0])
-	camera := mgl32.Ident4()
-	cameraUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("camera\x00"))
-	gl.UniformMatrix4fv(cameraUniform, 1, false, &camera[0])
-	glRenderer.cameraOrtho = true
-}
-
-// Perspective - set Perspective camera mode
-func (glRenderer *OpenglRenderer) Perspective(location, lookat, up mgl32.Vec3, angle, near, far float32) {
-	projection := mgl32.Perspective(mgl32.DegToRad(angle), float32(glRenderer.WindowWidth)/float32(glRenderer.WindowHeight), near, far)
-	projectionUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("projection\x00"))
-	gl.UniformMatrix4fv(projectionUniform, 1, false, &projection[0])
-	camera := mgl32.LookAtV(location, lookat, up)
-	cameraUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("camera\x00"))
-	gl.UniformMatrix4fv(cameraUniform, 1, false, &camera[0])
-	glRenderer.cameraAngle = angle
-	glRenderer.cameraNear = near
-	glRenderer.cameraFar = far
-	glRenderer.cameraLocation = location
-	glRenderer.cameraLookAt = lookat
-	glRenderer.cameraUp = up
-	glRenderer.cameraOrtho = false
-	glRenderer.updateCameraVectors()
-}
-
-func (glRenderer *OpenglRenderer) updateCameraVectors() {
-	window := glRenderer.WindowDimensions()
-	modelview := mgl32.LookAtV(glRenderer.cameraLocation, glRenderer.cameraLookAt, glRenderer.cameraUp)
-	projection := mgl32.Perspective(mgl32.DegToRad(glRenderer.cameraAngle), window.X()/window.Y(), glRenderer.cameraNear, glRenderer.cameraFar)
-	v, _ := mgl32.UnProject(mgl32.Vec3{0, 0, 0.5}, modelview, projection, 0, 0, int(window.X()), int(window.Y()))
-	glRenderer.tlv = v.Sub(glRenderer.cameraLocation).Normalize()
-	v, _ = mgl32.UnProject(mgl32.Vec3{window.X(), 0, 0.5}, modelview, projection, 0, 0, int(window.X()), int(window.Y()))
-	glRenderer.trv = v.Sub(glRenderer.cameraLocation).Normalize()
-	v, _ = mgl32.UnProject(mgl32.Vec3{0, window.Y(), 0.5}, modelview, projection, 0, 0, int(window.X()), int(window.Y()))
-	glRenderer.blv = v.Sub(glRenderer.cameraLocation).Normalize()
-	v, _ = mgl32.UnProject(mgl32.Vec3{window.X(), window.Y(), 0.5}, modelview, projection, 0, 0, int(window.X()), int(window.Y()))
-	glRenderer.brv = v.Sub(glRenderer.cameraLocation).Normalize()
-}
-
-// FrustrumContainsSphere - calculates if a sphere is at least partially within the camera frustrum
-func (glRenderer *OpenglRenderer) FrustrumContainsSphere(radius float32) bool {
-	if glRenderer.cameraOrtho {
-		return true
-	}
-	model := glRenderer.transformStack.Peek()
-	point := mgl32.TransformCoordinate(mgl32.Vec3{}, model)
-	r := mgl32.TransformCoordinate(mgl32.Vec3{radius, 0, 0}, model).Sub(point).Len()
-	delta := point.Sub(glRenderer.cameraLocation)
-	if point.ApproxEqual(glRenderer.cameraLocation) {
-		delta = mgl32.Vec3{1, 0, 0}
-	}
-	return delta.Dot(glRenderer.tlv.Cross(glRenderer.trv)) <= r &&
-		delta.Dot(glRenderer.trv.Cross(glRenderer.brv)) <= r &&
-		delta.Dot(glRenderer.brv.Cross(glRenderer.blv)) <= r &&
-		delta.Dot(glRenderer.blv.Cross(glRenderer.tlv)) <= r &&
-		util.Vec3LenSq(delta) < (glRenderer.cameraFar+r)*(glRenderer.cameraFar+r)
-	return true
-}
-
-// CameraLocation - get location of the camera
-func (glRenderer *OpenglRenderer) CameraLocation() mgl32.Vec3 {
-	return glRenderer.cameraLocation
-}
-
-func (glRenderer *OpenglRenderer) PushTransform(transform mgl32.Mat4) {
-	glRenderer.transformStack.Push(transform)
-	model := glRenderer.transformStack.Peek()
-	modelNormal := model.Inv().Transpose()
-	gl.UniformMatrix4fv(glRenderer.modelUniform, 1, false, &model[0])
-	gl.UniformMatrix4fv(glRenderer.modelNormalUniform, 1, false, &modelNormal[0])
-}
-
-func (glRenderer *OpenglRenderer) PopTransform() {
-	glRenderer.transformStack.Pop()
-	model := glRenderer.transformStack.Peek()
-	modelNormal := model.Inv().Transpose()
-	gl.UniformMatrix4fv(glRenderer.modelUniform, 1, false, &model[0])
-	gl.UniformMatrix4fv(glRenderer.modelNormalUniform, 1, false, &modelNormal[0])
-}
-
-func (glRenderer *OpenglRenderer) EnableDepthTest(depthTest bool) {
+func (glRenderer *OpenglRenderer) enableDepthTest(depthTest bool) {
 	if depthTest {
 		gl.Enable(gl.DEPTH_TEST)
 	} else {
@@ -315,14 +169,12 @@ func (glRenderer *OpenglRenderer) EnableDepthTest(depthTest bool) {
 	}
 }
 
-func (glRenderer *OpenglRenderer) EnableDepthMask(depthMast bool) {
+func (glRenderer *OpenglRenderer) enableDepthMask(depthMast bool) {
 	gl.DepthMask(depthMast)
 }
 
 // CreateGeometry - add geometry to the renderer
 func (glRenderer *OpenglRenderer) CreateGeometry(geometry *renderer.Geometry) {
-
-	// Configure the vertex data
 	var vbo uint32
 	gl.GenBuffers(1, &vbo)
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
@@ -334,40 +186,83 @@ func (glRenderer *OpenglRenderer) CreateGeometry(geometry *renderer.Geometry) {
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo)
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(geometry.Indicies)*4, gl.Ptr(geometry.Indicies), gl.DYNAMIC_DRAW)
 	geometry.IboId = ibo
+
+	if geometry.Material != nil {
+		glRenderer.createMaterial(geometry.Material)
+	}
 }
 
 //
 func (glRenderer *OpenglRenderer) DestroyGeometry(geometry *renderer.Geometry) {
 	gl.DeleteBuffers(1, &geometry.VboId)
 	gl.DeleteBuffers(1, &geometry.IboId)
+	glRenderer.destroyMaterial(geometry.Material)
 }
 
 //setup Texture
-func (glRenderer *OpenglRenderer) CreateMaterial(material *renderer.Material) {
-	if material.Diffuse != nil {
-		material.DiffuseId = glRenderer.newTexture(material.Diffuse, gl.TEXTURE0)
-	}
-	if material.Normal != nil {
-		material.NormalId = glRenderer.newTexture(material.Normal, gl.TEXTURE1)
-	}
-	if material.Roughness != nil {
-		material.RoughnessId = glRenderer.newTexture(material.Roughness, gl.TEXTURE2)
-	}
-	if material.Metalness != nil {
-		material.MetalnessId = glRenderer.newTexture(material.Metalness, gl.TEXTURE3)
+func (glRenderer *OpenglRenderer) createMaterial(material *renderer.Material) {
+	for i, tex := range material.Textures {
+		if !tex.Loaded {
+			texUnit := gl.TEXTURE0 + uint32(i)
+			if tex.CubeMap != nil {
+				cm := tex.CubeMap
+				tex.TextureId = glRenderer.loadCubeMap(cm.Right, cm.Left, cm.Top, cm.Bottom, cm.Back, cm.Front, texUnit)
+			} else {
+				tex.TextureId = glRenderer.loadTexture(tex.Img, texUnit)
+			}
+			tex.Loaded = true
+		}
 	}
 }
 
 //
-func (glRenderer *OpenglRenderer) DestroyMaterial(material *renderer.Material) {
-	gl.DeleteTextures(1, &material.DiffuseId)
-	gl.DeleteTextures(1, &material.NormalId)
-	gl.DeleteTextures(1, &material.RoughnessId)
-	gl.DeleteTextures(1, &material.MetalnessId)
+func (glRenderer *OpenglRenderer) destroyMaterial(material *renderer.Material) {
+	for _, tex := range material.Textures {
+		if tex.Loaded {
+			gl.DeleteTextures(1, &tex.TextureId)
+			tex.Loaded = false
+		}
+	}
 }
 
-//setup Texture
-func (glRenderer *OpenglRenderer) newTexture(img image.Image, textureUnit uint32) uint32 {
+func (glRenderer *OpenglRenderer) CreateShader(shader *renderer.Shader) {
+	var shaders []uint32
+
+	if len(shader.VertSrc) > 0 {
+		if s, err := compileShader(shader.VertSrc+"\x00", gl.VERTEX_SHADER); err == nil {
+			shaders = append(shaders, s)
+		} else {
+			fmt.Println("Error Compiling Vert Shader: ", err)
+		}
+	}
+
+	if len(shader.FragSrc) > 0 {
+		if s, err := compileShader(shader.FragSrc+"\x00", gl.FRAGMENT_SHADER); err == nil {
+			shaders = append(shaders, s)
+		} else {
+			fmt.Println("Error Compiling Frag Shader: ", err)
+		}
+	}
+
+	if len(shader.GeoSrc) > 0 {
+		if s, err := compileShader(shader.GeoSrc+"\x00", gl.GEOMETRY_SHADER); err == nil {
+			shaders = append(shaders, s)
+		} else {
+			fmt.Println("Error Compiling Geo Shader: ", err)
+		}
+	}
+
+	program, err := newProgram(shaders...)
+	if err != nil {
+		fmt.Println("Error Creating Shader Program: ", err)
+	}
+	shader.Program = program
+
+	gl.UseProgram(program)
+	gl.BindFragDataLocation(program, 0, gl.Str(fmt.Sprintf("%v\x00", shader.FragDataLocation)))
+}
+
+func (glRenderer *OpenglRenderer) loadTexture(img image.Image, textureUnit uint32) uint32 {
 	rgba := image.NewRGBA(img.Bounds())
 	if rgba.Stride != rgba.Rect.Size().X*4 {
 		log.Fatal("unsupported stride")
@@ -394,20 +289,7 @@ func (glRenderer *OpenglRenderer) newTexture(img image.Image, textureUnit uint32
 	return texId
 }
 
-func (glRenderer *OpenglRenderer) ReflectionMap(cm *renderer.CubeMap) {
-	cm.Resize(256)
-	glRenderer.envMapId = glRenderer.newCubeMap(cm.Right, cm.Left, cm.Top, cm.Bottom, cm.Back, cm.Front, gl.TEXTURE4)
-	cm.Resize(80)
-	glRenderer.envMapLOD1Id = glRenderer.newCubeMap(cm.Right, cm.Left, cm.Top, cm.Bottom, cm.Back, cm.Front, gl.TEXTURE5)
-	cm.Resize(30)
-	glRenderer.envMapLOD2Id = glRenderer.newCubeMap(cm.Right, cm.Left, cm.Top, cm.Bottom, cm.Back, cm.Front, gl.TEXTURE6)
-	cm.Resize(12)
-	glRenderer.envMapLOD3Id = glRenderer.newCubeMap(cm.Right, cm.Left, cm.Top, cm.Bottom, cm.Back, cm.Front, gl.TEXTURE7)
-	cm.Resize(6)
-	glRenderer.illuminanceMapId = glRenderer.newCubeMap(cm.Right, cm.Left, cm.Top, cm.Bottom, cm.Back, cm.Front, gl.TEXTURE8)
-}
-
-func (glRenderer *OpenglRenderer) newCubeMap(right, left, top, bottom, back, front image.Image, textureUnit uint32) uint32 {
+func (glRenderer *OpenglRenderer) loadCubeMap(right, left, top, bottom, back, front image.Image, textureUnit uint32) uint32 {
 	var texId uint32
 	gl.GenTextures(1, &texId)
 	gl.ActiveTexture(textureUnit)
@@ -458,141 +340,100 @@ func (glRenderer *OpenglRenderer) newCubeMap(right, left, top, bottom, back, fro
 	return texId
 }
 
-//
-func (glRenderer *OpenglRenderer) DrawGeometry(geometry *renderer.Geometry) {
+func (glRenderer *OpenglRenderer) DrawGeometry(geometry *renderer.Geometry, transform mgl32.Mat4) {
+	if geometry.Shader == nil {
+		return
+	}
 
+	// setup shader program
+	program := geometry.Shader.Program
+	gl.UseProgram(program)
+
+	// set buffers
 	gl.BindBuffer(gl.ARRAY_BUFFER, geometry.VboId)
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, geometry.IboId)
 
-	//update buffers
+	// update buffers
 	if geometry.VboDirty && len(geometry.Verticies) > 0 && len(geometry.Indicies) > 0 {
 		gl.BufferData(gl.ARRAY_BUFFER, len(geometry.Verticies)*4, gl.Ptr(geometry.Verticies), gl.DYNAMIC_DRAW)
 		gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(geometry.Indicies)*4, gl.Ptr(geometry.Indicies), gl.DYNAMIC_DRAW)
 		geometry.VboDirty = false
 	}
 
-	//set back face culling
+	// set back face culling
 	if geometry.CullBackface {
 		gl.Enable(gl.CULL_FACE)
 	} else {
 		gl.Disable(gl.CULL_FACE)
 	}
 
-	//set depthbuffer modes
-	glRenderer.EnableDepthTest(geometry.Material.DepthTest)
-	glRenderer.EnableDepthMask(geometry.Material.DepthMask)
+	if geometry.Material != nil {
+		// set depthbuffer modes
+		glRenderer.enableDepthTest(geometry.Material.DepthTest)
+		glRenderer.enableDepthMask(geometry.Material.DepthMask)
 
-	//set lighting mode
-	lightsUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("mode\x00"))
-	gl.Uniform1i(lightsUniform, geometry.Material.LightingMode)
-
-	//world camera position
-	cam := glRenderer.CameraLocation()
-	worldCamPosUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("worldCamPos\x00"))
-	gl.Uniform4f(worldCamPosUniform, cam[0], cam[1], cam[2], 0)
-
-	//transparency mode
-	if geometry.Material.Transparency == renderer.TRANSPARENCY_NON_EMISSIVE {
-		gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-	} else if geometry.Material.Transparency == renderer.TRANSPARENCY_EMISSIVE {
-		gl.BlendFunc(gl.SRC_ALPHA, gl.ONE)
-	} else {
-		gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+		// transparency mode
+		switch geometry.Material.Transparency {
+		case renderer.NON_EMISSIVE:
+			gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+		case renderer.EMISSIVE:
+			gl.BlendFunc(gl.SRC_ALPHA, gl.ONE)
+		default:
+			gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+		}
 	}
-	//set verticies attribute
-	vertAttrib := uint32(gl.GetAttribLocation(glRenderer.program, gl.Str("vert\x00")))
+
+	// set default uniforms
+	modelNormal := transform.Inv().Transpose()
+	geometry.Shader.Uniforms["model"] = transform
+	geometry.Shader.Uniforms["modelNormal"] = modelNormal
+
+	cam := glRenderer.camera
+	win := glRenderer.WindowDimensions()
+	if cam.Ortho {
+		geometry.Shader.Uniforms["projection"] = mgl32.Ortho2D(0, win.X(), win.Y(), 0)
+		geometry.Shader.Uniforms["camera"] = mgl32.Ident4()
+	} else {
+		geometry.Shader.Uniforms["projection"] = mgl32.Perspective(mgl32.DegToRad(cam.Angle), win.X()/win.Y(), cam.Near, cam.Far)
+		geometry.Shader.Uniforms["camera"] = mgl32.LookAtV(cam.Translation, cam.Lookat, cam.Up)
+	}
+
+	// set custom uniforms
+	setupUniforms(geometry.Shader)
+
+	// set verticies attribute
+	vertAttrib := uint32(gl.GetAttribLocation(program, gl.Str("vert\x00")))
 	gl.EnableVertexAttribArray(vertAttrib)
 	gl.VertexAttribPointer(vertAttrib, 3, gl.FLOAT, false, renderer.VertexStride*4, gl.PtrOffset(0))
-	//set normals attribute
-	normAttrib := uint32(gl.GetAttribLocation(glRenderer.program, gl.Str("normal\x00")))
+	// set normals attribute
+	normAttrib := uint32(gl.GetAttribLocation(program, gl.Str("normal\x00")))
 	gl.EnableVertexAttribArray(normAttrib)
 	gl.VertexAttribPointer(normAttrib, 3, gl.FLOAT, false, renderer.VertexStride*4, gl.PtrOffset(3*4))
-	//set texture coord attribute
-	texCoordAttrib := uint32(gl.GetAttribLocation(glRenderer.program, gl.Str("vertTexCoord\x00")))
+	// set texture coord attribute
+	texCoordAttrib := uint32(gl.GetAttribLocation(program, gl.Str("texCoord\x00")))
 	gl.EnableVertexAttribArray(texCoordAttrib)
 	gl.VertexAttribPointer(texCoordAttrib, 2, gl.FLOAT, false, renderer.VertexStride*4, gl.PtrOffset(6*4))
-	//vertex color attribute
-	colorAttrib := uint32(gl.GetAttribLocation(glRenderer.program, gl.Str("color\x00")))
+	// vertex color attribute
+	colorAttrib := uint32(gl.GetAttribLocation(program, gl.Str("color\x00")))
 	gl.EnableVertexAttribArray(colorAttrib)
 	gl.VertexAttribPointer(colorAttrib, 4, gl.FLOAT, false, renderer.VertexStride*4, gl.PtrOffset(8*4))
 
-	//setup textures
-	gl.ActiveTexture(gl.TEXTURE0)
-	gl.BindTexture(gl.TEXTURE_2D, geometry.Material.DiffuseId)
-	gl.ActiveTexture(gl.TEXTURE1)
-	gl.BindTexture(gl.TEXTURE_2D, geometry.Material.NormalId)
-	gl.ActiveTexture(gl.TEXTURE2)
-	gl.BindTexture(gl.TEXTURE_2D, geometry.Material.RoughnessId)
-	gl.ActiveTexture(gl.TEXTURE3)
-	gl.BindTexture(gl.TEXTURE_2D, geometry.Material.MetalnessId)
-
-	gl.ActiveTexture(gl.TEXTURE4)
-	gl.BindTexture(gl.TEXTURE_CUBE_MAP, glRenderer.envMapId)
-	gl.ActiveTexture(gl.TEXTURE5)
-	gl.BindTexture(gl.TEXTURE_CUBE_MAP, glRenderer.envMapLOD1Id)
-	gl.ActiveTexture(gl.TEXTURE6)
-	gl.BindTexture(gl.TEXTURE_CUBE_MAP, glRenderer.envMapLOD2Id)
-	gl.ActiveTexture(gl.TEXTURE7)
-	gl.BindTexture(gl.TEXTURE_CUBE_MAP, glRenderer.envMapLOD3Id)
-	gl.ActiveTexture(gl.TEXTURE8)
-	gl.BindTexture(gl.TEXTURE_CUBE_MAP, glRenderer.illuminanceMapId)
-
-	useVertexColorUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("useVertexColor\x00"))
-	if geometry.Material.Diffuse == nil {
-		gl.Uniform1i(useVertexColorUniform, 1)
-	} else {
-		gl.Uniform1i(useVertexColorUniform, 0)
+	if geometry.Material != nil {
+		// setup textures
+		for i, tex := range geometry.Material.Textures {
+			texUnit := gl.TEXTURE0 + uint32(i)
+			textureUniform := gl.GetUniformLocation(program, gl.Str(fmt.Sprintf("%v\x00", tex.TextureName)))
+			gl.Uniform1i(textureUniform, int32(i))
+			gl.ActiveTexture(texUnit)
+			var target uint32 = gl.TEXTURE_2D
+			if tex.CubeMap != nil {
+				target = gl.TEXTURE_CUBE_MAP
+			}
+			gl.BindTexture(target, tex.TextureId)
+		}
 	}
 
 	gl.DrawElements(gl.TRIANGLES, (int32)(len(geometry.Indicies)), gl.UNSIGNED_INT, gl.PtrOffset(0))
-}
-
-// ambient, diffuse and specular light values ( i is the light index )
-func (glRenderer *OpenglRenderer) CreateLight(ar, ag, ab, dr, dg, db, sr, sg, sb float32, directional bool, position mgl32.Vec3, i int) {
-	lights := glRenderer.lights
-	if directional {
-		lights = glRenderer.directionalLights
-		glRenderer.nbDirectionalLights = int32(i + 1)
-	} else {
-		glRenderer.nbLights = int32(i + 1)
-	}
-
-	//position
-	lights[(i * 16)] = position.X()
-	lights[(i*16)+1] = position.Y()
-	lights[(i*16)+2] = position.Z()
-	lights[(i*16)+3] = 1
-	//ambient
-	lights[(i*16)+4] = ar
-	lights[(i*16)+5] = ag
-	lights[(i*16)+6] = ab
-	lights[(i*16)+7] = 1
-	//diffuse
-	lights[(i*16)+8] = dr
-	lights[(i*16)+9] = dg
-	lights[(i*16)+10] = db
-	lights[(i*16)+11] = 1
-	//specular
-	lights[(i*16)+12] = sr
-	lights[(i*16)+13] = sg
-	lights[(i*16)+14] = sb
-	lights[(i*16)+15] = 1
-
-	//set uniform array
-	uniformName := "lights\x00"
-	if directional {
-		uniformName = "directionalLights\x00"
-	}
-	lightsUniform := gl.GetUniformLocation(glRenderer.program, gl.Str(uniformName))
-	gl.Uniform4fv(lightsUniform, (int32)(maxLights*16), &lights[0])
-	nbLightsUniform := gl.GetUniformLocation(glRenderer.program, gl.Str("nbLights\x00"))
-	gl.Uniform1i(nbLightsUniform, glRenderer.nbLights)
-	nbLightsUniform = gl.GetUniformLocation(glRenderer.program, gl.Str("nbDirectionalLights\x00"))
-	gl.Uniform1i(nbLightsUniform, glRenderer.nbDirectionalLights)
-}
-
-func (glRenderer *OpenglRenderer) DestroyLight(i int) {
-	//TODO
 }
 
 func (glRenderer *OpenglRenderer) LockCursor(lock bool) {

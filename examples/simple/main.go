@@ -2,6 +2,7 @@ package main
 
 import (
 	"image/color"
+	"io/ioutil"
 	"runtime"
 
 	"github.com/go-gl/mathgl/mgl32"
@@ -12,7 +13,6 @@ import (
 	"github.com/walesey/go-engine/glfwController"
 	"github.com/walesey/go-engine/opengl"
 	"github.com/walesey/go-engine/renderer"
-	"github.com/walesey/go-engine/util"
 )
 
 func init() {
@@ -35,18 +35,28 @@ func main() {
 
 	gameEngine.Start(func() {
 
-		light := renderer.CreateLight()
-		light.Directional = true
-		light.Ambient = [3]float32{0.3, 0.3, 0.3}
-		light.Diffuse = [3]float32{0.5, 0.5, 0.5}
-		light.Specular = [3]float32{0.7, 0.7, 0.7}
-		light.SetOrientation(util.FacingOrientation(0, mgl32.Vec3{1, 1, -1}, mgl32.Vec3{1, 0, 0}, mgl32.Vec3{0, 1, 0}))
-		gameEngine.AddLight(light)
+		shader := renderer.NewShader()
+		vertsrc, err := ioutil.ReadFile("build/shaders/basic.vert")
+		if err != nil {
+			panic(err)
+		}
+		shader.VertSrc = string(vertsrc)
 
-		// Sky cubemap
+		fragsrc, err := ioutil.ReadFile("build/shaders/basic.frag")
+		if err != nil {
+			panic(err)
+		}
+		shader.FragSrc = string(fragsrc)
+
+		// sky cube
 		skyImg, err := assets.ImportImage("resources/cubemap.png")
 		if err == nil {
-			gameEngine.Sky(assets.CreateMaterial(skyImg, nil, nil, nil), 999999)
+			geom := renderer.CreateSkyBox()
+			geom.Shader = shader
+			geom.Material = renderer.NewMaterial(renderer.NewTexture("diffuseMap", skyImg))
+			geom.CullBackface = false
+			geom.Transform(mgl32.Scale3D(100, 100, 100))
+			gameEngine.AddSpatial(geom)
 		}
 
 		// input/controller manager
@@ -65,7 +75,8 @@ func main() {
 
 		// Create a red box geometry, attach to a node, add the node to the scenegraph
 		boxGeometry := renderer.CreateBox(10, 10)
-		boxGeometry.Material = renderer.CreateMaterial()
+		boxGeometry.Material = renderer.NewMaterial()
+		boxGeometry.Shader = shader
 		boxGeometry.SetColor(color.NRGBA{254, 0, 0, 254})
 		boxGeometry.CullBackface = false
 		boxNode := renderer.CreateNode()

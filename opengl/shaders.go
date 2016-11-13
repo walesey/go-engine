@@ -3,35 +3,12 @@ package opengl
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"strings"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/go-gl/mathgl/mgl32"
+	"github.com/walesey/go-engine/renderer"
 )
-
-func programFromFile(vertFilePath, fragFilePath string) (uint32, error) {
-	bufVert, err := ioutil.ReadFile(vertFilePath)
-	if err != nil {
-		panic(err)
-	}
-	vertexShaderSource := string(bufVert) + "\x00"
-	vertexShader, err := compileShader(vertexShaderSource, gl.VERTEX_SHADER)
-	if err != nil {
-		return 0, err
-	}
-
-	bufFrag, err := ioutil.ReadFile(fragFilePath)
-	if err != nil {
-		panic(err)
-	}
-	fragmentShaderSource := string(bufFrag) + "\x00"
-	fragmentShader, err := compileShader(fragmentShaderSource, gl.FRAGMENT_SHADER)
-	if err != nil {
-		return 0, err
-	}
-
-	return newProgram(vertexShader, fragmentShader)
-}
 
 func newProgram(shaders ...uint32) (uint32, error) {
 	program := gl.CreateProgram()
@@ -80,4 +57,32 @@ func compileShader(source string, shaderType uint32) (uint32, error) {
 	}
 
 	return shader, nil
+}
+
+func setupUniforms(shader *renderer.Shader) {
+	for name, uniform := range shader.Uniforms {
+		uniformLocation := gl.GetUniformLocation(shader.Program, gl.Str(name+"\x00"))
+		switch t := uniform.(type) {
+		case float32:
+			gl.Uniform1f(uniformLocation, t)
+		case float64:
+			gl.Uniform1f(uniformLocation, float32(t))
+		case int32:
+			gl.Uniform1i(uniformLocation, t)
+		case int:
+			gl.Uniform1i(uniformLocation, int32(t))
+		case mgl32.Vec2:
+			gl.Uniform2f(uniformLocation, t[0], t[1])
+		case mgl32.Vec3:
+			gl.Uniform3f(uniformLocation, t[0], t[1], t[2])
+		case mgl32.Vec4:
+			gl.Uniform4f(uniformLocation, t[0], t[1], t[2], t[3])
+		case mgl32.Mat4:
+			gl.UniformMatrix4fv(uniformLocation, 1, false, &t[0])
+		case []float32:
+			gl.Uniform4fv(uniformLocation, (int32)(len(t)), &t[0])
+		default:
+			fmt.Printf("unexpected type for shader uniform: %T\n", t)
+		}
+	}
 }

@@ -51,19 +51,16 @@ func New() *Editor {
 
 func (e *Editor) Start() {
 	glRenderer := &opengl.OpenglRenderer{
-		WindowTitle: "GoEngine editor",
+		WindowTitle: "GoEngine Editor",
 	}
 	e.renderer = glRenderer
 	e.gameEngine = engine.NewEngine(e.renderer)
 
 	e.gameEngine.Start(func() {
-		//lighting
-		e.renderer.CreateLight(0.0, 0.0, 0.0, 0.5, 0.5, 0.5, 0.7, 0.7, 0.7, true, mgl32.Vec3{0.5, -1, 0.3}, 0)
-
 		//Sky
 		skyImg, err := assets.ImportImage("resources/cubemap.png")
 		if err == nil {
-			e.gameEngine.Sky(assets.CreateMaterial(skyImg, nil, nil, nil), 999999)
+			e.gameEngine.Sky(renderer.NewMaterial(renderer.NewTexture("diffuseMap", skyImg)), 999999)
 		}
 
 		//root node
@@ -97,9 +94,8 @@ func (e *Editor) Start() {
 
 func (e *Editor) initSelectSprite() {
 	img, _ := assets.DecodeImage(bytes.NewBuffer(util.Base64ToBytes(GeometryIconData)))
-	mat := assets.CreateMaterial(img, nil, nil, nil)
-	mat.LightingMode = renderer.MODE_UNLIT
-	mat.Transparency = renderer.TRANSPARENCY_EMISSIVE
+	mat := renderer.NewMaterial(renderer.NewTexture("diffuseMap", img))
+	mat.Transparency = renderer.EMISSIVE
 	mat.DepthTest = false
 	selectSprite := effects.CreateSprite(1, 1, 1, mat)
 	e.selectSprite = selectSprite
@@ -109,7 +105,7 @@ func (e *Editor) initSelectSprite() {
 func (e *Editor) updateSelectSprite(dt float64) {
 	selectedModel, _ := e.overviewMenu.getSelectedNode(e.currentMap.Root)
 	if selectedModel != nil {
-		size := selectedModel.Translation.Sub(e.gameEngine.Camera().GetTranslation()).Len() * 0.02
+		size := selectedModel.Translation.Sub(e.gameEngine.Camera().Translation).Len() * 0.02
 		translation, err := e.rootMapNode.RelativePosition(selectedModel.GetNode())
 		if err == nil {
 			e.selectSprite.SetScale(mgl32.Vec3{size, size, size})

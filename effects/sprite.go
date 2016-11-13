@@ -14,6 +14,7 @@ type Sprite struct {
 	location, scale                      mgl32.Vec3
 	Rotation                             float32
 	FaceCamera                           bool
+	cameraPosition                       mgl32.Vec3
 	frame, totalFrames, framesX, framesY int
 }
 
@@ -46,12 +47,8 @@ func BoxFlipbook(geometry *renderer.Geometry, frame, framesX, framesY int) {
 	geometry.SetUVs(u1, v1, u2, v1, u2, v2, u1, v2)
 }
 
-func (sprite *Sprite) Draw(r renderer.Renderer) {
-	if sprite.FaceCamera {
-		orientation := util.FacingOrientation(sprite.Rotation, r.CameraLocation().Sub(sprite.location), mgl32.Vec3{0, 0, 1}, mgl32.Vec3{-1, 0, 0})
-		sprite.node.SetOrientation(orientation)
-	}
-	sprite.node.Draw(r)
+func (sprite *Sprite) Draw(r renderer.Renderer, transform mgl32.Mat4) {
+	sprite.node.Draw(r, transform)
 }
 
 func (sprite *Sprite) Destroy(renderer renderer.Renderer) {
@@ -90,4 +87,15 @@ func (sprite *Sprite) SetScale(scale mgl32.Vec3) {
 
 func (sprite *Sprite) SetOrientation(orientation mgl32.Quat) {
 	sprite.node.SetOrientation(orientation)
+}
+
+func (sprite *Sprite) SetCameraLocation(cameraLocation mgl32.Vec3) {
+	sprite.cameraPosition = cameraLocation
+}
+
+func (sprite *Sprite) Update(dt float64) {
+	if sprite.FaceCamera {
+		orientation := util.FacingOrientation(sprite.Rotation, sprite.cameraPosition.Sub(sprite.location), mgl32.Vec3{0, 0, 1}, mgl32.Vec3{-1, 0, 0})
+		sprite.node.SetOrientation(orientation)
+	}
 }

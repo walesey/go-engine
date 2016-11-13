@@ -71,8 +71,8 @@ func main() {
 func fireParticles() *effects.ParticleSystem {
 	img, _ := assets.ImportImageCached("resources/fire.png")
 	material := assets.CreateMaterial(img, nil, nil, nil)
-	material.LightingMode = renderer.MODE_EMIT
-	material.Transparency = renderer.TRANSPARENCY_EMISSIVE
+	material.LightingMode = renderer.EMIT
+	material.Transparency = renderer.EMISSIVE
 	material.DepthMask = false
 	return effects.CreateParticleSystem(effects.ParticleSettings{
 		MaxParticles:     12,

@@ -22,8 +22,8 @@ type Window struct {
 	Tabs                          []Activatable
 }
 
-func (w *Window) Draw(renderer renderer.Renderer) {
-	w.node.Draw(renderer)
+func (w *Window) Draw(renderer renderer.Renderer, transform mgl32.Mat4) {
+	w.node.Draw(renderer, transform)
 }
 
 func (w *Window) Destroy(renderer renderer.Renderer) {
@@ -147,9 +147,7 @@ func NewWindow() *Window {
 	background := renderer.CreateNode()
 	box := renderer.CreateBoxWithOffset(1, 1, 0, 0)
 	box.SetColor(color.NRGBA{255, 255, 255, 255})
-	mat := renderer.CreateMaterial()
-	mat.LightingMode = renderer.MODE_UNLIT
-	box.Material = mat
+	box.Material = renderer.NewMaterial()
 	background.Add(box)
 	node.Add(background)
 	node.Add(elementNode)

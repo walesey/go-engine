@@ -160,9 +160,7 @@ func (c *Container) SetBackgroundColor(r, g, b, a uint8) {
 func (c *Container) SetBackgroundImage(img image.Image) {
 	c.background.Remove(c.backgroundBox, true)
 	box := renderer.CreateBoxWithOffset(1, 1, 0, 0)
-	mat := renderer.CreateMaterial()
-	mat.Diffuse = img
-	mat.LightingMode = renderer.MODE_UNLIT
+	mat := renderer.NewMaterial(renderer.NewTexture("diffuseMap", img))
 	box.Material = mat
 	c.backgroundBox = box
 	c.background.Add(box)
@@ -270,9 +268,7 @@ func NewContainer() *Container {
 	background := renderer.CreateNode()
 	box := renderer.CreateBoxWithOffset(1, 1, 0, 0)
 	box.SetColor(color.NRGBA{0, 0, 0, 0})
-	mat := renderer.CreateMaterial()
-	mat.LightingMode = renderer.MODE_UNLIT
-	box.Material = mat
+	box.Material = renderer.NewMaterial()
 	background.Add(box)
 	node.Add(background)
 	node.Add(elementsNode)

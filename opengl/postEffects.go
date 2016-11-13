@@ -1,10 +1,7 @@
 package opengl
 
 import (
-	"fmt"
-
 	"github.com/go-gl/gl/v4.1-core/gl"
-	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/renderer"
 )
 
@@ -13,7 +10,7 @@ type postEffect struct {
 	fboId     uint32
 	dboId     uint32
 	textureId uint32
-	shader    renderer.Shader
+	shader    *renderer.Shader
 }
 
 //Set up the frame buffer for rendering each post effect filter pass
@@ -33,12 +30,11 @@ func (glRenderer *OpenglRenderer) initPostEffects() {
 	glRenderer.postEffectVbo = vbo
 }
 
-func (glRenderer *OpenglRenderer) CreatePostEffect(shader renderer.Shader) {
+func (glRenderer *OpenglRenderer) CreatePostEffect(shader *renderer.Shader) {
 
 	//Create program
-	shaderName := shader.Name
-	program, _ := programFromFile(shaderName+".vert", shaderName+".frag")
-	gl.UseProgram(program)
+	glRenderer.CreateShader(shader)
+	gl.UseProgram(shader.Program)
 
 	//Create Texture
 	var fbo_texture uint32
@@ -64,12 +60,10 @@ func (glRenderer *OpenglRenderer) CreatePostEffect(shader renderer.Shader) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fbo_texture, 0)
 	gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, dbo)
-	gl.BindFragDataLocation(program, 0, gl.Str("outputColor\x00"))
-	gl.UseProgram(glRenderer.program)
 
 	//add new postEffect to the queue
 	newPe := postEffect{
-		program:   program,
+		program:   shader.Program,
 		textureId: fbo_texture,
 		dboId:     dbo,
 		fboId:     fbo,
@@ -78,10 +72,9 @@ func (glRenderer *OpenglRenderer) CreatePostEffect(shader renderer.Shader) {
 	glRenderer.postEffects = append(glRenderer.postEffects, newPe)
 }
 
-func (glRenderer *OpenglRenderer) DestroyPostEffects(shader renderer.Shader) {
-	shaderName := shader.Name
+func (glRenderer *OpenglRenderer) DestroyPostEffects(shader *renderer.Shader) {
 	for i, po := range glRenderer.postEffects {
-		if po.shader.Name == shaderName {
+		if po.shader == shader {
 			gl.DeleteRenderbuffers(1, &po.dboId)
 			gl.DeleteTextures(1, &po.textureId)
 			gl.DeleteFramebuffers(1, &po.fboId)
@@ -98,31 +91,7 @@ func (glRenderer *OpenglRenderer) renderPostEffect(pe postEffect) {
 	gl.Disable(gl.CULL_FACE)
 	gl.BindBuffer(gl.ARRAY_BUFFER, glRenderer.postEffectVbo)
 
-	//update uniforms
-	for _, uniform := range pe.shader.Uniforms {
-		uniformLocation := gl.GetUniformLocation(pe.program, gl.Str(uniform.Name+"\x00"))
-		switch t := uniform.Value.(type) {
-		default:
-			fmt.Printf("unexpected type for shader uniform: %T\n", t)
-		case float32:
-			gl.Uniform1f(uniformLocation, uniform.Value.(float32))
-		case float64:
-			gl.Uniform1f(uniformLocation, float32(uniform.Value.(float64)))
-		case int32:
-			gl.Uniform1i(uniformLocation, uniform.Value.(int32))
-		case int:
-			gl.Uniform1i(uniformLocation, int32(uniform.Value.(int)))
-		case mgl32.Vec2:
-			vec := uniform.Value.(mgl32.Vec2)
-			gl.Uniform2f(uniformLocation, vec[0], vec[1])
-		case mgl32.Vec3:
-			vec := uniform.Value.(mgl32.Vec3)
-			gl.Uniform3f(uniformLocation, vec[0], vec[1], vec[2])
-		case mgl32.Vec4:
-			vec := uniform.Value.(mgl32.Vec4)
-			gl.Uniform4f(uniformLocation, vec[0], vec[1], vec[2], vec[3])
-		}
-	}
+	setupUniforms(pe.shader)
 
 	vertAttrib := uint32(gl.GetAttribLocation(pe.program, gl.Str("vert\x00")))
 	gl.EnableVertexAttribArray(vertAttrib)

@@ -3,11 +3,12 @@ package assets
 import (
 	"bufio"
 	"fmt"
-	"image"
 	"log"
 	"os"
 	"strconv"
 	"strings"
+
+	"image"
 
 	"github.com/walesey/go-engine/renderer"
 )
@@ -26,7 +27,7 @@ type mtlData struct {
 	Ns, Ka, Kd, Ks, Ni, D float32
 	Illum                 int
 
-	Map_Kd, Map_Disp, Map_Roughness, Map_Metalness image.Image
+	maps map[string]image.Image
 }
 
 //imports an obj from a filePath and return a Geometry
@@ -77,7 +78,11 @@ func ImportObj(filePath string) (*renderer.Geometry, error) {
 
 	geometry := renderer.CreateGeometry(obj.Indicies, obj.Vertices)
 	if mtlErr == nil && obj.Mtl != nil {
-		geometry.Material = CreateMaterial(obj.Mtl.Map_Kd, obj.Mtl.Map_Disp, obj.Mtl.Map_Roughness, obj.Mtl.Map_Metalness)
+		textures := []*renderer.Texture{}
+		for key, img := range obj.Mtl.maps {
+			textures = append(textures, renderer.NewTexture(key, img))
+		}
+		geometry.Material = renderer.NewMaterial(textures...)
 	}
 
 	if err = scanner.Err(); err != nil {
@@ -85,16 +90,6 @@ func ImportObj(filePath string) (*renderer.Geometry, error) {
 		return nil, err
 	}
 	return geometry, nil
-}
-
-// Create material object from image files
-func CreateMaterial(diffuse, normal, roughness, metalness image.Image) *renderer.Material {
-	mat := renderer.CreateMaterial()
-	mat.Diffuse = diffuse
-	mat.Normal = normal
-	mat.Roughness = roughness
-	mat.Metalness = metalness
-	return mat
 }
 
 //returns corresponding index (0,1,2...)
@@ -175,7 +170,7 @@ func (obj *objData) processFace(line string, vertexList, uvList, normalList []fl
 
 //Returns mtl object data type
 func importMTL(filePath, fileName string) (*mtlData, error) {
-	mtl := &mtlData{}
+	mtl := &mtlData{maps: make(map[string]image.Image)}
 
 	file, err := os.Open(filePath + fileName)
 	if err != nil {
@@ -191,19 +186,24 @@ func importMTL(filePath, fileName string) (*mtlData, error) {
 		if len(tokens) > 0 {
 			dataType := tokens[0]
 			var err error = nil
-			if dataType == "newmtl" {
+			switch dataType {
+			case "newmtl":
 				mtl.Name = tokens[1]
-			} else if dataType == "Ns" {
+			case "Ns":
 				mtl.Ns = stf(tokens[1])
-				//TODO: Other mtl variables
-			} else if dataType == "map_Kd" {
-				mtl.Map_Kd, err = ImportImage(filePath + tokens[1])
-			} else if dataType == "map_Disp" {
-				mtl.Map_Disp, err = ImportImage(filePath + tokens[1])
-			} else if dataType == "map_Roughness" {
-				mtl.Map_Roughness, err = ImportImage(filePath + tokens[1])
-			} else if dataType == "map_Metalness" {
-				mtl.Map_Metalness, err = ImportImage(filePath + tokens[1])
+			//TODO: Other mtl variables
+			case "map_Kd":
+				mtl.maps["diffuseMap"], err = ImportImage(filePath + tokens[1])
+			case "map_Spec":
+				mtl.maps["specularMap"], err = ImportImage(filePath + tokens[1])
+			case "map_AO":
+				mtl.maps["aoMap"], err = ImportImage(filePath + tokens[1])
+			case "map_Disp":
+				mtl.maps["normalMap"], err = ImportImage(filePath + tokens[1])
+			case "map_Roughness":
+				mtl.maps["roughnessMap"], err = ImportImage(filePath + tokens[1])
+			case "map_Metalness":
+				mtl.maps["metalnessMap"], err = ImportImage(filePath + tokens[1])
 			}
 			if err != nil {
 				log.Printf("Error parsing mtl data %v: %v\n", dataType, err)

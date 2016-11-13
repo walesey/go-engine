@@ -1,7 +1,6 @@
 package renderer
 
 import (
-	"image"
 	"image/color"
 
 	"github.com/go-gl/mathgl/mgl32"
@@ -10,59 +9,26 @@ import (
 
 const VertexStride = 12
 
-const (
-	MODE_UNLIT int32 = iota
-	MODE_LIT
-	MODE_EMIT
-)
-
-const (
-	TRANSPARENCY_NON_EMISSIVE int = iota
-	TRANSPARENCY_EMISSIVE
-)
-
-type Material struct {
-	DiffuseId, NormalId, RoughnessId, MetalnessId uint32
-
-	loaded                                          bool
-	LightingMode                                    int32
-	Transparency                                    int
-	DepthTest, DepthMask                            bool
-	Diffuse, Normal, Roughness, Metalness image.Image
-}
-
-func CreateMaterial() *Material {
-	return &Material{
-		loaded:       false,
-		LightingMode: MODE_LIT,
-		Transparency: TRANSPARENCY_NON_EMISSIVE,
-		DepthTest:    true,
-		DepthMask:    true,
-	}
-}
-
 //Geometry
 type Geometry struct {
 	VboId, IboId    uint32
 	loaded          bool
 	VboDirty        bool
+	boundingRadius  float32
 	Indicies        []uint32
 	Verticies       []float32
 	Material        *Material
+	Shader          *Shader
 	CullBackface    bool
 	FrustrumCulling bool
-	boundingRadius  float32
 }
 
 //vericies format : x,y,z,   nx,ny,nz,   u,v,  r,g,b,a
 //indicies format : f1,f2,f3 (triangles)
 func CreateGeometry(indicies []uint32, verticies []float32) *Geometry {
-	mat := CreateMaterial()
 	return &Geometry{
 		Indicies:        indicies,
 		Verticies:       verticies,
-		Material:        mat,
-		loaded:          false,
 		CullBackface:    true,
 		FrustrumCulling: true,
 	}
@@ -76,11 +42,9 @@ func (geometry *Geometry) Copy() *Geometry {
 	return CreateGeometry(indicies, verticies)
 }
 
-func (geometry *Geometry) Draw(renderer Renderer) {
+func (geometry *Geometry) Draw(renderer Renderer, transform mgl32.Mat4) {
 	geometry.load(renderer)
-	if !geometry.FrustrumCulling || renderer.FrustrumContainsSphere(geometry.boundingRadius) {
-		renderer.DrawGeometry(geometry)
-	}
+	renderer.DrawGeometry(geometry, transform)
 }
 
 func (geometry *Geometry) load(renderer Renderer) {
@@ -89,19 +53,15 @@ func (geometry *Geometry) load(renderer Renderer) {
 		renderer.CreateGeometry(geometry)
 		geometry.loaded = true
 	}
-	if !geometry.Material.loaded {
-		renderer.CreateMaterial(geometry.Material)
-		geometry.Material.loaded = true
+	if geometry.Shader != nil && !geometry.Shader.loaded {
+		renderer.CreateShader(geometry.Shader)
+		geometry.Shader.loaded = true
 	}
 }
 
 func (geometry *Geometry) Destroy(renderer Renderer) {
 	renderer.DestroyGeometry(geometry)
 	geometry.loaded = false
-	if geometry.Material != nil {
-		renderer.DestroyMaterial(geometry.Material)
-		geometry.Material.loaded = false
-	}
 }
 
 func (geometry *Geometry) Centre() mgl32.Vec3 {

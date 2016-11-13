@@ -2,10 +2,10 @@ package parser
 
 import (
 	"bufio"
-	"bytes"
 	"crypto/md5"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -110,18 +110,13 @@ func (p *Parser) parseHashInclude() {
 	}
 	defer src.Close()
 
-	fragBuf, vertBuf, geoBuf := new(bytes.Buffer), new(bytes.Buffer), new(bytes.Buffer)
-	parser := New(src, includePath, fragBuf, vertBuf, geoBuf)
-	parser.includes = p.includes
-	parser.Parse()
-
-	fragData, vertData, geoData := fragBuf.Bytes(), vertBuf.Bytes(), geoBuf.Bytes()
-	fragHash, vertHash, geoHash := md5.Sum(fragData), md5.Sum(vertData), md5.Sum(geoData)
-	hash := fmt.Sprint(string(fragHash[:]), string(vertHash[:]), string(geoHash[:]))
+	data, _ := ioutil.ReadFile(includePath)
+	hashData := md5.Sum(data)
+	hash := string(hashData[:])
 	if _, ok := p.includes[hash]; !ok {
-		p.writeFrag(fragData)
-		p.writeVert(vertData)
-		p.writeGeo(geoData)
+		parser := New(src, includePath, p.vertOut, p.fragOut, p.geoOut)
+		parser.includes = p.includes
+		parser.Parse()
 	}
 	p.includes[hash] = true
 }

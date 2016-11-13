@@ -2,6 +2,7 @@ package main
 
 import (
 	"image/color"
+	"io/ioutil"
 	"runtime"
 	"time"
 
@@ -41,10 +42,9 @@ func (c *Character) Update(dt float64) {
 	}
 }
 
-func NewCharacter() *Character {
+func NewCharacter(shader *renderer.Shader) *Character {
 	characterImg, _ := assets.ImportImageCached("resources/stickman.png")
-	characterMat := assets.CreateMaterial(characterImg, nil, nil, nil)
-	characterMat.LightingMode = renderer.MODE_UNLIT
+	characterMat := renderer.NewMaterial(renderer.NewTexture("diffuseMap", characterImg))
 	sprite := effects.CreateSprite(4, 4, 1, characterMat)
 	sprite.FaceCamera = false
 	sprite.SetScale(mgl32.Vec2{characterSize, characterSize}.Vec3(0))
@@ -86,14 +86,31 @@ func main() {
 
 	gameEngine.Start(func() {
 
-		// Sky cubemap
-		skyImg, err := assets.ImportImageCached("resources/cubemap.png")
+		shader := renderer.NewShader()
+		vertsrc, err := ioutil.ReadFile("build/shaders/basic.vert")
+		if err != nil {
+			panic(err)
+		}
+		shader.VertSrc = string(vertsrc)
+
+		fragsrc, err := ioutil.ReadFile("build/shaders/basic.frag")
+		if err != nil {
+			panic(err)
+		}
+		shader.FragSrc = string(fragsrc)
+
+		skyImg, err := assets.ImportImage("resources/cubemap.png")
 		if err == nil {
-			gameEngine.Sky(assets.CreateMaterial(skyImg, nil, nil, nil), 999999)
+			geom := renderer.CreateSkyBox()
+			geom.Shader = shader
+			geom.Material = renderer.NewMaterial(renderer.NewTexture("diffuseMap", skyImg))
+			geom.CullBackface = false
+			geom.Transform(mgl32.Scale3D(100, 100, 100))
+			gameEngine.AddSpatial(geom)
 		}
 
 		// The player object
-		character := NewCharacter()
+		character := NewCharacter(shader)
 		character.body.SetPosition(mgl32.Vec2{400, 400})
 
 		// Add the character to all the things
@@ -103,6 +120,7 @@ func main() {
 
 		// terrain
 		terrainGeometry := renderer.CreateBoxWithOffset(800, 800-floorHeight, 0, floorHeight)
+		terrainGeometry.Shader = shader
 		terrainGeometry.SetColor(color.NRGBA{0, 254, 0, 254})
 		gameEngine.AddOrtho(terrainGeometry)
 
@@ -113,8 +131,8 @@ func main() {
 		physicsSpace.AddBody(terrainBody)
 
 		// create and manage a new particle system
-		spawnParticles := func(load func() *effects.ParticleSystem, position mgl32.Vec2) *effects.ParticleSystem {
-			particles := load()
+		spawnParticles := func(load func(shader *renderer.Shader) *effects.ParticleSystem, position mgl32.Vec2) *effects.ParticleSystem {
+			particles := load(shader)
 			particles.SetTranslation(position.Vec3(0))
 			gameEngine.AddOrtho(particles)
 			age := 0.0
@@ -176,15 +194,17 @@ func main() {
 	})
 }
 
-func dustParticles() *effects.ParticleSystem {
+func dustParticles(shader *renderer.Shader) *effects.ParticleSystem {
 	img, _ := assets.ImportImageCached("resources/smoke.png")
-	material := assets.CreateMaterial(img, nil, nil, nil)
-	material.LightingMode = renderer.MODE_UNLIT
+	material := renderer.NewMaterial(renderer.NewTexture("diffuseMap", img))
+	material.Transparency = renderer.EMISSIVE
+	material.DepthMask = false
 	particleSystem := effects.CreateParticleSystem(effects.ParticleSettings{
 		MaxParticles:     5,
 		ParticleEmitRate: 20,
 		BaseGeometry:     renderer.CreateBox(float32(1), float32(1)),
 		Material:         material,
+		Shader:           shader,
 		TotalFrames:      64,
 		FramesX:          8,
 		FramesY:          8,
@@ -205,15 +225,17 @@ func dustParticles() *effects.ParticleSystem {
 	return particleSystem
 }
 
-func majicParticles() *effects.ParticleSystem {
+func majicParticles(shader *renderer.Shader) *effects.ParticleSystem {
 	img, _ := assets.ImportImageCached("resources/majic.png")
-	material := assets.CreateMaterial(img, nil, nil, nil)
-	material.LightingMode = renderer.MODE_UNLIT
+	material := renderer.NewMaterial(renderer.NewTexture("diffuseMap", img))
+	material.Transparency = renderer.EMISSIVE
+	material.DepthMask = false
 	particleSystem := effects.CreateParticleSystem(effects.ParticleSettings{
 		MaxParticles:     300,
 		ParticleEmitRate: 700,
 		BaseGeometry:     renderer.CreateBox(float32(1), float32(1)),
 		Material:         material,
+		Shader:           shader,
 		TotalFrames:      9,
 		FramesX:          3,
 		FramesY:          3,
@@ -234,10 +256,11 @@ func majicParticles() *effects.ParticleSystem {
 	return particleSystem
 }
 
-func sparkParticles() *effects.ParticleSystem {
+func sparkParticles(shader *renderer.Shader) *effects.ParticleSystem {
 	img, _ := assets.ImportImageCached("resources/spark.png")
-	material := assets.CreateMaterial(img, nil, nil, nil)
-	material.LightingMode = renderer.MODE_UNLIT
+	material := renderer.NewMaterial(renderer.NewTexture("diffuseMap", img))
+	material.Transparency = renderer.EMISSIVE
+	material.DepthMask = false
 	particleSystem := effects.CreateParticleSystem(effects.ParticleSettings{
 		MaxParticles:     80,
 		ParticleEmitRate: 400,

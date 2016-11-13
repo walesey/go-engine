@@ -1,9 +1,8 @@
 package effects
 
 import (
-	"testing"
-	// "image"
 	"image/color"
+	"testing"
 
 	"github.com/stretchr/testify/assert"
 )

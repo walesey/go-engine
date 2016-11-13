@@ -13,9 +13,9 @@ buildExamples: buildShaders
 	go build -o $(BUILD_DIR)/ui ./examples/ui
 
 buildShaders: 
-	mkdir -p build
-	go run ./shaderBuilder/main.go shaders/basic.glsl vert > $(BUILD_DIR)/basic.vert
-	go run ./shaderBuilder/main.go shaders/basic.glsl frag > $(BUILD_DIR)/basic.frag
+	mkdir -p $(BUILD_DIR)/shaders
+	go run ./shaderBuilder/main.go shaders/basic.glsl vert > $(BUILD_DIR)/shaders/basic.vert
+	go run ./shaderBuilder/main.go shaders/basic.glsl frag > $(BUILD_DIR)/shaders/basic.frag
 
 testintall:
 	go get -t github.com/walesey/go-engine/actor

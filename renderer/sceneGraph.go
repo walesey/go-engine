@@ -40,22 +40,20 @@ func (sceneGraph *SceneGraph) Remove(spatial Spatial, destroy bool) {
 	sceneGraph.opaqueNode.Remove(spatial, destroy)
 }
 
-func (sceneGraph *SceneGraph) RenderScene(renderer Renderer) {
+func (sceneGraph *SceneGraph) RenderScene(renderer Renderer, cameraLocation mgl32.Vec3) {
 	//setup buckets
 	sceneGraph.transparentBucket = sceneGraph.transparentBucket[:0]
 	sceneGraph.buildBuckets(sceneGraph.transparentNode)
-	sceneGraph.sortBuckets(renderer)
+	sceneGraph.sortBuckets(renderer, cameraLocation)
 	//render buckets
-	sceneGraph.opaqueNode.Draw(renderer)
+	sceneGraph.opaqueNode.Draw(renderer, mgl32.Ident4())
 	for _, entry := range sceneGraph.transparentBucket {
 		renderEntry(entry, renderer)
 	}
 }
 
 func renderEntry(entry bucketEntry, renderer Renderer) {
-	renderer.PushTransform(entry.transform)
-	entry.spatial.Draw(renderer)
-	renderer.PopTransform()
+	entry.spatial.Draw(renderer, entry.transform)
 }
 
 type bucketEntry struct {
@@ -91,9 +89,9 @@ func (sceneGraph *SceneGraph) buildBuckets(node *Node) {
 	sceneGraph.txStack.Pop()
 }
 
-func (sceneGraph *SceneGraph) sortBuckets(renderer Renderer) {
+func (sceneGraph *SceneGraph) sortBuckets(renderer Renderer, cameraLocation mgl32.Vec3) {
 	for index, entry := range sceneGraph.transparentBucket {
-		sceneGraph.transparentBucket[index].cameraDelta = mgl32.TransformCoordinate(entry.spatial.Centre(), entry.transform).Sub(renderer.CameraLocation()).Len()
+		sceneGraph.transparentBucket[index].cameraDelta = mgl32.TransformCoordinate(entry.spatial.Centre(), entry.transform).Sub(cameraLocation).Len()
 	}
 	sort.Sort(sceneGraph.transparentBucket)
 }

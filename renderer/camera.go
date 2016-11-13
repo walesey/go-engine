@@ -8,92 +8,50 @@ import (
 
 // The camera Entity
 type Camera struct {
-	renderer                Renderer
-	translation, lookat, up mgl32.Vec3
-	angle, near, far        float32
-	ortho                   bool
+	Translation, Lookat, Up mgl32.Vec3
+	Angle, Near, Far        float32
+	Ortho                   bool
 }
 
-func CreateCamera(renderer Renderer) *Camera {
+func CreateCamera() *Camera {
 	cam := Camera{
-		renderer:    renderer,
-		translation: mgl32.Vec3{1, 0, 0},
-		lookat:      mgl32.Vec3{0, 0, 0},
-		up:          mgl32.Vec3{0, 1, 0},
-		angle:       45.0,
-		near:        0.1,
-		far:         999999999.0,
+		Translation: mgl32.Vec3{0, 0, 0},
+		Lookat:      mgl32.Vec3{1, 0, 0},
+		Up:          mgl32.Vec3{0, 1, 0},
+		Angle:       45.0,
+		Near:        0.1,
+		Far:         999999999.0,
 	}
 
 	return &cam
 }
 
-func (c *Camera) Ortho() {
-	c.renderer.Ortho()
-}
-
-func (c *Camera) Perspective() {
-	c.renderer.Perspective(c.translation, c.lookat, c.up, float32(c.angle), float32(c.near), float32(c.far))
-}
-
 func (c *Camera) GetDirection() mgl32.Vec3 {
-	return c.lookat.Sub(c.translation).Normalize()
+	return c.Lookat.Sub(c.Translation).Normalize()
 }
 
-func (c *Camera) GetTranslation() mgl32.Vec3 {
-	return c.translation
-}
-
-func (c *Camera) GetMouseVector(mouse mgl32.Vec2) mgl32.Vec3 {
-	window := c.renderer.WindowDimensions()
+func (c *Camera) GetMouseVector(windowSize mgl32.Vec2, mouse mgl32.Vec2) mgl32.Vec3 {
 	v, err := mgl32.UnProject(
-		mgl32.Vec3{mouse.X(), window.Y() - mouse.Y(), 0.5},
-		mgl32.LookAtV(c.translation, c.lookat, c.up),
-		mgl32.Perspective(mgl32.DegToRad(float32(c.angle)), float32(window.X())/float32(window.Y()), float32(c.near), float32(c.far)),
-		0, 0, int(window.X()), int(window.Y()),
+		mgl32.Vec3{mouse.X(), windowSize.Y() - mouse.Y(), 0.5},
+		mgl32.LookAtV(c.Translation, c.Lookat, c.Up),
+		mgl32.Perspective(mgl32.DegToRad(c.Angle), windowSize.X()/windowSize.Y(), c.Near, c.Far),
+		0, 0, int(windowSize.X()), int(windowSize.Y()),
 	)
 	if err == nil {
-		return v.Sub(c.translation).Normalize()
+		return v.Sub(c.Translation).Normalize()
 	} else {
 		log.Println("Error converting camera vector: ", err)
 	}
-	return c.lookat
+	return c.Lookat
 }
 
 func (c *Camera) SetScale(scale mgl32.Vec3) {} //na
 
 func (c *Camera) SetTranslation(translation mgl32.Vec3) {
-	c.translation = translation
-	c.Perspective()
+	c.Translation = translation
 }
 
 func (c *Camera) SetOrientation(orientation mgl32.Quat) {
-	direction := orientation.Rotate(mgl32.Vec3{9999999999, 0, 0})
-	c.lookat = c.translation.Add(direction)
-	c.Perspective()
-}
-
-func (c *Camera) SetLookat(lookat mgl32.Vec3) {
-	c.lookat = lookat
-	c.Perspective()
-}
-
-func (c *Camera) SetUp(up mgl32.Vec3) {
-	c.up = up
-	c.Perspective()
-}
-
-func (c *Camera) SetAngle(angle float32) {
-	c.angle = angle
-	c.Perspective()
-}
-
-func (c *Camera) SetNear(near float32) {
-	c.near = near
-	c.Perspective()
-}
-
-func (c *Camera) SetFar(far float32) {
-	c.far = far
-	c.Perspective()
+	direction := orientation.Rotate(mgl32.Vec3{1, 0, 0})
+	c.Lookat = c.Translation.Add(direction)
 }

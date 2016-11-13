@@ -89,9 +89,7 @@ func (ie *ImageElement) SetRotation(rotation float32) {
 func (ie *ImageElement) SetImage(img image.Image) {
 	ie.node.RemoveAll(true)
 	box := renderer.CreateBoxWithOffset(1, 1, 0, 0)
-	mat := renderer.CreateMaterial()
-	mat.Diffuse = img
-	mat.LightingMode = renderer.MODE_UNLIT
+	mat := renderer.NewMaterial(renderer.NewTexture("diffuseMap", img))
 	box.Material = mat
 	ie.img = img
 	ie.node.Add(box)

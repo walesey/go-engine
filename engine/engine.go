@@ -20,9 +20,6 @@ type Engine interface {
 	RemoveOrtho(spatial renderer.Spatial, destroy bool)
 	AddUpdatable(updatable Updatable)
 	RemoveUpdatable(updatable Updatable)
-	AddLight(light *renderer.Light)
-	RemoveLight(light *renderer.Light)
-	Sky(material *renderer.Material, size float32)
 	Camera() *renderer.Camera
 	Renderer() renderer.Renderer
 	SetFpsCap(FpsCap float64)
@@ -38,14 +35,14 @@ type EngineImpl struct {
 	orthoNode      *renderer.Node
 	camera         *renderer.Camera
 	updatableStore *UpdatableStore
-	lights         []*renderer.Light
 }
 
 func (engine *EngineImpl) Start(Init func()) {
 	if engine.renderer != nil {
-		engine.renderer.Init(Init)
-		engine.renderer.Update(engine.Update)
-		engine.renderer.Render(engine.Render)
+		engine.renderer.SetInit(Init)
+		engine.renderer.SetUpdate(engine.Update)
+		engine.renderer.SetRender(engine.Render)
+		engine.renderer.SetCamera(engine.camera)
 		engine.renderer.Start()
 	} else {
 		Init()
@@ -58,22 +55,13 @@ func (engine *EngineImpl) Start(Init func()) {
 func (engine *EngineImpl) Update() {
 	dt := engine.fpsMeter.UpdateFPSMeter()
 	engine.updatableStore.UpdateAll(dt)
-	engine.updateLights()
-}
-
-func (engine *EngineImpl) updateLights() {
-	if engine.lights != nil && engine.renderer != nil {
-		for i, light := range engine.lights {
-			light.Render(engine.renderer, i+1)
-		}
-	}
 }
 
 func (engine *EngineImpl) Render() {
-	engine.camera.Perspective()
-	engine.sceneGraph.RenderScene(engine.renderer)
-	engine.camera.Ortho()
-	engine.orthoNode.Draw(engine.renderer)
+	engine.camera.Ortho = false
+	engine.sceneGraph.RenderScene(engine.renderer, engine.camera.Translation)
+	engine.camera.Ortho = true
+	engine.orthoNode.Draw(engine.renderer, mgl32.Ident4())
 }
 
 func (engine *EngineImpl) AddOrtho(spatial renderer.Spatial) {
@@ -113,37 +101,6 @@ func (engine *EngineImpl) AddUpdatable(updatable Updatable) {
 
 func (engine *EngineImpl) RemoveUpdatable(updatable Updatable) {
 	engine.updatableStore.Remove(updatable)
-}
-
-func (engine *EngineImpl) AddLight(light *renderer.Light) {
-	engine.lights = append(engine.lights, light)
-}
-
-func (engine *EngineImpl) RemoveLight(light *renderer.Light) {
-	for i, l := range engine.lights {
-		if light == l {
-			engine.lights[i] = engine.lights[len(engine.lights)-1]
-			engine.lights[len(engine.lights)-1] = nil
-			engine.lights = engine.lights[:len(engine.lights)-1]
-			break
-		}
-	}
-}
-
-func (engine *EngineImpl) Sky(material *renderer.Material, size float32) {
-	if engine.sceneGraph != nil {
-		geom := renderer.CreateSkyBox()
-		geom.Material = material
-		geom.Material.LightingMode = renderer.MODE_UNLIT
-		geom.CullBackface = false
-		skyNode := renderer.CreateNode()
-		skyNode.Add(geom)
-		skyNode.SetRotation(1.57, mgl32.Vec3{0, 1, 0})
-		skyNode.SetScale(mgl32.Vec3{1, 1, 1}.Mul(size))
-		engine.AddSpatial(skyNode)
-		cubeMap := renderer.CreateCubemap(material.Diffuse)
-		engine.renderer.ReflectionMap(cubeMap)
-	}
 }
 
 func (engine *EngineImpl) Camera() *renderer.Camera {
@@ -201,14 +158,13 @@ func NewEngine(r renderer.Renderer) Engine {
 	sceneGraph := renderer.CreateSceneGraph()
 	orthoNode := renderer.CreateNode()
 	updatableStore := NewUpdatableStore()
-	camera := renderer.CreateCamera(r)
+	camera := renderer.CreateCamera()
 
 	return &EngineImpl{
 		fpsMeter:       fpsMeter,
 		sceneGraph:     sceneGraph,
 		orthoNode:      orthoNode,
 		updatableStore: updatableStore,
-		lights:         []*renderer.Light{},
 		renderer:       r,
 		camera:         camera,
 	}

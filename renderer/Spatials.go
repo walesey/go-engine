@@ -9,10 +9,10 @@ import (
 
 //A Spatial is something that can be Drawn by a Renderer
 type Spatial interface {
-	Draw(renderer Renderer)
+	Draw(renderer Renderer, transform mgl32.Mat4)
+	Optimize(geometry *Geometry, transform mgl32.Mat4)
 	Destroy(renderer Renderer)
 	Centre() mgl32.Vec3
-	Optimize(geometry *Geometry, transform mgl32.Mat4)
 }
 
 //An Entity is something that can be scaled, positioned and rotated (orientation)
@@ -43,12 +43,11 @@ func CreateNode() *Node {
 	return node
 }
 
-func (node *Node) Draw(renderer Renderer) {
-	renderer.PushTransform(node.Transform)
+func (node *Node) Draw(renderer Renderer, transform mgl32.Mat4) {
+	tx := transform.Mul4(node.Transform)
 	for _, child := range node.children {
-		child.Draw(renderer)
+		child.Draw(renderer, tx)
 	}
-	renderer.PopTransform()
 	node.cleanupDeleted(renderer)
 }
 

@@ -2,8 +2,9 @@ package main
 
 import (
 	"image/color"
-	"math"
 	"runtime"
+
+	"io/ioutil"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/actor"
@@ -31,18 +32,36 @@ func main() {
 		FullScreen:  true,
 	}
 	gameEngine := engine.NewEngine(glRenderer)
+	camera := gameEngine.Camera()
 	gameEngine.InitFpsDial()
 
 	gameEngine.Start(func() {
 
-		camera := gameEngine.Camera()
+		//TODO: make a util function for importing shaders from file
+		shader := renderer.NewShader()
+		vertsrc, err := ioutil.ReadFile("build/shaders/basic.vert")
+		if err != nil {
+			panic(err)
+		}
+		shader.VertSrc = string(vertsrc)
+
+		fragsrc, err := ioutil.ReadFile("build/shaders/basic.frag")
+		if err != nil {
+			panic(err)
+		}
+		shader.FragSrc = string(fragsrc)
 
 		// Sky cubemap
 		// skyImg, err := assets.ImportImage("resources/cubemapNightSky.jpg")
 		// skyImg, err := assets.ImportImage("resources/space.jpg")
 		skyImg, err := assets.ImportImage("resources/cubemap.png")
 		if err == nil {
-			gameEngine.Sky(assets.CreateMaterial(skyImg, nil, nil, nil), 999999)
+			geom := renderer.CreateSkyBox()
+			geom.Shader = shader
+			geom.Material = renderer.NewMaterial(renderer.NewTexture("diffuseMap", skyImg))
+			geom.CullBackface = false
+			geom.Transform(mgl32.Scale3D(10000, 10000, 10000))
+			gameEngine.AddSpatial(geom)
 		}
 
 		// load scene objs
@@ -56,39 +75,40 @@ func main() {
 		sceneNode := renderer.CreateNode()
 		for _, objFile := range objs {
 			if geom, err := assets.ImportObjCached(objFile); err == nil {
+				geom.Shader = shader
 				sceneNode.Add(geom)
 			}
 		}
 		gameEngine.AddSpatial(sceneNode)
 
 		torchLocation := mgl32.Vec3{0.86, 1.75, 1.05}
-		fire := fireParticles()
+		fire := fireParticles(shader)
 		torchParticles := effects.NewParticleGroup(camera, fire)
 		torchParticles.SetTranslation(torchLocation)
 		gameEngine.AddSpatialTransparent(torchParticles)
 		gameEngine.AddUpdatable(torchParticles)
 
-		light := renderer.CreateLight()
-		light.Ambient = [3]float32{0.0, 0.0, 0.0}
-		light.Diffuse = [3]float32{0.03, 0.02, 0.003}
-		light.Specular = [3]float32{0.0, 0.0, 0.0}
-		light.SetTranslation(torchLocation)
-		gameEngine.AddLight(light)
+		// light := renderer.CreateLight()
+		// light.Ambient = [3]float32{0.0, 0.0, 0.0}
+		// light.Diffuse = [3]float32{0.03, 0.02, 0.003}
+		// light.Specular = [3]float32{0.0, 0.0, 0.0}
+		// light.SetTranslation(torchLocation)
+		// gameEngine.AddLight(light)
 
-		var x float64
-		gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
-			x += dt
-			mag := float32(math.Abs(0.6*math.Sin(3*x)+0.3*math.Sin(4*x)+0.15*math.Sin(7*x)+0.1*math.Sin(15*x))) + 0.5
-			light.Diffuse = [3]float32{0.03 * mag, 0.02 * mag, 0.003 * mag}
-			light.SetTranslation(torchLocation)
-		}))
+		// var x float64
+		// gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
+		// 	x += dt
+		// 	mag := float32(math.Abs(0.6*math.Sin(3*x)+0.3*math.Sin(4*x)+0.15*math.Sin(7*x)+0.1*math.Sin(15*x))) + 0.5
+		// 	light.Diffuse = [3]float32{0.03 * mag, 0.02 * mag, 0.003 * mag}
+		// 	light.SetTranslation(torchLocation)
+		// }))
 
 		// input/controller manager
 		controllerManager := glfwController.NewControllerManager(glRenderer.Window)
 
 		// camera + wasd controls
 		freeMoveActor := actor.NewFreeMoveActor(camera)
-		freeMoveActor.Location = mgl32.Vec3{}
+		freeMoveActor.Location = mgl32.Vec3{-6, 2, -6}
 		mainController := controller.NewBasicMovementController(freeMoveActor, false)
 		controllerManager.AddController(mainController.(glfwController.Controller))
 		gameEngine.AddUpdatable(freeMoveActor)
@@ -107,17 +127,17 @@ func main() {
 	})
 }
 
-func fireParticles() *effects.ParticleSystem {
+func fireParticles(shader *renderer.Shader) *effects.ParticleSystem {
 	img, _ := assets.ImportImageCached("resources/fire.png")
-	material := assets.CreateMaterial(img, nil, nil, nil)
-	material.LightingMode = renderer.MODE_EMIT
-	material.Transparency = renderer.TRANSPARENCY_EMISSIVE
+	material := renderer.NewMaterial(renderer.NewTexture("diffuseMap", img))
+	material.Transparency = renderer.EMISSIVE
 	material.DepthMask = false
 	return effects.CreateParticleSystem(effects.ParticleSettings{
 		MaxParticles:     12,
 		ParticleEmitRate: 2,
 		BaseGeometry:     renderer.CreateBox(float32(1), float32(1)),
 		Material:         material,
+		Shader:           shader,
 		TotalFrames:      36,
 		FramesX:          6,
 		FramesY:          6,
