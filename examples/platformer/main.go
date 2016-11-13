@@ -98,11 +98,11 @@ func main() {
 			panic(err)
 		}
 		shader.FragSrc = string(fragsrc)
+		glRenderer.SetDefaultShader(shader)
 
 		skyImg, err := assets.ImportImage("resources/cubemap.png")
 		if err == nil {
 			geom := renderer.CreateSkyBox()
-			geom.Shader = shader
 			geom.Material = renderer.NewMaterial(renderer.NewTexture("diffuseMap", skyImg))
 			geom.CullBackface = false
 			geom.Transform(mgl32.Scale3D(100, 100, 100))
@@ -120,7 +120,6 @@ func main() {
 
 		// terrain
 		terrainGeometry := renderer.CreateBoxWithOffset(800, 800-floorHeight, 0, floorHeight)
-		terrainGeometry.Shader = shader
 		terrainGeometry.SetColor(color.NRGBA{0, 254, 0, 254})
 		gameEngine.AddOrtho(terrainGeometry)
 

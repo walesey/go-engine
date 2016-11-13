@@ -50,6 +50,7 @@ func main() {
 			panic(err)
 		}
 		shader.FragSrc = string(fragsrc)
+		glRenderer.SetDefaultShader(shader)
 
 		// Sky cubemap
 		// skyImg, err := assets.ImportImage("resources/cubemapNightSky.jpg")
@@ -57,7 +58,6 @@ func main() {
 		skyImg, err := assets.ImportImage("resources/cubemap.png")
 		if err == nil {
 			geom := renderer.CreateSkyBox()
-			geom.Shader = shader
 			geom.Material = renderer.NewMaterial(renderer.NewTexture("diffuseMap", skyImg))
 			geom.CullBackface = false
 			geom.Transform(mgl32.Scale3D(10000, 10000, 10000))
@@ -75,7 +75,6 @@ func main() {
 		sceneNode := renderer.CreateNode()
 		for _, objFile := range objs {
 			if geom, err := assets.ImportObjCached(objFile); err == nil {
-				geom.Shader = shader
 				sceneNode.Add(geom)
 			}
 		}

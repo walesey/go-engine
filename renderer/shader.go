@@ -2,7 +2,7 @@ package renderer
 
 type Shader struct {
 	Program uint32
-	loaded  bool
+	Loaded  bool
 
 	Uniforms         map[string]interface{}
 	FragDataLocation string

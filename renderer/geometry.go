@@ -53,9 +53,12 @@ func (geometry *Geometry) load(renderer Renderer) {
 		renderer.CreateGeometry(geometry)
 		geometry.loaded = true
 	}
-	if geometry.Shader != nil && !geometry.Shader.loaded {
+	if geometry.Material != nil {
+		renderer.CreateMaterial(geometry.Material)
+	}
+	if geometry.Shader != nil && !geometry.Shader.Loaded {
 		renderer.CreateShader(geometry.Shader)
-		geometry.Shader.loaded = true
+		geometry.Shader.Loaded = true
 	}
 }
 

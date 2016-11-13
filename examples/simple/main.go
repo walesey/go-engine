@@ -47,12 +47,12 @@ func main() {
 			panic(err)
 		}
 		shader.FragSrc = string(fragsrc)
+		glRenderer.SetDefaultShader(shader)
 
 		// sky cube
 		skyImg, err := assets.ImportImage("resources/cubemap.png")
 		if err == nil {
 			geom := renderer.CreateSkyBox()
-			geom.Shader = shader
 			geom.Material = renderer.NewMaterial(renderer.NewTexture("diffuseMap", skyImg))
 			geom.CullBackface = false
 			geom.Transform(mgl32.Scale3D(100, 100, 100))
@@ -76,7 +76,6 @@ func main() {
 		// Create a red box geometry, attach to a node, add the node to the scenegraph
 		boxGeometry := renderer.CreateBox(10, 10)
 		boxGeometry.Material = renderer.NewMaterial()
-		boxGeometry.Shader = shader
 		boxGeometry.SetColor(color.NRGBA{254, 0, 0, 254})
 		boxGeometry.CullBackface = false
 		boxNode := renderer.CreateNode()

@@ -27,6 +27,7 @@ type OpenglRenderer struct {
 	WindowTitle                string
 	Window                     *glfw.Window
 	camera                     *renderer.Camera
+	defaultShader              *renderer.Shader
 	postEffectVbo              uint32
 	postEffects                []postEffect
 }
@@ -186,21 +187,16 @@ func (glRenderer *OpenglRenderer) CreateGeometry(geometry *renderer.Geometry) {
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo)
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(geometry.Indicies)*4, gl.Ptr(geometry.Indicies), gl.DYNAMIC_DRAW)
 	geometry.IboId = ibo
-
-	if geometry.Material != nil {
-		glRenderer.createMaterial(geometry.Material)
-	}
 }
 
 //
 func (glRenderer *OpenglRenderer) DestroyGeometry(geometry *renderer.Geometry) {
 	gl.DeleteBuffers(1, &geometry.VboId)
 	gl.DeleteBuffers(1, &geometry.IboId)
-	glRenderer.destroyMaterial(geometry.Material)
 }
 
-//setup Texture
-func (glRenderer *OpenglRenderer) createMaterial(material *renderer.Material) {
+// CreateMaterial load material
+func (glRenderer *OpenglRenderer) CreateMaterial(material *renderer.Material) {
 	for i, tex := range material.Textures {
 		if !tex.Loaded {
 			texUnit := gl.TEXTURE0 + uint32(i)
@@ -216,7 +212,7 @@ func (glRenderer *OpenglRenderer) createMaterial(material *renderer.Material) {
 }
 
 //
-func (glRenderer *OpenglRenderer) destroyMaterial(material *renderer.Material) {
+func (glRenderer *OpenglRenderer) DestroyMaterial(material *renderer.Material) {
 	for _, tex := range material.Textures {
 		if tex.Loaded {
 			gl.DeleteTextures(1, &tex.TextureId)
@@ -225,7 +221,16 @@ func (glRenderer *OpenglRenderer) destroyMaterial(material *renderer.Material) {
 	}
 }
 
+func (glRenderer *OpenglRenderer) SetDefaultShader(shader *renderer.Shader) {
+	glRenderer.defaultShader = shader
+	glRenderer.CreateShader(shader)
+}
+
 func (glRenderer *OpenglRenderer) CreateShader(shader *renderer.Shader) {
+	if shader.Loaded {
+		return
+	}
+
 	var shaders []uint32
 
 	if len(shader.VertSrc) > 0 {
@@ -257,6 +262,7 @@ func (glRenderer *OpenglRenderer) CreateShader(shader *renderer.Shader) {
 		fmt.Println("Error Creating Shader Program: ", err)
 	}
 	shader.Program = program
+	shader.Loaded = true
 
 	gl.UseProgram(program)
 	gl.BindFragDataLocation(program, 0, gl.Str(fmt.Sprintf("%v\x00", shader.FragDataLocation)))
@@ -341,12 +347,13 @@ func (glRenderer *OpenglRenderer) loadCubeMap(right, left, top, bottom, back, fr
 }
 
 func (glRenderer *OpenglRenderer) DrawGeometry(geometry *renderer.Geometry, transform mgl32.Mat4) {
-	if geometry.Shader == nil {
-		return
+	shader := geometry.Shader
+	if shader == nil {
+		shader = glRenderer.defaultShader
 	}
 
 	// setup shader program
-	program := geometry.Shader.Program
+	program := shader.Program
 	gl.UseProgram(program)
 
 	// set buffers
@@ -385,21 +392,21 @@ func (glRenderer *OpenglRenderer) DrawGeometry(geometry *renderer.Geometry, tran
 
 	// set default uniforms
 	modelNormal := transform.Inv().Transpose()
-	geometry.Shader.Uniforms["model"] = transform
-	geometry.Shader.Uniforms["modelNormal"] = modelNormal
+	shader.Uniforms["model"] = transform
+	shader.Uniforms["modelNormal"] = modelNormal
 
 	cam := glRenderer.camera
 	win := glRenderer.WindowDimensions()
 	if cam.Ortho {
-		geometry.Shader.Uniforms["projection"] = mgl32.Ortho2D(0, win.X(), win.Y(), 0)
-		geometry.Shader.Uniforms["camera"] = mgl32.Ident4()
+		shader.Uniforms["projection"] = mgl32.Ortho2D(0, win.X(), win.Y(), 0)
+		shader.Uniforms["camera"] = mgl32.Ident4()
 	} else {
-		geometry.Shader.Uniforms["projection"] = mgl32.Perspective(mgl32.DegToRad(cam.Angle), win.X()/win.Y(), cam.Near, cam.Far)
-		geometry.Shader.Uniforms["camera"] = mgl32.LookAtV(cam.Translation, cam.Lookat, cam.Up)
+		shader.Uniforms["projection"] = mgl32.Perspective(mgl32.DegToRad(cam.Angle), win.X()/win.Y(), cam.Near, cam.Far)
+		shader.Uniforms["camera"] = mgl32.LookAtV(cam.Translation, cam.Lookat, cam.Up)
 	}
 
 	// set custom uniforms
-	setupUniforms(geometry.Shader)
+	setupUniforms(shader)
 
 	// set verticies attribute
 	vertAttrib := uint32(gl.GetAttribLocation(program, gl.Str("vert\x00")))

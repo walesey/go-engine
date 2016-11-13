@@ -17,6 +17,9 @@ type Renderer interface {
 	DestroyGeometry(geometry *Geometry)
 	DrawGeometry(geometry *Geometry, transform mgl32.Mat4)
 
+	CreateMaterial(material *Material)
+	DestroyMaterial(material *Material)
+
 	CreateShader(shader *Shader)
 	CreatePostEffect(shader *Shader)
 	DestroyPostEffects(shader *Shader)
