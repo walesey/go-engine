@@ -12,6 +12,7 @@ import (
 	"github.com/walesey/go-engine/engine"
 	"github.com/walesey/go-engine/glfwController"
 	"github.com/walesey/go-engine/opengl"
+	"github.com/walesey/go-engine/renderer"
 	"github.com/walesey/go-engine/ui"
 )
 
@@ -39,6 +40,12 @@ func main() {
 	gameEngine := engine.NewEngine(glRenderer)
 
 	gameEngine.Start(func() {
+
+		// load in ui shader
+		shader := renderer.NewShader()
+		shader.FragSrc = uiFragmentShader
+		shader.VertSrc = uiVertexShader
+		glRenderer.SetDefaultShader(shader)
 
 		// input/controller manager
 		controllerManager := glfwController.NewControllerManager(glRenderer.Window)
@@ -201,3 +208,45 @@ func htmlContent(content *ui.Container) []ui.Activatable {
 
 	return activatables
 }
+
+const uiVertexShader = `
+#version 330
+
+uniform mat4 projection;
+uniform mat4 camera;
+uniform mat4 model;
+
+in vec3 vert;
+in vec2 texCoord;
+in vec4 color;
+
+out vec2 fragTexCoord;
+out vec4 fragColor;
+
+void main() {
+	fragTexCoord = texCoord;
+	fragColor = color;
+	gl_Position = projection * camera * model * vec4(vert, 1);
+}
+`
+
+const uiFragmentShader = `
+#version 330
+
+uniform bool useTextures;
+uniform sampler2D diffuseMap;
+
+in vec2 fragTexCoord;
+in vec4 fragColor;
+
+out vec4 outputColor;
+
+void main() {
+	
+	if (useTextures) {
+  	outputColor = texture(diffuseMap, fragTexCoord) * fragColor;
+	} else {
+		outputColor = fragColor;
+	}
+}
+`

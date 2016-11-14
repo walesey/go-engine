@@ -63,6 +63,12 @@ func setupUniforms(shader *renderer.Shader) {
 	for name, uniform := range shader.Uniforms {
 		uniformLocation := gl.GetUniformLocation(shader.Program, gl.Str(name+"\x00"))
 		switch t := uniform.(type) {
+		case bool:
+			if t {
+				gl.Uniform1i(uniformLocation, 1)
+			} else {
+				gl.Uniform1i(uniformLocation, 0)
+			}
 		case float32:
 			gl.Uniform1f(uniformLocation, t)
 		case float64:

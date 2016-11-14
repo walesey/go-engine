@@ -2,7 +2,6 @@ package main
 
 import (
 	"image/color"
-	"io/ioutil"
 	"runtime"
 
 	"github.com/go-gl/mathgl/mgl32"
@@ -35,19 +34,9 @@ func main() {
 
 	gameEngine.Start(func() {
 
-		shader := renderer.NewShader()
-		vertsrc, err := ioutil.ReadFile("build/shaders/basic.vert")
-		if err != nil {
-			panic(err)
+		if shader, err := assets.ImportShader("build/shaders/basic.vert", "build/shaders/basic.frag"); err == nil {
+			glRenderer.SetDefaultShader(shader)
 		}
-		shader.VertSrc = string(vertsrc)
-
-		fragsrc, err := ioutil.ReadFile("build/shaders/basic.frag")
-		if err != nil {
-			panic(err)
-		}
-		shader.FragSrc = string(fragsrc)
-		glRenderer.SetDefaultShader(shader)
 
 		// sky cube
 		skyImg, err := assets.ImportImage("resources/cubemap.png")

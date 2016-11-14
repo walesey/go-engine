@@ -39,7 +39,12 @@ func (geometry *Geometry) Copy() *Geometry {
 	verticies := make([]float32, len(geometry.Verticies))
 	copy(indicies, geometry.Indicies)
 	copy(verticies, geometry.Verticies)
-	return CreateGeometry(indicies, verticies)
+	copy := CreateGeometry(indicies, verticies)
+	copy.Material = geometry.Material
+	copy.Shader = geometry.Shader
+	copy.CullBackface = geometry.CullBackface
+	copy.FrustrumCulling = geometry.FrustrumCulling
+	return copy
 }
 
 func (geometry *Geometry) Draw(renderer Renderer, transform mgl32.Mat4) {

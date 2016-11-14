@@ -8,6 +8,7 @@ import (
 	"runtime"
 
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/walesey/go-engine/assets"
 	"github.com/walesey/go-engine/controller"
 	"github.com/walesey/go-engine/engine"
 	"github.com/walesey/go-engine/glfwController"
@@ -93,7 +94,6 @@ func main() {
 			if network.IsClient() {
 				boxGeometry := renderer.CreateBox(30, 30)
 				boxGeometry.Material = renderer.NewMaterial()
-				boxGeometry.Material.LightingMode = renderer.UNLIT
 				boxGeometry.SetColor(color.NRGBA{254, 0, 0, 254})
 				player.node.Add(boxGeometry)
 				gameEngine.AddOrtho(player.node)
@@ -133,6 +133,11 @@ func main() {
 	// client setup
 	gameEngine.Start(func() {
 		if network.IsClient() {
+			if shader, err := assets.ImportShader("build/shaders/basic.vert", "build/shaders/basic.frag"); err == nil {
+				glRenderer.SetDefaultShader(shader)
+			}
+
+			glRenderer.BackGroundColor(0, 0.4, 0, 0)
 
 			// input/controller manager
 			controllerManager := glfwController.NewControllerManager(glRenderer.Window)

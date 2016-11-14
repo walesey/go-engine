@@ -2,7 +2,6 @@ package main
 
 import (
 	"image/color"
-	"io/ioutil"
 	"runtime"
 	"time"
 
@@ -42,7 +41,7 @@ func (c *Character) Update(dt float64) {
 	}
 }
 
-func NewCharacter(shader *renderer.Shader) *Character {
+func NewCharacter() *Character {
 	characterImg, _ := assets.ImportImageCached("resources/stickman.png")
 	characterMat := renderer.NewMaterial(renderer.NewTexture("diffuseMap", characterImg))
 	sprite := effects.CreateSprite(4, 4, 1, characterMat)
@@ -86,18 +85,10 @@ func main() {
 
 	gameEngine.Start(func() {
 
+		// load in default shader
 		shader := renderer.NewShader()
-		vertsrc, err := ioutil.ReadFile("build/shaders/basic.vert")
-		if err != nil {
-			panic(err)
-		}
-		shader.VertSrc = string(vertsrc)
-
-		fragsrc, err := ioutil.ReadFile("build/shaders/basic.frag")
-		if err != nil {
-			panic(err)
-		}
-		shader.FragSrc = string(fragsrc)
+		shader.FragSrc = fragShader
+		shader.VertSrc = vertShader
 		glRenderer.SetDefaultShader(shader)
 
 		skyImg, err := assets.ImportImage("resources/cubemap.png")
@@ -110,7 +101,7 @@ func main() {
 		}
 
 		// The player object
-		character := NewCharacter(shader)
+		character := NewCharacter()
 		character.body.SetPosition(mgl32.Vec2{400, 400})
 
 		// Add the character to all the things
@@ -120,7 +111,7 @@ func main() {
 
 		// terrain
 		terrainGeometry := renderer.CreateBoxWithOffset(800, 800-floorHeight, 0, floorHeight)
-		terrainGeometry.SetColor(color.NRGBA{0, 254, 0, 254})
+		terrainGeometry.SetColor(color.NRGBA{0, 80, 0, 254})
 		gameEngine.AddOrtho(terrainGeometry)
 
 		// terrain physics body
@@ -130,8 +121,8 @@ func main() {
 		physicsSpace.AddBody(terrainBody)
 
 		// create and manage a new particle system
-		spawnParticles := func(load func(shader *renderer.Shader) *effects.ParticleSystem, position mgl32.Vec2) *effects.ParticleSystem {
-			particles := load(shader)
+		spawnParticles := func(load func() *effects.ParticleSystem, position mgl32.Vec2) *effects.ParticleSystem {
+			particles := load()
 			particles.SetTranslation(position.Vec3(0))
 			gameEngine.AddOrtho(particles)
 			age := 0.0
@@ -193,17 +184,16 @@ func main() {
 	})
 }
 
-func dustParticles(shader *renderer.Shader) *effects.ParticleSystem {
+func dustParticles() *effects.ParticleSystem {
 	img, _ := assets.ImportImageCached("resources/smoke.png")
 	material := renderer.NewMaterial(renderer.NewTexture("diffuseMap", img))
-	material.Transparency = renderer.EMISSIVE
+	// material.Transparency = renderer.EMISSIVE
 	material.DepthMask = false
 	particleSystem := effects.CreateParticleSystem(effects.ParticleSettings{
 		MaxParticles:     5,
 		ParticleEmitRate: 20,
 		BaseGeometry:     renderer.CreateBox(float32(1), float32(1)),
 		Material:         material,
-		Shader:           shader,
 		TotalFrames:      64,
 		FramesX:          8,
 		FramesY:          8,
@@ -224,7 +214,7 @@ func dustParticles(shader *renderer.Shader) *effects.ParticleSystem {
 	return particleSystem
 }
 
-func majicParticles(shader *renderer.Shader) *effects.ParticleSystem {
+func majicParticles() *effects.ParticleSystem {
 	img, _ := assets.ImportImageCached("resources/majic.png")
 	material := renderer.NewMaterial(renderer.NewTexture("diffuseMap", img))
 	material.Transparency = renderer.EMISSIVE
@@ -234,7 +224,6 @@ func majicParticles(shader *renderer.Shader) *effects.ParticleSystem {
 		ParticleEmitRate: 700,
 		BaseGeometry:     renderer.CreateBox(float32(1), float32(1)),
 		Material:         material,
-		Shader:           shader,
 		TotalFrames:      9,
 		FramesX:          3,
 		FramesY:          3,
@@ -255,7 +244,7 @@ func majicParticles(shader *renderer.Shader) *effects.ParticleSystem {
 	return particleSystem
 }
 
-func sparkParticles(shader *renderer.Shader) *effects.ParticleSystem {
+func sparkParticles() *effects.ParticleSystem {
 	img, _ := assets.ImportImageCached("resources/spark.png")
 	material := renderer.NewMaterial(renderer.NewTexture("diffuseMap", img))
 	material.Transparency = renderer.EMISSIVE
@@ -287,3 +276,51 @@ func sparkParticles(shader *renderer.Shader) *effects.ParticleSystem {
 	particleSystem.FaceCamera = false
 	return particleSystem
 }
+
+const vertShader = `
+#version 330
+
+uniform mat4 projection;
+uniform mat4 camera;
+uniform mat4 model;
+
+in vec3 vert;
+in vec2 texCoord;
+in vec4 color;
+
+out vec2 fragTexCoord;
+out vec4 fragColor;
+
+void main() {
+    fragTexCoord = texCoord;
+    fragColor = color;
+    gl_Position = projection * camera * model * vec4(vert, 1);
+}
+`
+
+const fragShader = `
+#version 330
+
+uniform bool useTextures;
+uniform sampler2D diffuseMap;
+
+in vec2 fragTexCoord;
+in vec4 fragColor;
+
+out vec4 outputColor;
+
+void main() {
+	//repeat textures
+	float textureX = fragTexCoord.x - int(fragTexCoord.x);
+	float textureY = fragTexCoord.y - int(fragTexCoord.y);
+	if (fragTexCoord.x < 0) {textureX = textureX + 1.0;}
+	if (fragTexCoord.y < 0) {textureY = textureY + 1.0;}
+	vec2 textCoord = vec2(textureX, textureY);
+
+	if (useTextures) {
+  	outputColor = texture(diffuseMap, textCoord) * fragColor;
+	} else {
+		outputColor = fragColor;
+	}
+}
+`

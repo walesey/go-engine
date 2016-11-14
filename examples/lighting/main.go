@@ -4,8 +4,6 @@ import (
 	"image/color"
 	"runtime"
 
-	"io/ioutil"
-
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/actor"
 	"github.com/walesey/go-engine/assets"
@@ -37,20 +35,9 @@ func main() {
 
 	gameEngine.Start(func() {
 
-		//TODO: make a util function for importing shaders from file
-		shader := renderer.NewShader()
-		vertsrc, err := ioutil.ReadFile("build/shaders/basic.vert")
-		if err != nil {
-			panic(err)
+		if shader, err := assets.ImportShader("build/shaders/basic.vert", "build/shaders/basic.frag"); err == nil {
+			glRenderer.SetDefaultShader(shader)
 		}
-		shader.VertSrc = string(vertsrc)
-
-		fragsrc, err := ioutil.ReadFile("build/shaders/basic.frag")
-		if err != nil {
-			panic(err)
-		}
-		shader.FragSrc = string(fragsrc)
-		glRenderer.SetDefaultShader(shader)
 
 		// Sky cubemap
 		// skyImg, err := assets.ImportImage("resources/cubemapNightSky.jpg")
@@ -81,7 +68,7 @@ func main() {
 		gameEngine.AddSpatial(sceneNode)
 
 		torchLocation := mgl32.Vec3{0.86, 1.75, 1.05}
-		fire := fireParticles(shader)
+		fire := fireParticles()
 		torchParticles := effects.NewParticleGroup(camera, fire)
 		torchParticles.SetTranslation(torchLocation)
 		gameEngine.AddSpatialTransparent(torchParticles)
@@ -126,7 +113,7 @@ func main() {
 	})
 }
 
-func fireParticles(shader *renderer.Shader) *effects.ParticleSystem {
+func fireParticles() *effects.ParticleSystem {
 	img, _ := assets.ImportImageCached("resources/fire.png")
 	material := renderer.NewMaterial(renderer.NewTexture("diffuseMap", img))
 	material.Transparency = renderer.EMISSIVE
@@ -136,7 +123,6 @@ func fireParticles(shader *renderer.Shader) *effects.ParticleSystem {
 		ParticleEmitRate: 2,
 		BaseGeometry:     renderer.CreateBox(float32(1), float32(1)),
 		Material:         material,
-		Shader:           shader,
 		TotalFrames:      36,
 		FramesX:          6,
 		FramesY:          6,
