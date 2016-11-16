@@ -45,7 +45,6 @@ func main() {
 		shader := renderer.NewShader()
 		shader.FragSrc = uiFragmentShader
 		shader.VertSrc = uiVertexShader
-		glRenderer.SetDefaultShader(shader)
 
 		// input/controller manager
 		controllerManager := glfwController.NewControllerManager(glRenderer.Window)

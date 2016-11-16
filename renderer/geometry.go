@@ -11,26 +11,20 @@ const VertexStride = 12
 
 //Geometry
 type Geometry struct {
-	VboId, IboId    uint32
-	loaded          bool
-	VboDirty        bool
-	boundingRadius  float32
-	Indicies        []uint32
-	Verticies       []float32
-	Material        *Material
-	Shader          *Shader
-	CullBackface    bool
-	FrustrumCulling bool
+	VboId, IboId   uint32
+	loaded         bool
+	VboDirty       bool
+	boundingRadius float32
+	Indicies       []uint32
+	Verticies      []float32
 }
 
 //vericies format : x,y,z,   nx,ny,nz,   u,v,  r,g,b,a
 //indicies format : f1,f2,f3 (triangles)
 func CreateGeometry(indicies []uint32, verticies []float32) *Geometry {
 	return &Geometry{
-		Indicies:        indicies,
-		Verticies:       verticies,
-		CullBackface:    true,
-		FrustrumCulling: true,
+		Indicies:  indicies,
+		Verticies: verticies,
 	}
 }
 
@@ -39,12 +33,7 @@ func (geometry *Geometry) Copy() *Geometry {
 	verticies := make([]float32, len(geometry.Verticies))
 	copy(indicies, geometry.Indicies)
 	copy(verticies, geometry.Verticies)
-	copy := CreateGeometry(indicies, verticies)
-	copy.Material = geometry.Material
-	copy.Shader = geometry.Shader
-	copy.CullBackface = geometry.CullBackface
-	copy.FrustrumCulling = geometry.FrustrumCulling
-	return copy
+	return CreateGeometry(indicies, verticies)
 }
 
 func (geometry *Geometry) Draw(renderer Renderer, transform mgl32.Mat4) {
@@ -57,13 +46,6 @@ func (geometry *Geometry) load(renderer Renderer) {
 		geometry.boundingRadius = geometry.MaximalPointFromGeometry().Len()
 		renderer.CreateGeometry(geometry)
 		geometry.loaded = true
-	}
-	if geometry.Material != nil {
-		renderer.CreateMaterial(geometry.Material)
-	}
-	if geometry.Shader != nil && !geometry.Shader.Loaded {
-		renderer.CreateShader(geometry.Shader)
-		geometry.Shader.Loaded = true
 	}
 }
 
@@ -199,6 +181,5 @@ func CreateBeam(width float32, vector mgl32.Vec3) *Geometry {
 	geo.Indicies = append(geo.Indicies, 1, 2, 7, 7, 4, 1) //side
 	geo.Indicies = append(geo.Indicies, 2, 3, 6, 6, 7, 2) //bottom
 	geo.Indicies = append(geo.Indicies, 3, 0, 5, 5, 6, 3) //side
-	geo.CullBackface = false
 	return geo
 }

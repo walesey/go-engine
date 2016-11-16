@@ -35,8 +35,35 @@ func main() {
 
 	gameEngine.Start(func() {
 
+		rootNode := renderer.NewNode()
+		gameEngine.AddSpatial(rootNode)
+
+		transparentNode := renderer.NewNode()
+		gameEngine.AddSpatialTransparent(transparentNode)
+		transparentNode.RendererParams = &renderer.RendererParams{
+			DepthTest:    true,
+			Unlit:        true,
+			Transparency: renderer.EMISSIVE,
+		}
+
 		if shader, err := assets.ImportShader("build/shaders/basic.vert", "build/shaders/basic.frag"); err == nil {
-			glRenderer.SetDefaultShader(shader)
+			rootNode.Shader = shader
+			transparentNode.Shader = shader
+
+			// Lighting
+			shader.Uniforms["nbPointLights"] = 1
+			shader.Uniforms["pointLightPositions"] = []float32{
+				0, 0, 0, 0,
+				0, 0, 0, 0,
+				0, 0, 0, 0,
+				0, 0, 0, 0,
+			}
+			shader.Uniforms["pointLightValues"] = []float32{
+				20, 20, 20, 0,
+				0, 0, 0, 0,
+				0, 0, 0, 0,
+				0, 0, 0, 0,
+			}
 		}
 
 		// Sky cubemap
@@ -45,10 +72,13 @@ func main() {
 		skyImg, err := assets.ImportImage("resources/cubemap.png")
 		if err == nil {
 			geom := renderer.CreateSkyBox()
-			geom.Material = renderer.NewMaterial(renderer.NewTexture("diffuseMap", skyImg))
-			geom.CullBackface = false
 			geom.Transform(mgl32.Scale3D(10000, 10000, 10000))
-			gameEngine.AddSpatial(geom)
+			skyNode := renderer.NewNode()
+			skyNode.Material = renderer.NewMaterial(renderer.NewTexture("diffuseMap", skyImg))
+			skyNode.RendererParams = renderer.NewRendererParams()
+			skyNode.RendererParams.CullBackface = false
+			skyNode.Add(geom)
+			rootNode.Add(skyNode)
 		}
 
 		// load scene objs
@@ -59,19 +89,24 @@ func main() {
 			"resources/wellScene/well.obj",
 			"resources/wellScene/torches.obj",
 		}
-		sceneNode := renderer.CreateNode()
 		for _, objFile := range objs {
-			if geom, err := assets.ImportObjCached(objFile); err == nil {
+			if geom, mat, err := assets.ImportObjCached(objFile); err == nil {
+				sceneNode := renderer.NewNode()
 				sceneNode.Add(geom)
+				sceneNode.Material = mat
+				rootNode.Add(sceneNode)
 			}
 		}
-		gameEngine.AddSpatial(sceneNode)
+
+		fireImage, _ := assets.ImportImageCached("resources/fire.png")
+		fireMat := renderer.NewMaterial(renderer.NewTexture("diffuseMap", fireImage))
 
 		torchLocation := mgl32.Vec3{0.86, 1.75, 1.05}
 		fire := fireParticles()
 		torchParticles := effects.NewParticleGroup(camera, fire)
+		torchParticles.Node.Material = fireMat
 		torchParticles.SetTranslation(torchLocation)
-		gameEngine.AddSpatialTransparent(torchParticles)
+		transparentNode.Add(torchParticles)
 		gameEngine.AddUpdatable(torchParticles)
 
 		// light := renderer.CreateLight()
@@ -114,15 +149,10 @@ func main() {
 }
 
 func fireParticles() *effects.ParticleSystem {
-	img, _ := assets.ImportImageCached("resources/fire.png")
-	material := renderer.NewMaterial(renderer.NewTexture("diffuseMap", img))
-	material.Transparency = renderer.EMISSIVE
-	material.DepthMask = false
 	return effects.CreateParticleSystem(effects.ParticleSettings{
 		MaxParticles:     12,
 		ParticleEmitRate: 2,
 		BaseGeometry:     renderer.CreateBox(float32(1), float32(1)),
-		Material:         material,
 		TotalFrames:      36,
 		FramesX:          6,
 		FramesY:          6,

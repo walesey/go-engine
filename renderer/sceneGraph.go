@@ -17,8 +17,8 @@ type SceneGraph struct {
 //factory
 func CreateSceneGraph() *SceneGraph {
 	sceneGraph := &SceneGraph{
-		opaqueNode:      CreateNode(),
-		transparentNode: CreateNode(),
+		opaqueNode:      NewNode(),
+		transparentNode: NewNode(),
 		txStack:         matstack.NewTransformStack(),
 	}
 	return sceneGraph
@@ -53,11 +53,12 @@ func (sceneGraph *SceneGraph) RenderScene(renderer Renderer, cameraLocation mgl3
 }
 
 func renderEntry(entry bucketEntry, renderer Renderer) {
-	entry.spatial.Draw(renderer, entry.transform)
+	entry.parent.DrawChild(renderer, entry.transform, entry.spatial)
 }
 
 type bucketEntry struct {
 	spatial     Spatial
+	parent      *Node
 	transform   mgl32.Mat4
 	cameraDelta float32
 }
@@ -79,11 +80,16 @@ func (slice bucketEntries) Swap(i, j int) {
 func (sceneGraph *SceneGraph) buildBuckets(node *Node) {
 	sceneGraph.txStack.Push(node.Transform)
 	for _, child := range node.children {
-		nextNode, found := child.(*Node)
-		if found {
+		nextNode, ok := child.(*Node)
+		if ok {
 			sceneGraph.buildBuckets(nextNode)
 		} else {
-			sceneGraph.transparentBucket = append(sceneGraph.transparentBucket, bucketEntry{spatial: child, transform: sceneGraph.txStack.Peek()})
+			entry := bucketEntry{
+				spatial:   child,
+				parent:    node,
+				transform: sceneGraph.txStack.Peek(),
+			}
+			sceneGraph.transparentBucket = append(sceneGraph.transparentBucket, entry)
 		}
 	}
 	sceneGraph.txStack.Pop()

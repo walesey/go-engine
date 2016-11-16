@@ -36,9 +36,10 @@ func LoadMapToNode(srcModel *editorModels.NodeModel, destNode *renderer.Node) *e
 func loadMapRecursive(model, srcModel *editorModels.NodeModel, destNode *renderer.Node) {
 	model.SetNode(destNode)
 	if model.Geometry != nil {
-		geometry, err := ImportObjCached(*model.Geometry)
+		geometry, material, err := ImportObjCached(*model.Geometry)
 		if err == nil {
 			destNode.Add(geometry)
+			destNode.Material = material
 		}
 	}
 	destNode.SetScale(model.Scale)
@@ -48,7 +49,7 @@ func loadMapRecursive(model, srcModel *editorModels.NodeModel, destNode *rendere
 		copyRef(model, srcModel)
 	}
 	for _, childModel := range model.Children {
-		newNode := renderer.CreateNode()
+		newNode := renderer.NewNode()
 		destNode.Add(newNode)
 		loadMapRecursive(childModel, srcModel, newNode)
 	}

@@ -87,12 +87,9 @@ func (ie *ImageElement) SetRotation(rotation float32) {
 }
 
 func (ie *ImageElement) SetImage(img image.Image) {
-	ie.node.RemoveAll(true)
-	box := renderer.CreateBoxWithOffset(1, 1, 0, 0)
 	mat := renderer.NewMaterial(renderer.NewTexture("diffuseMap", img))
-	box.Material = mat
+	ie.node.Material = mat
 	ie.img = img
-	ie.node.Add(box)
 }
 
 func (ie *ImageElement) mouseMove(position mgl32.Vec2) {
@@ -111,8 +108,10 @@ func NewImageElement(img image.Image) *ImageElement {
 	imageElement := &ImageElement{
 		rotation: 0,
 		Hitbox:   NewHitbox(),
-		node:     renderer.CreateNode(),
+		node:     renderer.NewNode(),
 	}
+	box := renderer.CreateBoxWithOffset(1, 1, 0, 0)
+	imageElement.node.Add(box)
 	imageElement.SetImage(img)
 	return imageElement
 }

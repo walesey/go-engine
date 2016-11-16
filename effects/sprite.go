@@ -30,9 +30,10 @@ func CreateSprite(totalFrames, framesX, framesY int, material *renderer.Material
 	}
 	geometry := renderer.CreateBox(1, 1)
 	sprite.geometry = geometry
-	sprite.geometry.Material = material
-	sprite.geometry.CullBackface = false
-	sprite.node = renderer.CreateNode()
+	sprite.node = renderer.NewNode()
+	sprite.node.Material = material
+	sprite.node.RendererParams = renderer.NewRendererParams()
+	sprite.node.RendererParams.CullBackface = false
 	sprite.node.Add(sprite.geometry)
 	return &sprite
 }

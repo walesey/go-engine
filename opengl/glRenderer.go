@@ -27,13 +27,17 @@ type OpenglRenderer struct {
 	WindowTitle                string
 	Window                     *glfw.Window
 	camera                     *renderer.Camera
-	defaultShader              *renderer.Shader
 
 	postEffectVbo uint32
 	postEffects   []postEffect
 
-	cullFace, depthTest, depthMast bool
-	transparency                   renderer.Transparency
+	material, activeMaterial *renderer.Material
+	shader, activeShader     *renderer.Shader
+
+	transparency   renderer.Transparency
+	rendererParams renderer.RendererParams
+
+	depthTest, depthMast, cullFace, unlit, useTextures bool
 }
 
 // NewOpenglRenderer - create new renderer
@@ -109,8 +113,6 @@ func (glRenderer *OpenglRenderer) Start() {
 	gl.Enable(gl.TEXTURE_CUBE_MAP_SEAMLESS)
 	gl.Enable(gl.BLEND)
 	gl.DepthFunc(gl.LEQUAL)
-	glRenderer.enableCullFace(true)
-	glRenderer.setTransparency(renderer.NON_EMISSIVE)
 	gl.CullFace(gl.BACK)
 
 	glRenderer.initPostEffects()
@@ -132,8 +134,11 @@ func (glRenderer *OpenglRenderer) Start() {
 
 func (glRenderer *OpenglRenderer) mainLoop() {
 	glRenderer.onUpdate()
-	glRenderer.enableDepthTest(true)
-	glRenderer.enableDepthMask(true)
+
+	//set defaults
+	glRenderer.UseRendererParams(renderer.DefaultRendererParams())
+	glRenderer.UseMaterial(nil)
+
 	if len(glRenderer.postEffects) == 0 {
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 		glRenderer.onRender()
@@ -211,6 +216,43 @@ func (glRenderer *OpenglRenderer) enableDepthMask(depthMask bool) {
 	glRenderer.depthMast = depthMask
 }
 
+func (glRenderer *OpenglRenderer) enableUnlit(unlit bool) {
+	glRenderer.unlit = unlit
+}
+
+func (glRenderer *OpenglRenderer) enableMaterial() {
+	if glRenderer.material == glRenderer.activeMaterial {
+		return
+	}
+
+	glRenderer.activeMaterial = glRenderer.material
+	glRenderer.useTextures = (glRenderer.activeMaterial != nil && len(glRenderer.activeMaterial.Textures) > 0)
+
+	// setup material
+	if glRenderer.activeShader != nil && glRenderer.activeMaterial != nil {
+		textures := glRenderer.activeMaterial.Textures
+		for i, tex := range textures {
+			texUnit := gl.TEXTURE0 + uint32(i)
+			glRenderer.activeShader.Uniforms[tex.TextureName] = int32(i)
+			gl.ActiveTexture(texUnit)
+			var target uint32 = gl.TEXTURE_2D
+			if tex.CubeMap != nil {
+				target = gl.TEXTURE_CUBE_MAP
+			}
+			gl.BindTexture(target, tex.TextureId)
+		}
+	}
+}
+
+func (glRenderer *OpenglRenderer) enableShader() {
+	if glRenderer.shader == glRenderer.activeShader {
+		return
+	}
+
+	glRenderer.activeShader = glRenderer.shader
+	gl.UseProgram(glRenderer.activeShader.Program)
+}
+
 // CreateGeometry - add geometry to the renderer
 func (glRenderer *OpenglRenderer) CreateGeometry(geometry *renderer.Geometry) {
 	var vbo uint32
@@ -256,11 +298,6 @@ func (glRenderer *OpenglRenderer) DestroyMaterial(material *renderer.Material) {
 			tex.Loaded = false
 		}
 	}
-}
-
-func (glRenderer *OpenglRenderer) SetDefaultShader(shader *renderer.Shader) {
-	glRenderer.defaultShader = shader
-	glRenderer.CreateShader(shader)
 }
 
 func (glRenderer *OpenglRenderer) CreateShader(shader *renderer.Shader) {
@@ -383,15 +420,32 @@ func (glRenderer *OpenglRenderer) loadCubeMap(right, left, top, bottom, back, fr
 	return texId
 }
 
-func (glRenderer *OpenglRenderer) DrawGeometry(geometry *renderer.Geometry, transform mgl32.Mat4) {
-	shader := geometry.Shader
-	if shader == nil {
-		shader = glRenderer.defaultShader
-	}
+func (glRenderer *OpenglRenderer) UseRendererParams(params renderer.RendererParams) {
+	glRenderer.rendererParams = params
+}
 
-	// setup shader program
+func (glRenderer *OpenglRenderer) UseShader(shader *renderer.Shader) {
+	glRenderer.shader = shader
+}
+
+func (glRenderer *OpenglRenderer) UseMaterial(material *renderer.Material) {
+	glRenderer.material = material
+}
+
+func (glRenderer *OpenglRenderer) DrawGeometry(geometry *renderer.Geometry, transform mgl32.Mat4) {
+
+	glRenderer.enableShader()
+	glRenderer.enableMaterial()
+
+	shader := glRenderer.activeShader
 	program := shader.Program
-	gl.UseProgram(program)
+	params := glRenderer.rendererParams
+
+	glRenderer.enableDepthTest(params.DepthTest)
+	glRenderer.enableDepthMask(params.DepthMask)
+	glRenderer.enableCullFace(params.CullBackface)
+	glRenderer.enableUnlit(params.Unlit)
+	glRenderer.setTransparency(params.Transparency)
 
 	// set buffers
 	gl.BindBuffer(gl.ARRAY_BUFFER, geometry.VboId)
@@ -404,32 +458,7 @@ func (glRenderer *OpenglRenderer) DrawGeometry(geometry *renderer.Geometry, tran
 		geometry.VboDirty = false
 	}
 
-	// set back face culling
-	glRenderer.enableCullFace(geometry.CullBackface)
-
-	if geometry.Material != nil {
-		// set depthbuffer and transparency modes
-		glRenderer.enableDepthTest(geometry.Material.DepthTest)
-		glRenderer.enableDepthMask(geometry.Material.DepthMask)
-		glRenderer.setTransparency(geometry.Material.Transparency)
-
-		// setup textures
-		textures := geometry.Material.Textures
-		for i, tex := range textures {
-			texUnit := gl.TEXTURE0 + uint32(i)
-			shader.Uniforms[tex.TextureName] = int32(i)
-			gl.ActiveTexture(texUnit)
-			var target uint32 = gl.TEXTURE_2D
-			if tex.CubeMap != nil {
-				target = gl.TEXTURE_CUBE_MAP
-			}
-			gl.BindTexture(target, tex.TextureId)
-		}
-	}
-
-	shader.Uniforms["useTextures"] = (geometry.Material != nil && len(geometry.Material.Textures) > 0)
-
-	// set default uniforms
+	// set uniforms
 	modelNormal := transform.Inv().Transpose()
 	shader.Uniforms["model"] = transform
 	shader.Uniforms["modelNormal"] = modelNormal
@@ -443,6 +472,9 @@ func (glRenderer *OpenglRenderer) DrawGeometry(geometry *renderer.Geometry, tran
 		shader.Uniforms["projection"] = mgl32.Perspective(mgl32.DegToRad(cam.Angle), win.X()/win.Y(), cam.Near, cam.Far)
 		shader.Uniforms["camera"] = mgl32.LookAtV(cam.Translation, cam.Lookat, cam.Up)
 	}
+
+	shader.Uniforms["unlit"] = glRenderer.unlit
+	shader.Uniforms["useTextures"] = glRenderer.useTextures
 
 	// set custom uniforms
 	setupUniforms(shader)

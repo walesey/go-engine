@@ -156,7 +156,7 @@ func NewEngine(r renderer.Renderer) Engine {
 	fpsMeter.FpsCap = 144
 
 	sceneGraph := renderer.CreateSceneGraph()
-	orthoNode := renderer.CreateNode()
+	orthoNode := renderer.NewNode()
 	updatableStore := NewUpdatableStore()
 	camera := renderer.CreateCamera()
 

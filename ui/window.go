@@ -142,12 +142,14 @@ func deactivateAllTextFields(elem Element) {
 }
 
 func NewWindow() *Window {
-	node := renderer.CreateNode()
-	elementNode := renderer.CreateNode()
-	background := renderer.CreateNode()
+	node := renderer.NewNode()
+	elementNode := renderer.NewNode()
+	background := renderer.NewNode()
+	background.Material = renderer.NewMaterial()
+	elementNode.RendererParams = renderer.NewRendererParams()
+	elementNode.RendererParams.Unlit = true
 	box := renderer.CreateBoxWithOffset(1, 1, 0, 0)
 	box.SetColor(color.NRGBA{255, 255, 255, 255})
-	box.Material = renderer.NewMaterial()
 	background.Add(box)
 	node.Add(background)
 	node.Add(elementNode)

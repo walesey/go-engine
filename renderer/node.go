@@ -7,48 +7,109 @@ import (
 	"github.com/walesey/go-engine/util"
 )
 
-//A Spatial is something that can be Drawn by a Renderer
-type Spatial interface {
-	Draw(renderer Renderer, transform mgl32.Mat4)
-	Optimize(geometry *Geometry, transform mgl32.Mat4)
-	Destroy(renderer Renderer)
-	Centre() mgl32.Vec3
-}
+type Transparency int
 
-//An Entity is something that can be scaled, positioned and rotated (orientation)
-type Entity interface {
-	SetScale(scale mgl32.Vec3)
-	SetTranslation(translation mgl32.Vec3)
-	SetOrientation(orientation mgl32.Quat)
+const (
+	_ Transparency = iota
+	NON_EMISSIVE
+	EMISSIVE
+)
+
+type RendererParams struct {
+	CullBackface bool
+	DepthTest    bool
+	DepthMask    bool
+	Unlit        bool
+	Transparency
 }
 
 //Node
 type Node struct {
-	children    []Spatial
-	deleted     []Spatial
 	Transform   mgl32.Mat4
 	Scale       mgl32.Vec3
 	Translation mgl32.Vec3
 	Orientation mgl32.Quat
+
+	FrustrumCulling bool
+	Shader          *Shader
+	Material        *Material
+	RendererParams  *RendererParams
+
+	parent   *Node
+	children []Spatial
+	deleted  []Spatial
 }
 
-func CreateNode() *Node {
+func NewNode() *Node {
 	node := &Node{
-		children:    make([]Spatial, 0, 0),
-		deleted:     make([]Spatial, 0, 0),
-		Translation: mgl32.Vec3{0, 0, 0},
-		Orientation: mgl32.QuatIdent(),
+		children:        make([]Spatial, 0, 0),
+		deleted:         make([]Spatial, 0, 0),
+		Translation:     mgl32.Vec3{0, 0, 0},
+		Orientation:     mgl32.QuatIdent(),
+		FrustrumCulling: true,
 	}
 	node.SetScale(mgl32.Vec3{1, 1, 1})
 	return node
 }
 
+func NewRendererParams() *RendererParams {
+	defaults := DefaultRendererParams()
+	return &defaults
+}
+
+func DefaultRendererParams() RendererParams {
+	return RendererParams{
+		DepthTest:    true,
+		DepthMask:    true,
+		CullBackface: true,
+		Unlit:        false,
+		Transparency: NON_EMISSIVE,
+	}
+}
+
 func (node *Node) Draw(renderer Renderer, transform mgl32.Mat4) {
+	node.load(renderer)
 	tx := transform.Mul4(node.Transform)
 	for _, child := range node.children {
-		child.Draw(renderer, tx)
+		node.DrawChild(renderer, tx, child)
 	}
 	node.cleanupDeleted(renderer)
+}
+
+func (node *Node) DrawChild(renderer Renderer, transform mgl32.Mat4, child Spatial) {
+	node.setRenderStates(renderer)
+	child.Draw(renderer, transform)
+}
+
+func (node *Node) load(renderer Renderer) {
+	if node.Shader != nil && !node.Shader.Loaded {
+		renderer.CreateShader(node.Shader)
+		node.Shader.Loaded = true
+	}
+	if node.Material != nil {
+		renderer.CreateMaterial(node.Material)
+	}
+}
+
+func (node *Node) setRenderStates(renderer Renderer) {
+	for parent := node; parent != nil; parent = parent.parent {
+		if parent.Shader != nil {
+			renderer.UseShader(parent.Shader)
+			break
+		}
+	}
+	for parent := node; parent != nil; parent = parent.parent {
+		if parent.Material != nil {
+			renderer.UseMaterial(parent.Material)
+			break
+		}
+	}
+	for parent := node; parent != nil; parent = parent.parent {
+		if parent.RendererParams != nil {
+			renderer.UseRendererParams(*parent.RendererParams)
+			break
+		}
+	}
 }
 
 func (node *Node) Destroy(renderer Renderer) {
@@ -70,6 +131,9 @@ func (node *Node) Centre() mgl32.Vec3 {
 }
 
 func (node *Node) Add(spatial Spatial) {
+	if spatialNode, ok := spatial.(*Node); ok {
+		spatialNode.parent = node
+	}
 	node.children = append(node.children, spatial)
 }
 

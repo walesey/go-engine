@@ -4,14 +4,6 @@ import (
 	"image"
 )
 
-type Transparency int
-
-const (
-	_ Transparency = iota
-	NON_EMISSIVE
-	EMISSIVE
-)
-
 type Texture struct {
 	TextureId   uint32
 	TextureName string
@@ -21,10 +13,7 @@ type Texture struct {
 }
 
 type Material struct {
-	Textures  []*Texture
-	DepthTest bool
-	DepthMask bool
-	Transparency
+	Textures []*Texture
 }
 
 func NewTexture(name string, img image.Image) *Texture {
@@ -36,8 +25,6 @@ func NewTexture(name string, img image.Image) *Texture {
 
 func NewMaterial(textures ...*Texture) *Material {
 	return &Material{
-		Textures:  textures,
-		DepthTest: true,
-		DepthMask: true,
+		Textures: textures,
 	}
 }

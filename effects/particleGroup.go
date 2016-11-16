@@ -6,7 +6,7 @@ import (
 )
 
 type ParticleGroup struct {
-	node      *renderer.Node
+	Node      *renderer.Node
 	camera    *renderer.Camera
 	particles []*ParticleSystem
 }
@@ -31,28 +31,28 @@ func (pg *ParticleGroup) SetTranslation(translation mgl32.Vec3) {
 }
 
 func (pg *ParticleGroup) Draw(renderer renderer.Renderer, transform mgl32.Mat4) {
-	pg.node.Draw(renderer, transform)
+	pg.Node.Draw(renderer, transform)
 }
 
 func (pg *ParticleGroup) Destroy(renderer renderer.Renderer) {
-	pg.node.Destroy(renderer)
+	pg.Node.Destroy(renderer)
 }
 
 func (pg *ParticleGroup) Centre() mgl32.Vec3 {
-	return pg.node.Centre()
+	return pg.Node.Centre()
 }
 
 func (pg *ParticleGroup) Optimize(geometry *renderer.Geometry, transform mgl32.Mat4) {
-	pg.node.Optimize(geometry, transform)
+	pg.Node.Optimize(geometry, transform)
 }
 
 func NewParticleGroup(camera *renderer.Camera, particles ...*ParticleSystem) *ParticleGroup {
-	node := renderer.CreateNode()
+	node := renderer.NewNode()
 	for _, particle := range particles {
 		node.Add(particle)
 	}
 	return &ParticleGroup{
-		node:      node,
+		Node:      node,
 		camera:    camera,
 		particles: particles,
 	}

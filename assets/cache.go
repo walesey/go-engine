@@ -9,6 +9,7 @@ import (
 
 type AssetCache struct {
 	geometries map[string]*renderer.Geometry
+	materials  map[string]*renderer.Material
 	images     map[string]image.Image
 	mutex      *sync.Mutex
 }
@@ -19,19 +20,21 @@ func init() {
 	globalCache = NewAssetCache()
 }
 
-func (ac *AssetCache) ImportObj(path string) (*renderer.Geometry, error) {
-	geometry, ok := ac.geometries[path]
-	if !ok {
-		var err error
-		geometry, err = ImportObj(path)
+func (ac *AssetCache) ImportObj(path string) (geometry *renderer.Geometry, material *renderer.Material, err error) {
+	var okGeom, okMat bool
+	geometry, okGeom = ac.geometries[path]
+	material, okMat = ac.materials[path]
+	if !okGeom || !okMat {
+		geometry, material, err = ImportObj(path)
 		if err != nil {
-			return geometry, err
+			return
 		}
 		ac.mutex.Lock()
 		ac.geometries[path] = geometry
+		ac.materials[path] = material
 		ac.mutex.Unlock()
 	}
-	return geometry, nil
+	return
 }
 
 func (ac *AssetCache) ImportImage(path string) (image.Image, error) {
@@ -53,13 +56,14 @@ func ImportImageCached(path string) (image.Image, error) {
 	return globalCache.ImportImage(path)
 }
 
-func ImportObjCached(path string) (*renderer.Geometry, error) {
+func ImportObjCached(path string) (geometry *renderer.Geometry, material *renderer.Material, err error) {
 	return globalCache.ImportObj(path)
 }
 
 func NewAssetCache() *AssetCache {
 	return &AssetCache{
 		geometries: make(map[string]*renderer.Geometry),
+		materials:  make(map[string]*renderer.Material),
 		images:     make(map[string]image.Image),
 		mutex:      &sync.Mutex{},
 	}

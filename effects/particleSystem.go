@@ -21,7 +21,6 @@ type ParticleSettings struct {
 	MaxRotation, MinRotation                 float32
 	MaxRotationVelocity, MinRotationVelocity float32
 	BaseGeometry                             *renderer.Geometry
-	Material                                 *renderer.Material
 	TotalFrames, FramesX, FramesY            int
 	OnParticleUpdate                         func(p *Particle)
 }
@@ -53,8 +52,7 @@ type Particle struct {
 
 func CreateParticleSystem(settings ParticleSettings) *ParticleSystem {
 	geometry := renderer.CreateGeometry(make([]uint32, 0, 0), make([]float32, 0, 0))
-	geometry.Material = settings.Material
-	geometry.CullBackface = false
+
 	ps := ParticleSystem{
 		Settings:   settings,
 		FaceCamera: true,

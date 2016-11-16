@@ -248,7 +248,7 @@ func (te *TextElement) AddOnKeyPress(handler func(key string, release bool)) {
 
 func NewTextElement(text string, textColor color.Color, textSize float32, textFont *truetype.Font) *TextElement {
 	img := NewImageElement(image.NewAlpha(image.Rect(0, 0, 1, 1)))
-	node := renderer.CreateNode()
+	node := renderer.NewNode()
 	node.Add(img.Spatial())
 	textElem := &TextElement{
 		img:       img,

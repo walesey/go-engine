@@ -31,7 +31,7 @@ type mtlData struct {
 }
 
 //imports an obj from a filePath and return a Geometry
-func ImportObj(filePath string) (*renderer.Geometry, error) {
+func ImportObj(filePath string) (geometry *renderer.Geometry, material *renderer.Material, err error) {
 
 	obj := &objData{Indicies: make([]uint32, 0, 0), Vertices: make([]float32, 0, 0)}
 	vertexList := make([]float32, 0, 0)
@@ -47,7 +47,7 @@ func ImportObj(filePath string) (*renderer.Geometry, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		fmt.Printf("Error opening geometry file: %v\n", err)
-		return nil, err
+		return
 	}
 	defer file.Close()
 
@@ -76,20 +76,20 @@ func ImportObj(filePath string) (*renderer.Geometry, error) {
 		}
 	}
 
-	geometry := renderer.CreateGeometry(obj.Indicies, obj.Vertices)
+	geometry = renderer.CreateGeometry(obj.Indicies, obj.Vertices)
 	if mtlErr == nil && obj.Mtl != nil {
 		textures := []*renderer.Texture{}
 		for key, img := range obj.Mtl.maps {
 			textures = append(textures, renderer.NewTexture(key, img))
 		}
-		geometry.Material = renderer.NewMaterial(textures...)
+		material = renderer.NewMaterial(textures...)
 	}
 
 	if err = scanner.Err(); err != nil {
 		fmt.Printf("Error loading geometry: %v\n", err)
-		return nil, err
+		return
 	}
-	return geometry, nil
+	return
 }
 
 //returns corresponding index (0,1,2...)

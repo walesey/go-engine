@@ -2,7 +2,7 @@ COVER_DIR = cover
 BUILD_DIR = build
 
 build: buildShaders
-	go build -o $(BUILD_DIR)/editor
+	# go build -o $(BUILD_DIR)/editor
 
 buildExamples: buildShaders
 	go build -o $(BUILD_DIR)/lighting ./examples/lighting
@@ -12,10 +12,13 @@ buildExamples: buildShaders
 	go build -o $(BUILD_DIR)/simple ./examples/simple
 	go build -o $(BUILD_DIR)/ui ./examples/ui
 
-buildShaders: 
+buildShaders: compileShaderBuilder
 	mkdir -p $(BUILD_DIR)/shaders
-	go run ./shaderBuilder/main.go shaders/basic.glsl vert > $(BUILD_DIR)/shaders/basic.vert
-	go run ./shaderBuilder/main.go shaders/basic.glsl frag > $(BUILD_DIR)/shaders/basic.frag
+	./sBuilder shaders/basic.glsl vert > $(BUILD_DIR)/shaders/basic.vert
+	./sBuilder shaders/basic.glsl frag > $(BUILD_DIR)/shaders/basic.frag
+
+compileShaderBuilder:
+	go build -o sBuilder ./shaderBuilder
 
 testintall:
 	go get -t github.com/walesey/go-engine/actor

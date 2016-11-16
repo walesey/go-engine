@@ -1,10 +1,12 @@
 #frag
-vec4 directLight( float brightness, vec4 direction, vec4 diffuse, vec4 specular, vec4 normal ) {
-	vec4 normal_tangentSpace = (normal*2) - 1;
-	vec3 direction_tangentSpace = direction.xyz * TBNMatrix;
+vec3 directLight( vec3 light, vec3 direction, vec4 diffuse, vec4 specular, vec4 normal ) {
+	vec3 normal_tangentSpace = (normal.xyz*2) - 1;
+	vec3 direction_tangentSpace = direction * TBNMatrix;
 
-	float diffuseMultiplier = max(0.0, dot(normal_tangentSpace.xyz, -direction_tangentSpace.xyz));
+	float diffuseMultiplier = max(0.0, dot(normal_tangentSpace.xyz, -direction_tangentSpace));
 
-	return (diffuseMultiplier * diffuse);
+	vec3 color = (diffuseMultiplier * diffuse.rgb);
+
+	return color * light;
 }
 #endfrag

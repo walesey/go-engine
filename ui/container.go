@@ -158,12 +158,8 @@ func (c *Container) SetBackgroundColor(r, g, b, a uint8) {
 }
 
 func (c *Container) SetBackgroundImage(img image.Image) {
-	c.background.Remove(c.backgroundBox, true)
-	box := renderer.CreateBoxWithOffset(1, 1, 0, 0)
 	mat := renderer.NewMaterial(renderer.NewTexture("diffuseMap", img))
-	box.Material = mat
-	c.backgroundBox = box
-	c.background.Add(box)
+	c.background.Material = mat
 }
 
 func (c *Container) AddChildren(children ...Element) {
@@ -263,12 +259,12 @@ func NewMarginPercentages(percentage bool) MarginPercentages {
 }
 
 func NewContainer() *Container {
-	node := renderer.CreateNode()
-	elementsNode := renderer.CreateNode()
-	background := renderer.CreateNode()
+	node := renderer.NewNode()
+	elementsNode := renderer.NewNode()
+	background := renderer.NewNode()
 	box := renderer.CreateBoxWithOffset(1, 1, 0, 0)
 	box.SetColor(color.NRGBA{0, 0, 0, 0})
-	box.Material = renderer.NewMaterial()
+	background.Material = renderer.NewMaterial()
 	background.Add(box)
 	node.Add(background)
 	node.Add(elementsNode)

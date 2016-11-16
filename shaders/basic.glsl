@@ -14,8 +14,12 @@ void main() {
 	#endvert
 
 	#frag
-	vec4 finalColor = vec4(0.0);
-	finalColor += ao * pointLights(diffuse, specular, normal);
-	outputColor = finalColor;
+	if (unlit) {
+		outputColor = diffuse;
+	} else {
+		vec3 finalColor = vec3(0.0);
+		finalColor += ao.rgb * pointLights(diffuse, specular, normal);
+		outputColor = vec4(finalColor, diffuse.a);
+	}
 	#endfrag
 }

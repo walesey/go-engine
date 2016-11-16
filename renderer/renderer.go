@@ -12,6 +12,7 @@ type Renderer interface {
 	BackGroundColor(r, g, b, a float32)
 	WindowDimensions() mgl32.Vec2
 	LockCursor(lock bool)
+	UseRendererParams(params RendererParams)
 
 	CreateGeometry(geometry *Geometry)
 	DestroyGeometry(geometry *Geometry)
@@ -19,8 +20,26 @@ type Renderer interface {
 
 	CreateMaterial(material *Material)
 	DestroyMaterial(material *Material)
+	UseMaterial(material *Material)
 
 	CreateShader(shader *Shader)
+	UseShader(shader *Shader)
+
 	CreatePostEffect(shader *Shader)
 	DestroyPostEffects(shader *Shader)
+}
+
+//A Spatial is something that can be Drawn by a Renderer
+type Spatial interface {
+	Draw(renderer Renderer, transform mgl32.Mat4)
+	Optimize(geometry *Geometry, transform mgl32.Mat4)
+	Destroy(renderer Renderer)
+	Centre() mgl32.Vec3
+}
+
+//An Entity is something that can be scaled, positioned and rotated (orientation)
+type Entity interface {
+	SetScale(scale mgl32.Vec3)
+	SetTranslation(translation mgl32.Vec3)
+	SetOrientation(orientation mgl32.Quat)
 }
