@@ -34,6 +34,10 @@ func (w *Window) Centre() mgl32.Vec3 {
 	return w.node.Centre()
 }
 
+func (w *Window) SetParent(parent *renderer.Node) {
+	w.node.SetParent(parent)
+}
+
 func (w *Window) Optimize(geometry *renderer.Geometry, transform mgl32.Mat4) {
 	w.node.Optimize(geometry, transform)
 }
@@ -146,8 +150,6 @@ func NewWindow() *Window {
 	elementNode := renderer.NewNode()
 	background := renderer.NewNode()
 	background.Material = renderer.NewMaterial()
-	elementNode.RendererParams = renderer.NewRendererParams()
-	elementNode.RendererParams.Unlit = true
 	box := renderer.CreateBoxWithOffset(1, 1, 0, 0)
 	box.SetColor(color.NRGBA{255, 255, 255, 255})
 	background.Add(box)

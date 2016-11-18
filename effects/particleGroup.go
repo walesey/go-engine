@@ -19,7 +19,9 @@ func (pg *ParticleGroup) Disable(disable bool) {
 
 func (pg *ParticleGroup) Update(dt float64) {
 	for _, particle := range pg.particles {
-		particle.SetCameraLocation(pg.camera.Translation)
+		if pg.camera != nil {
+			particle.SetCameraLocation(pg.camera.Translation)
+		}
 		particle.Update(dt)
 	}
 }
@@ -40,6 +42,10 @@ func (pg *ParticleGroup) Destroy(renderer renderer.Renderer) {
 
 func (pg *ParticleGroup) Centre() mgl32.Vec3 {
 	return pg.Node.Centre()
+}
+
+func (pg *ParticleGroup) SetParent(parent *renderer.Node) {
+	pg.Node.SetParent(parent)
 }
 
 func (pg *ParticleGroup) Optimize(geometry *renderer.Geometry, transform mgl32.Mat4) {

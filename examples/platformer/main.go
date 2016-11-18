@@ -76,7 +76,6 @@ func main() {
 	}
 	gameEngine := engine.NewEngine(glRenderer)
 	gameEngine.InitFpsDial()
-	gameEngine.SetFpsCap(120)
 
 	// physics engine (Chipmonk)
 	physicsSpace := chipmunkPhysics.NewChipmonkSpace()
@@ -84,21 +83,13 @@ func main() {
 	gameEngine.AddUpdatable(physicsSpace)
 
 	gameEngine.Start(func() {
+		glRenderer.BackGroundColor(0.7, 0.7, 0.9, 0.0)
 
 		// load in default shader
 		shader := renderer.NewShader()
 		shader.FragSrc = fragShader
 		shader.VertSrc = vertShader
-		glRenderer.SetDefaultShader(shader)
-
-		skyImg, err := assets.ImportImage("resources/cubemap.png")
-		if err == nil {
-			geom := renderer.CreateSkyBox()
-			geom.Material = renderer.NewMaterial(renderer.NewTexture("diffuseMap", skyImg))
-			geom.CullBackface = false
-			geom.Transform(mgl32.Scale3D(100, 100, 100))
-			gameEngine.AddSpatial(geom)
-		}
+		gameEngine.DefaultShader(shader)
 
 		// The player object
 		character := NewCharacter()
@@ -120,23 +111,22 @@ func main() {
 		terrainBody.Body.AddShape(segment)
 		physicsSpace.AddBody(terrainBody)
 
-		// create and manage a new particle system
-		spawnParticles := func(load func() *effects.ParticleSystem, position mgl32.Vec2) *effects.ParticleSystem {
-			particles := load()
-			particles.SetTranslation(position.Vec3(0))
-			gameEngine.AddOrtho(particles)
-			age := 0.0
-			gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
-				particles.Update(dt)
-				age += dt
-				if age >= 0.2 {
-					particles.DisableSpawning = true
-				}
-				if age >= 10 {
-					gameEngine.RemoveOrtho(particles, true)
-				}
-			}))
-			return particles
+		particleNode := renderer.NewNode()
+		gameEngine.AddOrtho(particleNode)
+
+		// create a new timed particle system
+		spawnParticles := func(load func() *effects.ParticleGroup, position mgl32.Vec2) {
+			particleGroup := load()
+			particleGroup.SetTranslation(position.Vec3(0))
+			effects.TriggerTimedParticleGroup(
+				effects.TimedParticleGroup{
+					Particles:  particleGroup,
+					GameEngine: gameEngine,
+					TargetNode: particleNode,
+					Life:       0.2,
+					Cleanup:    10,
+				},
+			)
 		}
 
 		// input/controller manager
@@ -184,16 +174,13 @@ func main() {
 	})
 }
 
-func dustParticles() *effects.ParticleSystem {
+func dustParticles() *effects.ParticleGroup {
 	img, _ := assets.ImportImageCached("resources/smoke.png")
 	material := renderer.NewMaterial(renderer.NewTexture("diffuseMap", img))
-	// material.Transparency = renderer.EMISSIVE
-	material.DepthMask = false
 	particleSystem := effects.CreateParticleSystem(effects.ParticleSettings{
 		MaxParticles:     5,
 		ParticleEmitRate: 20,
 		BaseGeometry:     renderer.CreateBox(float32(1), float32(1)),
-		Material:         material,
 		TotalFrames:      64,
 		FramesX:          8,
 		FramesY:          8,
@@ -211,19 +198,18 @@ func dustParticles() *effects.ParticleSystem {
 		MinRotation:      3.14,
 	})
 	particleSystem.FaceCamera = false
-	return particleSystem
+	particleGroup := effects.NewParticleGroup(nil, particleSystem)
+	particleGroup.Node.Material = material
+	return particleGroup
 }
 
-func majicParticles() *effects.ParticleSystem {
+func majicParticles() *effects.ParticleGroup {
 	img, _ := assets.ImportImageCached("resources/majic.png")
 	material := renderer.NewMaterial(renderer.NewTexture("diffuseMap", img))
-	material.Transparency = renderer.EMISSIVE
-	material.DepthMask = false
 	particleSystem := effects.CreateParticleSystem(effects.ParticleSettings{
 		MaxParticles:     300,
 		ParticleEmitRate: 700,
 		BaseGeometry:     renderer.CreateBox(float32(1), float32(1)),
-		Material:         material,
 		TotalFrames:      9,
 		FramesX:          3,
 		FramesY:          3,
@@ -241,19 +227,18 @@ func majicParticles() *effects.ParticleSystem {
 		MinRotation:      3.14,
 	})
 	particleSystem.FaceCamera = false
-	return particleSystem
+	particleGroup := effects.NewParticleGroup(nil, particleSystem)
+	particleGroup.Node.Material = material
+	return particleGroup
 }
 
-func sparkParticles() *effects.ParticleSystem {
+func sparkParticles() *effects.ParticleGroup {
 	img, _ := assets.ImportImageCached("resources/spark.png")
 	material := renderer.NewMaterial(renderer.NewTexture("diffuseMap", img))
-	material.Transparency = renderer.EMISSIVE
-	material.DepthMask = false
 	particleSystem := effects.CreateParticleSystem(effects.ParticleSettings{
 		MaxParticles:     80,
 		ParticleEmitRate: 400,
 		BaseGeometry:     renderer.CreateBox(float32(1), float32(1)),
-		Material:         material,
 		TotalFrames:      1,
 		FramesX:          1,
 		FramesY:          1,
@@ -274,7 +259,9 @@ func sparkParticles() *effects.ParticleSystem {
 		},
 	})
 	particleSystem.FaceCamera = false
-	return particleSystem
+	particleGroup := effects.NewParticleGroup(nil, particleSystem)
+	particleGroup.Node.Material = material
+	return particleGroup
 }
 
 const vertShader = `

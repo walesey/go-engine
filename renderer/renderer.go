@@ -35,6 +35,7 @@ type Spatial interface {
 	Optimize(geometry *Geometry, transform mgl32.Mat4)
 	Destroy(renderer Renderer)
 	Centre() mgl32.Vec3
+	SetParent(parent *Node)
 }
 
 //An Entity is something that can be scaled, positioned and rotated (orientation)

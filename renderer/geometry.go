@@ -17,6 +17,7 @@ type Geometry struct {
 	boundingRadius float32
 	Indicies       []uint32
 	Verticies      []float32
+	parent         *Node
 }
 
 //vericies format : x,y,z,   nx,ny,nz,   u,v,  r,g,b,a
@@ -56,6 +57,10 @@ func (geometry *Geometry) Destroy(renderer Renderer) {
 
 func (geometry *Geometry) Centre() mgl32.Vec3 {
 	return mgl32.Vec3{0, 0, 0}
+}
+
+func (geometry *Geometry) SetParent(parent *Node) {
+	geometry.parent = parent
 }
 
 func (geometry *Geometry) ClearBuffers() {

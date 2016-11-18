@@ -92,6 +92,10 @@ func (node *Node) load(renderer Renderer) {
 }
 
 func (node *Node) setRenderStates(renderer Renderer) {
+	renderer.UseShader(nil)
+	renderer.UseMaterial(nil)
+	renderer.UseRendererParams(DefaultRendererParams())
+
 	for parent := node; parent != nil; parent = parent.parent {
 		if parent.Shader != nil {
 			renderer.UseShader(parent.Shader)
@@ -130,10 +134,12 @@ func (node *Node) Centre() mgl32.Vec3 {
 	return node.Translation
 }
 
+func (node *Node) SetParent(parent *Node) {
+	node.parent = parent
+}
+
 func (node *Node) Add(spatial Spatial) {
-	if spatialNode, ok := spatial.(*Node); ok {
-		spatialNode.parent = node
-	}
+	spatial.SetParent(node)
 	node.children = append(node.children, spatial)
 }
 

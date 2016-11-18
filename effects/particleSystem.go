@@ -84,6 +84,10 @@ func (ps *ParticleSystem) Centre() mgl32.Vec3 {
 	return ps.Location
 }
 
+func (ps *ParticleSystem) SetParent(parent *renderer.Node) {
+	ps.geometry.SetParent(parent)
+}
+
 func (ps *ParticleSystem) Optimize(geometry *renderer.Geometry, transform mgl32.Mat4) {
 	ps.geometry.Optimize(geometry, transform)
 }

@@ -9,15 +9,13 @@ import (
 	"github.com/walesey/go-engine/ui"
 )
 
-// Engine is a wrapper for all the go-engine boilerblate code.
-// It sets up a basic render / Update loop and provides a nice interface for writing games.
 type Engine interface {
 	Start(Init func())
+	DefaultShader(shader *renderer.Shader)
 	AddOrtho(spatial renderer.Spatial)
 	AddSpatial(spatial renderer.Spatial)
 	AddSpatialTransparent(spatial renderer.Spatial)
 	RemoveSpatial(spatial renderer.Spatial, destroy bool)
-	RemoveOrtho(spatial renderer.Spatial, destroy bool)
 	AddUpdatable(updatable Updatable)
 	RemoveUpdatable(updatable Updatable)
 	Camera() *renderer.Camera
@@ -32,9 +30,10 @@ type EngineImpl struct {
 	fpsMeter       *renderer.FPSMeter
 	renderer       renderer.Renderer
 	sceneGraph     *renderer.SceneGraph
-	orthoNode      *renderer.Node
 	camera         *renderer.Camera
 	updatableStore *UpdatableStore
+
+	opaqueNode, transparentNode, orthoNode *renderer.Node
 }
 
 func (engine *EngineImpl) Start(Init func()) {
@@ -52,6 +51,10 @@ func (engine *EngineImpl) Start(Init func()) {
 	}
 }
 
+func (engine *EngineImpl) DefaultShader(shader *renderer.Shader) {
+	engine.opaqueNode.Shader, engine.transparentNode.Shader, engine.orthoNode.Shader = shader, shader, shader
+}
+
 func (engine *EngineImpl) Update() {
 	dt := engine.fpsMeter.UpdateFPSMeter()
 	engine.updatableStore.UpdateAll(dt)
@@ -65,34 +68,21 @@ func (engine *EngineImpl) Render() {
 }
 
 func (engine *EngineImpl) AddOrtho(spatial renderer.Spatial) {
-	if engine.orthoNode != nil {
-		engine.orthoNode.Add(spatial)
-	}
-}
-
-func (engine *EngineImpl) RemoveOrtho(spatial renderer.Spatial, destroy bool) {
-	if engine.orthoNode != nil {
-		engine.orthoNode.Remove(spatial, destroy)
-	}
+	engine.orthoNode.Add(spatial)
 }
 
 func (engine *EngineImpl) AddSpatial(spatial renderer.Spatial) {
-	if engine.sceneGraph != nil {
-		engine.sceneGraph.Add(spatial)
-	}
+	engine.opaqueNode.Add(spatial)
 }
 
 func (engine *EngineImpl) AddSpatialTransparent(spatial renderer.Spatial) {
-	if engine.sceneGraph != nil {
-		engine.sceneGraph.AddTransparent(spatial)
-	}
+	engine.transparentNode.Add(spatial)
 }
 
 func (engine *EngineImpl) RemoveSpatial(spatial renderer.Spatial, destroy bool) {
-	if engine.sceneGraph != nil {
-		engine.sceneGraph.Remove(spatial, destroy)
-		engine.sceneGraph.RemoveTransparent(spatial, destroy)
-	}
+	engine.opaqueNode.Remove(spatial, destroy)
+	engine.transparentNode.Remove(spatial, destroy)
+	engine.orthoNode.Remove(spatial, destroy)
 }
 
 func (engine *EngineImpl) AddUpdatable(updatable Updatable) {
@@ -151,23 +141,38 @@ func (engine *EngineImpl) InitFpsDial() {
 	engine.AddOrtho(window)
 }
 
+func (engine *EngineImpl) initNodes() {
+	engine.opaqueNode, engine.transparentNode, engine.orthoNode = renderer.NewNode(), renderer.NewNode(), renderer.NewNode()
+}
+
 func NewEngine(r renderer.Renderer) Engine {
 	fpsMeter := renderer.CreateFPSMeter(1.0)
 	fpsMeter.FpsCap = 144
 
 	sceneGraph := renderer.CreateSceneGraph()
-	orthoNode := renderer.NewNode()
 	updatableStore := NewUpdatableStore()
 	camera := renderer.CreateCamera()
 
-	return &EngineImpl{
+	engine := &EngineImpl{
 		fpsMeter:       fpsMeter,
 		sceneGraph:     sceneGraph,
-		orthoNode:      orthoNode,
 		updatableStore: updatableStore,
 		renderer:       r,
 		camera:         camera,
 	}
+
+	engine.initNodes()
+	sceneGraph.Add(engine.opaqueNode)
+
+	engine.transparentNode.RendererParams = renderer.NewRendererParams()
+	engine.transparentNode.RendererParams.CullBackface = false
+	engine.transparentNode.RendererParams.DepthMask = false
+	sceneGraph.AddTransparent(engine.transparentNode)
+
+	engine.orthoNode.RendererParams = renderer.NewRendererParams()
+	engine.orthoNode.RendererParams.CullBackface = false
+	engine.orthoNode.RendererParams.Unlit = true
+	return engine
 }
 
 func NewHeadlessEngine() Engine {
@@ -175,8 +180,11 @@ func NewHeadlessEngine() Engine {
 	fpsMeter := renderer.CreateFPSMeter(1.0)
 	fpsMeter.FpsCap = 144
 
-	return &EngineImpl{
+	engine := &EngineImpl{
 		fpsMeter:       fpsMeter,
 		updatableStore: updatableStore,
 	}
+
+	engine.initNodes()
+	return engine
 }

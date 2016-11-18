@@ -38,13 +38,14 @@ func main() {
 		WindowHeight: 800,
 	}
 	gameEngine := engine.NewEngine(glRenderer)
+	gameEngine.InitFpsDial()
 
 	gameEngine.Start(func() {
-
 		// load in ui shader
 		shader := renderer.NewShader()
 		shader.FragSrc = uiFragmentShader
 		shader.VertSrc = uiVertexShader
+		gameEngine.DefaultShader(shader)
 
 		// input/controller manager
 		controllerManager := glfwController.NewControllerManager(glRenderer.Window)

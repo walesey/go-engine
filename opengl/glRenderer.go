@@ -433,9 +433,12 @@ func (glRenderer *OpenglRenderer) UseMaterial(material *renderer.Material) {
 }
 
 func (glRenderer *OpenglRenderer) DrawGeometry(geometry *renderer.Geometry, transform mgl32.Mat4) {
-
 	glRenderer.enableShader()
 	glRenderer.enableMaterial()
+
+	if glRenderer.activeShader == nil {
+		panic("ERROR: No shader is configured.")
+	}
 
 	shader := glRenderer.activeShader
 	program := shader.Program

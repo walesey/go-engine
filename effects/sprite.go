@@ -60,6 +60,10 @@ func (sprite *Sprite) Centre() mgl32.Vec3 {
 	return sprite.location
 }
 
+func (sprite *Sprite) SetParent(parent *renderer.Node) {
+	sprite.node.SetParent(parent)
+}
+
 func (sprite *Sprite) NextFrame() {
 	sprite.frame = sprite.frame + 1
 	if sprite.frame >= sprite.totalFrames {

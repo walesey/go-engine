@@ -35,9 +35,6 @@ func main() {
 
 	gameEngine.Start(func() {
 
-		rootNode := renderer.NewNode()
-		gameEngine.AddSpatial(rootNode)
-
 		transparentNode := renderer.NewNode()
 		gameEngine.AddSpatialTransparent(transparentNode)
 		transparentNode.RendererParams = &renderer.RendererParams{
@@ -47,8 +44,7 @@ func main() {
 		}
 
 		if shader, err := assets.ImportShader("build/shaders/basic.vert", "build/shaders/basic.frag"); err == nil {
-			rootNode.Shader = shader
-			transparentNode.Shader = shader
+			gameEngine.DefaultShader(shader)
 
 			// Lighting
 			shader.Uniforms["nbPointLights"] = 1
@@ -78,7 +74,7 @@ func main() {
 			skyNode.RendererParams = renderer.NewRendererParams()
 			skyNode.RendererParams.CullBackface = false
 			skyNode.Add(geom)
-			rootNode.Add(skyNode)
+			gameEngine.AddSpatial(skyNode)
 		}
 
 		// load scene objs
@@ -94,7 +90,7 @@ func main() {
 				sceneNode := renderer.NewNode()
 				sceneNode.Add(geom)
 				sceneNode.Material = mat
-				rootNode.Add(sceneNode)
+				gameEngine.AddSpatial(sceneNode)
 			}
 		}
 

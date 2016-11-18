@@ -137,6 +137,9 @@ func main() {
 				glRenderer.SetDefaultShader(shader)
 			}
 
+			// display fps
+			orthoNode.Add(gameEngine.FpsDial())
+
 			glRenderer.BackGroundColor(0, 0.4, 0, 0)
 
 			// input/controller manager
