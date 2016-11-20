@@ -14,8 +14,12 @@ buildExamples: buildShaders
 
 buildShaders: compileShaderBuilder
 	mkdir -p $(BUILD_DIR)/shaders
+
 	./sBuilder shaders/basic.glsl vert > $(BUILD_DIR)/shaders/basic.vert
 	./sBuilder shaders/basic.glsl frag > $(BUILD_DIR)/shaders/basic.frag
+
+	./sBuilder shaders/pbr.glsl vert > $(BUILD_DIR)/shaders/pbr.vert
+	./sBuilder shaders/pbr.glsl frag > $(BUILD_DIR)/shaders/pbr.frag
 
 compileShaderBuilder:
 	go build -o sBuilder ./shaderBuilder

@@ -8,8 +8,8 @@ type Texture struct {
 	TextureId   uint32
 	TextureName string
 	Img         image.Image
-	CubeMap     *CubeMap
 	Loaded      bool
+	CubeMap     *CubeMap
 }
 
 type Material struct {

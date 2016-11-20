@@ -40,7 +40,7 @@ type Editor struct {
 func New() *Editor {
 	return &Editor{
 		uiAssets:    ui.NewHtmlAssets(),
-		rootMapNode: renderer.CreateNode(),
+		rootMapNode: renderer.NewNode(),
 		currentMap: &editorModels.MapModel{
 			Name: "default",
 			Root: editorModels.NewNodeModel("root"),
@@ -57,10 +57,31 @@ func (e *Editor) Start() {
 	e.gameEngine = engine.NewEngine(e.renderer)
 
 	e.gameEngine.Start(func() {
-		//Sky
+
+		shader, err := assets.ImportShader("build/shaders/pbr.vert", "build/shaders/pbr.frag")
+		if err != nil {
+			panic("error importing shader")
+		}
+
+		e.gameEngine.DefaultShader(shader)
+
+		// Sky cubemap
 		skyImg, err := assets.ImportImage("resources/cubemap.png")
 		if err == nil {
-			e.gameEngine.Sky(renderer.NewMaterial(renderer.NewTexture("diffuseMap", skyImg)), 999999)
+			geom := renderer.CreateSkyBox()
+			geom.Transform(mgl32.Scale3D(10000, 10000, 10000))
+			skyNode := renderer.NewNode()
+			skyNode.Material = renderer.NewMaterial(renderer.NewTexture("diffuseMap", skyImg))
+			skyNode.RendererParams = renderer.NewRendererParams()
+			skyNode.RendererParams.CullBackface = false
+			skyNode.RendererParams.Unlit = true
+			skyNode.Add(geom)
+			e.gameEngine.AddSpatial(skyNode)
+		}
+
+		environmentCubemap := &renderer.Texture{
+			TextureName: "environmentMap",
+			CubeMap:     renderer.CreateCubemap(skyImg),
 		}
 
 		//root node
@@ -95,10 +116,14 @@ func (e *Editor) Start() {
 func (e *Editor) initSelectSprite() {
 	img, _ := assets.DecodeImage(bytes.NewBuffer(util.Base64ToBytes(GeometryIconData)))
 	mat := renderer.NewMaterial(renderer.NewTexture("diffuseMap", img))
-	mat.Transparency = renderer.EMISSIVE
-	mat.DepthTest = false
 	selectSprite := effects.CreateSprite(1, 1, 1, mat)
-	e.selectSprite = selectSprite
+	spriteNode := renderer.NewNode()
+	spriteNode.RendererParams = &renderer.RendererParams{
+		Unlit:        true,
+		Transparency: renderer.EMISSIVE,
+	}
+	spriteNode.Add(selectSprite)
+	e.selectSprite = spriteNode
 	e.gameEngine.AddSpatialTransparent(selectSprite)
 }
 

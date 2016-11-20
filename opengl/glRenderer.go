@@ -466,8 +466,10 @@ func (glRenderer *OpenglRenderer) DrawGeometry(geometry *renderer.Geometry, tran
 	shader.Uniforms["model"] = transform
 	shader.Uniforms["modelNormal"] = modelNormal
 
+	// set camera uniforms
 	cam := glRenderer.camera
 	win := glRenderer.WindowDimensions()
+	shader.Uniforms["cameraTranslation"] = cam.Translation
 	if cam.Ortho {
 		shader.Uniforms["projection"] = mgl32.Ortho2D(0, win.X(), win.Y(), 0)
 		shader.Uniforms["camera"] = mgl32.Ident4()

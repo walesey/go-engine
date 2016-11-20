@@ -26,8 +26,15 @@ func CreateCubemap(baseImage image.Image) *CubeMap {
 	return cubeMap
 }
 
-func (cm *CubeMap) Clone() *CubeMap {
-	return &CubeMap{Right: imaging.Clone(cm.Right), Left: imaging.Clone(cm.Left), Top: imaging.Clone(cm.Top), Bottom: imaging.Clone(cm.Bottom), Back: imaging.Clone(cm.Back), Front: imaging.Clone(cm.Front)}
+func (cm *CubeMap) Copy() *CubeMap {
+	return &CubeMap{
+		Right:  imaging.Clone(cm.Right),
+		Left:   imaging.Clone(cm.Left),
+		Top:    imaging.Clone(cm.Top),
+		Bottom: imaging.Clone(cm.Bottom),
+		Back:   imaging.Clone(cm.Back),
+		Front:  imaging.Clone(cm.Front),
+	}
 }
 
 func (cm *CubeMap) Resize(size int) {

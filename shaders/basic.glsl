@@ -4,6 +4,7 @@
 #include "./lib/worldTransform.glsl"
 #include "./lib/textures.glsl"
 #include "./lib/pointLights.glsl"
+#include "./lib/directionalLights.glsl"
 
 void main() {
 	textures();
@@ -19,6 +20,7 @@ void main() {
 	} else {
 		vec3 finalColor = vec3(0.0);
 		finalColor += ao.rgb * pointLights(diffuse, specular, normal);
+		finalColor += ao.rgb * directionalLights(diffuse, specular, normal);
 		outputColor = vec4(finalColor, diffuse.a);
 	}
 	#endfrag

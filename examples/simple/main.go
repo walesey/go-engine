@@ -35,17 +35,21 @@ func main() {
 	gameEngine.Start(func() {
 
 		if shader, err := assets.ImportShader("build/shaders/basic.vert", "build/shaders/basic.frag"); err == nil {
-			glRenderer.SetDefaultShader(shader)
+			gameEngine.DefaultShader(shader)
 		}
 
 		// sky cube
 		skyImg, err := assets.ImportImage("resources/cubemap.png")
 		if err == nil {
 			geom := renderer.CreateSkyBox()
-			geom.Material = renderer.NewMaterial(renderer.NewTexture("diffuseMap", skyImg))
-			geom.CullBackface = false
-			geom.Transform(mgl32.Scale3D(100, 100, 100))
-			gameEngine.AddSpatial(geom)
+			geom.Transform(mgl32.Scale3D(10000, 10000, 10000))
+			skyNode := renderer.NewNode()
+			skyNode.Material = renderer.NewMaterial(renderer.NewTexture("diffuseMap", skyImg))
+			skyNode.RendererParams = renderer.NewRendererParams()
+			skyNode.RendererParams.CullBackface = false
+			skyNode.RendererParams.Unlit = true
+			skyNode.Add(geom)
+			gameEngine.AddSpatial(skyNode)
 		}
 
 		// input/controller manager

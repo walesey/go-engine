@@ -88,7 +88,7 @@ func main() {
 		if _, ok := players[playerID]; !ok {
 			player := &Player{clientId: playerID}
 			players[player.clientId] = player
-			player.node = renderer.CreateNode()
+			player.node = renderer.NewNode()
 			player.position = position
 			gameEngine.AddUpdatable(player)
 			if network.IsClient() {
@@ -133,12 +133,11 @@ func main() {
 	// client setup
 	gameEngine.Start(func() {
 		if network.IsClient() {
-			if shader, err := assets.ImportShader("build/shaders/basic.vert", "build/shaders/basic.frag"); err == nil {
-				glRenderer.SetDefaultShader(shader)
-			}
+			gameEngine.InitFpsDial()
 
-			// display fps
-			orthoNode.Add(gameEngine.FpsDial())
+			if shader, err := assets.ImportShader("build/shaders/basic.vert", "build/shaders/basic.frag"); err == nil {
+				gameEngine.DefaultShader(shader)
+			}
 
 			glRenderer.BackGroundColor(0, 0.4, 0, 0)
 
