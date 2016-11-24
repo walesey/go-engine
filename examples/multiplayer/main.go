@@ -93,7 +93,6 @@ func main() {
 			gameEngine.AddUpdatable(player)
 			if network.IsClient() {
 				boxGeometry := renderer.CreateBox(30, 30)
-				boxGeometry.Material = renderer.NewMaterial()
 				boxGeometry.SetColor(color.NRGBA{254, 0, 0, 254})
 				player.node.Add(boxGeometry)
 				gameEngine.AddOrtho(player.node)

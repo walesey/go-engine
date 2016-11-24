@@ -158,7 +158,7 @@ func (c *Container) SetBackgroundColor(r, g, b, a uint8) {
 }
 
 func (c *Container) SetBackgroundImage(img image.Image) {
-	mat := renderer.NewMaterial(renderer.NewTexture("diffuseMap", img))
+	mat := renderer.NewMaterial(renderer.NewTexture("diffuseMap", img, false))
 	c.background.Material = mat
 }
 

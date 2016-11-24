@@ -8,18 +8,19 @@ type Texture struct {
 	TextureId   uint32
 	TextureName string
 	Img         image.Image
+	Lod         bool
 	Loaded      bool
-	CubeMap     *CubeMap
 }
 
 type Material struct {
 	Textures []*Texture
 }
 
-func NewTexture(name string, img image.Image) *Texture {
+func NewTexture(name string, img image.Image, lod bool) *Texture {
 	return &Texture{
 		TextureName: name,
 		Img:         img,
+		Lod:         lod,
 	}
 }
 

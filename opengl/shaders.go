@@ -87,6 +87,8 @@ func setupUniforms(shader *renderer.Shader) {
 			gl.UniformMatrix4fv(uniformLocation, 1, false, &t[0])
 		case []float32:
 			gl.Uniform4fv(uniformLocation, (int32)(len(t)), &t[0])
+		case []int32:
+			gl.Uniform4iv(uniformLocation, (int32)(len(t)), &t[0])
 		default:
 			fmt.Printf("unexpected type for shader uniform: %T\n", t)
 		}

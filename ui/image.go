@@ -87,7 +87,7 @@ func (ie *ImageElement) SetRotation(rotation float32) {
 }
 
 func (ie *ImageElement) SetImage(img image.Image) {
-	mat := renderer.NewMaterial(renderer.NewTexture("diffuseMap", img))
+	mat := renderer.NewMaterial(renderer.NewTexture("diffuseMap", img, false))
 	ie.node.Material = mat
 	ie.img = img
 }

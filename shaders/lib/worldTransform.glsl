@@ -18,6 +18,7 @@ out mat3 inverseTBNMatrix;
 void worldTransform() {
 	worldVertex = (model * vec4(vert,1)).xyz;
 	worldNormal = (modelNormal * vec4(normal,1)).xyz;
+	worldNormal = normalize(worldNormal);
 	eyeDirection = normalize(worldVertex - cameraTranslation);
 
 	// generate arbitrary tangent and bitangent to the normal

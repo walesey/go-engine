@@ -33,6 +33,7 @@ type OpenglRenderer struct {
 
 	material, activeMaterial *renderer.Material
 	shader, activeShader     *renderer.Shader
+	cubeMap, activeCubeMap   *renderer.CubeMap
 
 	transparency   renderer.Transparency
 	rendererParams renderer.RendererParams
@@ -232,15 +233,28 @@ func (glRenderer *OpenglRenderer) enableMaterial() {
 	if glRenderer.activeShader != nil && glRenderer.activeMaterial != nil {
 		textures := glRenderer.activeMaterial.Textures
 		for i, tex := range textures {
-			texUnit := gl.TEXTURE0 + uint32(i)
+			textureUnit := gl.TEXTURE0 + uint32(i)
 			glRenderer.activeShader.Uniforms[tex.TextureName] = int32(i)
-			gl.ActiveTexture(texUnit)
-			var target uint32 = gl.TEXTURE_2D
-			if tex.CubeMap != nil {
-				target = gl.TEXTURE_CUBE_MAP
-			}
-			gl.BindTexture(target, tex.TextureId)
+			gl.ActiveTexture(textureUnit)
+			gl.BindTexture(gl.TEXTURE_2D, tex.TextureId)
+
 		}
+	}
+}
+
+func (glRenderer *OpenglRenderer) enableCubeMap() {
+	if glRenderer.cubeMap == glRenderer.activeCubeMap {
+		return
+	}
+
+	glRenderer.activeCubeMap = glRenderer.cubeMap
+	cubeMap := glRenderer.activeCubeMap
+
+	// setup cubeMap
+	if glRenderer.activeShader != nil && cubeMap != nil {
+		gl.ActiveTexture(gl.TEXTURE10)
+		gl.BindTexture(gl.TEXTURE_CUBE_MAP, cubeMap.Id)
+		glRenderer.activeShader.Uniforms[cubeMap.Name] = int32(10)
 	}
 }
 
@@ -278,13 +292,8 @@ func (glRenderer *OpenglRenderer) DestroyGeometry(geometry *renderer.Geometry) {
 func (glRenderer *OpenglRenderer) CreateMaterial(material *renderer.Material) {
 	for i, tex := range material.Textures {
 		if !tex.Loaded {
-			texUnit := gl.TEXTURE0 + uint32(i)
-			if tex.CubeMap != nil {
-				cm := tex.CubeMap
-				tex.TextureId = glRenderer.loadCubeMap(cm.Right, cm.Left, cm.Top, cm.Bottom, cm.Back, cm.Front, texUnit)
-			} else {
-				tex.TextureId = glRenderer.loadTexture(tex.Img, texUnit)
-			}
+			textureUnit := gl.TEXTURE0 + uint32(i)
+			tex.TextureId = glRenderer.loadTexture(tex.Img, textureUnit, tex.Lod)
 			tex.Loaded = true
 		}
 	}
@@ -298,6 +307,24 @@ func (glRenderer *OpenglRenderer) DestroyMaterial(material *renderer.Material) {
 			tex.Loaded = false
 		}
 	}
+}
+
+func (glRenderer *OpenglRenderer) CreateCubeMap(cubeMap *renderer.CubeMap) {
+	if cubeMap.Loaded {
+		return
+	}
+
+	cm := cubeMap
+	cubeMap.Id = glRenderer.loadCubeMap(cm.Right, cm.Left, cm.Top, cm.Bottom, cm.Back, cm.Front, uint32(10), cm.Lod)
+	cubeMap.Loaded = true
+}
+
+func (glRenderer *OpenglRenderer) DestroyCubeMap(cubeMap *renderer.CubeMap) {
+	if !cubeMap.Loaded {
+		return
+	}
+	gl.DeleteTextures(1, &cubeMap.Id)
+	cubeMap.Loaded = false
 }
 
 func (glRenderer *OpenglRenderer) CreateShader(shader *renderer.Shader) {
@@ -342,7 +369,7 @@ func (glRenderer *OpenglRenderer) CreateShader(shader *renderer.Shader) {
 	gl.BindFragDataLocation(program, 0, gl.Str(fmt.Sprintf("%v\x00", shader.FragDataLocation)))
 }
 
-func (glRenderer *OpenglRenderer) loadTexture(img image.Image, textureUnit uint32) uint32 {
+func (glRenderer *OpenglRenderer) loadTexture(img image.Image, textureUnit uint32, lod bool) uint32 {
 	rgba := image.NewRGBA(img.Bounds())
 	if rgba.Stride != rgba.Rect.Size().X*4 {
 		log.Fatal("unsupported stride")
@@ -352,10 +379,6 @@ func (glRenderer *OpenglRenderer) loadTexture(img image.Image, textureUnit uint3
 	gl.GenTextures(1, &texId)
 	gl.ActiveTexture(textureUnit)
 	gl.BindTexture(gl.TEXTURE_2D, texId)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
 	gl.TexImage2D(
 		gl.TEXTURE_2D,
 		0,
@@ -365,11 +388,21 @@ func (glRenderer *OpenglRenderer) loadTexture(img image.Image, textureUnit uint3
 		0,
 		gl.RGBA,
 		gl.UNSIGNED_BYTE,
-		gl.Ptr(rgba.Pix))
+		gl.Ptr(rgba.Pix),
+	)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+	if lod {
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR)
+		gl.GenerateMipmap(gl.TEXTURE_2D)
+	} else {
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+	}
 	return texId
 }
 
-func (glRenderer *OpenglRenderer) loadCubeMap(right, left, top, bottom, back, front image.Image, textureUnit uint32) uint32 {
+func (glRenderer *OpenglRenderer) loadCubeMap(right, left, top, bottom, back, front image.Image, textureUnit uint32, lod bool) uint32 {
 	var texId uint32
 	gl.GenTextures(1, &texId)
 	gl.ActiveTexture(textureUnit)
@@ -377,20 +410,21 @@ func (glRenderer *OpenglRenderer) loadCubeMap(right, left, top, bottom, back, fr
 
 	for i := 0; i < 6; i++ {
 		img := right
-		texIndex := (uint32)(gl.TEXTURE_CUBE_MAP_POSITIVE_X)
-		if i == 1 {
+		var texIndex uint32 = gl.TEXTURE_CUBE_MAP_POSITIVE_X
+		switch i {
+		case 1:
 			img = left
 			texIndex = gl.TEXTURE_CUBE_MAP_NEGATIVE_X
-		} else if i == 2 {
+		case 2:
 			img = top
 			texIndex = gl.TEXTURE_CUBE_MAP_NEGATIVE_Y
-		} else if i == 3 {
+		case 3:
 			img = bottom
 			texIndex = gl.TEXTURE_CUBE_MAP_POSITIVE_Y
-		} else if i == 4 {
+		case 4:
 			img = back
 			texIndex = gl.TEXTURE_CUBE_MAP_NEGATIVE_Z
-		} else if i == 5 {
+		case 5:
 			img = front
 			texIndex = gl.TEXTURE_CUBE_MAP_POSITIVE_Z
 		}
@@ -400,7 +434,6 @@ func (glRenderer *OpenglRenderer) loadCubeMap(right, left, top, bottom, back, fr
 			log.Fatal("unsupported stride")
 		}
 		draw.Draw(rgba, rgba.Bounds(), img, image.Point{0, 0}, draw.Src)
-
 		gl.TexImage2D(
 			texIndex,
 			0,
@@ -410,13 +443,19 @@ func (glRenderer *OpenglRenderer) loadCubeMap(right, left, top, bottom, back, fr
 			0,
 			gl.RGBA,
 			gl.UNSIGNED_BYTE,
-			gl.Ptr(rgba.Pix))
+			gl.Ptr(rgba.Pix),
+		)
+		gl.TexParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+		gl.TexParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+		gl.TexParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+		gl.TexParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE)
+		if lod {
+			gl.TexParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR)
+			gl.GenerateMipmap(gl.TEXTURE_CUBE_MAP)
+		} else {
+			gl.TexParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+		}
 	}
-	gl.TexParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-	gl.TexParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-	gl.TexParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE)
 	return texId
 }
 
@@ -432,9 +471,14 @@ func (glRenderer *OpenglRenderer) UseMaterial(material *renderer.Material) {
 	glRenderer.material = material
 }
 
+func (glRenderer *OpenglRenderer) UseCubeMap(cubeMap *renderer.CubeMap) {
+	glRenderer.cubeMap = cubeMap
+}
+
 func (glRenderer *OpenglRenderer) DrawGeometry(geometry *renderer.Geometry, transform mgl32.Mat4) {
 	glRenderer.enableShader()
 	glRenderer.enableMaterial()
+	glRenderer.enableCubeMap()
 
 	if glRenderer.activeShader == nil {
 		panic("ERROR: No shader is configured.")

@@ -58,7 +58,7 @@ func (e *Editor) Start() {
 
 	e.gameEngine.Start(func() {
 
-		shader, err := assets.ImportShader("build/shaders/pbr.vert", "build/shaders/pbr.frag")
+		shader, err := assets.ImportShader("build/shaders/diffuseSpecular.vert", "build/shaders/diffuseSpecular.frag")
 		if err != nil {
 			panic("error importing shader")
 		}
@@ -71,17 +71,30 @@ func (e *Editor) Start() {
 			geom := renderer.CreateSkyBox()
 			geom.Transform(mgl32.Scale3D(10000, 10000, 10000))
 			skyNode := renderer.NewNode()
-			skyNode.Material = renderer.NewMaterial(renderer.NewTexture("diffuseMap", skyImg))
+			skyNode.Material = renderer.NewMaterial(renderer.NewTexture("diffuseMap", skyImg, false))
 			skyNode.RendererParams = renderer.NewRendererParams()
 			skyNode.RendererParams.CullBackface = false
 			skyNode.RendererParams.Unlit = true
 			skyNode.Add(geom)
 			e.gameEngine.AddSpatial(skyNode)
+			// create an environmentMap using the skybox texture
+			envCubeMap := renderer.NewCubemap("environmentMap", skyImg, true)
+			e.gameEngine.DefaultCubeMap(envCubeMap)
 		}
 
-		environmentCubemap := &renderer.Texture{
-			TextureName: "environmentMap",
-			CubeMap:     renderer.CreateCubemap(skyImg),
+		// Lighting
+		shader.Uniforms["nbDirectionalLights"] = 1
+		shader.Uniforms["directionalLightVectors"] = []float32{
+			-1, -1, -1, 0,
+			0, 0, 0, 0,
+			0, 0, 0, 0,
+			0, 0, 0, 0,
+		}
+		shader.Uniforms["directionalLightValues"] = []float32{
+			0.4, 0.4, 0.4, 0,
+			0, 0, 0, 0,
+			0, 0, 0, 0,
+			0, 0, 0, 0,
 		}
 
 		//root node
@@ -115,7 +128,7 @@ func (e *Editor) Start() {
 
 func (e *Editor) initSelectSprite() {
 	img, _ := assets.DecodeImage(bytes.NewBuffer(util.Base64ToBytes(GeometryIconData)))
-	mat := renderer.NewMaterial(renderer.NewTexture("diffuseMap", img))
+	mat := renderer.NewMaterial(renderer.NewTexture("diffuseMap", img, false))
 	selectSprite := effects.CreateSprite(1, 1, 1, mat)
 	spriteNode := renderer.NewNode()
 	spriteNode.RendererParams = &renderer.RendererParams{

@@ -2,8 +2,10 @@ package main
 
 import (
 	"image/color"
+	"math"
 	"runtime"
 
+	"github.com/disintegration/imaging"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/actor"
 	"github.com/walesey/go-engine/assets"
@@ -51,40 +53,37 @@ func main() {
 		gameEngine.DefaultShader(shader)
 
 		// Sky cubemap
-		// skyImg, err := assets.ImportImage("resources/cubemapNightSky.jpg")
-		skyImg, err := assets.ImportImage("resources/space.jpg")
-		// skyImg, err := assets.ImportImage("resources/cubemap.png")
+		skyImg, err := assets.ImportImage("TestAssets/Files/skybox/cloudSky.jpg")
 		if err == nil {
+			skyImg = imaging.AdjustBrightness(skyImg, -30)
+			skyImg = imaging.AdjustContrast(skyImg, 30)
 			geom := renderer.CreateSkyBox()
 			geom.Transform(mgl32.Scale3D(10000, 10000, 10000))
 			skyNode := renderer.NewNode()
-			skyNode.Material = renderer.NewMaterial(renderer.NewTexture("diffuseMap", skyImg))
+			skyNode.Material = renderer.NewMaterial(renderer.NewTexture("diffuseMap", skyImg, false))
 			skyNode.RendererParams = renderer.NewRendererParams()
 			skyNode.RendererParams.CullBackface = false
 			skyNode.RendererParams.Unlit = true
 			skyNode.Add(geom)
 			gameEngine.AddSpatial(skyNode)
-		}
-
-		environmentCubemap := &renderer.Texture{
-			TextureName: "environmentMap",
-			CubeMap:     renderer.CreateCubemap(skyImg),
+			// create an environmentMap using the skybox texture
+			envCubeMap := renderer.NewCubemap("environmentMap", skyImg, true)
+			gameEngine.DefaultCubeMap(envCubeMap)
 		}
 
 		// load scene objs
 		objs := []string{
-			"resources/wellScene/floor.obj",
-			"resources/wellScene/frame1.obj",
-			"resources/wellScene/frame2.obj",
-			"resources/wellScene/well.obj",
-			"resources/wellScene/torches.obj",
+			"TestAssets/wellScene/floor.obj",
+			"TestAssets/wellScene/frame1.obj",
+			"TestAssets/wellScene/frame2.obj",
+			"TestAssets/wellScene/well.obj",
+			"TestAssets/wellScene/torches.obj",
 		}
 		for _, objFile := range objs {
 			if geom, mat, err := assets.ImportObjCached(objFile); err == nil {
 				sceneNode := renderer.NewNode()
 				sceneNode.Add(geom)
 				sceneNode.Material = mat
-				sceneNode.Material.Textures = append(sceneNode.Material.Textures, environmentCubemap)
 				sceneNode.RendererParams = renderer.NewRendererParams()
 				sceneNode.RendererParams.CullBackface = false
 				gameEngine.AddSpatial(sceneNode)
@@ -92,7 +91,7 @@ func main() {
 		}
 
 		fireImage, _ := assets.ImportImageCached("resources/fire.png")
-		fireMat := renderer.NewMaterial(renderer.NewTexture("diffuseMap", fireImage))
+		fireMat := renderer.NewMaterial(renderer.NewTexture("diffuseMap", fireImage, false))
 
 		torchLocation := mgl32.Vec3{0.86, 1.75, 1.05}
 		fire := fireParticles()
@@ -102,28 +101,28 @@ func main() {
 		transparentNode.Add(torchParticles)
 		gameEngine.AddUpdatable(torchParticles)
 
-		// var x float64
-		// gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
-		// 	x += dt
-		// 	mag := float32(math.Abs(0.6*math.Sin(3*x)+0.3*math.Sin(4*x)+0.15*math.Sin(7*x)+0.1*math.Sin(15*x))) + 0.5
-		// 	mag *= 10
-		// 	lightPos := torchLocation.Add(mgl32.Vec3{0, 0.05, 0})
+		var x float64
+		gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
+			x += dt
+			mag := float32(math.Abs(0.6*math.Sin(3*x)+0.3*math.Sin(4*x)+0.15*math.Sin(7*x)+0.1*math.Sin(15*x))) + 0.5
+			mag *= 10
+			lightPos := torchLocation.Add(mgl32.Vec3{0, 0.05, 0})
 
-		// 	// shader Lighting
-		// 	shader.Uniforms["nbPointLights"] = 2
-		// 	shader.Uniforms["pointLightPositions"] = []float32{
-		// 		lightPos.X(), lightPos.Y(), lightPos.Z(), 0,
-		// 		lightPos.X(), lightPos.Y(), -lightPos.Z(), 0,
-		// 		0, 0, 0, 0,
-		// 		0, 0, 0, 0,
-		// 	}
-		// 	shader.Uniforms["pointLightValues"] = []float32{
-		// 		0.03 * mag, 0.02 * mag, 0.003 * mag, 0,
-		// 		0.03 * mag, 0.02 * mag, 0.003 * mag, 0,
-		// 		0, 0, 0, 0,
-		// 		0, 0, 0, 0,
-		// 	}
-		// }))
+			// shader Lighting
+			shader.Uniforms["nbPointLights"] = 2
+			shader.Uniforms["pointLightPositions"] = []float32{
+				lightPos.X(), lightPos.Y(), lightPos.Z(), 0,
+				lightPos.X(), lightPos.Y(), -lightPos.Z(), 0,
+				0, 0, 0, 0,
+				0, 0, 0, 0,
+			}
+			shader.Uniforms["pointLightValues"] = []float32{
+				0.03 * mag, 0.02 * mag, 0.003 * mag, 0,
+				0.03 * mag, 0.02 * mag, 0.003 * mag, 0,
+				0, 0, 0, 0,
+				0, 0, 0, 0,
+			}
+		}))
 
 		// input/controller manager
 		controllerManager := glfwController.NewControllerManager(glRenderer.Window)
@@ -131,6 +130,7 @@ func main() {
 		// camera + wasd controls
 		freeMoveActor := actor.NewFreeMoveActor(camera)
 		freeMoveActor.Location = mgl32.Vec3{-6, 2, -6}
+		freeMoveActor.MoveSpeed = 1.5
 		mainController := controller.NewBasicMovementController(freeMoveActor, false)
 		controllerManager.AddController(mainController.(glfwController.Controller))
 		gameEngine.AddUpdatable(freeMoveActor)

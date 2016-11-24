@@ -12,7 +12,7 @@ import (
 
 func (e *Editor) closeNodeEditor() {
 	if e.fileBrowserOpen {
-		e.gameEngine.RemoveOrtho(e.fileBrowser.window, false)
+		e.gameEngine.RemoveSpatial(e.fileBrowser.window, false)
 		e.fileBrowserOpen = false
 	}
 }
@@ -33,7 +33,7 @@ func (e *Editor) openNodeEditor(node *editorModels.NodeModel, callback func()) {
 					node.Classes = append(node.Classes, className)
 				}
 			}
-			e.gameEngine.RemoveOrtho(window, true)
+			e.gameEngine.RemoveSpatial(window, true)
 			e.controllerManager.RemoveController(uiController)
 			callback()
 		}
@@ -41,7 +41,7 @@ func (e *Editor) openNodeEditor(node *editorModels.NodeModel, callback func()) {
 
 	e.uiAssets.AddCallback("nodeEditorCancel", func(element ui.Element, args ...interface{}) {
 		if len(args) >= 2 && !args[1].(bool) { // not on release
-			e.gameEngine.RemoveOrtho(window, true)
+			e.gameEngine.RemoveSpatial(window, true)
 			e.controllerManager.RemoveController(uiController)
 		}
 	})

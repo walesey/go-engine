@@ -33,6 +33,7 @@ type Node struct {
 	FrustrumCulling bool
 	Shader          *Shader
 	Material        *Material
+	CubeMap         *CubeMap
 	RendererParams  *RendererParams
 
 	parent   *Node
@@ -89,6 +90,10 @@ func (node *Node) load(renderer Renderer) {
 	if node.Material != nil {
 		renderer.CreateMaterial(node.Material)
 	}
+	if node.CubeMap != nil && !node.CubeMap.Loaded {
+		renderer.CreateCubeMap(node.CubeMap)
+		node.CubeMap.Loaded = true
+	}
 }
 
 func (node *Node) setRenderStates(renderer Renderer) {
@@ -105,6 +110,12 @@ func (node *Node) setRenderStates(renderer Renderer) {
 	for parent := node; parent != nil; parent = parent.parent {
 		if parent.Material != nil {
 			renderer.UseMaterial(parent.Material)
+			break
+		}
+	}
+	for parent := node; parent != nil; parent = parent.parent {
+		if parent.CubeMap != nil {
+			renderer.UseCubeMap(parent.CubeMap)
 			break
 		}
 	}

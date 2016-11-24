@@ -74,8 +74,9 @@ func loadMapToNode(model *editorModels.NodeModel) chan MapLoadUpdate {
 	updateNode = func(srcModel *editorModels.NodeModel, destNode *renderer.Node) {
 		srcModel.SetNode(destNode)
 		if srcModel.Geometry != nil {
-			geometry, err := assets.ImportObjCached(*srcModel.Geometry)
+			geometry, material, err := assets.ImportObjCached(*srcModel.Geometry)
 			if err == nil {
+				destNode.Material = material
 				destNode.Add(geometry)
 			}
 			geomsLoaded++
@@ -95,13 +96,13 @@ func loadMapToNode(model *editorModels.NodeModel) chan MapLoadUpdate {
 			}
 		}
 		for _, childModel := range srcModel.Children {
-			newNode := renderer.CreateNode()
+			newNode := renderer.NewNode()
 			destNode.Add(newNode)
 			updateNode(childModel, newNode)
 		}
 	}
 
-	node := renderer.CreateNode()
+	node := renderer.NewNode()
 	go func() {
 		updateNode(model, node)
 		out <- MapLoadUpdate{node, geomsLoaded}

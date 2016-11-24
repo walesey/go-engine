@@ -10,7 +10,7 @@ import (
 )
 
 func (e *Editor) closeProgressBar() {
-	e.gameEngine.RemoveOrtho(e.progressBar, false)
+	e.gameEngine.RemoveSpatial(e.progressBar, false)
 }
 
 func (e *Editor) openProgressBar() {

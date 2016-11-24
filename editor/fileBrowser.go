@@ -26,7 +26,7 @@ type FileBrowser struct {
 
 func (e *Editor) closeFileBrowser() {
 	if e.fileBrowserOpen {
-		e.gameEngine.RemoveOrtho(e.fileBrowser.window, false)
+		e.gameEngine.RemoveSpatial(e.fileBrowser.window, false)
 		e.controllerManager.RemoveController(e.fileBrowserController)
 		e.fileBrowserOpen = false
 	}

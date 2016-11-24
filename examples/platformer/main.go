@@ -43,7 +43,7 @@ func (c *Character) Update(dt float64) {
 
 func NewCharacter() *Character {
 	characterImg, _ := assets.ImportImageCached("resources/stickman.png")
-	characterMat := renderer.NewMaterial(renderer.NewTexture("diffuseMap", characterImg))
+	characterMat := renderer.NewMaterial(renderer.NewTexture("diffuseMap", characterImg, false))
 	sprite := effects.CreateSprite(4, 4, 1, characterMat)
 	sprite.FaceCamera = false
 	sprite.SetScale(mgl32.Vec2{characterSize, characterSize}.Vec3(0))
@@ -176,7 +176,7 @@ func main() {
 
 func dustParticles() *effects.ParticleGroup {
 	img, _ := assets.ImportImageCached("resources/smoke.png")
-	material := renderer.NewMaterial(renderer.NewTexture("diffuseMap", img))
+	material := renderer.NewMaterial(renderer.NewTexture("diffuseMap", img, false))
 	particleSystem := effects.CreateParticleSystem(effects.ParticleSettings{
 		MaxParticles:     5,
 		ParticleEmitRate: 20,
@@ -205,7 +205,7 @@ func dustParticles() *effects.ParticleGroup {
 
 func majicParticles() *effects.ParticleGroup {
 	img, _ := assets.ImportImageCached("resources/majic.png")
-	material := renderer.NewMaterial(renderer.NewTexture("diffuseMap", img))
+	material := renderer.NewMaterial(renderer.NewTexture("diffuseMap", img, false))
 	particleSystem := effects.CreateParticleSystem(effects.ParticleSettings{
 		MaxParticles:     300,
 		ParticleEmitRate: 700,
@@ -234,7 +234,7 @@ func majicParticles() *effects.ParticleGroup {
 
 func sparkParticles() *effects.ParticleGroup {
 	img, _ := assets.ImportImageCached("resources/spark.png")
-	material := renderer.NewMaterial(renderer.NewTexture("diffuseMap", img))
+	material := renderer.NewMaterial(renderer.NewTexture("diffuseMap", img, false))
 	particleSystem := effects.CreateParticleSystem(effects.ParticleSettings{
 		MaxParticles:     80,
 		ParticleEmitRate: 400,

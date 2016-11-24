@@ -22,6 +22,10 @@ type Renderer interface {
 	DestroyMaterial(material *Material)
 	UseMaterial(material *Material)
 
+	CreateCubeMap(cubeMap *CubeMap)
+	DestroyCubeMap(cubeMap *CubeMap)
+	UseCubeMap(cubeMap *CubeMap)
+
 	CreateShader(shader *Shader)
 	UseShader(shader *Shader)
 

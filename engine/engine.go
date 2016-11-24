@@ -12,6 +12,7 @@ import (
 type Engine interface {
 	Start(Init func())
 	DefaultShader(shader *renderer.Shader)
+	DefaultCubeMap(cubeMap *renderer.CubeMap)
 	AddOrtho(spatial renderer.Spatial)
 	AddSpatial(spatial renderer.Spatial)
 	AddSpatialTransparent(spatial renderer.Spatial)
@@ -53,6 +54,10 @@ func (engine *EngineImpl) Start(Init func()) {
 
 func (engine *EngineImpl) DefaultShader(shader *renderer.Shader) {
 	engine.opaqueNode.Shader, engine.transparentNode.Shader, engine.orthoNode.Shader = shader, shader, shader
+}
+
+func (engine *EngineImpl) DefaultCubeMap(cubeMap *renderer.CubeMap) {
+	engine.opaqueNode.CubeMap, engine.transparentNode.CubeMap, engine.orthoNode.CubeMap = cubeMap, cubeMap, cubeMap
 }
 
 func (engine *EngineImpl) Update() {

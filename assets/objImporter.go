@@ -80,7 +80,7 @@ func ImportObj(filePath string) (geometry *renderer.Geometry, material *renderer
 	if mtlErr == nil && obj.Mtl != nil {
 		textures := []*renderer.Texture{}
 		for key, img := range obj.Mtl.maps {
-			textures = append(textures, renderer.NewTexture(key, img))
+			textures = append(textures, renderer.NewTexture(key, img, true))
 		}
 		material = renderer.NewMaterial(textures...)
 	}

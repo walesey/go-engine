@@ -65,7 +65,7 @@ func loadImageAsset(key, data string, uiAssets ui.HtmlAssets) {
 }
 
 func (e *Editor) closeMainMenu() {
-	e.gameEngine.RemoveOrtho(e.mainMenu, false)
+	e.gameEngine.RemoveSpatial(e.mainMenu, false)
 	e.controllerManager.RemoveController(e.mainMenuController)
 }
 

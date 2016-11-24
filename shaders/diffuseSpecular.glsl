@@ -3,7 +3,6 @@
 #include "./lib/base.glsl"
 #include "./lib/worldTransform.glsl"
 #include "./lib/textures.glsl"
-#include "./lib/metalnessTexture.glsl"
 #include "./lib/roughnessTexture.glsl"
 #include "./lib/pointLights.glsl"
 #include "./lib/directionalLights.glsl"
@@ -11,7 +10,6 @@
 
 void main() {
 	textures();
-	metalnessTexture();
 	roughnessTexture();
 
 	#vert

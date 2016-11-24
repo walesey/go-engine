@@ -12,8 +12,8 @@ uniform vec4 pointLightValues[ MAX_POINT_LIGHTS ];
 vec3 pointLights(vec4 diffuse, vec4 specular, vec4 normal) {
 	vec3 totalLight = vec3(0.0, 0.0, 0.0);
 	for (int i=0; i < nbPointLights; i++) {
-		vec3 LightPos = pointLightPositions[i].xyz;
-		vec3 LightValue = pointLightValues[i].xyz;
+		vec3 LightPos = pointLightPositions[i].rgb;
+		vec3 LightValue = pointLightValues[i].rgb;
 
 		vec3 v = worldVertex - LightPos;
 		float lightDistance = dot(v, v);
