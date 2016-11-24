@@ -23,12 +23,12 @@ func NewCubemap(name string, baseImage image.Image, lod bool) *CubeMap {
 
 	cubeMap.Name = name
 	cubeMap.Lod = lod
-	cubeMap.Right = imaging.Crop(baseImage, image.Rect(3*x/4, y/3, x, 2*y/3))
-	cubeMap.Left = imaging.Crop(baseImage, image.Rect(x/4, y/3, x/2, 2*y/3))
-	cubeMap.Back = imaging.Crop(baseImage, image.Rect(0, y/3, x/4, 2*y/3))
-	cubeMap.Front = imaging.Crop(baseImage, image.Rect(x/2, y/3, 3*x/4, 2*y/3))
+	cubeMap.Right = imaging.Crop(baseImage, image.Rect(x/2, y/3, 3*x/4, 2*y/3))
+	cubeMap.Left = imaging.Crop(baseImage, image.Rect(0, y/3, x/4, 2*y/3))
 	cubeMap.Top = imaging.Crop(baseImage, image.Rect(x/4, 0, x/2, y/3))
 	cubeMap.Bottom = imaging.Crop(baseImage, image.Rect(x/4, 2*y/3, x/2, y))
+	cubeMap.Back = imaging.Crop(baseImage, image.Rect(3*x/4, y/3, x, 2*y/3))
+	cubeMap.Front = imaging.Crop(baseImage, image.Rect(x/4, y/3, x/2, 2*y/3))
 
 	return cubeMap
 }

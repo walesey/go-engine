@@ -11,7 +11,6 @@ import (
 type Sprite struct {
 	node                                 *renderer.Node
 	geometry                             *renderer.Geometry
-	location, scale                      mgl32.Vec3
 	Rotation                             float32
 	FaceCamera                           bool
 	cameraPosition                       mgl32.Vec3
@@ -20,8 +19,6 @@ type Sprite struct {
 
 func CreateSprite(totalFrames, framesX, framesY int, material *renderer.Material) *Sprite {
 	sprite := Sprite{
-		location:    mgl32.Vec3{0, 0, 0},
-		scale:       mgl32.Vec3{1, 1, 1},
 		frame:       0,
 		FaceCamera:  true,
 		totalFrames: totalFrames,
@@ -32,8 +29,6 @@ func CreateSprite(totalFrames, framesX, framesY int, material *renderer.Material
 	sprite.geometry = geometry
 	sprite.node = renderer.NewNode()
 	sprite.node.Material = material
-	sprite.node.RendererParams = renderer.NewRendererParams()
-	sprite.node.RendererParams.CullBackface = false
 	sprite.node.Add(sprite.geometry)
 	return &sprite
 }
@@ -57,7 +52,7 @@ func (sprite *Sprite) Destroy(renderer renderer.Renderer) {
 }
 
 func (sprite *Sprite) Centre() mgl32.Vec3 {
-	return sprite.location
+	return sprite.node.Centre()
 }
 
 func (sprite *Sprite) SetParent(parent *renderer.Node) {
@@ -81,12 +76,10 @@ func (sprite *Sprite) Optimize(geometry *renderer.Geometry, transform mgl32.Mat4
 }
 
 func (sprite *Sprite) SetTranslation(translation mgl32.Vec3) {
-	sprite.location = translation
 	sprite.node.SetTranslation(translation)
 }
 
 func (sprite *Sprite) SetScale(scale mgl32.Vec3) {
-	sprite.scale = scale
 	sprite.node.SetScale(scale)
 }
 
@@ -100,7 +93,7 @@ func (sprite *Sprite) SetCameraLocation(cameraLocation mgl32.Vec3) {
 
 func (sprite *Sprite) Update(dt float64) {
 	if sprite.FaceCamera {
-		orientation := util.FacingOrientation(sprite.Rotation, sprite.cameraPosition.Sub(sprite.location), mgl32.Vec3{0, 0, 1}, mgl32.Vec3{-1, 0, 0})
+		orientation := util.FacingOrientation(sprite.Rotation, sprite.cameraPosition.Sub(sprite.node.Translation), mgl32.Vec3{0, 0, 1}, mgl32.Vec3{-1, 0, 0})
 		sprite.node.SetOrientation(orientation)
 	}
 }

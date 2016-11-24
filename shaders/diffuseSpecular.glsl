@@ -3,6 +3,7 @@
 #include "./lib/base.glsl"
 #include "./lib/worldTransform.glsl"
 #include "./lib/textures.glsl"
+#include "./lib/fresnelEffect.glsl"
 #include "./lib/roughnessTexture.glsl"
 #include "./lib/pointLights.glsl"
 #include "./lib/directionalLights.glsl"
@@ -22,8 +23,9 @@ void main() {
 		outputColor = diffuse;
 	} else {
 		vec4 aoDiffuse = ao * diffuse;
-		vec3 dLight = pointLights(aoDiffuse, specular, normal) + directionalLights(aoDiffuse, specular, normal);
-		vec3 iLight = indirectLight(aoDiffuse, specular, normal);
+		vec4 feSpecular = fresnelEffect(specular, normal);
+		vec3 dLight = pointLights(aoDiffuse, feSpecular, normal) + directionalLights(aoDiffuse, feSpecular, normal);
+		vec3 iLight = indirectLight(aoDiffuse, feSpecular, normal);
 		outputColor = vec4(dLight + iLight, diffuse.a);
 	}
 	#endfrag

@@ -60,6 +60,7 @@ func main() {
 			geom := renderer.CreateSkyBox()
 			geom.Transform(mgl32.Scale3D(10000, 10000, 10000))
 			skyNode := renderer.NewNode()
+			skyNode.SetOrientation(mgl32.QuatRotate(1.57, mgl32.Vec3{0, 1, 0}))
 			skyNode.Material = renderer.NewMaterial(renderer.NewTexture("diffuseMap", skyImg, false))
 			skyNode.RendererParams = renderer.NewRendererParams()
 			skyNode.RendererParams.CullBackface = false

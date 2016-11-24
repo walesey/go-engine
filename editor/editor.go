@@ -34,7 +34,7 @@ type Editor struct {
 	fileBrowserOpen       bool
 	fileBrowserController glfwController.Controller
 	mouseMode             string
-	selectSprite          renderer.Entity
+	selectSprite          *effects.Sprite
 }
 
 func New() *Editor {
@@ -71,6 +71,7 @@ func (e *Editor) Start() {
 			geom := renderer.CreateSkyBox()
 			geom.Transform(mgl32.Scale3D(10000, 10000, 10000))
 			skyNode := renderer.NewNode()
+			skyNode.SetOrientation(mgl32.QuatRotate(1.57, mgl32.Vec3{0, 1, 0}))
 			skyNode.Material = renderer.NewMaterial(renderer.NewTexture("diffuseMap", skyImg, false))
 			skyNode.RendererParams = renderer.NewRendererParams()
 			skyNode.RendererParams.CullBackface = false
@@ -83,19 +84,19 @@ func (e *Editor) Start() {
 		}
 
 		// Lighting
-		shader.Uniforms["nbDirectionalLights"] = 1
-		shader.Uniforms["directionalLightVectors"] = []float32{
-			-1, -1, -1, 0,
-			0, 0, 0, 0,
-			0, 0, 0, 0,
-			0, 0, 0, 0,
-		}
-		shader.Uniforms["directionalLightValues"] = []float32{
-			0.4, 0.4, 0.4, 0,
-			0, 0, 0, 0,
-			0, 0, 0, 0,
-			0, 0, 0, 0,
-		}
+		// shader.Uniforms["nbDirectionalLights"] = 1
+		// shader.Uniforms["directionalLightVectors"] = []float32{
+		// 	-1, -1, -1, 0,
+		// 	0, 0, 0, 0,
+		// 	0, 0, 0, 0,
+		// 	0, 0, 0, 0,
+		// }
+		// shader.Uniforms["directionalLightValues"] = []float32{
+		// 	0.4, 0.4, 0.4, 0,
+		// 	0, 0, 0, 0,
+		// 	0, 0, 0, 0,
+		// 	0, 0, 0, 0,
+		// }
 
 		//root node
 		e.gameEngine.AddSpatial(e.rootMapNode)
@@ -131,24 +132,25 @@ func (e *Editor) initSelectSprite() {
 	mat := renderer.NewMaterial(renderer.NewTexture("diffuseMap", img, false))
 	selectSprite := effects.CreateSprite(1, 1, 1, mat)
 	spriteNode := renderer.NewNode()
-	spriteNode.RendererParams = &renderer.RendererParams{
-		Unlit:        true,
-		Transparency: renderer.EMISSIVE,
-	}
+	spriteNode.RendererParams = &renderer.RendererParams{Unlit: true}
 	spriteNode.Add(selectSprite)
-	e.selectSprite = spriteNode
-	e.gameEngine.AddSpatialTransparent(selectSprite)
+	e.selectSprite = selectSprite
+	e.gameEngine.AddSpatialTransparent(spriteNode)
 }
 
 func (e *Editor) updateSelectSprite(dt float64) {
 	selectedModel, _ := e.overviewMenu.getSelectedNode(e.currentMap.Root)
-	if selectedModel != nil {
-		size := selectedModel.Translation.Sub(e.gameEngine.Camera().Translation).Len() * 0.02
+	if selectedModel == nil {
+		e.selectSprite.SetScale(mgl32.Vec3{})
+	} else {
+		camPos := e.gameEngine.Camera().Translation
+		e.selectSprite.SetCameraLocation(camPos)
+		e.selectSprite.Update(dt)
+		size := selectedModel.Translation.Sub(camPos).Len() * 0.02
+		e.selectSprite.SetScale(mgl32.Vec3{size, size, size})
 		translation, err := e.rootMapNode.RelativePosition(selectedModel.GetNode())
-		if err == nil {
-			e.selectSprite.SetScale(mgl32.Vec3{size, size, size})
-			e.selectSprite.SetTranslation(translation)
-		} else {
+		e.selectSprite.SetTranslation(translation)
+		if err != nil {
 			e.selectSprite.SetScale(mgl32.Vec3{})
 		}
 	}
