@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"regexp"
 
 	"github.com/walesey/go-engine/shaderBuilder/parser"
 )
@@ -30,5 +31,8 @@ func main() {
 	default:
 		panic("Invalid shader type: " + mode)
 	}
-	fmt.Println(out.String())
+	output := out.String()
+
+	re := regexp.MustCompile("\n[\\s]+\n[\\s]+\n")
+	fmt.Println(re.ReplaceAllString(output, "\n\n"))
 }

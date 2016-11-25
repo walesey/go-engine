@@ -58,7 +58,7 @@ func (e *Editor) Start() {
 
 	e.gameEngine.Start(func() {
 
-		shader, err := assets.ImportShader("build/shaders/diffuseSpecular.vert", "build/shaders/diffuseSpecular.frag")
+		shader, err := assets.ImportShader("shaders/build/diffuseSpecular.vert", "shaders/build/diffuseSpecular.frag")
 		if err != nil {
 			panic("error importing shader")
 		}

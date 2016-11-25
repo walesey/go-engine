@@ -1,28 +1,18 @@
 COVER_DIR = cover
 BUILD_DIR = build
+SHADER_BUILD_DIR = shaders/build
 
-build: buildShaders
-	# go build -o $(BUILD_DIR)/editor
+build: compileShaderBuilder
+	mkdir -p $(SHADER_BUILD_DIR)
 
-buildExamples: buildShaders
-	go build -o $(BUILD_DIR)/lighting ./examples/lighting
-	go build -o $(BUILD_DIR)/multiplayer ./examples/multiplayer
-	go build -o $(BUILD_DIR)/particles ./examples/particles
-	go build -o $(BUILD_DIR)/platformer ./examples/platformer
-	go build -o $(BUILD_DIR)/simple ./examples/simple
-	go build -o $(BUILD_DIR)/ui ./examples/ui
+	./sBuilder shaders/basic.glsl vert > $(SHADER_BUILD_DIR)/basic.vert
+	./sBuilder shaders/basic.glsl frag > $(SHADER_BUILD_DIR)/basic.frag
 
-buildShaders: compileShaderBuilder
-	mkdir -p $(BUILD_DIR)/shaders
+	./sBuilder shaders/pbr.glsl vert > $(SHADER_BUILD_DIR)/pbr.vert
+	./sBuilder shaders/pbr.glsl frag > $(SHADER_BUILD_DIR)/pbr.frag
 
-	./sBuilder shaders/basic.glsl vert > $(BUILD_DIR)/shaders/basic.vert
-	./sBuilder shaders/basic.glsl frag > $(BUILD_DIR)/shaders/basic.frag
-
-	./sBuilder shaders/pbr.glsl vert > $(BUILD_DIR)/shaders/pbr.vert
-	./sBuilder shaders/pbr.glsl frag > $(BUILD_DIR)/shaders/pbr.frag
-
-	./sBuilder shaders/diffuseSpecular.glsl vert > $(BUILD_DIR)/shaders/diffuseSpecular.vert
-	./sBuilder shaders/diffuseSpecular.glsl frag > $(BUILD_DIR)/shaders/diffuseSpecular.frag
+	./sBuilder shaders/diffuseSpecular.glsl vert > $(SHADER_BUILD_DIR)/diffuseSpecular.vert
+	./sBuilder shaders/diffuseSpecular.glsl frag > $(SHADER_BUILD_DIR)/diffuseSpecular.frag
 
 compileShaderBuilder:
 	go build -o sBuilder ./shaderBuilder

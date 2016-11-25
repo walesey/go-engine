@@ -45,7 +45,7 @@ func main() {
 			Transparency: renderer.EMISSIVE,
 		}
 
-		shader, err := assets.ImportShader("build/shaders/pbr.vert", "build/shaders/pbr.frag")
+		shader, err := assets.ImportShader("shaders/build/pbr.vert", "shaders/build/pbr.frag")
 		if err != nil {
 			panic("error importing shader")
 		}

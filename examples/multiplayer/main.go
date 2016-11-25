@@ -134,7 +134,7 @@ func main() {
 		if network.IsClient() {
 			gameEngine.InitFpsDial()
 
-			if shader, err := assets.ImportShader("build/shaders/basic.vert", "build/shaders/basic.frag"); err == nil {
+			if shader, err := assets.ImportShader("shaders/build/basic.vert", "shaders/build/basic.frag"); err == nil {
 				gameEngine.DefaultShader(shader)
 			}
 
