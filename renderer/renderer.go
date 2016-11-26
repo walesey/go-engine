@@ -31,6 +31,9 @@ type Renderer interface {
 
 	CreatePostEffect(shader *Shader)
 	DestroyPostEffects(shader *Shader)
+
+	AddLight(light *Light)
+	RemoveLight(light *Light)
 }
 
 //A Spatial is something that can be Drawn by a Renderer

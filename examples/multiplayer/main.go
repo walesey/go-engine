@@ -59,11 +59,7 @@ func main() {
 		gameEngine = engine.NewHeadlessEngine()
 		network.StartServer(serverPort)
 	} else {
-		glRenderer = &opengl.OpenglRenderer{
-			WindowTitle:  "Networking example",
-			WindowWidth:  800,
-			WindowHeight: 800,
-		}
+		glRenderer := opengl.NewOpenglRenderer("Networking example", 800, 800, false)
 		gameEngine = engine.NewEngine(glRenderer)
 		network.ConnectClient(fmt.Sprintf("%v:%v", serverAddr, serverPort))
 	}

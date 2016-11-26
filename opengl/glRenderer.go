@@ -14,6 +14,9 @@ import (
 	"github.com/walesey/go-engine/renderer"
 )
 
+const MAX_POINT_LIGHTS = 4
+const MAX_DIRECTIONAL_LIGHTS = 4
+
 func init() {
 	// GLFW event handling must run on the main OS thread
 	runtime.LockOSThread()
@@ -39,15 +42,27 @@ type OpenglRenderer struct {
 	rendererParams renderer.RendererParams
 
 	depthTest, depthMast, cullFace, unlit, useTextures bool
+
+	lights                  []*renderer.Light
+	nbPointLights           int32
+	pointLightValues        []float32
+	pointLightPositions     []float32
+	nbDirectionalLights     int32
+	directionalLightValues  []float32
+	directionalLightVectors []float32
 }
 
 // NewOpenglRenderer - create new renderer
 func NewOpenglRenderer(WindowTitle string, WindowWidth, WindowHeight int, FullScreen bool) *OpenglRenderer {
 	return &OpenglRenderer{
-		WindowTitle:  WindowTitle,
-		WindowWidth:  WindowWidth,
-		WindowHeight: WindowHeight,
-		FullScreen:   FullScreen,
+		WindowTitle:             WindowTitle,
+		WindowWidth:             WindowWidth,
+		WindowHeight:            WindowHeight,
+		FullScreen:              FullScreen,
+		pointLightValues:        make([]float32, MAX_POINT_LIGHTS*4),
+		pointLightPositions:     make([]float32, MAX_POINT_LIGHTS*4),
+		directionalLightValues:  make([]float32, MAX_DIRECTIONAL_LIGHTS*4),
+		directionalLightVectors: make([]float32, MAX_DIRECTIONAL_LIGHTS*4),
 	}
 }
 
@@ -135,6 +150,7 @@ func (glRenderer *OpenglRenderer) Start() {
 
 func (glRenderer *OpenglRenderer) mainLoop() {
 	glRenderer.onUpdate()
+	glRenderer.updateLights()
 
 	//set defaults
 	glRenderer.UseRendererParams(renderer.DefaultRendererParams())
@@ -525,6 +541,14 @@ func (glRenderer *OpenglRenderer) DrawGeometry(geometry *renderer.Geometry, tran
 	shader.Uniforms["unlit"] = glRenderer.unlit
 	shader.Uniforms["useTextures"] = glRenderer.useTextures
 
+	shader.Uniforms["nbPointLights"] = glRenderer.nbPointLights
+	shader.Uniforms["pointLightValues"] = glRenderer.pointLightValues
+	shader.Uniforms["pointLightPositions"] = glRenderer.pointLightPositions
+
+	shader.Uniforms["nbDirectionalLights"] = glRenderer.nbDirectionalLights
+	shader.Uniforms["directionalLightValues"] = glRenderer.directionalLightValues
+	shader.Uniforms["directionalLightVectors"] = glRenderer.directionalLightVectors
+
 	// set custom uniforms
 	setupUniforms(shader)
 
@@ -550,4 +574,40 @@ func (glRenderer *OpenglRenderer) DrawGeometry(geometry *renderer.Geometry, tran
 
 func (glRenderer *OpenglRenderer) LockCursor(lock bool) {
 	glRenderer.Window.SetInputMode(glfw.CursorMode, glfw.CursorDisabled)
+}
+
+func (glRenderer *OpenglRenderer) updateLights() {
+	glRenderer.nbPointLights = 0
+	glRenderer.nbDirectionalLights = 0
+	for _, light := range glRenderer.lights {
+		c := light.Color
+		p := light.Position
+		switch light.LightType {
+		case renderer.POINT:
+			i := glRenderer.nbPointLights
+			glRenderer.pointLightValues[i*4], glRenderer.pointLightValues[i*4+1], glRenderer.pointLightValues[i*4+2] = c[0], c[1], c[2]
+			glRenderer.pointLightPositions[i*4], glRenderer.pointLightPositions[i*4+1], glRenderer.pointLightPositions[i*4+2] = p[0], p[1], p[2]
+			glRenderer.nbPointLights++
+		case renderer.DIRECTIONAL:
+			i := glRenderer.nbDirectionalLights
+			glRenderer.directionalLightValues[i*4], glRenderer.directionalLightValues[i*4+1], glRenderer.directionalLightValues[i*4+2] = c[0], c[1], c[2]
+			glRenderer.directionalLightVectors[i*4], glRenderer.directionalLightVectors[i*4+1], glRenderer.directionalLightVectors[i*4+2] = p[0], p[1], p[2]
+			glRenderer.nbDirectionalLights++
+		}
+	}
+}
+
+func (glRenderer *OpenglRenderer) AddLight(light *renderer.Light) {
+	glRenderer.lights = append(glRenderer.lights, light)
+}
+
+func (glRenderer *OpenglRenderer) RemoveLight(light *renderer.Light) {
+	for i, l := range glRenderer.lights {
+		if l == light {
+			glRenderer.lights[i] = glRenderer.lights[len(glRenderer.lights)-1]
+			glRenderer.lights[len(glRenderer.lights)-1] = nil
+			glRenderer.lights = glRenderer.lights[:len(glRenderer.lights)-1]
+			break
+		}
+	}
 }

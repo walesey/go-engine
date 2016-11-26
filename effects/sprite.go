@@ -9,7 +9,7 @@ import (
 )
 
 type Sprite struct {
-	node                                 *renderer.Node
+	Node                                 *renderer.Node
 	geometry                             *renderer.Geometry
 	Rotation                             float32
 	FaceCamera                           bool
@@ -27,9 +27,9 @@ func CreateSprite(totalFrames, framesX, framesY int, material *renderer.Material
 	}
 	geometry := renderer.CreateBox(1, 1)
 	sprite.geometry = geometry
-	sprite.node = renderer.NewNode()
-	sprite.node.Material = material
-	sprite.node.Add(sprite.geometry)
+	sprite.Node = renderer.NewNode()
+	sprite.Node.Material = material
+	sprite.Node.Add(sprite.geometry)
 	return &sprite
 }
 
@@ -44,19 +44,19 @@ func BoxFlipbook(geometry *renderer.Geometry, frame, framesX, framesY int) {
 }
 
 func (sprite *Sprite) Draw(r renderer.Renderer, transform mgl32.Mat4) {
-	sprite.node.Draw(r, transform)
+	sprite.Node.Draw(r, transform)
 }
 
 func (sprite *Sprite) Destroy(renderer renderer.Renderer) {
-	sprite.node.Destroy(renderer)
+	sprite.Node.Destroy(renderer)
 }
 
 func (sprite *Sprite) Centre() mgl32.Vec3 {
-	return sprite.node.Centre()
+	return sprite.Node.Centre()
 }
 
 func (sprite *Sprite) SetParent(parent *renderer.Node) {
-	sprite.node.SetParent(parent)
+	sprite.Node.SetParent(parent)
 }
 
 func (sprite *Sprite) NextFrame() {
@@ -76,15 +76,15 @@ func (sprite *Sprite) Optimize(geometry *renderer.Geometry, transform mgl32.Mat4
 }
 
 func (sprite *Sprite) SetTranslation(translation mgl32.Vec3) {
-	sprite.node.SetTranslation(translation)
+	sprite.Node.SetTranslation(translation)
 }
 
 func (sprite *Sprite) SetScale(scale mgl32.Vec3) {
-	sprite.node.SetScale(scale)
+	sprite.Node.SetScale(scale)
 }
 
 func (sprite *Sprite) SetOrientation(orientation mgl32.Quat) {
-	sprite.node.SetOrientation(orientation)
+	sprite.Node.SetOrientation(orientation)
 }
 
 func (sprite *Sprite) SetCameraLocation(cameraLocation mgl32.Vec3) {
@@ -93,7 +93,7 @@ func (sprite *Sprite) SetCameraLocation(cameraLocation mgl32.Vec3) {
 
 func (sprite *Sprite) Update(dt float64) {
 	if sprite.FaceCamera {
-		orientation := util.FacingOrientation(sprite.Rotation, sprite.cameraPosition.Sub(sprite.node.Translation), mgl32.Vec3{0, 0, 1}, mgl32.Vec3{-1, 0, 0})
-		sprite.node.SetOrientation(orientation)
+		orientation := util.FacingOrientation(sprite.Rotation, sprite.cameraPosition.Sub(sprite.Node.Translation), mgl32.Vec3{0, 0, 1}, mgl32.Vec3{-1, 0, 0})
+		sprite.Node.SetOrientation(orientation)
 	}
 }

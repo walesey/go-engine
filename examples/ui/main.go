@@ -32,11 +32,7 @@ func init() {
 func main() {
 
 	//renderer and game engine
-	glRenderer := &opengl.OpenglRenderer{
-		WindowTitle:  "ui",
-		WindowWidth:  800,
-		WindowHeight: 800,
-	}
+	glRenderer := opengl.NewOpenglRenderer("ui", 800, 800, false)
 	gameEngine := engine.NewEngine(glRenderer)
 	gameEngine.InitFpsDial()
 

@@ -30,6 +30,7 @@ type ParticleSystem struct {
 	DisableSpawning bool
 	FaceCamera      bool
 	Settings        ParticleSettings
+	Node            *renderer.Node
 	geometry        *renderer.Geometry
 	particles       []*Particle
 	life            float32
@@ -52,10 +53,13 @@ type Particle struct {
 
 func CreateParticleSystem(settings ParticleSettings) *ParticleSystem {
 	geometry := renderer.CreateGeometry(make([]uint32, 0, 0), make([]float32, 0, 0))
+	node := renderer.NewNode()
+	node.Add(geometry)
 
 	ps := ParticleSystem{
 		Settings:   settings,
 		FaceCamera: true,
+		Node:       node,
 		geometry:   geometry,
 		particles:  make([]*Particle, settings.MaxParticles),
 	}
@@ -73,11 +77,11 @@ func (ps *ParticleSystem) initParitcles() {
 }
 
 func (ps *ParticleSystem) Draw(renderer renderer.Renderer, transform mgl32.Mat4) {
-	ps.geometry.Draw(renderer, transform)
+	ps.Node.Draw(renderer, transform)
 }
 
 func (ps *ParticleSystem) Destroy(renderer renderer.Renderer) {
-	ps.geometry.Destroy(renderer)
+	ps.Node.Destroy(renderer)
 }
 
 func (ps *ParticleSystem) Centre() mgl32.Vec3 {
@@ -85,7 +89,7 @@ func (ps *ParticleSystem) Centre() mgl32.Vec3 {
 }
 
 func (ps *ParticleSystem) SetParent(parent *renderer.Node) {
-	ps.geometry.SetParent(parent)
+	ps.Node.SetParent(parent)
 }
 
 func (ps *ParticleSystem) Optimize(geometry *renderer.Geometry, transform mgl32.Mat4) {

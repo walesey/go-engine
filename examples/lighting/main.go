@@ -27,10 +27,7 @@ func init() {
 //
 func main() {
 
-	glRenderer := &opengl.OpenglRenderer{
-		WindowTitle: "Lighting",
-		FullScreen:  true,
-	}
+	glRenderer := opengl.NewOpenglRenderer("Lighting", 1920, 1080, true)
 	gameEngine := engine.NewEngine(glRenderer)
 	camera := gameEngine.Camera()
 	gameEngine.InitFpsDial()
@@ -91,39 +88,31 @@ func main() {
 			}
 		}
 
-		fireImage, _ := assets.ImportImageCached("resources/fire.png")
-		fireMat := renderer.NewMaterial(renderer.NewTexture("diffuseMap", fireImage, false))
-
-		torchLocation := mgl32.Vec3{0.86, 1.75, 1.05}
-		fire := fireParticles()
-		torchParticles := effects.NewParticleGroup(camera, fire)
-		torchParticles.Node.Material = fireMat
-		torchParticles.SetTranslation(torchLocation)
-		transparentNode.Add(torchParticles)
-		gameEngine.AddUpdatable(torchParticles)
-
-		var x float64
-		gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
-			x += dt
-			mag := float32(math.Abs(0.6*math.Sin(3*x)+0.3*math.Sin(4*x)+0.15*math.Sin(7*x)+0.1*math.Sin(15*x))) + 0.5
-			mag *= 10
-			lightPos := torchLocation.Add(mgl32.Vec3{0, 0.05, 0})
-
-			// shader Lighting
-			shader.Uniforms["nbPointLights"] = 2
-			shader.Uniforms["pointLightPositions"] = []float32{
-				lightPos.X(), lightPos.Y(), lightPos.Z(), 0,
-				lightPos.X(), lightPos.Y(), -lightPos.Z(), 0,
-				0, 0, 0, 0,
-				0, 0, 0, 0,
+		for i := 0; i < 2; i++ {
+			torchLocation := mgl32.Vec3{0.86, 1.76, 1.05}
+			if i == 1 {
+				torchLocation = mgl32.Vec3{0.86, 1.76, -1.05}
 			}
-			shader.Uniforms["pointLightValues"] = []float32{
-				0.03 * mag, 0.02 * mag, 0.003 * mag, 0,
-				0.03 * mag, 0.02 * mag, 0.003 * mag, 0,
-				0, 0, 0, 0,
-				0, 0, 0, 0,
-			}
-		}))
+
+			fire := fireParticles()
+			spark := sparkParticles()
+			torchParticles := effects.NewParticleGroup(camera, fire, spark)
+			torchParticles.SetTranslation(torchLocation)
+			transparentNode.Add(torchParticles)
+			gameEngine.AddUpdatable(torchParticles)
+
+			light := renderer.NewLight(renderer.POINT)
+			light.SetTranslation(torchLocation.Add(mgl32.Vec3{0, 0.05, 0}))
+			glRenderer.AddLight(light)
+
+			var x float64
+			gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
+				x += dt
+				mag := float32(math.Abs(0.6*math.Sin(3*x)+0.3*math.Sin(4*x)+0.15*math.Sin(7*x)+0.1*math.Sin(15*x))) + 0.5
+				mag *= 0.05
+				light.Color = [3]float32{1 * mag, 0.6 * mag, 0.4 * mag}
+			}))
+		}
 
 		// input/controller manager
 		controllerManager := glfwController.NewControllerManager(glRenderer.Window)
@@ -151,25 +140,56 @@ func main() {
 }
 
 func fireParticles() *effects.ParticleSystem {
-	return effects.CreateParticleSystem(effects.ParticleSettings{
+	img, _ := assets.ImportImageCached("TestAssets/Fire.png")
+	fire := effects.CreateParticleSystem(effects.ParticleSettings{
 		MaxParticles:     12,
-		ParticleEmitRate: 2,
+		ParticleEmitRate: 3,
 		BaseGeometry:     renderer.CreateBox(float32(1), float32(1)),
 		TotalFrames:      36,
 		FramesX:          6,
 		FramesY:          6,
 		MaxLife:          0.8,
 		MinLife:          1.5,
-		StartColor:       color.NRGBA{254, 54, 0, 255},
-		EndColor:         color.NRGBA{254, 100, 20, 255},
-		StartSize:        mgl32.Vec3{0.1, 0.1, 0.1},
-		EndSize:          mgl32.Vec3{0.15, 0.15, 0.15},
-		MinTranslation:   mgl32.Vec3{-0.01, 0.01, -0.01},
-		MaxTranslation:   mgl32.Vec3{0.01, 0.01, 0.01},
-		MinStartVelocity: mgl32.Vec3{-0.02, -0.02, -0.02},
-		MaxStartVelocity: mgl32.Vec3{0.02, 0.02, 0.02},
-		Acceleration:     mgl32.Vec3{0.0, 0.0, 0.0},
+		StartColor:       color.NRGBA{255, 180, 80, 255},
+		EndColor:         color.NRGBA{255, 60, 20, 255},
+		StartSize:        mgl32.Vec3{1, 1, 1}.Mul(0.16),
+		EndSize:          mgl32.Vec3{1, 1, 1}.Mul(0.23),
+		MinTranslation:   mgl32.Vec3{1, 1, 1}.Mul(-0.01),
+		MaxTranslation:   mgl32.Vec3{1, 1, 1}.Mul(0.01),
+		MinStartVelocity: mgl32.Vec3{-0.02, 0, -0.02},
+		MaxStartVelocity: mgl32.Vec3{0.02, 0.08, 0.02},
 		MinRotation:      3.0,
 		MaxRotation:      3.6,
 	})
+	fire.Node.Material = renderer.NewMaterial(renderer.NewTexture("diffuseMap", img, false))
+	return fire
+}
+
+func sparkParticles() *effects.ParticleSystem {
+	img, _ := assets.ImportImageCached("resources/spark.png")
+	smoke := effects.CreateParticleSystem(effects.ParticleSettings{
+		MaxParticles:     7,
+		ParticleEmitRate: 7,
+		BaseGeometry:     renderer.CreateBox(float32(1), float32(1)),
+		TotalFrames:      1,
+		FramesX:          1,
+		FramesY:          1,
+		MaxLife:          1.0,
+		MinLife:          0.7,
+		StartColor:       color.NRGBA{255, 220, 180, 255},
+		EndColor:         color.NRGBA{255, 155, 55, 255},
+		StartSize:        mgl32.Vec3{1, 1, 1}.Mul(0.008),
+		EndSize:          mgl32.Vec3{1, 1, 1}.Mul(0.005),
+		MinTranslation:   mgl32.Vec3{1, 1, 1}.Mul(-0.04),
+		MaxTranslation:   mgl32.Vec3{1, 1, 1}.Mul(0.04),
+		MinStartVelocity: mgl32.Vec3{-0.5, 0.0, -0.5},
+		MaxStartVelocity: mgl32.Vec3{0.5, 1.0, 0.5},
+		Acceleration:     mgl32.Vec3{0.0, -1.0, 0.0},
+		OnParticleUpdate: func(p *effects.Particle) {
+			p.Scale[0] = p.Scale[0] * (1 + p.Velocity.Len()*3.5)
+			p.Orientation = mgl32.QuatBetweenVectors(mgl32.Vec3{1, 0, 0}, p.Velocity)
+		},
+	})
+	smoke.Node.Material = renderer.NewMaterial(renderer.NewTexture("diffuseMap", img, false))
+	return smoke
 }
