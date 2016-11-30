@@ -13,7 +13,7 @@ This project is currently in progress and it is likely to change significantly o
 * Particle System
 * UI system
 * Controller system (mouse, keyboard, joystick)
-* Multiplayer networking library (event driven)
+* Multiplayer networking library
 
 
 ## Instructions
@@ -35,7 +35,8 @@ Go-Engine uses go-gl which requires opengl.
 * renderer.Node (struct) - Container for Spatials.
 * renderer.Geometry (struct) - A collection of faces and verticies.
 * renderer.Material (struct) - used for texturing a geometry.
-* renderer.Camera (struct) - The main object used to interact with the camera.
+* renderer.Camera (struct) - Struct used to manage the camera.
+* renderer.Light (struct) - Struct used to manage dynamic lights.
 * controller.Controller (interface) - Can have (mouse/keyboard...) events bound to.
 * engine.Engine (interface) - The main game engine interface
 * engine.Updatable (interface) - anything that can be updated every game simulation step.
