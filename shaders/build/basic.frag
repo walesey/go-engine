@@ -44,13 +44,15 @@ void textures() {
 	// multiply color by diffuse map. use only color if no map is provided
 	if (useTextures) {
 		diffuse = fragColor * texture(diffuseMap, overflowTextCoord);
+		specular = texture(specularMap, overflowTextCoord);
+		normal = texture(normalMap, overflowTextCoord);
+		ao = texture(aoMap, overflowTextCoord);
 	} else {
 		diffuse = fragColor;
+		specular = vec4(0);
+		normal = vec4(0);
+		ao = vec4(1);
 	}
-
-	normal = texture(normalMap, overflowTextCoord);
-	specular = texture(specularMap, overflowTextCoord);
-	ao = texture(aoMap, overflowTextCoord);
 }
 
 float pow2(float x) { 
@@ -123,9 +125,7 @@ void main() {
 	if (unlit) {
 		outputColor = diffuse;
 	} else {
-		vec3 finalColor = vec3(0.0);
-		finalColor += ao.rgb * pointLights(diffuse, specular, normal);
-		finalColor += ao.rgb * directionalLights(diffuse, specular, normal);
+		vec3 finalColor = pointLights(diffuse, specular, normal) + directionalLights(diffuse, specular, normal);
 		outputColor = vec4(finalColor, diffuse.a);
 	}
 	

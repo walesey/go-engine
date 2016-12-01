@@ -109,7 +109,7 @@ func setupScene(gameEngine engine.Engine, shader *renderer.Shader) {
 	}
 
 	// Sky cubemap
-	skyImg, err := assets.ImportImage("TestAssets/Files/skybox/cloudSky.jpg")
+	skyImg, err := assets.ImportImage("TestAssets/cloudSky.jpg")
 	if err == nil {
 		skyImg = imaging.AdjustBrightness(skyImg, -30)
 		skyImg = imaging.AdjustContrast(skyImg, 30)

@@ -44,13 +44,15 @@ void textures() {
 	// multiply color by diffuse map. use only color if no map is provided
 	if (useTextures) {
 		diffuse = fragColor * texture(diffuseMap, overflowTextCoord);
+		specular = texture(specularMap, overflowTextCoord);
+		normal = texture(normalMap, overflowTextCoord);
+		ao = texture(aoMap, overflowTextCoord);
 	} else {
 		diffuse = fragColor;
+		specular = vec4(0);
+		normal = vec4(0);
+		ao = vec4(1);
 	}
-
-	normal = texture(normalMap, overflowTextCoord);
-	specular = texture(specularMap, overflowTextCoord);
-	ao = texture(aoMap, overflowTextCoord);
 }
 
 uniform sampler2D metalnessMap;

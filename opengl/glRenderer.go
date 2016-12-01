@@ -582,6 +582,7 @@ func (glRenderer *OpenglRenderer) updateLights() {
 	for _, light := range glRenderer.lights {
 		c := light.Color
 		p := light.Position
+		d := light.Direction
 		switch light.LightType {
 		case renderer.POINT:
 			i := glRenderer.nbPointLights
@@ -591,7 +592,7 @@ func (glRenderer *OpenglRenderer) updateLights() {
 		case renderer.DIRECTIONAL:
 			i := glRenderer.nbDirectionalLights
 			glRenderer.directionalLightValues[i*4], glRenderer.directionalLightValues[i*4+1], glRenderer.directionalLightValues[i*4+2] = c[0], c[1], c[2]
-			glRenderer.directionalLightVectors[i*4], glRenderer.directionalLightVectors[i*4+1], glRenderer.directionalLightVectors[i*4+2] = p[0], p[1], p[2]
+			glRenderer.directionalLightVectors[i*4], glRenderer.directionalLightVectors[i*4+1], glRenderer.directionalLightVectors[i*4+2] = d[0], d[1], d[2]
 			glRenderer.nbDirectionalLights++
 		}
 	}

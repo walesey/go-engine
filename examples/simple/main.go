@@ -49,6 +49,30 @@ func main() {
 			gameEngine.AddSpatial(skyNode)
 		}
 
+		// Add some light to the scene
+		directionalLight := renderer.NewLight(renderer.DIRECTIONAL)
+		directionalLight.Color = [3]float32{0.6, 0.6, 0.6}
+		gameEngine.AddLight(directionalLight)
+
+		// Create a red box geometry, attach to a node, add the node to the scenegraph
+		boxGeometry := renderer.CreateBox(10, 10)
+		boxGeometry.SetColor(color.NRGBA{254, 0, 0, 254})
+		boxNode := renderer.NewNode()
+		boxNode.RendererParams = renderer.NewRendererParams()
+		boxNode.RendererParams.CullBackface = false
+		boxNode.Material = renderer.NewMaterial()
+		boxNode.SetTranslation(mgl32.Vec3{30, 0})
+		boxNode.Add(boxGeometry)
+		gameEngine.AddSpatial(boxNode)
+
+		// make the box spin
+		var angle float64
+		gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
+			angle += dt
+			q := mgl32.QuatRotate(float32(angle), mgl32.Vec3{0, 1, 0})
+			boxNode.SetOrientation(q)
+		}))
+
 		// input/controller manager
 		controllerManager := glfwController.NewControllerManager(glRenderer.Window)
 
@@ -62,24 +86,6 @@ func main() {
 
 		//lock the cursor
 		glRenderer.LockCursor(true)
-
-		// Create a red box geometry, attach to a node, add the node to the scenegraph
-		boxGeometry := renderer.CreateBox(10, 10)
-		boxGeometry.Material = renderer.NewMaterial()
-		boxGeometry.SetColor(color.NRGBA{254, 0, 0, 254})
-		boxGeometry.CullBackface = false
-		boxNode := renderer.CreateNode()
-		boxNode.SetTranslation(mgl32.Vec3{30, 0})
-		boxNode.Add(boxGeometry)
-		gameEngine.AddSpatial(boxNode)
-
-		// make the box spin
-		var angle float64
-		gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
-			angle += dt
-			q := mgl32.QuatRotate(float32(angle), mgl32.Vec3{0, 1, 0})
-			boxNode.SetOrientation(q)
-		}))
 
 		// custom key bindings
 		customController := controller.CreateController()
