@@ -10,6 +10,7 @@ type Element interface {
 	ReRender()
 	Spatial() renderer.Spatial
 	GetId() string
+	SetId(id string)
 	mouseMove(position mgl32.Vec2)
 	mouseClick(button int, release bool, position mgl32.Vec2)
 	keyClick(key string, release bool)

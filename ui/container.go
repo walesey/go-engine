@@ -202,6 +202,10 @@ func (c *Container) GetId() string {
 	return c.id
 }
 
+func (c *Container) SetId(id string) {
+	c.id = id
+}
+
 func (c *Container) ElementById(id string) Element {
 	for _, child := range c.children {
 		if child.GetId() == id {

@@ -51,6 +51,10 @@ func (tf *TextField) GetId() string {
 	return tf.container.GetId()
 }
 
+func (tf *TextField) SetId(id string) {
+	tf.container.SetId(id)
+}
+
 func (tf *TextField) mouseMove(position mgl32.Vec2) {
 	tf.container.mouseMove(position)
 }

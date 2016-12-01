@@ -15,6 +15,8 @@ import (
 	"github.com/walesey/go-engine/glfwController"
 	"github.com/walesey/go-engine/opengl"
 	"github.com/walesey/go-engine/renderer"
+	"github.com/walesey/go-engine/ui"
+	"github.com/walesey/go-fileserver/client"
 )
 
 func init() {
@@ -26,99 +28,27 @@ func init() {
 
 //
 func main() {
-
 	glRenderer := opengl.NewOpenglRenderer("Lighting", 1920, 1080, true)
 	gameEngine := engine.NewEngine(glRenderer)
-	camera := gameEngine.Camera()
 	gameEngine.InitFpsDial()
 
 	gameEngine.Start(func() {
-
-		transparentNode := renderer.NewNode()
-		gameEngine.AddSpatialTransparent(transparentNode)
-		transparentNode.RendererParams = &renderer.RendererParams{
-			DepthTest:    true,
-			Unlit:        true,
-			Transparency: renderer.EMISSIVE,
-		}
 
 		shader, err := assets.ImportShader("shaders/build/pbr.vert", "shaders/build/pbr.frag")
 		if err != nil {
 			panic("error importing shader")
 		}
-
 		gameEngine.DefaultShader(shader)
 
-		// Sky cubemap
-		skyImg, err := assets.ImportImage("TestAssets/Files/skybox/cloudSky.jpg")
-		if err == nil {
-			skyImg = imaging.AdjustBrightness(skyImg, -30)
-			skyImg = imaging.AdjustContrast(skyImg, 30)
-			geom := renderer.CreateSkyBox()
-			geom.Transform(mgl32.Scale3D(10000, 10000, 10000))
-			skyNode := renderer.NewNode()
-			skyNode.SetOrientation(mgl32.QuatRotate(1.57, mgl32.Vec3{0, 1, 0}))
-			skyNode.Material = renderer.NewMaterial(renderer.NewTexture("diffuseMap", skyImg, false))
-			skyNode.RendererParams = renderer.NewRendererParams()
-			skyNode.RendererParams.CullBackface = false
-			skyNode.RendererParams.Unlit = true
-			skyNode.Add(geom)
-			gameEngine.AddSpatial(skyNode)
-			// create an environmentMap using the skybox texture
-			envCubeMap := renderer.NewCubemap("environmentMap", skyImg, true)
-			gameEngine.DefaultCubeMap(envCubeMap)
-		}
-
-		// load scene objs
-		objs := []string{
-			"TestAssets/wellScene/floor.obj",
-			"TestAssets/wellScene/frame1.obj",
-			"TestAssets/wellScene/frame2.obj",
-			"TestAssets/wellScene/well.obj",
-			"TestAssets/wellScene/torches.obj",
-		}
-		for _, objFile := range objs {
-			if geom, mat, err := assets.ImportObjCached(objFile); err == nil {
-				sceneNode := renderer.NewNode()
-				sceneNode.Add(geom)
-				sceneNode.Material = mat
-				sceneNode.RendererParams = renderer.NewRendererParams()
-				sceneNode.RendererParams.CullBackface = false
-				gameEngine.AddSpatial(sceneNode)
-			}
-		}
-
-		for i := 0; i < 2; i++ {
-			torchLocation := mgl32.Vec3{0.86, 1.76, 1.05}
-			if i == 1 {
-				torchLocation = mgl32.Vec3{0.86, 1.76, -1.05}
-			}
-
-			fire := fireParticles()
-			spark := sparkParticles()
-			torchParticles := effects.NewParticleGroup(camera, fire, spark)
-			torchParticles.SetTranslation(torchLocation)
-			transparentNode.Add(torchParticles)
-			gameEngine.AddUpdatable(torchParticles)
-
-			light := renderer.NewLight(renderer.POINT)
-			light.SetTranslation(torchLocation.Add(mgl32.Vec3{0, 0.05, 0}))
-			glRenderer.AddLight(light)
-
-			var x float64
-			gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
-				x += dt
-				mag := float32(math.Abs(0.6*math.Sin(3*x)+0.3*math.Sin(4*x)+0.15*math.Sin(7*x)+0.1*math.Sin(15*x))) + 0.5
-				mag *= 0.05
-				light.Color = [3]float32{1 * mag, 0.6 * mag, 0.4 * mag}
-			}))
-		}
+		fetchAssets(gameEngine, func() {
+			setupScene(gameEngine, shader)
+		})
 
 		// input/controller manager
 		controllerManager := glfwController.NewControllerManager(glRenderer.Window)
 
 		// camera + wasd controls
-		freeMoveActor := actor.NewFreeMoveActor(camera)
+		freeMoveActor := actor.NewFreeMoveActor(gameEngine.Camera())
 		freeMoveActor.Location = mgl32.Vec3{-6, 2, -6}
 		freeMoveActor.MoveSpeed = 1.5
 		mainController := controller.NewBasicMovementController(freeMoveActor, false)
@@ -137,6 +67,111 @@ func main() {
 			glRenderer.Window.SetShouldClose(true)
 		}, controller.KeyEscape, controller.Press)
 	})
+}
+
+func fetchAssets(gameEngine engine.Engine, complete func()) {
+	patcher := client.NewClient("TestAssets", "http://walesey.net:5000")
+	done := make(chan bool)
+	go func() {
+		patcher.SyncFiles()
+		done <- true
+	}()
+
+	progressBar := ui.NewProgressBar("Downloading assets...")
+	ui.SetProgressBar(progressBar, 0)
+	gameEngine.AddOrtho(progressBar)
+	progress := 0
+	var loader engine.Updatable
+	loader = engine.UpdatableFunc(func(dt float64) {
+		select {
+		case <-patcher.Complete:
+			progress++
+			ui.SetProgressBar(progressBar, 1+int((progress*20)/patcher.TotalFiles))
+		case <-done:
+			gameEngine.RemoveSpatial(progressBar, true)
+			gameEngine.RemoveUpdatable(loader)
+			gameEngine.RequestAnimationFrame(complete)
+		default:
+		}
+	})
+	gameEngine.AddUpdatable(loader)
+}
+
+func setupScene(gameEngine engine.Engine, shader *renderer.Shader) {
+	camera := gameEngine.Camera()
+
+	transparentNode := renderer.NewNode()
+	gameEngine.AddSpatialTransparent(transparentNode)
+	transparentNode.RendererParams = &renderer.RendererParams{
+		DepthTest:    true,
+		Unlit:        true,
+		Transparency: renderer.EMISSIVE,
+	}
+
+	// Sky cubemap
+	skyImg, err := assets.ImportImage("TestAssets/Files/skybox/cloudSky.jpg")
+	if err == nil {
+		skyImg = imaging.AdjustBrightness(skyImg, -30)
+		skyImg = imaging.AdjustContrast(skyImg, 30)
+		geom := renderer.CreateSkyBox()
+		geom.Transform(mgl32.Scale3D(10000, 10000, 10000))
+		skyNode := renderer.NewNode()
+		skyNode.SetOrientation(mgl32.QuatRotate(1.57, mgl32.Vec3{0, 1, 0}))
+		skyNode.Material = renderer.NewMaterial(renderer.NewTexture("diffuseMap", skyImg, false))
+		skyNode.RendererParams = renderer.NewRendererParams()
+		skyNode.RendererParams.CullBackface = false
+		skyNode.RendererParams.Unlit = true
+		skyNode.Add(geom)
+		gameEngine.AddSpatial(skyNode)
+		// create an environmentMap using the skybox texture
+		envCubeMap := renderer.NewCubemap("environmentMap", skyImg, true)
+		gameEngine.DefaultCubeMap(envCubeMap)
+	}
+
+	// load scene objs
+	objs := []string{
+		"TestAssets/wellScene/floor.obj",
+		"TestAssets/wellScene/frame1.obj",
+		"TestAssets/wellScene/frame2.obj",
+		"TestAssets/wellScene/well.obj",
+		"TestAssets/wellScene/torches.obj",
+	}
+	for _, objFile := range objs {
+		if geom, mat, err := assets.ImportObjCached(objFile); err == nil {
+			sceneNode := renderer.NewNode()
+			sceneNode.Add(geom)
+			sceneNode.Material = mat
+			sceneNode.RendererParams = renderer.NewRendererParams()
+			sceneNode.RendererParams.CullBackface = false
+			gameEngine.AddSpatial(sceneNode)
+		}
+	}
+
+	for i := 0; i < 2; i++ {
+		torchLocation := mgl32.Vec3{0.86, 1.76, 1.05}
+		if i == 1 {
+			torchLocation = mgl32.Vec3{0.86, 1.76, -1.05}
+		}
+
+		fire := fireParticles()
+		spark := sparkParticles()
+		torchParticles := effects.NewParticleGroup(camera, fire, spark)
+		torchParticles.SetTranslation(torchLocation)
+		transparentNode.Add(torchParticles)
+		gameEngine.AddUpdatable(torchParticles)
+
+		light := renderer.NewLight(renderer.POINT)
+		light.SetTranslation(torchLocation.Add(mgl32.Vec3{0, 0.05, 0}))
+		gameEngine.AddLight(light)
+
+		var x float64
+		gameEngine.AddUpdatable(engine.UpdatableFunc(func(dt float64) {
+			x += dt
+			mag := float32(math.Abs(0.6*math.Sin(3*x)+0.3*math.Sin(4*x)+0.15*math.Sin(7*x)+0.1*math.Sin(15*x))) + 0.5
+			mag *= 0.05
+			light.Color = [3]float32{1 * mag, 0.6 * mag, 0.4 * mag}
+		}))
+	}
 }
 
 func fireParticles() *effects.ParticleSystem {
@@ -166,7 +201,7 @@ func fireParticles() *effects.ParticleSystem {
 }
 
 func sparkParticles() *effects.ParticleSystem {
-	img, _ := assets.ImportImageCached("resources/spark.png")
+	img, _ := assets.ImportImageCached("TestAssets/Spark.png")
 	smoke := effects.CreateParticleSystem(effects.ParticleSettings{
 		MaxParticles:     7,
 		ParticleEmitRate: 7,

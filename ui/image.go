@@ -52,6 +52,10 @@ func (ie *ImageElement) GetId() string {
 	return ie.id
 }
 
+func (ie *ImageElement) SetId(id string) {
+	ie.id = id
+}
+
 func (ie *ImageElement) SetWidth(width float32) {
 	ie.width = width
 }

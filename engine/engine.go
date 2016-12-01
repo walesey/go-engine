@@ -19,6 +19,9 @@ type Engine interface {
 	RemoveSpatial(spatial renderer.Spatial, destroy bool)
 	AddUpdatable(updatable Updatable)
 	RemoveUpdatable(updatable Updatable)
+	AddLight(light *renderer.Light)
+	RemoveLight(light *renderer.Light)
+	RequestAnimationFrame(cb func())
 	Camera() *renderer.Camera
 	Renderer() renderer.Renderer
 	SetFpsCap(FpsCap float64)
@@ -33,6 +36,7 @@ type EngineImpl struct {
 	sceneGraph     *renderer.SceneGraph
 	camera         *renderer.Camera
 	updatableStore *UpdatableStore
+	stepCounter    int64
 
 	opaqueNode, transparentNode, orthoNode *renderer.Node
 }
@@ -61,6 +65,7 @@ func (engine *EngineImpl) DefaultCubeMap(cubeMap *renderer.CubeMap) {
 }
 
 func (engine *EngineImpl) Update() {
+	engine.stepCounter++
 	dt := engine.fpsMeter.UpdateFPSMeter()
 	engine.updatableStore.UpdateAll(dt)
 }
@@ -96,6 +101,26 @@ func (engine *EngineImpl) AddUpdatable(updatable Updatable) {
 
 func (engine *EngineImpl) RemoveUpdatable(updatable Updatable) {
 	engine.updatableStore.Remove(updatable)
+}
+
+func (engine *EngineImpl) AddLight(light *renderer.Light) {
+	engine.renderer.AddLight(light)
+}
+
+func (engine *EngineImpl) RemoveLight(light *renderer.Light) {
+	engine.renderer.RemoveLight(light)
+}
+
+func (engine *EngineImpl) RequestAnimationFrame(cb func()) {
+	step := engine.stepCounter
+	var updater Updatable
+	updater = UpdatableFunc(func(dt float64) {
+		if engine.stepCounter != step {
+			engine.RemoveUpdatable(updater)
+			cb()
+		}
+	})
+	engine.AddUpdatable(updater)
 }
 
 func (engine *EngineImpl) Camera() *renderer.Camera {
