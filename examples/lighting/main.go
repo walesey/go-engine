@@ -3,6 +3,7 @@ package main
 import (
 	"image/color"
 	"math"
+	"os"
 	"runtime"
 
 	"github.com/disintegration/imaging"
@@ -70,10 +71,11 @@ func main() {
 }
 
 func fetchAssets(gameEngine engine.Engine, complete func()) {
-	patcher := client.NewClient("TestAssets", "http://walesey.net:5000")
+	os.Mkdir("TestAssets", 0777)
+	patcher := client.NewClient("TestAssets", "http://walesey.net")
 	done := make(chan bool)
 	go func() {
-		patcher.SyncFiles()
+		patcher.SyncFiles("TestFiles")
 		done <- true
 	}()
 
