@@ -8,6 +8,7 @@ const (
 	_ LightType = iota
 	POINT
 	DIRECTIONAL
+	AMBIENT
 )
 
 type Light struct {

@@ -50,9 +50,9 @@ func main() {
 		}
 
 		// Add some light to the scene
-		directionalLight := renderer.NewLight(renderer.DIRECTIONAL)
-		directionalLight.Color = [3]float32{0.6, 0.6, 0.6}
-		gameEngine.AddLight(directionalLight)
+		ambientLight := renderer.NewLight(renderer.AMBIENT)
+		ambientLight.Color = [3]float32{0.3, 0.3, 0.3}
+		gameEngine.AddLight(ambientLight)
 
 		// Create a red box geometry, attach to a node, add the node to the scenegraph
 		boxGeometry := renderer.CreateBox(10, 10)

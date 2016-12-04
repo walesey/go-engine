@@ -55,6 +55,12 @@ void textures() {
 	}
 }
 
+uniform vec3 ambientLightValue;
+
+vec3 ambientLight(vec4 diffuse) {
+	return ambientLightValue * diffuse.rgb;
+}
+
 float pow2(float x) { 
 	return x*x; 
 }
@@ -125,7 +131,7 @@ void main() {
 	if (unlit) {
 		outputColor = diffuse;
 	} else {
-		vec3 finalColor = pointLights(diffuse, specular, normal) + directionalLights(diffuse, specular, normal);
+		vec3 finalColor = ambientLight(diffuse) + pointLights(diffuse, specular, normal) + directionalLights(diffuse, specular, normal);
 		outputColor = vec4(finalColor, diffuse.a);
 	}
 	

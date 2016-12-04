@@ -44,6 +44,7 @@ type OpenglRenderer struct {
 	depthTest, depthMast, cullFace, unlit, useTextures bool
 
 	lights                  []*renderer.Light
+	ambientLightValue       mgl32.Vec3
 	nbPointLights           int32
 	pointLightValues        []float32
 	pointLightPositions     []float32
@@ -541,6 +542,8 @@ func (glRenderer *OpenglRenderer) DrawGeometry(geometry *renderer.Geometry, tran
 	shader.Uniforms["unlit"] = glRenderer.unlit
 	shader.Uniforms["useTextures"] = glRenderer.useTextures
 
+	shader.Uniforms["ambientLightValue"] = glRenderer.ambientLightValue
+
 	shader.Uniforms["nbPointLights"] = glRenderer.nbPointLights
 	shader.Uniforms["pointLightValues"] = glRenderer.pointLightValues
 	shader.Uniforms["pointLightPositions"] = glRenderer.pointLightPositions
@@ -584,6 +587,8 @@ func (glRenderer *OpenglRenderer) updateLights() {
 		p := light.Position
 		d := light.Direction
 		switch light.LightType {
+		case renderer.AMBIENT:
+			glRenderer.ambientLightValue = mgl32.Vec3{c[0], c[1], c[2]}
 		case renderer.POINT:
 			i := glRenderer.nbPointLights
 			glRenderer.pointLightValues[i*4], glRenderer.pointLightValues[i*4+1], glRenderer.pointLightValues[i*4+2] = c[0], c[1], c[2]

@@ -92,6 +92,12 @@ vec4 fresnelEffect(vec4 baseSpecular, vec4 normal) {
   return mix(baseSpecular, vec4(1.0), pow(1.0 - NdV, 5.0));
 }
 
+uniform vec3 ambientLightValue;
+
+vec3 ambientLight(vec4 diffuse) {
+	return ambientLightValue * diffuse.rgb;
+}
+
 vec3 directLight( vec3 light, vec3 direction, vec4 diffuse, vec4 specular, vec4 normal ) {
 	vec3 normal_tangentSpace = (normal.xyz*2) - 1;
 	vec3 direction_tangentSpace = direction * TBNMatrix;
@@ -171,7 +177,7 @@ void main() {
 	} else {
 		vec4 aoDiffuse = ao * diffuse;
 		vec4 feSpecular = fresnelEffect(specular, normal);
-		vec3 dLight = pointLights(aoDiffuse, feSpecular, normal) + directionalLights(aoDiffuse, feSpecular, normal);
+		vec3 dLight = ambientLight(aoDiffuse) + pointLights(aoDiffuse, feSpecular, normal) + directionalLights(aoDiffuse, feSpecular, normal);
 		vec3 iLight = indirectLight(aoDiffuse, feSpecular, normal);
 		outputColor = vec4(dLight + iLight, diffuse.a);
 	}

@@ -50,9 +50,8 @@ func New() *Editor {
 }
 
 func (e *Editor) Start() {
-	glRenderer := &opengl.OpenglRenderer{
-		WindowTitle: "GoEngine Editor",
-	}
+
+	glRenderer := opengl.NewOpenglRenderer("GoEngine Editor", 1800, 900, false)
 	e.renderer = glRenderer
 	e.gameEngine = engine.NewEngine(e.renderer)
 
