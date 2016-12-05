@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"os"
 	"runtime"
 
 	"github.com/walesey/go-engine/controller"
@@ -16,5 +18,11 @@ func init() {
 }
 
 func main() {
-	editor.New().Start()
+	assetDir := "."
+	if len(os.Args) >= 2 {
+		assetDir = os.Args[1]
+	}
+
+	fmt.Println("Using assetDir: ", assetDir)
+	editor.New(assetDir).Start()
 }

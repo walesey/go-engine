@@ -3,6 +3,8 @@ package editor
 import (
 	"bytes"
 
+	"path/filepath"
+
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/actor"
 	"github.com/walesey/go-engine/assets"
@@ -18,6 +20,7 @@ import (
 )
 
 type Editor struct {
+	assetDir              string
 	renderer              renderer.Renderer
 	gameEngine            engine.Engine
 	currentMap            *editorModels.MapModel
@@ -37,8 +40,9 @@ type Editor struct {
 	selectSprite          *effects.Sprite
 }
 
-func New() *Editor {
+func New(assetDir string) *Editor {
 	return &Editor{
+		assetDir:    assetDir,
 		uiAssets:    ui.NewHtmlAssets(),
 		rootMapNode: renderer.NewNode(),
 		currentMap: &editorModels.MapModel{
@@ -57,7 +61,10 @@ func (e *Editor) Start() {
 
 	e.gameEngine.Start(func() {
 
-		shader, err := assets.ImportShader("shaders/build/diffuseSpecular.vert", "shaders/build/diffuseSpecular.frag")
+		shader, err := assets.ImportShader(
+			filepath.Join(e.assetDir, "shaders/build/pbr.vert"),
+			filepath.Join(e.assetDir, "shaders/build/pbr.frag"),
+		)
 		if err != nil {
 			panic("error importing shader")
 		}
@@ -65,7 +72,7 @@ func (e *Editor) Start() {
 		e.gameEngine.DefaultShader(shader)
 
 		// Sky cubemap
-		skyImg, err := assets.ImportImage("resources/cubemap.png")
+		skyImg, err := assets.ImportImage(filepath.Join(e.assetDir, "resources/cubemap.png"))
 		if err == nil {
 			geom := renderer.CreateSkyBox()
 			geom.Transform(mgl32.Scale3D(10000, 10000, 10000))
@@ -82,20 +89,9 @@ func (e *Editor) Start() {
 			e.gameEngine.DefaultCubeMap(envCubeMap)
 		}
 
-		// Lighting
-		// shader.Uniforms["nbDirectionalLights"] = 1
-		// shader.Uniforms["directionalLightVectors"] = []float32{
-		// 	-1, -1, -1, 0,
-		// 	0, 0, 0, 0,
-		// 	0, 0, 0, 0,
-		// 	0, 0, 0, 0,
-		// }
-		// shader.Uniforms["directionalLightValues"] = []float32{
-		// 	0.4, 0.4, 0.4, 0,
-		// 	0, 0, 0, 0,
-		// 	0, 0, 0, 0,
-		// 	0, 0, 0, 0,
-		// }
+		l := renderer.NewLight(renderer.DIRECTIONAL)
+		l.Color = [3]float32{0.7, 0.7, 0.8}
+		e.gameEngine.AddLight(l)
 
 		//root node
 		e.gameEngine.AddSpatial(e.rootMapNode)

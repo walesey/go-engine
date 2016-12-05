@@ -29,3 +29,7 @@ func NewMaterial(textures ...*Texture) *Material {
 		Textures: textures,
 	}
 }
+
+func (m *Material) Destroy(renderer Renderer) {
+	renderer.DestroyMaterial(m)
+}

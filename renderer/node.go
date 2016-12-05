@@ -131,6 +131,8 @@ func (node *Node) Destroy(renderer Renderer) {
 	for _, child := range node.children {
 		child.Destroy(renderer)
 	}
+	node.Material.Destroy(renderer)
+	node.CubeMap.Destroy(renderer)
 	node.cleanupDeleted(renderer)
 }
 
