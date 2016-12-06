@@ -37,7 +37,7 @@ func (tf *TextField) RenderCursor() {
 	xPos := int(cursorTranslation.X >> 6)
 	tf.cursor.SetTranslation(mgl32.Vec2{float32(xPos), 0}.Vec3(0))
 	if tf.active {
-		tf.cursor.SetScale(mgl32.Vec2{tf.text.textSize, tf.text.textSize}.Vec3(0))
+		tf.cursor.SetScale(mgl32.Vec2{tf.text.props.textSize, tf.text.props.textSize}.Vec3(0))
 	} else {
 		tf.cursor.SetScale(mgl32.Vec2{0, 0}.Vec3(0))
 	}
@@ -65,7 +65,7 @@ func (tf *TextField) mouseClick(button int, release bool, position mgl32.Vec2) {
 
 func (tf *TextField) keyClick(key string, release bool) {
 	if tf.active && !release {
-		textBytes := []byte(tf.text.text)
+		textBytes := []byte(tf.text.GetText())
 		if key == "backspace" {
 			if len(textBytes) > 0 && tf.cursorPos > 0 {
 				cursorPos := tf.cursorPos
@@ -78,12 +78,12 @@ func (tf *TextField) keyClick(key string, release bool) {
 				tf.cursorPos--
 			}
 		} else if key == "rightArrow" {
-			if tf.cursorPos < len(tf.text.text) {
+			if tf.cursorPos < len(tf.text.GetText()) {
 				tf.cursorPos++
 			}
 		} else {
 			insertText := []rune(key)
-			newText := []rune(tf.text.text)
+			newText := []rune(tf.text.GetText())
 			newText = append(newText[:tf.cursorPos], append(insertText, newText[tf.cursorPos:]...)...)
 			cursorPos := tf.cursorPos
 			tf.SetText(string(newText))

@@ -18,7 +18,7 @@ import (
 	"golang.org/x/image/font"
 )
 
-const (
+const ( // TODO: implement text align
 	LEFT_ALIGN int = iota
 	CENTER_ALIGN
 	RIGHT_ALIGN
@@ -42,29 +42,32 @@ func LoadFont(fontData []byte) (*truetype.Font, error) {
 	return f, nil
 }
 
+type textProps struct {
+	width, height float32
+	size, offset  mgl32.Vec2
+	text          string
+	placeholder   string
+	textColor     color.Color
+	textSize      float32
+	textFont      *truetype.Font
+	textAlign     int
+	hidden        bool
+}
+
 type TextElement struct {
-	id                 string
-	node               *renderer.Node
-	img                *ImageElement
-	width, height      float32
-	text               string
-	placeholder        string
-	textColor          color.Color
-	textSize           float32
-	textFont           *truetype.Font
-	textAlign          int
-	size, offset       mgl32.Vec2
-	hidden             bool
-	onKeyPressHandlers []func(key string, release bool)
-	dirty              bool
+	id                   string
+	node                 *renderer.Node
+	img                  *ImageElement
+	props, previousProps textProps
+	onKeyPressHandlers   []func(key string, release bool)
 }
 
 func (te *TextElement) getContext() *freetype.Context {
 	c := freetype.NewContext()
 	c.SetDPI(75)
-	c.SetFont(te.textFont)
-	c.SetFontSize(float64(te.textSize))
-	c.SetSrc(image.NewUniform(te.textColor))
+	c.SetFont(te.props.textFont)
+	c.SetFontSize(float64(te.props.textSize))
+	c.SetSrc(image.NewUniform(te.props.textColor))
 	c.SetHinting(font.HintingNone)
 	return c
 }
@@ -76,14 +79,14 @@ func (te *TextElement) updateImage(size mgl32.Vec2) {
 
 	text := te.GetHiddenText()
 	if len(text) == 0 {
-		text = te.placeholder
-		r, g, b, _ := te.textColor.RGBA()
+		text = te.props.placeholder
+		r, g, b, _ := te.props.textColor.RGBA()
 		placeholderColor := color.RGBA{uint8(r), uint8(g), uint8(b), 80}
 		c.SetSrc(image.NewUniform(placeholderColor))
 	}
 
 	// Establish image dimensions and do word wrap
-	textHeight := c.PointToFixed(float64(te.textSize))
+	textHeight := c.PointToFixed(float64(te.props.textSize))
 	var width int
 	var height int = int(textHeight >> 6)
 	words := strings.Split(text, " ")
@@ -101,8 +104,8 @@ func (te *TextElement) updateImage(size mgl32.Vec2) {
 		}
 		lines[lineNb] = fmt.Sprintf("%v%v", lines[lineNb], wordWithSpace)
 	}
-	if te.height > 0 {
-		height = int(te.height)
+	if te.props.height > 0 {
+		height = int(te.props.height)
 	}
 
 	rgba := image.NewRGBA(image.Rect(0, 0, int(size.X()), height+int(textHeight>>6)/3))
@@ -127,95 +130,78 @@ func (te *TextElement) updateImage(size mgl32.Vec2) {
 }
 
 func (te *TextElement) GetText() string {
-	return te.text
+	return te.props.text
 }
 
 func (te *TextElement) GetHiddenText() string {
-	if te.hidden {
+	if te.props.hidden {
 		text := ""
-		for i := 0; i < len(te.text); i++ {
+		for i := 0; i < len(te.props.text); i++ {
 			text = fmt.Sprint(text, "*")
 		}
 		return text
 	}
-	return te.text
+	return te.props.text
 }
 
 func (te *TextElement) SetText(text string) *TextElement {
-	te.text = text
-	te.dirty = true
+	te.props.text = text
 	return te
 }
 
 func (te *TextElement) SetPlaceholder(placeholder string) *TextElement {
-	te.placeholder = placeholder
-	te.dirty = true
+	te.props.placeholder = placeholder
 	return te
 }
 
 func (te *TextElement) SetFont(textFont *truetype.Font) *TextElement {
-	te.textFont = textFont
-	te.dirty = true
+	te.props.textFont = textFont
 	return te
 }
 
 func (te *TextElement) SetTextSize(textSize float32) *TextElement {
-	te.textSize = textSize
-	te.dirty = true
+	te.props.textSize = textSize
 	return te
 }
 
 func (te *TextElement) SetTextColor(textColor color.Color) *TextElement {
-	te.textColor = textColor
-	te.dirty = true
+	te.props.textColor = textColor
 	return te
 }
 
 func (te *TextElement) SetWidth(width float32) *TextElement {
-	te.width = width
-	te.dirty = true
+	te.props.width = width
 	return te
 }
 
 func (te *TextElement) SetHeight(height float32) *TextElement {
-	te.height = height
-	te.dirty = true
+	te.props.height = height
 	return te
 }
 
 func (te *TextElement) SetHidden(hidden bool) *TextElement {
-	te.hidden = hidden
+	te.props.hidden = hidden
 	return te
 }
 
 func (te *TextElement) Render(size, offset mgl32.Vec2) mgl32.Vec2 {
-	useWidth := size.X()
-	useHeight := size.Y()
-	if te.width > 0 {
-		useWidth = te.width
+	te.props.size, te.props.offset = size, offset
+	textWidth, textHeight := size.X(), size.Y()
+	if te.props.width > 0 {
+		textWidth = te.props.width
 	}
-	if te.height > 0 {
-		useHeight = te.height
+	if te.props.height > 0 {
+		textHeight = te.props.height
 	}
-	useSize := mgl32.Vec2{useWidth, useHeight}
-	te.size = useSize
-	te.offset = offset
-	if te.dirty {
-		te.updateImage(useSize)
+	if te.previousProps != te.props {
+		te.updateImage(mgl32.Vec2{textWidth, textHeight})
+		te.previousProps = te.props
 	}
-	te.dirty = false
-	renderSize := te.img.Render(size, offset)
-	if te.textAlign == CENTER_ALIGN {
-		te.img.Render(size, offset.Add(mgl32.Vec2{(size.X() - renderSize.X()) * 0.5, 0}))
-	}
-	if te.textAlign == RIGHT_ALIGN {
-		te.img.Render(size, offset.Add(mgl32.Vec2{size.X() - renderSize.X(), 0}))
-	}
-	return renderSize
+	return te.img.Render(size, offset)
 }
 
 func (te *TextElement) ReRender() {
-	te.Render(te.size, te.offset)
+	te.Render(te.props.size, te.props.offset)
 }
 
 func (te *TextElement) Spatial() renderer.Spatial {
@@ -243,7 +229,7 @@ func (te *TextElement) keyClick(key string, release bool) {
 }
 
 func (te *TextElement) SetAlign(align int) {
-	te.textAlign = align
+	te.props.textAlign = align
 }
 
 func (te *TextElement) AddOnKeyPress(handler func(key string, release bool)) {
@@ -255,13 +241,14 @@ func NewTextElement(text string, textColor color.Color, textSize float32, textFo
 	node := renderer.NewNode()
 	node.Add(img.Spatial())
 	textElem := &TextElement{
-		img:       img,
-		node:      node,
-		text:      text,
-		textColor: textColor,
-		textSize:  textSize,
-		textFont:  textFont,
-		dirty:     true,
+		img:  img,
+		node: node,
+		props: textProps{
+			text:      text,
+			textColor: textColor,
+			textSize:  textSize,
+			textFont:  textFont,
+		},
 	}
 	if textFont == nil {
 		defaultFont, _ := LoadFont(getDefaultFont())

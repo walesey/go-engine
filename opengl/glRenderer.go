@@ -396,6 +396,9 @@ func (glRenderer *OpenglRenderer) loadTexture(img image.Image, textureUnit uint3
 	gl.GenTextures(1, &texId)
 	gl.ActiveTexture(textureUnit)
 	gl.BindTexture(gl.TEXTURE_2D, texId)
+	if rgba.Rect.Size().X == 0 || rgba.Rect.Size().Y == 0 {
+		return texId
+	}
 	gl.TexImage2D(
 		gl.TEXTURE_2D,
 		0,
