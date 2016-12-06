@@ -16,6 +16,12 @@ This project is currently in progress and it is likely to change significantly o
 * Multiplayer networking library
 
 
+## Platform Support
+* Windows
+* macOS
+* ~~webgl/browser~~ (WIP)
+* ~~android~~ (Planned)
+
 ## Instructions
 
 Example programs can be found in `examples/*`.
