@@ -47,4 +47,4 @@ Go-Engine uses go-gl which requires opengl.
 * engine.Engine (interface) - The main game engine interface
 * engine.Updatable (interface) - anything that can be updated every game simulation step.
 
-![Demo](http://i.imgur.com/wtI7fK8.png)
+![Demo](http://i.imgur.com/toTtrxp.jpg)
