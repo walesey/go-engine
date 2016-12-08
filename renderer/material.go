@@ -31,5 +31,7 @@ func NewMaterial(textures ...*Texture) *Material {
 }
 
 func (m *Material) Destroy(renderer Renderer) {
-	renderer.DestroyMaterial(m)
+	if m != nil {
+		renderer.DestroyMaterial(m)
+	}
 }

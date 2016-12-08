@@ -10,13 +10,14 @@ import (
 )
 
 type TextField struct {
-	container       *Container
-	text            *TextElement
-	cursor          *renderer.Node
-	cursorPos       int
-	active          bool
-	onFocusHandlers []func()
-	onBlurHandlers  []func()
+	container        *Container
+	text             *TextElement
+	cursor           *renderer.Node
+	cursorPos        int
+	active           bool
+	onFocusHandlers  []func()
+	onBlurHandlers   []func()
+	onChangeHandlers []func(string)
 }
 
 func (tf *TextField) Render(size, offset mgl32.Vec2) mgl32.Vec2 {
@@ -119,6 +120,9 @@ func (tf *TextField) GetHitbox() Hitbox {
 func (tf *TextField) SetText(text string) *TextField {
 	tf.text.SetText(text)
 	tf.cursorPos = len(text)
+	for _, handler := range tf.onChangeHandlers {
+		handler(text)
+	}
 	return tf
 }
 
@@ -213,6 +217,10 @@ func (tf *TextField) AddOnBlur(handler func()) {
 
 func (tf *TextField) AddOnKeyPress(handler func(key string, release bool)) {
 	tf.AddOnKeyPress(handler)
+}
+
+func (tf *TextField) AddOnChange(handler func(string)) {
+	tf.onChangeHandlers = append(tf.onChangeHandlers, handler)
 }
 
 func NewTextField(text string, textColor color.Color, textSize float32, textFont *truetype.Font) *TextField {
