@@ -16,6 +16,12 @@ This project is currently in progress and it is likely to change significantly o
 * Multiplayer networking library
 
 
+## Platform Support
+* Windows
+* macOS
+* ~~webgl/browser~~ (WIP)
+* ~~android~~ (Planned)
+
 ## Instructions
 
 Example programs can be found in `examples/*`.
@@ -40,3 +46,5 @@ Go-Engine uses go-gl which requires opengl.
 * controller.Controller (interface) - Can have (mouse/keyboard...) events bound to.
 * engine.Engine (interface) - The main game engine interface
 * engine.Updatable (interface) - anything that can be updated every game simulation step.
+
+![Demo](http://i.imgur.com/wtI7fK8.png)
