@@ -216,6 +216,10 @@ func (te *TextElement) SetId(id string) {
 	te.id = id
 }
 
+func (te *TextElement) GetChildren() Children {
+	return []Element{}
+}
+
 func (te *TextElement) mouseMove(position mgl32.Vec2) {
 	te.img.mouseMove(position)
 }

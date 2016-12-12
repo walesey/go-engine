@@ -187,15 +187,16 @@ func (c *Container) RemoveAllChildren() {
 	c.children = c.children[:0]
 }
 
-func (c *Container) GetChild(index int) Element {
-	if index >= c.GetNbChildren() {
-		return nil
-	}
-	return c.children[index]
+func (c *Container) ElementById(id string) Element {
+	return c.GetChildren().GetChildById(id)
 }
 
-func (c *Container) GetNbChildren() int {
-	return len(c.children)
+func (c *Container) TextElementById(id string) *TextElement {
+	return c.GetChildren().TextElementById(id)
+}
+
+func (c *Container) GetChildren() Children {
+	return c.children
 }
 
 func (c *Container) GetId() string {
@@ -204,32 +205,6 @@ func (c *Container) GetId() string {
 
 func (c *Container) SetId(id string) {
 	c.id = id
-}
-
-func (c *Container) ElementById(id string) Element {
-	for _, child := range c.children {
-		if child.GetId() == id {
-			return child
-		}
-		container, ok := child.(*Container)
-		if ok {
-			if elem := container.ElementById(id); elem != nil {
-				return elem
-			}
-		}
-	}
-	return nil
-}
-
-func (c *Container) TextElementById(id string) *TextElement {
-	container, ok := c.ElementById(id).(*Container)
-	if ok && container.GetNbChildren() > 0 {
-		textElement, ok := container.GetChild(0).(*TextElement)
-		if ok {
-			return textElement
-		}
-	}
-	return nil
 }
 
 func (c *Container) mouseMove(position mgl32.Vec2) {

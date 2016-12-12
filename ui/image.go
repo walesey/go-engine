@@ -56,6 +56,10 @@ func (ie *ImageElement) SetId(id string) {
 	ie.id = id
 }
 
+func (ie *ImageElement) GetChildren() Children {
+	return []Element{}
+}
+
 func (ie *ImageElement) SetWidth(width float32) {
 	ie.width = width
 }

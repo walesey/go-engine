@@ -11,6 +11,7 @@ type Element interface {
 	Spatial() renderer.Spatial
 	GetId() string
 	SetId(id string)
+	GetChildren() Children
 	mouseMove(position mgl32.Vec2)
 	mouseClick(button int, release bool, position mgl32.Vec2)
 	keyClick(key string, release bool)

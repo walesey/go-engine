@@ -89,23 +89,14 @@ func (w *Window) ElementById(id string) Element {
 		if w.element.GetId() == id {
 			return w.element
 		}
-		container, ok := w.element.(*Container)
-		if ok {
-			return container.ElementById(id)
-		}
+		return w.element.GetChildren().GetChildById(id)
 	}
 	return nil
 }
 
 func (w *Window) TextElementById(id string) *TextElement {
-	container, ok := w.ElementById(id).(*Container)
-	if ok && container.GetNbChildren() > 0 {
-		if textElement, ok := container.GetChild(0).(*TextElement); ok {
-			return textElement
-		}
-		if textField, ok := container.GetChild(0).(*TextField); ok {
-			return textField.text
-		}
+	if w.element != nil {
+		return w.element.GetChildren().TextElementById(id)
 	}
 	return nil
 }
@@ -133,14 +124,11 @@ func (w *Window) keyClick(key string, release bool) {
 }
 
 func deactivateAllTextFields(elem Element) {
-	if container, ok := elem.(*Container); ok {
-		for i := 0; i < container.GetNbChildren(); i++ {
-			child := container.GetChild(i)
-			deactivateAllTextFields(child)
-			text, ok := child.(*TextField)
-			if ok {
-				text.Deactivate()
-			}
+	for _, child := range elem.GetChildren() {
+		deactivateAllTextFields(child)
+		text, ok := child.(*TextField)
+		if ok {
+			text.Deactivate()
 		}
 	}
 }

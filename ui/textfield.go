@@ -56,6 +56,10 @@ func (tf *TextField) SetId(id string) {
 	tf.container.SetId(id)
 }
 
+func (tf *TextField) GetChildren() Children {
+	return []Element{}
+}
+
 func (tf *TextField) mouseMove(position mgl32.Vec2) {
 	tf.container.mouseMove(position)
 }
@@ -233,6 +237,7 @@ func NewTextField(text string, textColor color.Color, textSize float32, textFont
 		container: NewContainer(),
 		text:      NewTextElement(text, textColor, textSize, textFont),
 		cursor:    cursorNode,
+		cursorPos: len(text),
 	}
 	tf.text.node.Add(cursorNode)
 	tf.container.AddChildren(tf.text)
