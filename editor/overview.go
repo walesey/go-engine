@@ -36,6 +36,7 @@ func (e *Editor) initOverviewMenu() {
 			uniqueIdCounter++
 			e.createNewGroup(fmt.Sprintf("group_%v", uniqueIdCounter))
 			e.overviewMenu.updateTree(e.currentMap)
+			e.refreshMap()
 		}
 	})
 
