@@ -19,7 +19,7 @@ void main() {
 	if (unlit) {
 		outputColor = diffuse;
 	} else {
-		vec3 finalColor = ambientLight(diffuse) + pointLights(diffuse, specular, normal) + directionalLights(diffuse, specular, normal);
+		vec3 finalColor = ambientLight(diffuse) + pointLights(diffuse, specular, normalValue) + directionalLights(diffuse, specular, normalValue);
 		outputColor = vec4(finalColor, diffuse.a);
 	}
 	#endfrag

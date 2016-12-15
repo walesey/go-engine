@@ -2,8 +2,8 @@
 #include "./common.glsl"
 #include "./worldTransform.glsl"
 
-vec3 directLight( vec3 light, vec3 direction, vec4 diffuse, vec4 specular, vec4 normal ) {
-	vec3 normal_tangentSpace = (normal.xyz*2) - 1;
+vec3 directLight( vec3 light, vec3 direction, vec4 diffuse, vec4 specular, vec4 normalValue ) {
+	vec3 normal_tangentSpace = (normalValue.xyz*2) - 1;
 	vec3 direction_tangentSpace = direction * TBNMatrix;
 	vec3 eyeDirection_tangentSpace = eyeDirection * TBNMatrix;
 	vec3 reflectedEye_tangentSpace = reflect( eyeDirection_tangentSpace, normal_tangentSpace );

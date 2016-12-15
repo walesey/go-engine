@@ -29,8 +29,8 @@ void worldTransform() {
 	// generate arbitrary tangent and bitangent to the normal
 	vec3 tangent = cross(normal, normal + vec3(-1));
 	vec3 bitangent = cross(normal, tangent);
-	vec3 worldTangent = (modelNormal * vec4(tangent,1)).xyz;
-	vec3 worldBitangent = (modelNormal * vec4(bitangent,1)).xyz;
+	vec3 worldTangent = normalize((modelNormal * vec4(tangent,1)).xyz);
+	vec3 worldBitangent = normalize((modelNormal * vec4(bitangent,1)).xyz);
 
 	//tangent space conversion - worldToTangent
 	TBNMatrix = mat3(worldTangent, worldBitangent, worldNormal);

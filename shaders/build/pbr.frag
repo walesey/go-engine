@@ -25,7 +25,7 @@ uniform sampler2D aoMap;
 in vec2 fragTexCoord;
 in vec4 fragColor;
 
-vec4 normal;
+vec4 normalValue;
 vec4 diffuse;
 vec4 specular;
 vec4 ao;
@@ -45,12 +45,12 @@ void textures() {
 	if (useTextures) {
 		diffuse = fragColor * texture(diffuseMap, overflowTextCoord);
 		specular = texture(specularMap, overflowTextCoord);
-		normal = texture(normalMap, overflowTextCoord);
+		normalValue = texture(normalMap, overflowTextCoord);
 		ao = texture(aoMap, overflowTextCoord);
 	} else {
 		diffuse = fragColor;
 		specular = vec4(0);
-		normal = vec4(0);
+		normalValue = vec4(0);
 		ao = vec4(1);
 	}
 }
@@ -84,8 +84,8 @@ float pow3(float x) {
 	return x*x*x; 
 }
 
-vec4 fresnelEffect(vec4 baseSpecular, vec4 normal) {
-	vec3 normal_tangentSpace = (normal.xyz*2) - 1;
+vec4 fresnelEffect(vec4 baseSpecular, vec4 normalValue) {
+	vec3 normal_tangentSpace = (normalValue.xyz*2) - 1;
 	vec3 normal_worldSpace = normal_tangentSpace * inverseTBNMatrix;
 	float NdV = abs(dot(normal_worldSpace, eyeDirection));
 
@@ -98,8 +98,8 @@ vec3 ambientLight(vec4 diffuse) {
 	return ambientLightValue * diffuse.rgb;
 }
 
-vec3 directLight( vec3 light, vec3 direction, vec4 diffuse, vec4 specular, vec4 normal ) {
-	vec3 normal_tangentSpace = (normal.xyz*2) - 1;
+vec3 directLight( vec3 light, vec3 direction, vec4 diffuse, vec4 specular, vec4 normalValue ) {
+	vec3 normal_tangentSpace = (normalValue.xyz*2) - 1;
 	vec3 direction_tangentSpace = direction * TBNMatrix;
 	vec3 eyeDirection_tangentSpace = eyeDirection * TBNMatrix;
 	vec3 reflectedEye_tangentSpace = reflect( eyeDirection_tangentSpace, normal_tangentSpace );
@@ -119,7 +119,7 @@ uniform int nbPointLights;
 uniform vec4 pointLightPositions[ MAX_POINT_LIGHTS ];
 uniform vec4 pointLightValues[ MAX_POINT_LIGHTS ];
 
-vec3 pointLights(vec4 diffuse, vec4 specular, vec4 normal) {
+vec3 pointLights(vec4 diffuse, vec4 specular, vec4 normalValue) {
 	vec3 totalLight = vec3(0.0, 0.0, 0.0);
 	for (int i=0; i < nbPointLights; i++) {
 		vec3 LightPos = pointLightPositions[i].rgb;
@@ -132,7 +132,7 @@ vec3 pointLights(vec4 diffuse, vec4 specular, vec4 normal) {
 		vec3 worldLightDir = normalize(v);
 		vec3 light = brightness*LightValue;
 
-		totalLight += directLight(light, worldLightDir, diffuse, specular, normal);
+		totalLight += directLight(light, worldLightDir, diffuse, specular, normalValue);
 	}
 	return totalLight;
 }
@@ -143,21 +143,21 @@ uniform int nbDirectionalLights;
 uniform vec4 directionalLightVectors[ MAX_DIRECTIONAL_LIGHTS ];
 uniform vec4 directionalLightValues[ MAX_DIRECTIONAL_LIGHTS ];
 
-vec3 directionalLights(vec4 diffuse, vec4 specular, vec4 normal) {
+vec3 directionalLights(vec4 diffuse, vec4 specular, vec4 normalValue) {
 	vec3 totalLight = vec3(0.0, 0.0, 0.0);
 	for (int i=0; i < nbDirectionalLights; i++) {
 		vec3 LightDirection = directionalLightVectors[i].rgb;
 		vec3 LightValue = directionalLightValues[i].rgb;
 
-		totalLight += directLight(LightValue, LightDirection, diffuse, specular, normal);
+		totalLight += directLight(LightValue, LightDirection, diffuse, specular, normalValue);
 	}
 	return totalLight;
 }
 
 uniform samplerCube environmentMap;
 
-vec3 indirectLight(vec4 diffuse, vec4 specular, vec4 normal) {
-	vec3 normal_tangentSpace = (normal.xyz*2) - 1;
+vec3 indirectLight(vec4 diffuse, vec4 specular, vec4 normalValue) {
+	vec3 normal_tangentSpace = (normalValue.xyz*2) - 1;
 	vec3 normal_worldSpace = normal_tangentSpace * inverseTBNMatrix;
 	vec3 reflectedEye_worldSpace = reflect( eyeDirection, normal_worldSpace );
 
@@ -176,9 +176,9 @@ void main() {
 		outputColor = diffuse;
 	} else {
 		vec4 aoDiffuse = ao * diffuse;
-		vec4 feSpecular = fresnelEffect(specular, normal);
-		vec3 dLight = ambientLight(aoDiffuse) + pointLights(aoDiffuse, feSpecular, normal) + directionalLights(aoDiffuse, feSpecular, normal);
-		vec3 iLight = indirectLight(aoDiffuse, feSpecular, normal);
+		vec4 feSpecular = fresnelEffect(specular, normalValue);
+		vec3 dLight = ambientLight(aoDiffuse) + pointLights(aoDiffuse, feSpecular, normalValue) + directionalLights(aoDiffuse, feSpecular, normalValue);
+		vec3 iLight = indirectLight(aoDiffuse, feSpecular, normalValue);
 		outputColor = vec4(dLight + iLight, diffuse.a);
 	}
 	

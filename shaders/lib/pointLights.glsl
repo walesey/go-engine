@@ -9,7 +9,7 @@ uniform int nbPointLights;
 uniform vec4 pointLightPositions[ MAX_POINT_LIGHTS ];
 uniform vec4 pointLightValues[ MAX_POINT_LIGHTS ];
 
-vec3 pointLights(vec4 diffuse, vec4 specular, vec4 normal) {
+vec3 pointLights(vec4 diffuse, vec4 specular, vec4 normalValue) {
 	vec3 totalLight = vec3(0.0, 0.0, 0.0);
 	for (int i=0; i < nbPointLights; i++) {
 		vec3 LightPos = pointLightPositions[i].rgb;
@@ -22,7 +22,7 @@ vec3 pointLights(vec4 diffuse, vec4 specular, vec4 normal) {
 		vec3 worldLightDir = normalize(v);
 		vec3 light = brightness*LightValue;
 
-		totalLight += directLight(light, worldLightDir, diffuse, specular, normal);
+		totalLight += directLight(light, worldLightDir, diffuse, specular, normalValue);
 	}
 	return totalLight;
 }

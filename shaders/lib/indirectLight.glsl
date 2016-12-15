@@ -3,8 +3,8 @@
 
 uniform samplerCube environmentMap;
 
-vec3 indirectLight(vec4 diffuse, vec4 specular, vec4 normal) {
-	vec3 normal_tangentSpace = (normal.xyz*2) - 1;
+vec3 indirectLight(vec4 diffuse, vec4 specular, vec4 normalValue) {
+	vec3 normal_tangentSpace = (normalValue.xyz*2) - 1;
 	vec3 normal_worldSpace = normal_tangentSpace * inverseTBNMatrix;
 	vec3 reflectedEye_worldSpace = reflect( eyeDirection, normal_worldSpace );
 

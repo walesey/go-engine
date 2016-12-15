@@ -19,7 +19,7 @@ uniform sampler2D aoMap;
 in vec2 fragTexCoord;
 in vec4 fragColor;
 
-vec4 normal;
+vec4 normalValue;
 vec4 diffuse;
 vec4 specular;
 vec4 ao;
@@ -39,12 +39,12 @@ void textures() {
 	if (useTextures) {
 		diffuse = fragColor * texture(diffuseMap, overflowTextCoord);
 		specular = texture(specularMap, overflowTextCoord);
-		normal = texture(normalMap, overflowTextCoord);
+		normalValue = texture(normalMap, overflowTextCoord);
 		ao = texture(aoMap, overflowTextCoord);
 	} else {
 		diffuse = fragColor;
 		specular = vec4(0);
-		normal = vec4(0);
+		normalValue = vec4(0);
 		ao = vec4(1);
 	}
 }
