@@ -25,7 +25,11 @@ func (e *Editor) openNodeEditor(node *editorModels.NodeModel, callback func()) {
 
 	e.uiAssets.AddCallback("nodeEditorOk", func(element ui.Element, args ...interface{}) {
 		if len(args) >= 2 && !args[1].(bool) { // not on release
-			node.Id = window.TextElementById("name").GetText()
+			newId := window.TextElementById("name").GetText()
+			if check, _ := findNodeById(newId, e.currentMap.Root); check != nil {
+				return // id already taken
+			}
+			node.Id = newId
 			node.Classes = []string{}
 			for i := 1; i <= 3; i++ {
 				className := window.TextElementById(fmt.Sprintf("class%v", i)).GetText()

@@ -248,6 +248,7 @@ func (glRenderer *OpenglRenderer) enableMaterial() {
 
 	// setup material
 	if glRenderer.activeShader != nil && glRenderer.activeMaterial != nil {
+		glRenderer.createMaterial(glRenderer.activeMaterial)
 		textures := glRenderer.activeMaterial.Textures
 		for i, tex := range textures {
 			textureUnit := gl.TEXTURE0 + uint32(i)
@@ -269,6 +270,7 @@ func (glRenderer *OpenglRenderer) enableCubeMap() {
 
 	// setup cubeMap
 	if glRenderer.activeShader != nil && cubeMap != nil {
+		glRenderer.createCubeMap(glRenderer.activeCubeMap)
 		gl.ActiveTexture(gl.TEXTURE10)
 		gl.BindTexture(gl.TEXTURE_CUBE_MAP, cubeMap.Id)
 		glRenderer.activeShader.Uniforms[cubeMap.Name] = int32(10)
@@ -280,12 +282,17 @@ func (glRenderer *OpenglRenderer) enableShader() {
 		return
 	}
 
+	glRenderer.createShader(glRenderer.shader)
 	glRenderer.activeShader = glRenderer.shader
 	gl.UseProgram(glRenderer.activeShader.Program)
 }
 
 // CreateGeometry - add geometry to the renderer
-func (glRenderer *OpenglRenderer) CreateGeometry(geometry *renderer.Geometry) {
+func (glRenderer *OpenglRenderer) createGeometry(geometry *renderer.Geometry) {
+	if geometry.Loaded || len(geometry.Verticies) == 0 || len(geometry.Indicies) == 0 {
+		return
+	}
+
 	var vbo uint32
 	gl.GenBuffers(1, &vbo)
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
@@ -297,6 +304,7 @@ func (glRenderer *OpenglRenderer) CreateGeometry(geometry *renderer.Geometry) {
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo)
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(geometry.Indicies)*4, gl.Ptr(geometry.Indicies), gl.DYNAMIC_DRAW)
 	geometry.IboId = ibo
+	geometry.Loaded = true
 }
 
 //
@@ -306,7 +314,7 @@ func (glRenderer *OpenglRenderer) DestroyGeometry(geometry *renderer.Geometry) {
 }
 
 // CreateMaterial load material
-func (glRenderer *OpenglRenderer) CreateMaterial(material *renderer.Material) {
+func (glRenderer *OpenglRenderer) createMaterial(material *renderer.Material) {
 	for i, tex := range material.Textures {
 		if !tex.Loaded {
 			textureUnit := gl.TEXTURE0 + uint32(i)
@@ -326,7 +334,7 @@ func (glRenderer *OpenglRenderer) DestroyMaterial(material *renderer.Material) {
 	}
 }
 
-func (glRenderer *OpenglRenderer) CreateCubeMap(cubeMap *renderer.CubeMap) {
+func (glRenderer *OpenglRenderer) createCubeMap(cubeMap *renderer.CubeMap) {
 	if cubeMap.Loaded {
 		return
 	}
@@ -344,7 +352,7 @@ func (glRenderer *OpenglRenderer) DestroyCubeMap(cubeMap *renderer.CubeMap) {
 	cubeMap.Loaded = false
 }
 
-func (glRenderer *OpenglRenderer) CreateShader(shader *renderer.Shader) {
+func (glRenderer *OpenglRenderer) createShader(shader *renderer.Shader) {
 	if shader.Loaded {
 		return
 	}
@@ -503,6 +511,8 @@ func (glRenderer *OpenglRenderer) DrawGeometry(geometry *renderer.Geometry, tran
 	if glRenderer.activeShader == nil {
 		panic("ERROR: No shader is configured.")
 	}
+
+	glRenderer.createGeometry(geometry)
 
 	shader := glRenderer.activeShader
 	program := shader.Program

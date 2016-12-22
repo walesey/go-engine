@@ -36,5 +36,6 @@ func NewCubemap(name string, baseImage image.Image, lod bool) *CubeMap {
 func (cm *CubeMap) Destroy(renderer Renderer) {
 	if cm != nil {
 		renderer.DestroyCubeMap(cm)
+		cm.Loaded = false
 	}
 }

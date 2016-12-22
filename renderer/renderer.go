@@ -14,19 +14,15 @@ type Renderer interface {
 	LockCursor(lock bool)
 	UseRendererParams(params RendererParams)
 
-	CreateGeometry(geometry *Geometry)
-	DestroyGeometry(geometry *Geometry)
 	DrawGeometry(geometry *Geometry, transform mgl32.Mat4)
+	DestroyGeometry(geometry *Geometry)
 
-	CreateMaterial(material *Material)
-	DestroyMaterial(material *Material)
 	UseMaterial(material *Material)
+	DestroyMaterial(material *Material)
 
-	CreateCubeMap(cubeMap *CubeMap)
-	DestroyCubeMap(cubeMap *CubeMap)
 	UseCubeMap(cubeMap *CubeMap)
+	DestroyCubeMap(cubeMap *CubeMap)
 
-	CreateShader(shader *Shader)
 	UseShader(shader *Shader)
 
 	CreatePostEffect(shader *Shader)
@@ -42,6 +38,7 @@ type Spatial interface {
 	Optimize(geometry *Geometry, transform mgl32.Mat4)
 	Destroy(renderer Renderer)
 	Centre() mgl32.Vec3
+	BoundingRadius() float32
 	SetParent(parent *Node)
 }
 

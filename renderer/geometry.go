@@ -12,7 +12,7 @@ const VertexStride = 12
 //Geometry
 type Geometry struct {
 	VboId, IboId   uint32
-	loaded         bool
+	Loaded         bool
 	VboDirty       bool
 	boundingRadius float32
 	Indicies       []uint32
@@ -38,21 +38,15 @@ func (geometry *Geometry) Copy() *Geometry {
 }
 
 func (geometry *Geometry) Draw(renderer Renderer, transform mgl32.Mat4) {
-	geometry.load(renderer)
-	renderer.DrawGeometry(geometry, transform)
-}
-
-func (geometry *Geometry) load(renderer Renderer) {
-	if !geometry.loaded && len(geometry.Indicies) != 0 && len(geometry.Verticies) != 0 {
+	if !geometry.Loaded {
 		geometry.boundingRadius = geometry.MaximalPointFromGeometry().Len()
-		renderer.CreateGeometry(geometry)
-		geometry.loaded = true
 	}
+	renderer.DrawGeometry(geometry, transform)
 }
 
 func (geometry *Geometry) Destroy(renderer Renderer) {
 	renderer.DestroyGeometry(geometry)
-	geometry.loaded = false
+	geometry.Loaded = false
 }
 
 func (geometry *Geometry) Centre() mgl32.Vec3 {
@@ -116,6 +110,10 @@ func (geometry *Geometry) Optimize(destination *Geometry, transform mgl32.Mat4) 
 	}
 	destination.transformRange(transform, vertOffset)
 	geometry.updateGeometry()
+}
+
+func (geometry *Geometry) BoundingRadius() float32 {
+	return geometry.boundingRadius
 }
 
 func (geometry *Geometry) SetUVs(uvs ...float32) {

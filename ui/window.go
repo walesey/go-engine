@@ -42,6 +42,10 @@ func (w *Window) Optimize(geometry *renderer.Geometry, transform mgl32.Mat4) {
 	w.node.Optimize(geometry, transform)
 }
 
+func (w *Window) BoundingRadius() float32 {
+	return w.node.BoundingRadius()
+}
+
 func (w *Window) SetScale(scale mgl32.Vec3) {
 	w.background.SetScale(scale)
 	w.size = scale.Vec2()

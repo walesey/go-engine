@@ -33,7 +33,7 @@ func (glRenderer *OpenglRenderer) initPostEffects() {
 func (glRenderer *OpenglRenderer) CreatePostEffect(shader *renderer.Shader) {
 
 	//Create program
-	glRenderer.CreateShader(shader)
+	glRenderer.createShader(shader)
 	gl.UseProgram(shader.Program)
 
 	//Create Texture

@@ -96,6 +96,10 @@ func (ps *ParticleSystem) Optimize(geometry *renderer.Geometry, transform mgl32.
 	ps.geometry.Optimize(geometry, transform)
 }
 
+func (ps *ParticleSystem) BoundingRadius() float32 {
+	return ps.Node.BoundingRadius()
+}
+
 func (ps *ParticleSystem) SetCameraLocation(cameraLocation mgl32.Vec3) {
 	ps.cameraPosition = cameraLocation
 }

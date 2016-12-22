@@ -69,7 +69,6 @@ func DefaultRendererParams() RendererParams {
 }
 
 func (node *Node) Draw(renderer Renderer, transform mgl32.Mat4) {
-	node.load(renderer)
 	tx := transform.Mul4(node.Transform)
 	for _, child := range node.children {
 		node.DrawChild(renderer, tx, child)
@@ -80,20 +79,6 @@ func (node *Node) Draw(renderer Renderer, transform mgl32.Mat4) {
 func (node *Node) DrawChild(renderer Renderer, transform mgl32.Mat4, child Spatial) {
 	node.setRenderStates(renderer)
 	child.Draw(renderer, transform)
-}
-
-func (node *Node) load(renderer Renderer) {
-	if node.Shader != nil && !node.Shader.Loaded {
-		renderer.CreateShader(node.Shader)
-		node.Shader.Loaded = true
-	}
-	if node.Material != nil {
-		renderer.CreateMaterial(node.Material)
-	}
-	if node.CubeMap != nil && !node.CubeMap.Loaded {
-		renderer.CreateCubeMap(node.CubeMap)
-		node.CubeMap.Loaded = true
-	}
 }
 
 func (node *Node) setRenderStates(renderer Renderer) {
@@ -223,4 +208,16 @@ func (node *Node) RelativePosition(n *Node) (mgl32.Vec3, error) {
 		}
 	}
 	return mgl32.Vec3{}, fmt.Errorf("Node not found")
+}
+
+func (node *Node) BoundingRadius() float32 {
+	var radius float32
+	for _, child := range node.children {
+		boundingRadius := child.BoundingRadius()
+		if boundingRadius > radius {
+			radius = boundingRadius
+		}
+	}
+	point := mgl32.TransformCoordinate(mgl32.Vec3{}, node.Transform)
+	return mgl32.TransformCoordinate(mgl32.Vec3{radius, 0, 0}, node.Transform).Sub(point).Len()
 }
