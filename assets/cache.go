@@ -1,6 +1,7 @@
 package assets
 
 import (
+	"fmt"
 	"image"
 	"sync"
 
@@ -8,10 +9,11 @@ import (
 )
 
 type AssetCache struct {
-	geometries map[string]*renderer.Geometry
-	materials  map[string]*renderer.Material
-	images     map[string]image.Image
-	mutex      *sync.Mutex
+	geometries  map[string]*renderer.Geometry
+	materials   map[string]*renderer.Material
+	images      map[string]image.Image
+	fileMutexes map[string]*sync.Mutex
+	mutex       *sync.Mutex
 }
 
 var globalCache *AssetCache
@@ -21,35 +23,49 @@ func init() {
 }
 
 func (ac *AssetCache) ImportObj(path string) (geometry *renderer.Geometry, material *renderer.Material, err error) {
+	ac.lockFilepath(path)
 	var okGeom, okMat bool
 	geometry, okGeom = ac.geometries[path]
 	material, okMat = ac.materials[path]
-	if !okGeom || !okMat {
+	if !okGeom && !okMat {
+		fmt.Println(path)
 		geometry, material, err = ImportObj(path)
-		if err != nil {
-			return
-		}
 		ac.mutex.Lock()
 		ac.geometries[path] = geometry
 		ac.materials[path] = material
 		ac.mutex.Unlock()
 	}
+	ac.unlockFilepath(path)
 	return
 }
 
-func (ac *AssetCache) ImportImage(path string) (image.Image, error) {
-	image, ok := ac.images[path]
+func (ac *AssetCache) ImportImage(path string) (img image.Image, err error) {
+	ac.lockFilepath(path)
+	var ok bool
+	img, ok = ac.images[path]
 	if !ok {
-		var err error
-		image, err = ImportImage(path)
-		if err != nil {
-			return image, err
-		}
+		img, err = ImportImage(path)
 		ac.mutex.Lock()
-		ac.images[path] = image
+		ac.images[path] = img
 		ac.mutex.Unlock()
 	}
-	return image, nil
+	ac.unlockFilepath(path)
+	return
+}
+
+func (ac *AssetCache) fileMutex(path string) *sync.Mutex {
+	if _, ok := ac.fileMutexes[path]; !ok {
+		ac.fileMutexes[path] = &sync.Mutex{}
+	}
+	return ac.fileMutexes[path]
+}
+
+func (ac *AssetCache) lockFilepath(path string) {
+	ac.fileMutex(path).Lock()
+}
+
+func (ac *AssetCache) unlockFilepath(path string) {
+	ac.fileMutex(path).Unlock()
 }
 
 func ImportImageCached(path string) (image.Image, error) {
@@ -62,9 +78,10 @@ func ImportObjCached(path string) (geometry *renderer.Geometry, material *render
 
 func NewAssetCache() *AssetCache {
 	return &AssetCache{
-		geometries: make(map[string]*renderer.Geometry),
-		materials:  make(map[string]*renderer.Material),
-		images:     make(map[string]image.Image),
-		mutex:      &sync.Mutex{},
+		geometries:  make(map[string]*renderer.Geometry),
+		materials:   make(map[string]*renderer.Material),
+		images:      make(map[string]image.Image),
+		fileMutexes: make(map[string]*sync.Mutex),
+		mutex:       &sync.Mutex{},
 	}
 }
