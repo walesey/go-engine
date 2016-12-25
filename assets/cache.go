@@ -1,7 +1,6 @@
 package assets
 
 import (
-	"fmt"
 	"image"
 	"sync"
 
@@ -28,7 +27,6 @@ func (ac *AssetCache) ImportObj(path string) (geometry *renderer.Geometry, mater
 	geometry, okGeom = ac.geometries[path]
 	material, okMat = ac.materials[path]
 	if !okGeom && !okMat {
-		fmt.Println(path)
 		geometry, material, err = ImportObj(path)
 		ac.mutex.Lock()
 		ac.geometries[path] = geometry
@@ -55,7 +53,9 @@ func (ac *AssetCache) ImportImage(path string) (img image.Image, err error) {
 
 func (ac *AssetCache) fileMutex(path string) *sync.Mutex {
 	if _, ok := ac.fileMutexes[path]; !ok {
+		ac.mutex.Lock()
 		ac.fileMutexes[path] = &sync.Mutex{}
+		ac.mutex.Unlock()
 	}
 	return ac.fileMutexes[path]
 }
