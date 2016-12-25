@@ -52,11 +52,11 @@ func (ac *AssetCache) ImportImage(path string) (img image.Image, err error) {
 }
 
 func (ac *AssetCache) fileMutex(path string) *sync.Mutex {
+	ac.mutex.Lock()
 	if _, ok := ac.fileMutexes[path]; !ok {
-		ac.mutex.Lock()
 		ac.fileMutexes[path] = &sync.Mutex{}
-		ac.mutex.Unlock()
 	}
+	ac.mutex.Unlock()
 	return ac.fileMutexes[path]
 }
 
