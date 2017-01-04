@@ -52,8 +52,8 @@ func (pg *ParticleGroup) Optimize(geometry *renderer.Geometry, transform mgl32.M
 	pg.Node.Optimize(geometry, transform)
 }
 
-func (pg *ParticleGroup) BoundingRadius() float32 {
-	return pg.Node.BoundingRadius()
+func (pg *ParticleGroup) BoundingRadius(transform mgl32.Mat4) float32 {
+	return pg.Node.BoundingRadius(transform)
 }
 
 func NewParticleGroup(camera *renderer.Camera, particles ...*ParticleSystem) *ParticleGroup {

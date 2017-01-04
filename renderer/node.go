@@ -47,7 +47,7 @@ func NewNode() *Node {
 		deleted:         make([]Spatial, 0, 0),
 		Translation:     mgl32.Vec3{0, 0, 0},
 		Orientation:     mgl32.QuatIdent(),
-		FrustrumCulling: true,
+		FrustrumCulling: false,
 	}
 	node.SetScale(mgl32.Vec3{1, 1, 1})
 	return node
@@ -77,6 +77,14 @@ func (node *Node) Draw(renderer Renderer, transform mgl32.Mat4) {
 }
 
 func (node *Node) DrawChild(renderer Renderer, transform mgl32.Mat4, child Spatial) {
+	if node.FrustrumCulling && !renderer.Camera().CameraContainsSphere(
+		renderer.WindowDimensions(),
+		child.BoundingRadius(transform),
+		mgl32.TransformCoordinate(mgl32.Vec3{}, transform),
+	) {
+		return
+	}
+
 	node.setRenderStates(renderer)
 	child.Draw(renderer, transform)
 }
@@ -133,6 +141,10 @@ func (node *Node) Centre() mgl32.Vec3 {
 }
 
 func (node *Node) SetParent(parent *Node) {
+	// nodes can only be added to one parent at a time
+	if node.parent != nil {
+		node.parent.Remove(node, false)
+	}
 	node.parent = parent
 }
 
@@ -147,6 +159,7 @@ func (node *Node) Remove(spatial Spatial, destroy bool) {
 			node.children[i] = node.children[len(node.children)-1]
 			node.children[len(node.children)-1] = nil
 			node.children = node.children[:len(node.children)-1]
+			child.SetParent(nil)
 			if destroy {
 				node.deleted = append(node.deleted, child)
 			}
@@ -156,6 +169,9 @@ func (node *Node) Remove(spatial Spatial, destroy bool) {
 }
 
 func (node *Node) RemoveAll(destroy bool) {
+	for _, child := range node.children {
+		child.SetParent(nil)
+	}
 	if destroy {
 		node.deleted = append(node.deleted, node.children...)
 	}
@@ -210,10 +226,11 @@ func (node *Node) RelativePosition(n *Node) (mgl32.Vec3, error) {
 	return mgl32.Vec3{}, fmt.Errorf("Node not found")
 }
 
-func (node *Node) BoundingRadius() float32 {
+func (node *Node) BoundingRadius(transform mgl32.Mat4) float32 {
+	tx := transform.Mul4(node.Transform)
 	var radius float32
 	for _, child := range node.children {
-		boundingRadius := child.BoundingRadius()
+		boundingRadius := child.BoundingRadius(tx)
 		if boundingRadius > radius {
 			radius = boundingRadius
 		}

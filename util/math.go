@@ -54,6 +54,32 @@ func RoundHalfUp(val float32) (newVal int) {
 	return (int)(Round(val, .5, 0))
 }
 
+func Min(values ...float64) float64 {
+	if len(values) == 0 {
+		return 0
+	}
+	minValue := values[0]
+	for _, value := range values {
+		if value < minValue {
+			minValue = value
+		}
+	}
+	return minValue
+}
+
+func Max(values ...float64) float64 {
+	if len(values) == 0 {
+		return 0
+	}
+	maxValue := values[0]
+	for _, value := range values {
+		if value > maxValue {
+			maxValue = value
+		}
+	}
+	return maxValue
+}
+
 //PointToPlaneDist distance from plane (a,b,c) to point
 func PointToPlaneDist(a, b, c, point mgl32.Vec3) float32 {
 	ab := b.Sub(a)

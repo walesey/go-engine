@@ -83,6 +83,10 @@ func (glRenderer *OpenglRenderer) SetCamera(camera *renderer.Camera) {
 	glRenderer.camera = camera
 }
 
+func (glRenderer *OpenglRenderer) Camera() *renderer.Camera {
+	return glRenderer.camera
+}
+
 //Start -
 func (glRenderer *OpenglRenderer) Start() {
 	if err := glfw.Init(); err != nil {

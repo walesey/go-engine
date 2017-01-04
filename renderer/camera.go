@@ -47,6 +47,19 @@ func (c *Camera) GetMouseVector(windowSize, mouse mgl32.Vec2) mgl32.Vec3 {
 	return v.Sub(c.Translation).Normalize()
 }
 
+// GetWindowVector - Returns the screen position of the given world vector
+func (c *Camera) GetWindowVector(windowSize mgl32.Vec2, point mgl32.Vec3) mgl32.Vec3 {
+	v := mgl32.Project(
+		point,
+		mgl32.LookAtV(c.Translation, c.Lookat, c.Up),
+		mgl32.Perspective(mgl32.DegToRad(c.Angle), windowSize.X()/windowSize.Y(), c.Near, c.Far),
+		0, 0, int(windowSize.X()), int(windowSize.Y()),
+	)
+
+	x, y := v.X()/v.Z(), v.Y()/v.Z()
+	return mgl32.Vec3{x, windowSize.Y() - y, 0}
+}
+
 // CameraContainsSphere - determines if a sphere in contained in the frustrum given by the camera.
 // sphere is given by point and radius
 func (c *Camera) CameraContainsSphere(windowSize mgl32.Vec2, radius float32, point mgl32.Vec3) bool {

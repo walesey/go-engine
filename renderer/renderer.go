@@ -7,6 +7,7 @@ type Renderer interface {
 	SetUpdate(callback func())
 	SetRender(callback func())
 	SetCamera(camera *Camera)
+	Camera() *Camera
 	Start()
 
 	BackGroundColor(r, g, b, a float32)
@@ -32,13 +33,13 @@ type Renderer interface {
 	RemoveLight(light *Light)
 }
 
-//A Spatial is something that can be Drawn by a Renderer
+//A Spatial is something that can be Added to scenegraph nodes
 type Spatial interface {
 	Draw(renderer Renderer, transform mgl32.Mat4)
 	Optimize(geometry *Geometry, transform mgl32.Mat4)
 	Destroy(renderer Renderer)
 	Centre() mgl32.Vec3
-	BoundingRadius() float32
+	BoundingRadius(transform mgl32.Mat4) float32
 	SetParent(parent *Node)
 }
 

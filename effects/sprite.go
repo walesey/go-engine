@@ -75,8 +75,8 @@ func (sprite *Sprite) Optimize(geometry *renderer.Geometry, transform mgl32.Mat4
 	sprite.geometry.Optimize(geometry, transform)
 }
 
-func (sprite *Sprite) BoundingRadius() float32 {
-	return sprite.Node.BoundingRadius()
+func (sprite *Sprite) BoundingRadius(transform mgl32.Mat4) float32 {
+	return sprite.Node.BoundingRadius(transform)
 }
 
 func (sprite *Sprite) SetTranslation(translation mgl32.Vec3) {

@@ -67,3 +67,13 @@ func TestSegmentCircleIntersect_noIntersection(t *testing.T) {
 	_, err := SegmentCircleIntersect(0.5, mgl32.Vec2{2, 1}, mgl32.Vec2{1, 1}, mgl32.Vec2{5, -2})
 	assert.NotNil(t, err, "SegmentCircleIntersect error should not be nil")
 }
+
+func TestMin(t *testing.T) {
+	min := Min(0.5, -3, 5.3, 4)
+	assert.EqualValues(t, min, -3, "Min should return correct min value")
+}
+
+func TestMax(t *testing.T) {
+	max := Max(0.5, -3, 5.3, 4)
+	assert.EqualValues(t, max, 5.3, "Min should return correct max value")
+}

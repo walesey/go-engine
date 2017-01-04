@@ -17,7 +17,6 @@ type Geometry struct {
 	boundingRadius float32
 	Indicies       []uint32
 	Verticies      []float32
-	parent         *Node
 }
 
 //vericies format : x,y,z,   nx,ny,nz,   u,v,  r,g,b,a
@@ -38,7 +37,7 @@ func (geometry *Geometry) Copy() *Geometry {
 }
 
 func (geometry *Geometry) Draw(renderer Renderer, transform mgl32.Mat4) {
-	if !geometry.Loaded {
+	if !geometry.Loaded || geometry.VboDirty {
 		geometry.boundingRadius = geometry.MaximalPointFromGeometry().Len()
 	}
 	renderer.DrawGeometry(geometry, transform)
@@ -53,9 +52,7 @@ func (geometry *Geometry) Centre() mgl32.Vec3 {
 	return mgl32.Vec3{0, 0, 0}
 }
 
-func (geometry *Geometry) SetParent(parent *Node) {
-	geometry.parent = parent
-}
+func (geometry *Geometry) SetParent(parent *Node) {}
 
 func (geometry *Geometry) ClearBuffers() {
 	geometry.Indicies = geometry.Indicies[:0]
@@ -112,8 +109,9 @@ func (geometry *Geometry) Optimize(destination *Geometry, transform mgl32.Mat4) 
 	geometry.updateGeometry()
 }
 
-func (geometry *Geometry) BoundingRadius() float32 {
-	return geometry.boundingRadius
+func (geometry *Geometry) BoundingRadius(transform mgl32.Mat4) float32 {
+	point := mgl32.TransformCoordinate(mgl32.Vec3{}, transform)
+	return mgl32.TransformCoordinate(mgl32.Vec3{geometry.boundingRadius, 0, 0}, transform).Sub(point).Len()
 }
 
 func (geometry *Geometry) SetUVs(uvs ...float32) {
