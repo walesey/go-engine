@@ -56,8 +56,7 @@ func (c *Camera) GetWindowVector(windowSize mgl32.Vec2, point mgl32.Vec3) mgl32.
 		0, 0, int(windowSize.X()), int(windowSize.Y()),
 	)
 
-	x, y := v.X()/v.Z(), v.Y()/v.Z()
-	return mgl32.Vec3{x, windowSize.Y() - y, 0}
+	return mgl32.Vec3{v.X(), windowSize.Y() - v.Y(), v.Z()}
 }
 
 // CameraContainsSphere - determines if a sphere in contained in the frustrum given by the camera.
