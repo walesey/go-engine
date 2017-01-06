@@ -112,13 +112,15 @@ func (ps *ParticleSystem) Update(dt float64) {
 	newSpawnCount := int(ps.life * ps.Settings.ParticleEmitRate)
 	spawnCount := newSpawnCount - previouseSpawnCount
 	if !ps.DisableSpawning {
-		for i := 0; i < spawnCount; i = i + 1 {
+		for i := 0; i < spawnCount; i++ {
 			ps.spawnParticle()
 		}
 	}
 	//update all particles:
 	for _, p := range ps.particles {
-		ps.updateParticle(p, dt)
+		if p.active {
+			ps.updateParticle(p, dt)
+		}
 	}
 	//sort particles and build geometry
 	ps.geometry.ClearBuffers()

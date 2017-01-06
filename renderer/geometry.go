@@ -37,6 +37,10 @@ func (geometry *Geometry) Copy() *Geometry {
 }
 
 func (geometry *Geometry) Draw(renderer Renderer, transform mgl32.Mat4) {
+	if len(geometry.Verticies) == 0 && len(geometry.Indicies) == 0 {
+		geometry.boundingRadius = 0
+		return
+	}
 	if !geometry.Loaded || geometry.VboDirty {
 		geometry.boundingRadius = geometry.MaximalPointFromGeometry().Len()
 	}
