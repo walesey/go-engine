@@ -5,6 +5,7 @@ import (
 	"math"
 
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/go-gl/mathgl/mgl64"
 )
 
 func Vec3LenSq(v1 mgl32.Vec3) float32 {
@@ -16,6 +17,10 @@ func Vec2LenSq(v1 mgl32.Vec2) float32 {
 }
 
 func Vec3Lerp(start, end mgl32.Vec3, amount float32) mgl32.Vec3 {
+	return start.Mul(1.0 - amount).Add(end.Mul(amount))
+}
+
+func Vec3Lerp64(start, end mgl64.Vec3, amount float64) mgl64.Vec3 {
 	return start.Mul(1.0 - amount).Add(end.Mul(amount))
 }
 

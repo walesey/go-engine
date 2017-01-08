@@ -55,6 +55,26 @@ void textures() {
 	}
 }
 
+uniform sampler2D compositeMap;
+
+vec4 roughness;
+vec4 metalness;
+vec4 metalSpecular;
+vec4 metalDiffuse;
+
+void pbrCompositeTextures() {
+	vec2 overflowTextCoord = repeatTextCoord();
+
+	vec4 composite = texture(compositeMap, overflowTextCoord);
+
+	ao = vec4(composite.r);
+	roughness = vec4(composite.g);
+	metalness = vec4(composite.b);
+
+	metalSpecular = mix(vec4(0.04), diffuse, metalness.r);
+	metalDiffuse = mix(diffuse, vec4(0), metalness.r);
+}
+
 float pow2(float x) { 
 	return x*x; 
 }
@@ -69,16 +89,6 @@ vec4 fresnelEffect(vec4 baseSpecular, vec4 normalValue) {
 	float NdV = abs(dot(normal_worldSpace, eyeDirection));
 
   return mix(baseSpecular, vec4(1.0), pow(1.0 - NdV, 5.0));
-}
-
-uniform sampler2D roughnessMap;
-
-vec4 roughness;
-
-void roughnessTexture() {
-	vec2 overflowTextCoord = repeatTextCoord();
-
-	roughness = texture(roughnessMap, overflowTextCoord);
 }
 
 uniform vec3 ambientLightValue;
@@ -157,8 +167,8 @@ vec3 indirectLight(vec4 diffuse, vec4 specular, vec4 normalValue) {
 }
 
 void main() {
-	textures();
-	roughnessTexture();
+  textures();
+	pbrCompositeTextures();
 
 	if (unlit) {
 		outputColor = diffuse;

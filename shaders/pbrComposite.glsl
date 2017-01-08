@@ -3,16 +3,16 @@
 #include "./lib/base.glsl"
 #include "./lib/worldTransform.glsl"
 #include "./lib/textures.glsl"
+#include "./lib/pbrCompositeTextures.glsl"
 #include "./lib/fresnelEffect.glsl"
-#include "./lib/roughnessTexture.glsl"
 #include "./lib/ambientLight.glsl"
 #include "./lib/pointLights.glsl"
 #include "./lib/directionalLights.glsl"
 #include "./lib/indirectLight.glsl"
 
 void main() {
-	textures();
-	roughnessTexture();
+  textures();
+	pbrCompositeTextures();
 
 	#vert
 	worldTransform();

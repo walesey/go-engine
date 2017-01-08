@@ -79,8 +79,8 @@ func (node *Node) Draw(renderer Renderer, transform mgl32.Mat4) {
 func (node *Node) DrawChild(renderer Renderer, transform mgl32.Mat4, child Spatial) {
 	if node.FrustrumCulling && !renderer.Camera().CameraContainsSphere(
 		renderer.WindowDimensions(),
-		child.BoundingRadius(transform),
-		mgl32.TransformCoordinate(mgl32.Vec3{}, transform),
+		child.BoundingRadius(),
+		mgl32.TransformCoordinate(child.Center(), transform),
 	) {
 		return
 	}
@@ -136,7 +136,7 @@ func (node *Node) cleanupDeleted(renderer Renderer) {
 	node.deleted = node.deleted[:0]
 }
 
-func (node *Node) Centre() mgl32.Vec3 {
+func (node *Node) Center() mgl32.Vec3 {
 	return node.Translation
 }
 
@@ -226,15 +226,27 @@ func (node *Node) RelativePosition(n *Node) (mgl32.Vec3, error) {
 	return mgl32.Vec3{}, fmt.Errorf("Node not found")
 }
 
-func (node *Node) BoundingRadius(transform mgl32.Mat4) float32 {
-	tx := transform.Mul4(node.Transform)
+func (node *Node) BoundingRadius() float32 {
 	var radius float32
 	for _, child := range node.children {
-		boundingRadius := child.BoundingRadius(tx)
+		boundingRadius := child.BoundingRadius()
+		if !child.Center().ApproxEqual(mgl32.Vec3{}) {
+			boundingRadius += child.Center().Len()
+		}
 		if boundingRadius > radius {
 			radius = boundingRadius
 		}
 	}
+
 	point := mgl32.TransformCoordinate(mgl32.Vec3{}, node.Transform)
 	return mgl32.TransformCoordinate(mgl32.Vec3{radius, 0, 0}, node.Transform).Sub(point).Len()
+}
+
+func (node *Node) SetFrustrumCullingRecursive(enable bool) {
+	node.FrustrumCulling = enable
+	for _, child := range node.children {
+		if childNode, ok := child.(*Node); ok {
+			childNode.SetFrustrumCullingRecursive(enable)
+		}
+	}
 }

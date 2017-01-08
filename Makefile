@@ -14,6 +14,9 @@ build: compileShaderBuilder
 	./sBuilder shaders/diffuseSpecular.glsl vert > $(SHADER_BUILD_DIR)/diffuseSpecular.vert
 	./sBuilder shaders/diffuseSpecular.glsl frag > $(SHADER_BUILD_DIR)/diffuseSpecular.frag
 
+	./sBuilder shaders/pbrComposite.glsl vert > $(SHADER_BUILD_DIR)/pbrComposite.vert
+	./sBuilder shaders/pbrComposite.glsl frag > $(SHADER_BUILD_DIR)/pbrComposite.frag
+
 compileShaderBuilder:
 	go build -o sBuilder ./shaderBuilder
 

@@ -25,8 +25,8 @@ void main() {
 	if (unlit) {
 		outputColor = diffuse;
 	} else {
-		vec4 aoDiffuse = ao * diffuse;
-		vec4 feSpecular = fresnelEffect(specular, normalValue);
+		vec4 aoDiffuse = ao * metalDiffuse;
+		vec4 feSpecular = fresnelEffect(metalSpecular, normalValue);
 		vec3 dLight = ambientLight(aoDiffuse) + pointLights(aoDiffuse, feSpecular, normalValue) + directionalLights(aoDiffuse, feSpecular, normalValue);
 		vec3 iLight = indirectLight(aoDiffuse, feSpecular, normalValue);
 		outputColor = vec4(dLight + iLight, diffuse.a);

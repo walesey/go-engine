@@ -204,6 +204,8 @@ func importMTL(filePath, fileName string) (*mtlData, error) {
 				mtl.maps["roughnessMap"], err = ImportImage(filePath + tokens[1])
 			case "map_Metalness":
 				mtl.maps["metalnessMap"], err = ImportImage(filePath + tokens[1])
+			case "map_Composite":
+				mtl.maps["compositeMap"], err = ImportImage(filePath + tokens[1])
 			}
 			if err != nil {
 				log.Printf("Error parsing mtl data %v: %v\n", dataType, err)

@@ -62,8 +62,8 @@ func (e *Editor) Start() {
 	e.gameEngine.Start(func() {
 
 		shader, err := assets.ImportShader(
-			filepath.Join(e.assetDir, "shaders/build/pbr.vert"),
-			filepath.Join(e.assetDir, "shaders/build/pbr.frag"),
+			filepath.Join(e.assetDir, "shaders/build/pbrComposite.vert"),
+			filepath.Join(e.assetDir, "shaders/build/pbrComposite.frag"),
 		)
 		if err != nil {
 			panic("error importing shader")
@@ -72,7 +72,7 @@ func (e *Editor) Start() {
 		e.gameEngine.DefaultShader(shader)
 
 		// Sky cubemap
-		skyImg, err := assets.ImportImage(filepath.Join(e.assetDir, "resources/cubemap.png"))
+		skyImg, err := assets.ImportImage(filepath.Join(e.assetDir, "TestAssets/cloudSky.jpg"))
 		if err == nil {
 			geom := renderer.CreateSkyBox()
 			geom.Transform(mgl32.Scale3D(10000, 10000, 10000))

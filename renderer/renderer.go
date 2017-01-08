@@ -38,8 +38,8 @@ type Spatial interface {
 	Draw(renderer Renderer, transform mgl32.Mat4)
 	Optimize(geometry *Geometry, transform mgl32.Mat4)
 	Destroy(renderer Renderer)
-	Centre() mgl32.Vec3
-	BoundingRadius(transform mgl32.Mat4) float32
+	Center() mgl32.Vec3
+	BoundingRadius() float32
 	SetParent(parent *Node)
 }
 

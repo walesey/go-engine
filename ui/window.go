@@ -30,8 +30,8 @@ func (w *Window) Destroy(renderer renderer.Renderer) {
 	w.node.Destroy(renderer)
 }
 
-func (w *Window) Centre() mgl32.Vec3 {
-	return w.node.Centre()
+func (w *Window) Center() mgl32.Vec3 {
+	return w.node.Center()
 }
 
 func (w *Window) SetParent(parent *renderer.Node) {
@@ -42,8 +42,8 @@ func (w *Window) Optimize(geometry *renderer.Geometry, transform mgl32.Mat4) {
 	w.node.Optimize(geometry, transform)
 }
 
-func (w *Window) BoundingRadius(transform mgl32.Mat4) float32 {
-	return w.node.BoundingRadius(transform)
+func (w *Window) BoundingRadius() float32 {
+	return w.node.BoundingRadius()
 }
 
 func (w *Window) SetScale(scale mgl32.Vec3) {

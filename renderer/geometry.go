@@ -52,7 +52,7 @@ func (geometry *Geometry) Destroy(renderer Renderer) {
 	geometry.Loaded = false
 }
 
-func (geometry *Geometry) Centre() mgl32.Vec3 {
+func (geometry *Geometry) Center() mgl32.Vec3 {
 	return mgl32.Vec3{0, 0, 0}
 }
 
@@ -113,9 +113,8 @@ func (geometry *Geometry) Optimize(destination *Geometry, transform mgl32.Mat4) 
 	geometry.updateGeometry()
 }
 
-func (geometry *Geometry) BoundingRadius(transform mgl32.Mat4) float32 {
-	point := mgl32.TransformCoordinate(mgl32.Vec3{}, transform)
-	return mgl32.TransformCoordinate(mgl32.Vec3{geometry.boundingRadius, 0, 0}, transform).Sub(point).Len()
+func (geometry *Geometry) BoundingRadius() float32 {
+	return geometry.boundingRadius
 }
 
 func (geometry *Geometry) SetUVs(uvs ...float32) {

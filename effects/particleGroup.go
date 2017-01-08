@@ -40,8 +40,8 @@ func (pg *ParticleGroup) Destroy(renderer renderer.Renderer) {
 	pg.Node.Destroy(renderer)
 }
 
-func (pg *ParticleGroup) Centre() mgl32.Vec3 {
-	return pg.Node.Centre()
+func (pg *ParticleGroup) Center() mgl32.Vec3 {
+	return pg.Node.Center()
 }
 
 func (pg *ParticleGroup) SetParent(parent *renderer.Node) {
@@ -52,8 +52,8 @@ func (pg *ParticleGroup) Optimize(geometry *renderer.Geometry, transform mgl32.M
 	pg.Node.Optimize(geometry, transform)
 }
 
-func (pg *ParticleGroup) BoundingRadius(transform mgl32.Mat4) float32 {
-	return pg.Node.BoundingRadius(transform)
+func (pg *ParticleGroup) BoundingRadius() float32 {
+	return pg.Node.BoundingRadius()
 }
 
 func NewParticleGroup(camera *renderer.Camera, particles ...*ParticleSystem) *ParticleGroup {

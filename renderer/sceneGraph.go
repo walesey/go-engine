@@ -97,7 +97,7 @@ func (sceneGraph *SceneGraph) buildBuckets(node *Node) {
 
 func (sceneGraph *SceneGraph) sortBuckets(renderer Renderer, cameraLocation mgl32.Vec3) {
 	for index, entry := range sceneGraph.transparentBucket {
-		sceneGraph.transparentBucket[index].cameraDelta = mgl32.TransformCoordinate(entry.spatial.Centre(), entry.transform).Sub(cameraLocation).Len()
+		sceneGraph.transparentBucket[index].cameraDelta = mgl32.TransformCoordinate(entry.spatial.Center(), entry.transform).Sub(cameraLocation).Len()
 	}
 	sort.Sort(sceneGraph.transparentBucket)
 }

@@ -58,12 +58,15 @@ void textures() {
 uniform sampler2D metalnessMap;
 
 vec4 metalness;
+vec4 metalSpecular;
+vec4 metalDiffuse;
 
 void metalnessTexture() {
 	vec2 overflowTextCoord = repeatTextCoord();
 
 	metalness = texture(metalnessMap, overflowTextCoord);
-	specular = mix(vec4(0.04), diffuse, metalness.r);
+	metalSpecular = mix(vec4(0.04), diffuse, metalness.r);
+	metalDiffuse = mix(diffuse, vec4(0), metalness.r);
 }
 
 uniform sampler2D roughnessMap;
@@ -175,8 +178,8 @@ void main() {
 	if (unlit) {
 		outputColor = diffuse;
 	} else {
-		vec4 aoDiffuse = ao * diffuse;
-		vec4 feSpecular = fresnelEffect(specular, normalValue);
+		vec4 aoDiffuse = ao * metalDiffuse;
+		vec4 feSpecular = fresnelEffect(metalSpecular, normalValue);
 		vec3 dLight = ambientLight(aoDiffuse) + pointLights(aoDiffuse, feSpecular, normalValue) + directionalLights(aoDiffuse, feSpecular, normalValue);
 		vec3 iLight = indirectLight(aoDiffuse, feSpecular, normalValue);
 		outputColor = vec4(dLight + iLight, diffuse.a);
