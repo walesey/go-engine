@@ -120,6 +120,31 @@ func PointLiesInsideTriangle(a, b, c, point mgl32.Vec3) bool {
 	return dot12 > 0 && dot13 > 0
 }
 
+//RayTriangleIntersect - return true if the ray formed by start and direction intersects with the triangle formed by points (a,b,c)
+func RayTriangleIntersect(a, b, c, start, direction mgl32.Vec3) (point mgl32.Vec3, ok bool) {
+	normal := a.Sub(b).Cross(a.Sub(c))
+	u := direction
+	w := start.Sub(a)
+	d := normal.Dot(u)
+	n := -normal.Dot(w)
+
+	// is parallel
+	if math.Abs(float64(d)) < 0.00000001 {
+		ok = false
+		return
+	}
+
+	// intersect param
+	s := n / d
+	if s < 0 {
+		ok = false
+		return
+	}
+	point = start.Add(u.Mul(s))
+	ok = PointLiesInsideTriangle(a, b, c, point)
+	return
+}
+
 //PointLiesInsideAABB - return true if the point lies within the rectan formed by points a and b
 func PointLiesInsideAABB(a, b, point mgl32.Vec2) bool {
 	if (point.X() > a.X() && point.X() > b.X()) || (point.X() < a.X() && point.X() < b.X()) {

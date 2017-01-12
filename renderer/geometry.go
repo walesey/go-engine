@@ -152,6 +152,31 @@ func (geometry *Geometry) MaximalPointFromGeometry() mgl32.Vec3 {
 	return mgl32.Vec3{}
 }
 
+func (geometry *Geometry) RayIntersect(start, direction mgl32.Vec3) (point mgl32.Vec3, ok bool) {
+	indicies := geometry.Indicies
+	verts := geometry.Verticies
+	var distSq float32
+	var closest *mgl32.Vec3
+	for i := 0; i < len(geometry.Indicies); i = i + 3 {
+		indexA, indexB, indexC := indicies[i], indicies[i+1], indicies[i+2]
+		a := mgl32.Vec3{verts[indexA*VertexStride], verts[indexA*VertexStride+1], verts[indexA*VertexStride+2]}
+		b := mgl32.Vec3{verts[indexB*VertexStride], verts[indexB*VertexStride+1], verts[indexB*VertexStride+2]}
+		c := mgl32.Vec3{verts[indexC*VertexStride], verts[indexC*VertexStride+1], verts[indexC*VertexStride+2]}
+		if point, intersectOk := util.RayTriangleIntersect(a, b, c, start, direction); intersectOk {
+			newDist := util.Vec3LenSq(point.Sub(start))
+			if closest == nil || newDist < distSq {
+				distSq = newDist
+				closest = &point
+			}
+		}
+	}
+	if closest != nil {
+		point = *closest
+		ok = true
+	}
+	return
+}
+
 //Primitives
 func CreateBox(width, height float32) *Geometry {
 	return CreateBoxWithOffset(width, height, -width/2, -height/2)

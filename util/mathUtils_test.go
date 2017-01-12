@@ -28,6 +28,50 @@ func TestPointToLineDist(t *testing.T) {
 	assert.EqualValues(t, 1, PointToLineDist(mgl32.Vec3{0, 0, 0}, mgl32.Vec3{1, 0, 1}, mgl32.Vec3{0, 1, 0}))
 }
 
+func TestRayTriangleIntersect(t *testing.T) {
+	_, ok := RayTriangleIntersect(mgl32.Vec3{0, 0, 0}, mgl32.Vec3{1, 0, 1}, mgl32.Vec3{0, 1, 0}, mgl32.Vec3{0.3, 0.3, 1}, mgl32.Vec3{0, 0, -1})
+	assert.True(t, ok)
+	_, ok = RayTriangleIntersect(mgl32.Vec3{0, 0, 0}, mgl32.Vec3{1, 0, 1}, mgl32.Vec3{0, 1, 0}, mgl32.Vec3{0.3, 0.3, 1}, mgl32.Vec3{1, 1, -1})
+	assert.False(t, ok)
+
+	l1 := mgl32.Vec3{2.892240, 3.859714, 2.725942}
+	l2 := mgl32.Vec3{-3.341824, 4.781777, -7.25608}
+	_, ok = RayTriangleIntersect(
+		mgl32.Vec3{-3.283049, 5.601070, -3.754745},
+		mgl32.Vec3{-3.283049, 3.906013, -5.754745},
+		mgl32.Vec3{-1.283049, 4.949342, -5.754745},
+		l1, l2.Sub(l1),
+	)
+	assert.True(t, ok)
+
+	_, ok = RayTriangleIntersect(
+		mgl32.Vec3{-10.544811, 5.601070, -3.754745},
+		mgl32.Vec3{-10.544811, 3.906013, -5.754745},
+		mgl32.Vec3{-8.544811, 5.867845, -5.754745},
+		l1, l2.Sub(l1),
+	)
+	assert.False(t, ok)
+
+	l1 = mgl32.Vec3{2.892240, 3.859714, 2.725942}
+	l2 = mgl32.Vec3{-2.373239, 5.056099, -5.450665}
+	result, ok := RayTriangleIntersect(
+		mgl32.Vec3{-3.283049, 5.601070, -3.754745},
+		mgl32.Vec3{-3.283049, 3.906013, -5.754745},
+		mgl32.Vec3{-1.283049, 5.867845, -5.754745},
+		l1, l2.Sub(l1),
+	)
+	assert.True(t, ok)
+	assert.True(t, result.ApproxEqualThreshold(l2, 0.0001), "Correct ray intersection point should be returned")
+
+	_, ok = RayTriangleIntersect(
+		mgl32.Vec3{-3.871009, 5.454870, -3.754745},
+		mgl32.Vec3{-3.068868, 3.906013, -5.754745},
+		mgl32.Vec3{-2.062161, 5.867845, -4.974771},
+		l1, l2.Sub(l1),
+	)
+	assert.False(t, ok)
+}
+
 func TestTwoSegmentIntersect_intersection(t *testing.T) {
 	intersect, err := TwoSegmentIntersect(mgl32.Vec2{0, 0}, mgl32.Vec2{2, 2}, mgl32.Vec2{-1, 1}, mgl32.Vec2{2, 1})
 	assert.Nil(t, err, "TwoSegmentIntersect error should be nil")

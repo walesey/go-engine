@@ -250,3 +250,34 @@ func (node *Node) SetFrustrumCullingRecursive(enable bool) {
 		}
 	}
 }
+
+func (node *Node) RayIntersect(start, direction mgl32.Vec3) (point mgl32.Vec3, ok bool) {
+	inverseTx := node.Transform.Inv()
+	s := mgl32.TransformCoordinate(start, inverseTx)
+	d := mgl32.TransformNormal(direction, inverseTx)
+	var distSq float32
+	var closest *mgl32.Vec3
+	for _, child := range node.children {
+		var intersect mgl32.Vec3
+		var intersectOk bool
+		if childNode, okNode := child.(*Node); okNode {
+			intersect, intersectOk = childNode.RayIntersect(s, d)
+		}
+		if childGeometry, okGeom := child.(*Geometry); okGeom {
+			intersect, intersectOk = childGeometry.RayIntersect(s, d)
+		}
+		if intersectOk {
+			newDist := util.Vec3LenSq(intersect.Sub(s))
+			if closest == nil || newDist < distSq {
+				distSq = newDist
+				closest = &intersect
+			}
+		}
+	}
+	if closest != nil {
+		point = *closest
+		ok = true
+		point = mgl32.TransformCoordinate(point, node.Transform)
+	}
+	return
+}
