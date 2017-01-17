@@ -59,32 +59,6 @@ func RoundHalfUp(val float32) (newVal int) {
 	return (int)(Round(val, .5, 0))
 }
 
-func Min(values ...float64) float64 {
-	if len(values) == 0 {
-		return 0
-	}
-	minValue := values[0]
-	for _, value := range values {
-		if value < minValue {
-			minValue = value
-		}
-	}
-	return minValue
-}
-
-func Max(values ...float64) float64 {
-	if len(values) == 0 {
-		return 0
-	}
-	maxValue := values[0]
-	for _, value := range values {
-		if value > maxValue {
-			maxValue = value
-		}
-	}
-	return maxValue
-}
-
 //PointToPlaneDist distance from plane (a,b,c) to point
 func PointToPlaneDist(a, b, c, point mgl32.Vec3) float32 {
 	ab := b.Sub(a)
@@ -207,4 +181,48 @@ func SegmentCircleIntersect(radius float32, center, start, finish mgl32.Vec2) (m
 	}
 
 	return mgl32.Vec2{}, fmt.Errorf("No intersections")
+}
+
+// Max - returns the largest value of the values provided.
+func Max(values ...float64) float64 {
+	var result float64
+	for i, value := range values {
+		if i == 0 || value > result {
+			result = value
+		}
+	}
+	return result
+}
+
+// Max - returns the largest value of the values provided.
+func MaxF32(values ...float32) float32 {
+	var result float32
+	for i, value := range values {
+		if i == 0 || value > result {
+			result = value
+		}
+	}
+	return result
+}
+
+// Min - returns the smallest value of the values provided.
+func Min(values ...float64) float64 {
+	var result float64
+	for i, value := range values {
+		if i == 0 || value < result {
+			result = value
+		}
+	}
+	return result
+}
+
+// Min - returns the smallest value of the values provided.
+func MinF32(values ...float32) float32 {
+	var result float32
+	for i, value := range values {
+		if i == 0 || value < result {
+			result = value
+		}
+	}
+	return result
 }

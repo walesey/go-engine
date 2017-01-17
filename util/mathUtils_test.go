@@ -114,7 +114,7 @@ func TestSegmentCircleIntersect_noIntersection(t *testing.T) {
 
 func TestMin(t *testing.T) {
 	min := Min(0.5, -3, 5.3, 4)
-	assert.EqualValues(t, min, -3, "Min should return correct min value")
+	assert.EqualValues(t, min, -3, "Min should return correct min float")
 }
 
 func TestMax(t *testing.T) {

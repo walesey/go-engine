@@ -79,7 +79,7 @@ func (node *Node) Draw(renderer Renderer, transform mgl32.Mat4) {
 func (node *Node) DrawChild(renderer Renderer, transform mgl32.Mat4, child Spatial) {
 	if node.FrustrumCulling && !renderer.Camera().CameraContainsSphere(
 		renderer.WindowDimensions(),
-		child.BoundingRadius(),
+		child.BoundingRadius()*util.MaxF32(node.Scale[0], node.Scale[1], node.Scale[2]),
 		mgl32.TransformCoordinate(child.Center(), transform),
 	) {
 		return
