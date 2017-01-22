@@ -48,7 +48,7 @@ func (c *Container) Render(size, offset mgl32.Vec2) mgl32.Vec2 {
 		containerSize[0] = c.getWidth(size.X()) - padding.Left - padding.Right
 	}
 	if c.height > 0 {
-		containerSize[1] = c.getHeight(size.X()) - padding.Top - padding.Bottom
+		containerSize[1] = c.getHeight(size.Y()) - padding.Top - padding.Bottom
 	}
 	var width, height, highest float32 = 0, 0, 0
 	for _, child := range c.children {
@@ -130,9 +130,9 @@ func (c *Container) UsePercentHeight(usePercent bool) {
 	c.percentHeight = usePercent
 }
 
-func (c *Container) getHeight(parentWidth float32) float32 {
+func (c *Container) getHeight(parentHeight float32) float32 {
 	if c.percentHeight {
-		return parentWidth * c.height / 100.0
+		return parentHeight * c.height / 100.0
 	}
 	return c.height
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strings"
+	"time"
 )
 
 func Base64ToBytes(base64String string) []byte {
@@ -15,4 +16,23 @@ func Base64ToBytes(base64String string) []byte {
 		return []byte{}
 	}
 	return data
+}
+
+func SetInterval(fn func(), interval time.Duration) func() {
+	ticker := time.NewTicker(interval)
+	quit := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				fn()
+			case <-quit:
+				ticker.Stop()
+				return
+			}
+		}
+	}()
+	return func() {
+		close(quit)
+	}
 }

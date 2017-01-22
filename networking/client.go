@@ -13,7 +13,7 @@ const clientPacketBufferSize = 100
 type Client struct {
 	token                string
 	conn                 *net.UDPConn
-	packets              chan Packet
+	onPacketReceived     func(packet Packet)
 	bytesSent            int64
 	bytesReceived        int64
 	bytesSentByEvent     map[string]int64
@@ -22,7 +22,6 @@ type Client struct {
 
 func NewClient() *Client {
 	return &Client{
-		packets:              make(chan Packet, clientPacketBufferSize),
 		bytesSentByEvent:     make(map[string]int64),
 		bytesReceivedByEvent: make(map[string]int64),
 	}
@@ -74,11 +73,18 @@ func (c *Client) Connect(addr string) error {
 				c.updateBytesReceived(packet.Command, int64(i-j))
 
 				c.token = packet.Token
-				c.packets <- packet
+
+				if c.onPacketReceived != nil {
+					c.onPacketReceived(packet)
+				}
 			}
 		}
 	}()
 	return nil
+}
+
+func (c *Client) PacketReceived(callback func(packet Packet)) {
+	c.onPacketReceived = callback
 }
 
 func (c *Client) WriteMessage(command string, data []byte) {
@@ -113,15 +119,6 @@ func (c *Client) WriteMessage(command string, data []byte) {
 	if err != nil {
 		fmt.Println("Error writing udp message: ", err)
 	}
-}
-
-func (c *Client) GetNextMessage() (Packet, bool) {
-	select {
-	case packet := <-c.packets:
-		return packet, true
-	default:
-	}
-	return Packet{}, false
 }
 
 func (c *Client) Close() {

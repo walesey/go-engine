@@ -1,31 +1,44 @@
 package networking
 
 import (
-	"log"
 	"time"
+
+	"github.com/walesey/go-engine/emitter"
+	"github.com/walesey/go-engine/util"
 )
 
 type Network struct {
-	client *Client
-	server *Server
-	events map[string]func(clientId string, data []byte)
+	*emitter.Emitter
+	stopInterval func()
+	client       *Client
+	server       *Server
 }
 
 func NewNetwork() *Network {
 	var network *Network
 	network = &Network{
-		events: make(map[string]func(clientId string, data []byte)),
+		Emitter: emitter.New(16),
 	}
 	return network
 }
 
 func (n *Network) StartServer(port int) {
 	n.server = NewServer()
+	n.server.ClientJoinedEvent(func(clientId string) {
+		n.Emit("newClient", clientId)
+	})
+	n.server.PacketReceived(func(packet Packet) {
+		n.Emit(packet.Command, packet)
+	})
 	n.server.Listen(port)
+	n.startWriteInterval(50 * time.Millisecond)
 }
 
 func (n *Network) ConnectClient(addr string) error {
 	n.client = NewClient()
+	n.client.PacketReceived(func(packet Packet) {
+		n.Emit(packet.Command, packet)
+	})
 	if err := n.client.Connect(addr); err != nil {
 		return err
 	}
@@ -33,32 +46,27 @@ func (n *Network) ConnectClient(addr string) error {
 	return nil
 }
 
+// Update is used when using network in a fully syncronous manner.
+// Update should not be called when using asyncronous (channel) based event handling
 func (n *Network) Update(dt float64) {
-	if n.IsClient() {
-		for packet, ok := n.client.GetNextMessage(); ok; packet, ok = n.client.GetNextMessage() {
-			n.CallEvent(packet.Command, packet.Token, packet.Data)
-		}
-	} else if n.IsServer() {
-		n.server.Update(dt)
-		for packet, ok := n.server.GetNextMessage(); ok; packet, ok = n.server.GetNextMessage() {
-			n.CallEvent(packet.Command, packet.Token, packet.Data)
-		}
-	}
+	n.FlushAll()
 }
 
-func (n *Network) CallEvent(name, clientId string, data []byte) {
-	callback, ok := n.events[name]
-	if ok {
-		// log.Printf("[NETWORK EVENT] %v clientId:%v", name, clientId)
-		callback(clientId, data)
-	} else {
-		log.Printf("[NETWORK EVENT] ERROR: Unknown event: %v clientId:%v", name, clientId)
-	}
+func (n *Network) ClientJoinedEvent(fn func(clientId string)) {
+	n.On("newClient", func(event emitter.Event) {
+		if clientId, ok := event.(string); ok {
+			fn(clientId)
+		}
+	})
 }
 
 // RegisterEvent - register an event that will be triggered on clients and server.
-func (n *Network) RegisterEvent(name string, callback func(clientId string, data []byte)) {
-	n.events[name] = callback
+func (n *Network) RegisterEvent(name string, fn func(clientId string, data []byte)) {
+	n.On(name, func(event emitter.Event) {
+		if packet, ok := event.(Packet); ok {
+			fn(packet.Token, packet.Data)
+		}
+	})
 }
 
 // TriggerEvent - Trigger an event to run on a particular client.
@@ -86,7 +94,7 @@ func (n *Network) BroadcastEvent(name string, data []byte) {
 // CallOnServerAndClient - trigger an event on the server and on all client.
 // If called on the client, this will trigger the event on the client and on the server.
 func (n *Network) TriggerOnServerAndClients(name string, data []byte) {
-	n.CallEvent(name, "", data)
+	n.Emit(name, Packet{Data: data})
 	if n.IsClient() {
 		n.client.WriteMessage(name, data)
 	}
@@ -95,21 +103,8 @@ func (n *Network) TriggerOnServerAndClients(name string, data []byte) {
 	}
 }
 
-//ClientJoinedEvent - This function is called when a new client connects to the server
-func (n *Network) ClientJoinedEvent(callback func(clientId string)) {
-	if n.server != nil {
-		n.server.ClientJoinedEvent(callback)
-	}
-}
-
 func (n *Network) ClientToken() string {
 	return n.client.token
-}
-
-func (n *Network) SetWriteBufferDuration(dur time.Duration) {
-	if n.IsServer() {
-		n.server.bufferedWriteDuration = dur
-	}
 }
 
 func (n *Network) FlushAllWriteBuffers() {
@@ -169,18 +164,35 @@ func (n *Network) IsServer() bool {
 func (n *Network) Kill() {
 	n.KillClient()
 	n.KillServer()
+	n.Close()
 }
 
 func (n *Network) KillClient() {
 	if n.client != nil {
 		n.client.Close()
 	}
+	n.stopIntervals()
 	n.client = nil
 }
 
 func (n *Network) KillServer() {
 	if n.server != nil {
 		n.server.Close()
+		n.Off("newClient")
 	}
+	n.stopIntervals()
 	n.server = nil
+}
+
+func (n *Network) startWriteInterval(bufferedWriteDuration time.Duration) {
+	n.stopIntervals()
+	if n.server != nil {
+		n.stopInterval = util.SetInterval(n.server.FlushAllWriteBuffers, bufferedWriteDuration)
+	}
+}
+
+func (n *Network) stopIntervals() {
+	if n.stopInterval != nil {
+		n.stopInterval()
+	}
 }

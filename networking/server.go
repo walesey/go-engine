@@ -9,33 +9,24 @@ import (
 	"time"
 )
 
-const serverPacketBufferSize = 1000
-const serverSessionBufferSize = 20
-const sessionTimeout = 10 * 60 // 10 minutes
+const sessionTimeout = 10 * time.Minute
 
 type Server struct {
-	conn                  *net.UDPConn
-	sessions              map[string]*Session
-	newSessions           chan *Session
-	packets               chan Packet
-	onClientJoined        func(clientId string)
-	writeTimer            time.Time
-	bufferedWriteDuration time.Duration
-	bytesSent             int64
-	bytesReceived         int64
+	conn             *net.UDPConn
+	sessions         map[string]*Session
+	onClientJoined   func(clientId string)
+	onPacketReceived func(packet Packet)
+	bytesSent        int64
+	bytesReceived    int64
 }
 
 func NewServer() *Server {
 	var server *Server
 	server = &Server{
-		sessions:    make(map[string]*Session),
-		newSessions: make(chan *Session, serverSessionBufferSize),
-		packets:     make(chan Packet, clientPacketBufferSize),
+		sessions: make(map[string]*Session),
 		onClientJoined: func(clientId string) {
 			server.WriteMessage("", clientId, []byte{})
 		},
-		writeTimer:            time.Now(),
-		bufferedWriteDuration: 50 * time.Millisecond,
 	}
 	return server
 }
@@ -85,10 +76,19 @@ func (s *Server) Listen(port int) {
 				}
 
 				if len(packet.Token) == 0 {
-					s.newSessions <- NewSession(addr)
+					newSession := NewSession(addr)
+					s.sessions[newSession.token] = newSession
+					s.onClientJoined(newSession.token)
+					s.cleanupSessions()
 				}
 
-				s.packets <- packet
+				if session, ok := s.sessions[packet.Token]; ok {
+					session.idleTimer = time.Now()
+				}
+
+				if s.onPacketReceived != nil {
+					s.onPacketReceived(packet)
+				}
 			}
 		}
 	}()
@@ -108,6 +108,17 @@ func (s *Server) WriteMessage(command, token string, data []byte) {
 	}
 }
 
+func (s *Server) cleanupSessions() {
+	// check for session timeouts
+	for token, session := range s.sessions {
+		if time.Since(session.idleTimer) > sessionTimeout {
+			fmt.Println("session timed out: ", token)
+			delete(s.sessions, token)
+		}
+		session.idleTimer = time.Now()
+	}
+}
+
 func (s *Server) BroadcastMessage(command string, data []byte) {
 	for token, _ := range s.sessions {
 		s.WriteMessage(command, token, data)
@@ -118,28 +129,8 @@ func (s *Server) ClientJoinedEvent(callback func(clientId string)) {
 	s.onClientJoined = callback
 }
 
-func (s *Server) Update(dt float64) {
-	// check for new sessions
-	select {
-	case newSession := <-s.newSessions:
-		s.sessions[newSession.token] = newSession
-		s.onClientJoined(newSession.token)
-	default:
-	}
-
-	// write all buffered messages
-	if time.Since(s.writeTimer) > s.bufferedWriteDuration {
-		s.writeTimer = time.Now()
-		s.FlushAllWriteBuffers()
-	}
-
-	// check for session timeouts
-	for token, session := range s.sessions {
-		if session.idleTime > sessionTimeout {
-			delete(s.sessions, token)
-		}
-		session.idleTime = session.idleTime + dt
-	}
+func (s *Server) PacketReceived(callback func(packet Packet)) {
+	s.onPacketReceived = callback
 }
 
 // FlushAllWriteBuffers - send all buffered messages immediately for all sessions
@@ -178,18 +169,6 @@ func (s *Server) FlushWriteBuffer(token string) {
 			session.packetBuffer.Reset()
 		}
 	}
-}
-
-func (s *Server) GetNextMessage() (Packet, bool) {
-	select {
-	case packet := <-s.packets:
-		if session, ok := s.sessions[packet.Token]; ok {
-			session.idleTime = 0
-		}
-		return packet, true
-	default:
-	}
-	return Packet{}, false
 }
 
 func (s *Server) Close() {
