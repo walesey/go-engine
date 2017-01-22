@@ -5,7 +5,7 @@ import "sync"
 type Event interface{}
 
 type EventEmitter interface {
-	On(topic string, handler func(Event)) chan Event
+	On(topic string, handlers ...func(Event)) <-chan Event
 	Off(topic string)
 	Emit(topic string, event Event)
 	Close()

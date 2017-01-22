@@ -8,18 +8,23 @@ import (
 )
 
 type Network struct {
-	*emitter.Emitter
-	stopInterval func()
+	emitter.EventEmitter
 	client       *Client
 	server       *Server
+	stopInterval func()
+	writeBuffer  chan message
+}
+
+type message struct {
+	Packet
+	broadcast bool
 }
 
 func NewNetwork() *Network {
-	var network *Network
-	network = &Network{
-		Emitter: emitter.New(16),
+	return &Network{
+		EventEmitter: emitter.New(16),
+		writeBuffer:  make(chan message, 64),
 	}
-	return network
 }
 
 func (n *Network) StartServer(port int) {
@@ -32,6 +37,7 @@ func (n *Network) StartServer(port int) {
 	})
 	n.server.Listen(port)
 	n.startWriteInterval(50 * time.Millisecond)
+	n.startMessageWriter()
 }
 
 func (n *Network) ConnectClient(addr string) error {
@@ -42,7 +48,8 @@ func (n *Network) ConnectClient(addr string) error {
 	if err := n.client.Connect(addr); err != nil {
 		return err
 	}
-	n.client.WriteMessage("", []byte{})
+	n.startMessageWriter()
+	n.writeMessage("", "", []byte{}, false)
 	return nil
 }
 
@@ -72,35 +79,20 @@ func (n *Network) RegisterEvent(name string, fn func(clientId string, data []byt
 // TriggerEvent - Trigger an event to run on a particular client.
 // If called on the client, this will trigger the event on the server.
 func (n *Network) TriggerEvent(name, clientId string, data []byte) {
-	if n.IsClient() {
-		n.client.WriteMessage(name, data)
-	}
-	if n.IsServer() {
-		n.server.WriteMessage(name, clientId, data)
-	}
+	n.writeMessage(name, clientId, data, false)
 }
 
 // BroadcastEvent - trigger an event on all clients.
 // If called on the client, this will trigger the event on the server.
 func (n *Network) BroadcastEvent(name string, data []byte) {
-	if n.IsClient() {
-		n.client.WriteMessage(name, data)
-	}
-	if n.IsServer() {
-		n.server.BroadcastMessage(name, data)
-	}
+	n.writeMessage(name, "", data, true)
 }
 
 // CallOnServerAndClient - trigger an event on the server and on all client.
 // If called on the client, this will trigger the event on the client and on the server.
 func (n *Network) TriggerOnServerAndClients(name string, data []byte) {
 	n.Emit(name, Packet{Data: data})
-	if n.IsClient() {
-		n.client.WriteMessage(name, data)
-	}
-	if n.IsServer() {
-		n.server.BroadcastMessage(name, data)
-	}
+	n.writeMessage(name, "", data, true)
 }
 
 func (n *Network) ClientToken() string {
@@ -161,38 +153,72 @@ func (n *Network) IsServer() bool {
 	return n.server != nil
 }
 
-func (n *Network) Kill() {
-	n.KillClient()
-	n.KillServer()
+func (n *Network) Close() {
+	n.killClient()
+	n.killServer()
 	n.Close()
+	close(n.writeBuffer)
 }
 
-func (n *Network) KillClient() {
+func (n *Network) killClient() {
 	if n.client != nil {
 		n.client.Close()
 	}
-	n.stopIntervals()
+	n.killInterval()
 	n.client = nil
 }
 
-func (n *Network) KillServer() {
+func (n *Network) killServer() {
 	if n.server != nil {
 		n.server.Close()
 		n.Off("newClient")
 	}
-	n.stopIntervals()
+	n.killInterval()
 	n.server = nil
 }
 
 func (n *Network) startWriteInterval(bufferedWriteDuration time.Duration) {
-	n.stopIntervals()
+	n.killInterval()
 	if n.server != nil {
 		n.stopInterval = util.SetInterval(n.server.FlushAllWriteBuffers, bufferedWriteDuration)
 	}
 }
 
-func (n *Network) stopIntervals() {
+func (n *Network) killInterval() {
 	if n.stopInterval != nil {
 		n.stopInterval()
+	}
+}
+
+// async message writing
+func (n *Network) startMessageWriter() {
+	close(n.writeBuffer)
+	n.writeBuffer = make(chan message, 64)
+	go n.messageWriter()
+}
+
+func (n *Network) messageWriter() {
+	for msg := range n.writeBuffer {
+		if n.IsClient() {
+			n.client.WriteMessage(msg.Command, msg.Data)
+		}
+		if n.IsServer() {
+			if msg.broadcast {
+				n.server.BroadcastMessage(msg.Command, msg.Data)
+			} else {
+				n.server.WriteMessage(msg.Packet)
+			}
+		}
+	}
+}
+
+func (n *Network) writeMessage(name, clientId string, data []byte, broadcast bool) {
+	n.writeBuffer <- message{
+		broadcast: broadcast,
+		Packet: Packet{
+			Token:   clientId,
+			Command: name,
+			Data:    data,
+		},
 	}
 }

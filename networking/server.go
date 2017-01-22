@@ -25,7 +25,7 @@ func NewServer() *Server {
 	server = &Server{
 		sessions: make(map[string]*Session),
 		onClientJoined: func(clientId string) {
-			server.WriteMessage("", clientId, []byte{})
+			server.WriteMessage(Packet{Token: clientId, Data: []byte{}})
 		},
 	}
 	return server
@@ -94,14 +94,8 @@ func (s *Server) Listen(port int) {
 	}()
 }
 
-func (s *Server) WriteMessage(command, token string, data []byte) {
-	if session, ok := s.sessions[token]; ok {
-		packet := Packet{
-			Token:   token,
-			Command: command,
-			Data:    data,
-		}
-
+func (s *Server) WriteMessage(packet Packet) {
+	if session, ok := s.sessions[packet.Token]; ok {
 		if _, err := session.packetBuffer.Write(Encode(packet)); err != nil {
 			fmt.Println("Error Writing udp message to session buffer: ", err)
 		}
@@ -121,7 +115,11 @@ func (s *Server) cleanupSessions() {
 
 func (s *Server) BroadcastMessage(command string, data []byte) {
 	for token, _ := range s.sessions {
-		s.WriteMessage(command, token, data)
+		s.WriteMessage(Packet{
+			Command: command,
+			Token:   token,
+			Data:    data,
+		})
 	}
 }
 
