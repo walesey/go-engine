@@ -49,3 +49,19 @@ func TestASyncronousEvents(t *testing.T) {
 	result = <-otherChan
 	assert.EqualValues(t, result, otherEvent)
 }
+
+func TestOffCleanup(t *testing.T) {
+	e := New(5)
+	helloChan := e.On("hello")
+	helloChan2 := e.On("hello")
+	assert.EqualValues(t, len(e.Listeners("hello")), 2)
+
+	e.Off("hello", helloChan)
+	assert.EqualValues(t, len(e.Listeners("hello")), 1)
+	assert.EqualValues(t, e.Listeners("hello")[0], helloChan2)
+
+	helloChan3 := e.On("hello")
+	e.Off("hello", helloChan3)
+	assert.EqualValues(t, len(e.Listeners("hello")), 1)
+	assert.EqualValues(t, e.Listeners("hello")[0], helloChan2)
+}

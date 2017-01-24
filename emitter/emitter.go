@@ -6,7 +6,8 @@ type Event interface{}
 
 type EventEmitter interface {
 	On(topic string, handlers ...func(Event)) <-chan Event
-	Off(topic string)
+	Off(topic string, channels ...<-chan Event)
+	Listeners(topic string) []<-chan Event
 	Emit(topic string, event Event)
 	Close()
 	FlushAll()
@@ -36,64 +37,88 @@ func New(channelSize int) *Emitter {
 
 // On - creates a new topic listener with optional handlers and returns the
 func (e *Emitter) On(topic string, handlers ...func(Event)) <-chan Event {
-	e.mux.Lock()
 	l := listener{
 		handlers: handlers,
 		ch:       make(chan Event, e.channelSize),
 	}
-	if topicListeners, ok := e.topics[topic]; ok {
-		e.topics[topic] = append(topicListeners, l)
+	if topicListeners, ok := e.getListeners(topic); ok {
+		e.setListeners(topic, append(topicListeners, l))
 	} else {
-		e.topics[topic] = listeners{l}
+		e.setListeners(topic, listeners{l})
 	}
-	e.mux.Unlock()
 	return l.ch
 }
 
-func (e *Emitter) Off(topic string) {
-	e.mux.Lock()
-	if topicListeners, ok := e.topics[topic]; ok {
-		for _, l := range topicListeners {
-			close(l.ch)
+func (e *Emitter) Off(topic string, channels ...<-chan Event) {
+	if topicListeners, ok := e.getListeners(topic); ok {
+		if len(channels) > 0 {
+			for _, ch := range channels {
+				for i := len(topicListeners) - 1; i >= 0; i-- {
+					if topicListeners[i].ch == ch {
+						close(topicListeners[i].ch)
+						topicListeners = append(topicListeners[:i], topicListeners[i+1:]...)
+					}
+				}
+			}
+			e.setListeners(topic, topicListeners)
+		} else {
+			for _, l := range topicListeners {
+				close(l.ch)
+			}
+			e.deleteListeners(topic)
 		}
 	}
-	delete(e.topics, topic)
-	e.mux.Unlock()
+}
+
+func (e *Emitter) Listeners(topic string) []<-chan Event {
+	if topicListeners, ok := e.getListeners(topic); ok {
+		listeners := make([]<-chan Event, len(topicListeners))
+		for i, l := range topicListeners {
+			listeners[i] = l.ch
+		}
+		return listeners
+	}
+	return []<-chan Event{}
 }
 
 // Emit - writes an event to the given topic
 func (e *Emitter) Emit(topic string, event Event) {
 	e.mux.Lock()
+	defer e.mux.Unlock()
 	if topicListeners, ok := e.topics[topic]; ok {
 		for _, l := range topicListeners {
 			l.ch <- event
 		}
 	}
-	e.mux.Unlock()
 }
 
 func (e *Emitter) Close() {
 	e.mux.Lock()
+	defer e.mux.Unlock()
 	for _, topicListeners := range e.topics {
 		for _, l := range topicListeners {
 			close(l.ch)
 		}
 	}
 	e.topics = make(map[string]listeners)
-	e.mux.Unlock()
 }
 
 // FlushAll - flushes all events from all channels and calls handlers for them
 func (e *Emitter) FlushAll() {
+	e.mux.Lock()
+	defer e.mux.Unlock()
 	for topic, _ := range e.topics {
+		e.mux.Unlock()
 		e.Flush(topic)
+		e.mux.Lock()
 	}
 }
 
 // Flush - flushes all events from the topic channels and calls handlers for them
 func (e *Emitter) Flush(topic string) {
-	if ll, ok := e.topics[topic]; ok {
-		for _, l := range ll {
+	topicListeners, ok := e.getListeners(topic)
+	if ok {
+		for _, l := range topicListeners {
 			l.flush()
 		}
 	}
@@ -111,4 +136,23 @@ Loop:
 			break Loop
 		}
 	}
+}
+
+func (e *Emitter) getListeners(topic string) (l listeners, ok bool) {
+	e.mux.Lock()
+	defer e.mux.Unlock()
+	l, ok = e.topics[topic]
+	return
+}
+
+func (e *Emitter) setListeners(topic string, l listeners) {
+	e.mux.Lock()
+	defer e.mux.Unlock()
+	e.topics[topic] = l
+}
+
+func (e *Emitter) deleteListeners(topic string) {
+	e.mux.Lock()
+	defer e.mux.Unlock()
+	delete(e.topics, topic)
 }

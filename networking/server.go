@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
+	"sync"
 	"time"
 )
 
@@ -14,6 +15,7 @@ const sessionTimeout = 10 * time.Minute
 type Server struct {
 	conn             *net.UDPConn
 	sessions         map[string]*Session
+	mux              *sync.Mutex
 	onClientJoined   func(clientId string)
 	onPacketReceived func(packet Packet)
 	bytesSent        int64
@@ -24,6 +26,7 @@ func NewServer() *Server {
 	var server *Server
 	server = &Server{
 		sessions: make(map[string]*Session),
+		mux:      &sync.Mutex{},
 		onClientJoined: func(clientId string) {
 			server.WriteMessage(Packet{Token: clientId, Data: []byte{}})
 		},
@@ -77,12 +80,12 @@ func (s *Server) Listen(port int) {
 
 				if len(packet.Token) == 0 {
 					newSession := NewSession(addr)
-					s.sessions[newSession.token] = newSession
+					s.setSession(newSession.token, newSession)
 					s.onClientJoined(newSession.token)
 					s.cleanupSessions()
 				}
 
-				if session, ok := s.sessions[packet.Token]; ok {
+				if session, ok := s.getSession(packet.Token); ok {
 					session.idleTimer = time.Now()
 				}
 
@@ -95,7 +98,7 @@ func (s *Server) Listen(port int) {
 }
 
 func (s *Server) WriteMessage(packet Packet) {
-	if session, ok := s.sessions[packet.Token]; ok {
+	if session, ok := s.getSession(packet.Token); ok {
 		if _, err := session.packetBuffer.Write(Encode(packet)); err != nil {
 			fmt.Println("Error Writing udp message to session buffer: ", err)
 		}
@@ -103,6 +106,8 @@ func (s *Server) WriteMessage(packet Packet) {
 }
 
 func (s *Server) cleanupSessions() {
+	s.mux.Lock()
+	defer s.mux.Unlock()
 	// check for session timeouts
 	for token, session := range s.sessions {
 		if time.Since(session.idleTimer) > sessionTimeout {
@@ -114,12 +119,16 @@ func (s *Server) cleanupSessions() {
 }
 
 func (s *Server) BroadcastMessage(command string, data []byte) {
-	for token, _ := range s.sessions {
+	s.mux.Lock()
+	defer s.mux.Unlock()
+	for token := range s.sessions {
+		s.mux.Unlock()
 		s.WriteMessage(Packet{
 			Command: command,
 			Token:   token,
 			Data:    data,
 		})
+		s.mux.Lock()
 	}
 }
 
@@ -133,14 +142,18 @@ func (s *Server) PacketReceived(callback func(packet Packet)) {
 
 // FlushAllWriteBuffers - send all buffered messages immediately for all sessions
 func (s *Server) FlushAllWriteBuffers() {
+	s.mux.Lock()
+	defer s.mux.Unlock()
 	for token := range s.sessions {
+		s.mux.Unlock()
 		s.FlushWriteBuffer(token)
+		s.mux.Lock()
 	}
 }
 
 // FlushWriteBuffer - send all buffered messages immediately
 func (s *Server) FlushWriteBuffer(token string) {
-	if session, ok := s.sessions[token]; ok {
+	if session, ok := s.getSession(token); ok {
 		data := session.packetBuffer.Bytes()
 		if len(data) > 0 {
 			var gzipBuf bytes.Buffer
@@ -173,4 +186,23 @@ func (s *Server) Close() {
 	s.FlushAllWriteBuffers()
 	s.conn.Close()
 	s.conn = nil
+}
+
+func (s *Server) getSession(token string) (session *Session, ok bool) {
+	s.mux.Lock()
+	defer s.mux.Unlock()
+	session, ok = s.sessions[token]
+	return
+}
+
+func (s *Server) setSession(token string, session *Session) {
+	s.mux.Lock()
+	defer s.mux.Unlock()
+	s.sessions[token] = session
+}
+
+func (s *Server) deleteSession(token string) {
+	s.mux.Lock()
+	defer s.mux.Unlock()
+	delete(s.sessions, token)
 }
