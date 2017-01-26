@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image/color"
 	"math"
 	"os"
@@ -34,6 +35,13 @@ func main() {
 	gameEngine.InitFpsDial()
 
 	gameEngine.Start(func() {
+
+		cellShader, err := assets.ImportShader("shaders/build/postEffects/cell.vert", "shaders/build/postEffects/cell.frag")
+		if err != nil {
+			fmt.Println("error importing cell shader", err)
+		} else {
+			glRenderer.CreatePostEffect(cellShader)
+		}
 
 		shader, err := assets.ImportShader("shaders/build/pbr.vert", "shaders/build/pbr.frag")
 		if err != nil {

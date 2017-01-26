@@ -16,6 +16,11 @@ build: compileShaderBuilder
 
 	./sBuilder shaders/pbrComposite.glsl vert > $(SHADER_BUILD_DIR)/pbrComposite.vert
 	./sBuilder shaders/pbrComposite.glsl frag > $(SHADER_BUILD_DIR)/pbrComposite.frag
+	
+	mkdir -p $(SHADER_BUILD_DIR)/postEffects
+
+	./sBuilder shaders/postEffects/cell.glsl vert > $(SHADER_BUILD_DIR)/postEffects/cell.vert
+	./sBuilder shaders/postEffects/cell.glsl frag > $(SHADER_BUILD_DIR)/postEffects/cell.frag
 
 compileShaderBuilder:
 	go build -o sBuilder ./shaderBuilder

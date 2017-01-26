@@ -1,7 +1,7 @@
 package opengl
 
 import (
-	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/go-gl/gl/v4.3-core/gl"
 	"github.com/walesey/go-engine/renderer"
 )
 
@@ -16,17 +16,18 @@ type postEffect struct {
 //Set up the frame buffer for rendering each post effect filter pass
 func (glRenderer *OpenglRenderer) initPostEffects() {
 	//post effects quad
-	verts := []float32{
-		-1, -1, 0, 0,
-		1, -1, 1, 0,
-		-1, 1, 0, 1,
-		1, 1, 1, 1,
+	quadVertices := []float32{
+		// Positions  // Texture Coords
+		-1, 1, 0, 0, 1,
+		-1, -1, 0, 0, 0,
+		1, 1, 0, 1, 1,
+		1, -1, 0, 1, 0,
 	}
+
 	var vbo uint32
 	gl.GenBuffers(1, &vbo)
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, len(verts)*4, gl.Ptr(verts), gl.STATIC_DRAW)
-	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
+	gl.BufferData(gl.ARRAY_BUFFER, len(quadVertices)*4, gl.Ptr(quadVertices), gl.STATIC_DRAW)
 	glRenderer.postEffectVbo = vbo
 }
 
@@ -38,8 +39,8 @@ func (glRenderer *OpenglRenderer) CreatePostEffect(shader *renderer.Shader) {
 
 	//Create Texture
 	var fbo_texture uint32
-	gl.ActiveTexture(gl.TEXTURE0)
 	gl.GenTextures(1, &fbo_texture)
+	gl.ActiveTexture(gl.TEXTURE0)
 	gl.BindTexture(gl.TEXTURE_2D, fbo_texture)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
@@ -60,6 +61,7 @@ func (glRenderer *OpenglRenderer) CreatePostEffect(shader *renderer.Shader) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fbo_texture, 0)
 	gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, dbo)
+	gl.BindRenderbuffer(gl.FRAMEBUFFER, 0)
 
 	//add new postEffect to the queue
 	newPe := postEffect{
@@ -90,16 +92,17 @@ func (glRenderer *OpenglRenderer) renderPostEffect(pe postEffect) {
 	gl.BindTexture(gl.TEXTURE_2D, pe.textureId)
 	gl.Disable(gl.CULL_FACE)
 	gl.BindBuffer(gl.ARRAY_BUFFER, glRenderer.postEffectVbo)
+	pe.shader.Uniforms["diffuseMap"] = int32(0)
 
 	setupUniforms(pe.shader)
 
 	vertAttrib := uint32(gl.GetAttribLocation(pe.program, gl.Str("vert\x00")))
 	gl.EnableVertexAttribArray(vertAttrib)
-	gl.VertexAttribPointer(vertAttrib, 2, gl.FLOAT, false, 4*4, gl.PtrOffset(0))
-	texCoordAttrib := uint32(gl.GetAttribLocation(pe.program, gl.Str("vertTexCoord\x00")))
+	gl.VertexAttribPointer(vertAttrib, 3, gl.FLOAT, false, 5*4, gl.PtrOffset(0))
+
+	texCoordAttrib := uint32(gl.GetAttribLocation(pe.program, gl.Str("texCoord\x00")))
 	gl.EnableVertexAttribArray(texCoordAttrib)
-	gl.VertexAttribPointer(texCoordAttrib, 2, gl.FLOAT, false, 4*4, gl.PtrOffset(2*4))
+	gl.VertexAttribPointer(texCoordAttrib, 2, gl.FLOAT, false, 5*4, gl.PtrOffset(3*4))
 
 	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
-	gl.DisableVertexAttribArray(texCoordAttrib)
 }

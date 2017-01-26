@@ -8,7 +8,7 @@ import (
 	"runtime"
 
 	"github.com/disintegration/imaging"
-	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/go-gl/gl/v4.3-core/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/renderer"
@@ -96,7 +96,7 @@ func (glRenderer *OpenglRenderer) Start() {
 
 	glfw.WindowHint(glfw.Resizable, glfw.False)
 	glfw.WindowHint(glfw.ContextVersionMajor, 4)
-	glfw.WindowHint(glfw.ContextVersionMinor, 1)
+	glfw.WindowHint(glfw.ContextVersionMinor, 3)
 	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
 	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
 
@@ -170,6 +170,8 @@ func (glRenderer *OpenglRenderer) mainLoop() {
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 		glRenderer.onRender()
 		//Render Post effects
+		glRenderer.UseRendererParams(renderer.DefaultRendererParams())
+		glRenderer.UseMaterial(nil)
 		for i := 0; i < len(glRenderer.postEffects)-1; i = i + 1 {
 			gl.BindFramebuffer(gl.FRAMEBUFFER, glRenderer.postEffects[i+1].fboId)
 			gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
@@ -259,7 +261,6 @@ func (glRenderer *OpenglRenderer) enableMaterial() {
 			glRenderer.activeShader.Uniforms[tex.TextureName] = int32(i)
 			gl.ActiveTexture(textureUnit)
 			gl.BindTexture(gl.TEXTURE_2D, tex.TextureId)
-
 		}
 	}
 }
