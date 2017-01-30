@@ -170,8 +170,6 @@ func (glRenderer *OpenglRenderer) mainLoop() {
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 		glRenderer.onRender()
 		//Render Post effects
-		glRenderer.UseRendererParams(renderer.DefaultRendererParams())
-		glRenderer.UseMaterial(nil)
 		for i := 0; i < len(glRenderer.postEffects)-1; i = i + 1 {
 			gl.BindFramebuffer(gl.FRAMEBUFFER, glRenderer.postEffects[i+1].fboId)
 			gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
@@ -395,7 +393,8 @@ func (glRenderer *OpenglRenderer) createShader(shader *renderer.Shader) {
 	shader.Program = program
 	shader.Loaded = true
 
-	gl.UseProgram(program)
+	glRenderer.UseShader(shader)
+	glRenderer.enableShader()
 	gl.BindFragDataLocation(program, 0, gl.Str(fmt.Sprintf("%v\x00", shader.FragDataLocation)))
 }
 

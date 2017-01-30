@@ -36,11 +36,11 @@ func main() {
 
 	gameEngine.Start(func() {
 
-		cellShader, err := assets.ImportShader("shaders/build/postEffects/cell.vert", "shaders/build/postEffects/cell.frag")
+		glowShader, err := assets.ImportShader("shaders/build/postEffects/glow.vert", "shaders/build/postEffects/glow.frag")
 		if err != nil {
-			fmt.Println("error importing cell shader", err)
+			fmt.Println("error importing glow shader", err)
 		} else {
-			glRenderer.CreatePostEffect(cellShader)
+			glRenderer.CreatePostEffect(glowShader)
 		}
 
 		shader, err := assets.ImportShader("shaders/build/pbr.vert", "shaders/build/pbr.frag")

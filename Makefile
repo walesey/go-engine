@@ -21,6 +21,9 @@ build: compileShaderBuilder
 
 	./sBuilder shaders/postEffects/cell.glsl vert > $(SHADER_BUILD_DIR)/postEffects/cell.vert
 	./sBuilder shaders/postEffects/cell.glsl frag > $(SHADER_BUILD_DIR)/postEffects/cell.frag
+	
+	./sBuilder shaders/postEffects/glow.glsl vert > $(SHADER_BUILD_DIR)/postEffects/glow.vert
+	./sBuilder shaders/postEffects/glow.glsl frag > $(SHADER_BUILD_DIR)/postEffects/glow.frag
 
 compileShaderBuilder:
 	go build -o sBuilder ./shaderBuilder
