@@ -35,7 +35,14 @@ func main() {
 	gameEngine.InitFpsDial()
 
 	gameEngine.Start(func() {
+		// Import the main shader
+		shader, err := assets.ImportShader("shaders/build/pbr.vert", "shaders/build/pbr.frag")
+		if err != nil {
+			panic("error importing shader")
+		}
+		gameEngine.DefaultShader(shader)
 
+		// Import a glow post effect
 		glowShader, err := assets.ImportShader("shaders/build/postEffects/glow.vert", "shaders/build/postEffects/glow.frag")
 		if err != nil {
 			fmt.Println("error importing glow shader", err)
@@ -43,12 +50,10 @@ func main() {
 			glRenderer.CreatePostEffect(glowShader)
 		}
 
-		shader, err := assets.ImportShader("shaders/build/pbr.vert", "shaders/build/pbr.frag")
-		if err != nil {
-			panic("error importing shader")
-		}
-		gameEngine.DefaultShader(shader)
+		// enable anti aliasing with 4 samples
+		glRenderer.AntiAliasing(4)
 
+		// fetch assets from the server and then load the scene
 		fetchAssets(gameEngine, func() {
 			setupScene(gameEngine, shader)
 		})

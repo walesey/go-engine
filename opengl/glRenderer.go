@@ -87,6 +87,11 @@ func (glRenderer *OpenglRenderer) Camera() *renderer.Camera {
 	return glRenderer.camera
 }
 
+func (glRenderer *OpenglRenderer) AntiAliasing(samples int) {
+	glfw.WindowHint(glfw.Samples, samples)
+	gl.Enable(gl.MULTISAMPLE)
+}
+
 //Start -
 func (glRenderer *OpenglRenderer) Start() {
 	if err := glfw.Init(); err != nil {
