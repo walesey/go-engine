@@ -1,7 +1,9 @@
 package main
 
 import (
+	"go/build"
 	"image/color"
+	"os"
 	"runtime"
 
 	"github.com/go-gl/mathgl/mgl32"
@@ -19,6 +21,9 @@ func init() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	//Set default glfw controller
 	controller.SetDefaultConstructor(glfwController.NewActionMap)
+	// set working dir to access assets
+	p, _ := build.Import("github.com/walesey/go-engine", "", build.FindOnly)
+	os.Chdir(p.Dir)
 }
 
 //

@@ -1,7 +1,9 @@
 package main
 
 import (
+	"go/build"
 	"image/color"
+	"os"
 	"runtime"
 	"time"
 
@@ -64,6 +66,9 @@ func init() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	//Set default glfw controller
 	controller.SetDefaultConstructor(glfwController.NewActionMap)
+	// set working dir to access assets
+	p, _ := build.Import("github.com/walesey/go-engine", "", build.FindOnly)
+	os.Chdir(p.Dir)
 }
 
 func main() {
