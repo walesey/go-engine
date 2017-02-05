@@ -156,9 +156,20 @@ vec3 indirectLight(vec4 diffuse, vec4 specular, vec4 normalValue) {
 	return (diffuse.rgb * diffuseValue) + (specular.rgb * specularValue);
 }
 
+uniform sampler2D glowMap;
+
+out vec4 brightColor;
+
+void glowOutput() {
+	vec2 overflowTextCoord = repeatTextCoord();
+
+	brightColor = fragColor * texture(glowMap, overflowTextCoord);
+}
+
 void main() {
 	textures();
 	roughnessTexture();
+	glowOutput();
 
 	if (unlit) {
 		outputColor = diffuse;

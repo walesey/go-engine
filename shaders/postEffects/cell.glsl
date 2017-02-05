@@ -7,7 +7,7 @@ out vec2 fragTexCoord;
 #endvert
 
 #frag
-uniform sampler2D diffuseMap;
+uniform sampler2D tex0;
 in vec2 fragTexCoord;
 out vec4 outputColor;
 
@@ -31,7 +31,7 @@ void main() {
 
   #frag
 	vec4 finalColor = vec4(0,0,0,1);
-	vec4 source = texture(diffuseMap, fragTexCoord);
+	vec4 source = texture(tex0, fragTexCoord);
 	finalColor = vec4( cell(source.r), cell(source.g), cell(source.b), cell(source.a) );
 	outputColor = finalColor; 
   #endfrag

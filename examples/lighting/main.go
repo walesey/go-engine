@@ -44,6 +44,7 @@ func main() {
 		if err != nil {
 			panic("error importing shader")
 		}
+		shader.FragDataLocations = []string{"outputColor", "brightColor"}
 		gameEngine.DefaultShader(shader)
 
 		// Import a glow post effect
@@ -51,6 +52,7 @@ func main() {
 		if err != nil {
 			fmt.Println("error importing glow shader", err)
 		} else {
+			glowShader.InputBuffers = 2
 			glRenderer.CreatePostEffect(glowShader)
 		}
 
@@ -215,7 +217,7 @@ func fireParticles() *effects.ParticleSystem {
 		MinRotation:      3.0,
 		MaxRotation:      3.6,
 	})
-	fire.Node.Material = renderer.NewMaterial(renderer.NewTexture("diffuseMap", img, false))
+	fire.Node.Material = renderer.NewMaterial(renderer.NewTexture("glowMap", img, false))
 	return fire
 }
 
@@ -244,6 +246,6 @@ func sparkParticles() *effects.ParticleSystem {
 			p.Orientation = mgl32.QuatBetweenVectors(mgl32.Vec3{1, 0, 0}, p.Velocity)
 		},
 	})
-	smoke.Node.Material = renderer.NewMaterial(renderer.NewTexture("diffuseMap", img, false))
+	smoke.Node.Material = renderer.NewMaterial(renderer.NewTexture("glowMap", img, false))
 	return smoke
 }

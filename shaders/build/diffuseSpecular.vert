@@ -55,9 +55,12 @@ float pow3(float x) {
 
 void roughnessTexture() {}
 
+void glowOutput() {}
+
 void main() {
 	textures();
 	roughnessTexture();
+	glowOutput();
 
 	worldTransform();
 	gl_Position = projection * camera * model * vec4(vert, 1);

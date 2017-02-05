@@ -7,7 +7,8 @@ out vec2 fragTexCoord;
 #endvert
 
 #frag
-uniform sampler2D diffuseMap;
+uniform sampler2D tex0;
+uniform sampler2D tex1;
 in vec2 fragTexCoord;
 out vec4 outputColor;
 
@@ -21,15 +22,16 @@ void main() {
   #endvert
 
   #frag
-  vec2 tex_offset = 1.0 / textureSize(diffuseMap, 0);
-  vec3 result = texture(diffuseMap, fragTexCoord).rgb * weight[0];
-  for (int i = 1; i < 5.; ++i) {
-    result += texture(diffuseMap, fragTexCoord + vec2(tex_offset.x * i, 0.0)).rgb * weight[i];
-    result += texture(diffuseMap, fragTexCoord - vec2(tex_offset.x * i, 0.0)).rgb * weight[i];
+  vec2 tex_offset = 1.0 / textureSize(tex0, 0);
+  vec3 result = texture(tex1, fragTexCoord).rgb;
+  result += texture(tex0, fragTexCoord).rgb * weight[0];
+  for (int i = 1; i < 5; ++i) {
+    result += texture(tex0, fragTexCoord + vec2(tex_offset.x * i, 0.0)).rgb * weight[i];
+    result += texture(tex0, fragTexCoord - vec2(tex_offset.x * i, 0.0)).rgb * weight[i];
   }
   for (int i = 1; i < 5; ++i) {
-    result += texture(diffuseMap, fragTexCoord + vec2(0.0, tex_offset.y * i)).rgb * weight[i];
-    result += texture(diffuseMap, fragTexCoord - vec2(0.0, tex_offset.y * i)).rgb * weight[i];
+    result += texture(tex0, fragTexCoord + vec2(0.0, tex_offset.y * i)).rgb * weight[i];
+    result += texture(tex0, fragTexCoord - vec2(0.0, tex_offset.y * i)).rgb * weight[i];
   }
   outputColor = vec4(result, 1.0);
   #endfrag

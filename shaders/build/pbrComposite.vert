@@ -55,9 +55,12 @@ float pow3(float x) {
 	return x*x*x; 
 }
 
+void glowOutput() {}
+
 void main() {
   textures();
 	pbrCompositeTextures();
+	glowOutput();
 
 	worldTransform();
 	gl_Position = projection * camera * model * vec4(vert, 1);

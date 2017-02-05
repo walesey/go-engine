@@ -10,11 +10,13 @@
 #include "./lib/pointLights.glsl"
 #include "./lib/directionalLights.glsl"
 #include "./lib/indirectLight.glsl"
+#include "./lib/glowOutput.glsl"
 
 void main() {
 	textures();
 	metalnessTexture();
 	roughnessTexture();
+	glowOutput();
 
 	#vert
 	worldTransform();

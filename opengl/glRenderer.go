@@ -38,6 +38,8 @@ type OpenglRenderer struct {
 	shader, activeShader     *renderer.Shader
 	cubeMap, activeCubeMap   *renderer.CubeMap
 
+	defaultTextureId uint32
+
 	transparency   renderer.Transparency
 	rendererParams renderer.RendererParams
 
@@ -145,6 +147,14 @@ func (glRenderer *OpenglRenderer) Start() {
 
 	glRenderer.onInit()
 
+	// load default texture (1 transparent pixel)
+	defaultImg := &image.RGBA{
+		Pix:    []uint8{0, 0, 0, 0},
+		Stride: 4,
+		Rect:   image.Rectangle{Min: image.Point{0, 0}, Max: image.Point{1, 1}},
+	}
+	glRenderer.defaultTextureId = glRenderer.loadTexture(defaultImg, gl.TEXTURE0, false)
+
 	window.SetRefreshCallback(func(w *glfw.Window) {
 		glRenderer.mainLoop()
 		window.SwapBuffers()
@@ -165,18 +175,19 @@ func (glRenderer *OpenglRenderer) mainLoop() {
 	//set defaults
 	glRenderer.UseRendererParams(renderer.DefaultRendererParams())
 	glRenderer.UseMaterial(nil)
+	glRenderer.enableMaterial()
 
 	if len(glRenderer.postEffects) == 0 {
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 		glRenderer.onRender()
 	} else {
 		//Render to the first post effect buffer
-		gl.BindFramebuffer(gl.FRAMEBUFFER, glRenderer.postEffects[0].fboId)
+		glRenderer.postEffects[0].Bind()
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 		glRenderer.onRender()
 		//Render Post effects
 		for i := 0; i < len(glRenderer.postEffects)-1; i = i + 1 {
-			gl.BindFramebuffer(gl.FRAMEBUFFER, glRenderer.postEffects[i+1].fboId)
+			glRenderer.postEffects[i+1].Bind()
 			gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 			glRenderer.renderPostEffect(glRenderer.postEffects[i])
 		}
@@ -258,11 +269,16 @@ func (glRenderer *OpenglRenderer) enableMaterial() {
 	// setup material
 	if glRenderer.activeShader != nil && glRenderer.activeMaterial != nil {
 		glRenderer.createMaterial(glRenderer.activeMaterial)
-		textures := glRenderer.activeMaterial.Textures
-		for i, tex := range textures {
-			textureUnit := gl.TEXTURE0 + uint32(i)
-			glRenderer.activeShader.Uniforms[tex.TextureName] = int32(i)
-			gl.ActiveTexture(textureUnit)
+		// // clear textures
+		for _, i := range glRenderer.activeShader.TextureUnits {
+			textureUnit := i + gl.TEXTURE0
+			gl.ActiveTexture(uint32(textureUnit))
+			gl.BindTexture(gl.TEXTURE_2D, glRenderer.defaultTextureId)
+		}
+		// set textures
+		for _, tex := range glRenderer.activeMaterial.Textures {
+			textureUnit := glRenderer.activeShader.AddTexture(tex) + gl.TEXTURE0
+			gl.ActiveTexture(uint32(textureUnit))
 			gl.BindTexture(gl.TEXTURE_2D, tex.TextureId)
 		}
 	}
@@ -323,10 +339,10 @@ func (glRenderer *OpenglRenderer) DestroyGeometry(geometry *renderer.Geometry) {
 
 // CreateMaterial load material
 func (glRenderer *OpenglRenderer) createMaterial(material *renderer.Material) {
-	for i, tex := range material.Textures {
+	for _, tex := range material.Textures {
 		if !tex.Loaded {
-			textureUnit := gl.TEXTURE0 + uint32(i)
-			tex.TextureId = glRenderer.loadTexture(tex.Img, textureUnit, tex.Lod)
+			textureUnit := gl.TEXTURE0 // + uint32(i)
+			tex.TextureId = glRenderer.loadTexture(tex.Img, uint32(textureUnit), tex.Lod)
 			tex.Loaded = true
 		}
 	}
@@ -398,9 +414,9 @@ func (glRenderer *OpenglRenderer) createShader(shader *renderer.Shader) {
 	shader.Program = program
 	shader.Loaded = true
 
-	glRenderer.UseShader(shader)
-	glRenderer.enableShader()
-	gl.BindFragDataLocation(program, 0, gl.Str(fmt.Sprintf("%v\x00", shader.FragDataLocation)))
+	for i, fragDataLocation := range shader.FragDataLocations {
+		gl.BindFragDataLocation(program, uint32(i), gl.Str(fmt.Sprintf("%v\x00", fragDataLocation)))
+	}
 }
 
 func (glRenderer *OpenglRenderer) loadTexture(img image.Image, textureUnit uint32, lod bool) uint32 {
