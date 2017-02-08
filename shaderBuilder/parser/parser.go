@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strconv"
 )
 
 type Parser struct {
@@ -85,6 +86,8 @@ func (p *Parser) parseHash() {
 		p.parseHashEndFrag()
 	case ENDGEO:
 		p.parseHashEndGeo()
+	case LOOKUP:
+		p.parseHashLookup()
 	default:
 		p.write(literal)
 		p.write(p.literal)
@@ -166,18 +169,69 @@ func (p *Parser) parseHashEndGeo() {
 	p.geo = false
 }
 
+func (p *Parser) parseHashLookup() {
+	p.next()
+	p.expect(WHITESPACE)
+	if p.token != NUMBER {
+		p.error("HashLookup: missing size param")
+		return
+	}
+
+	lookupSize, err := strconv.Atoi(p.literal)
+	if err != nil {
+		p.error(err.Error())
+	}
+	p.next()
+
+	p.expect(WHITESPACE)
+	if p.token != IDENTIFIER {
+		p.error("HashLookup: missing identifier param")
+		return
+	}
+	p.next()
+
+	p.expect(WHITESPACE)
+	exp := p.parseExpression()
+
+	p.write(`float lookupTable[`)
+	p.write(strconv.Itoa(lookupSize))
+	p.write(`] = float[] (`)
+	for i := 0; i < lookupSize; i++ {
+		result := exp.Evaluate(Variable{Name: "i", Value: float64(i)})
+		p.write(strconv.FormatFloat(result, 'f', -1, 64))
+		if i < lookupSize-1 {
+			p.write(", ")
+		}
+	}
+	p.write(`);`)
+}
+
 func (p *Parser) parseString() {
 	p.write(`"`)
 	p.write(p.literal)
 	p.write(`"`)
 }
 
+func (p *Parser) nextNoWhitespace() {
+	p.next()
+	for p.token == WHITESPACE {
+		p.next()
+	}
+}
+
 func (p *Parser) next() {
 	p.token, p.literal = p.scan()
 }
 
+func (p *Parser) expect(t Token) {
+	if p.token != t {
+		p.unexpectedError()
+	}
+	p.next()
+}
+
 func (p *Parser) unexpectedError() {
-	p.error(fmt.Sprint("Unexpected '", p.literal))
+	p.error(fmt.Sprint("Unexpected ", p.literal))
 }
 
 func (p *Parser) error(msg string) {

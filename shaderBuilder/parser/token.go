@@ -9,9 +9,18 @@ const (
 	WHITESPACE
 	IDENTIFIER
 	STRING
+	NUMBER
 
-	HASH    //#
-	UNKNOWN // eg. '{', '}', '+', ...
+	LEFT_PARENTHESIS  // (
+	RIGHT_PARENTHESIS // )
+
+	HASH      // #
+	PLUS      // +
+	MINUS     // -
+	MULTIPLY  // *
+	SLASH     // /
+	REMAINDER // %
+	UNKNOWN
 
 	// keywords
 	INCLUDE
@@ -21,6 +30,7 @@ const (
 	ENDVERT
 	ENDFRAG
 	ENDGEO
+	LOOKUP
 )
 
 func checkKeyword(literal string) Token {
@@ -39,6 +49,8 @@ func checkKeyword(literal string) Token {
 		return ENDFRAG
 	case "endgeo":
 		return ENDGEO
+	case "lookup":
+		return LOOKUP
 	}
 	return IDENTIFIER
 }

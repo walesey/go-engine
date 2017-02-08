@@ -13,13 +13,30 @@ func (p *Parser) scan() (tkn Token, literal string) {
 	} else if isLetter(p.chr) {
 		tkn, literal = p.scanIdentifier()
 		return
+	} else if isNumeric(p.chr) {
+		tkn, literal = NUMBER, p.scanNumber()
+		return
 	}
 
 	switch p.chr {
 	case eof:
 		tkn, literal = EOF, ""
+	case '(':
+		tkn, literal = LEFT_PARENTHESIS, string(p.chr)
+	case ')':
+		tkn, literal = RIGHT_PARENTHESIS, string(p.chr)
 	case '#':
 		tkn, literal = HASH, string(p.chr)
+	case '+':
+		tkn, literal = PLUS, string(p.chr)
+	case '-':
+		tkn, literal = MINUS, string(p.chr)
+	case '*':
+		tkn, literal = MULTIPLY, string(p.chr)
+	case '/':
+		tkn, literal = SLASH, string(p.chr)
+	case '%':
+		tkn, literal = REMAINDER, string(p.chr)
 	case '"':
 		tkn, literal = STRING, p.scanString()
 	default:
@@ -52,6 +69,10 @@ func isLetter(ch rune) bool {
 
 func isDigit(ch rune) bool {
 	return '0' <= ch && ch <= '9'
+}
+
+func isNumeric(ch rune) bool {
+	return isDigit(ch) || ch == '.'
 }
 
 func isIdentifierRune(ch rune) bool {
@@ -98,6 +119,24 @@ func (p *Parser) scanIdentifier() (tkn Token, literal string) {
 	tkn = checkKeyword(literal)
 
 	return
+}
+
+func (p *Parser) scanNumber() (literal string) {
+	var buf bytes.Buffer
+	buf.WriteRune(p.chr)
+
+	for {
+		if p.read(); p.chr == eof {
+			break
+		} else if !isNumeric(p.chr) {
+			p.unread()
+			break
+		} else {
+			buf.WriteRune(p.chr)
+		}
+	}
+
+	return buf.String()
 }
 
 func (p *Parser) scanString() string {
