@@ -20,6 +20,7 @@ const (
 	MULTIPLY  // *
 	SLASH     // /
 	REMAINDER // %
+	POWER     // ^
 	UNKNOWN
 
 	// keywords

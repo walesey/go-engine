@@ -72,31 +72,55 @@ func (p *Parser) parseGroupExpression() Expression {
 	return exp
 }
 
-func (p *Parser) parseIdentifier() Expression {
+func (p *Parser) parseLiteralExpression() Expression {
 	left := p.parseGroupExpression()
 
-	if p.token == IDENTIFIER {
-		left = Identifier{Name: p.literal}
+	tkn := PLUS
+	if p.token == PLUS || p.token == MINUS {
+		tkn = p.token
 		p.nextNoWhitespace()
+	}
+
+	if p.token == NUMBER || p.token == IDENTIFIER {
+		var right Expression
+		if p.token == NUMBER {
+			value, _ := strconv.ParseFloat(p.literal, 64)
+			right = Literal{Value: value}
+			p.nextNoWhitespace()
+		} else if p.token == IDENTIFIER {
+			right = Identifier{Name: p.literal}
+			p.nextNoWhitespace()
+		}
+		left = BinaryExpression{
+			Operator: tkn,
+			Left:     left,
+			Right:    right,
+		}
 	}
 
 	return left
 }
 
-func (p *Parser) parseLiteralExpression() Expression {
-	left := p.parseIdentifier()
+func (p *Parser) parsePowerExpression() Expression {
+	nextParse := p.parseLiteralExpression
+	left := nextParse()
 
-	if p.token == NUMBER {
-		value, _ := strconv.ParseFloat(p.literal, 64)
-		left = Literal{Value: value}
+	for p.token == POWER {
+		tkn := p.token
 		p.nextNoWhitespace()
+
+		left = BinaryExpression{
+			Operator: tkn,
+			Left:     left,
+			Right:    nextParse(),
+		}
 	}
 
 	return left
 }
 
 func (p *Parser) parseMultiplicativeExpression() Expression {
-	nextParse := p.parseLiteralExpression
+	nextParse := p.parsePowerExpression
 	left := nextParse()
 
 	for p.token == MULTIPLY || p.token == SLASH || p.token == REMAINDER {

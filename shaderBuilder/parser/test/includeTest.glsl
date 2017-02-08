@@ -2,6 +2,7 @@
 
 #frag
 uniform #lookup 10 lookupTable ((i + 1) / 100.0);
+uniform #lookup 10 lookupTable2 ((i + 1) / -100.0);
 
 vec4 fragFunc() {
   output = vec4(0.5);

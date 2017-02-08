@@ -37,6 +37,8 @@ func (p *Parser) scan() (tkn Token, literal string) {
 		tkn, literal = SLASH, string(p.chr)
 	case '%':
 		tkn, literal = REMAINDER, string(p.chr)
+	case '^':
+		tkn, literal = POWER, string(p.chr)
 	case '"':
 		tkn, literal = STRING, p.scanString()
 	default:

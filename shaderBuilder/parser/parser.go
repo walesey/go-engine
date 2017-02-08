@@ -176,7 +176,6 @@ func (p *Parser) parseHashLookup() {
 		p.error("HashLookup: missing size param")
 		return
 	}
-
 	lookupSize, err := strconv.Atoi(p.literal)
 	if err != nil {
 		p.error(err.Error())
@@ -188,14 +187,12 @@ func (p *Parser) parseHashLookup() {
 		p.error("HashLookup: missing identifier param")
 		return
 	}
+	lookupName := p.literal
 	p.next()
 
 	p.expect(WHITESPACE)
 	exp := p.parseExpression()
-
-	p.write(`float lookupTable[`)
-	p.write(strconv.Itoa(lookupSize))
-	p.write(`] = float[] (`)
+	p.write(fmt.Sprintf(`float %v[%v] = float[] (`, lookupName, lookupSize))
 	for i := 0; i < lookupSize; i++ {
 		result := exp.Evaluate(Variable{Name: "i", Value: float64(i)})
 		p.write(strconv.FormatFloat(result, 'f', -1, 64))
