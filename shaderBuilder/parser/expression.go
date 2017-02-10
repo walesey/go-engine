@@ -1,6 +1,9 @@
 package parser
 
-import "strconv"
+import (
+	"math"
+	"strconv"
+)
 
 type Variable struct {
 	Name  string
@@ -30,6 +33,8 @@ func (b BinaryExpression) Evaluate(variables ...Variable) float64 {
 	case REMAINDER:
 		leftInt, rightInt := int(b.Left.Evaluate(variables...)), int(b.Right.Evaluate(variables...))
 		return float64(leftInt % rightInt)
+	case POWER:
+		return math.Pow(b.Left.Evaluate(variables...), b.Right.Evaluate(variables...))
 	default:
 	}
 	return 0
@@ -56,15 +61,36 @@ func (l Literal) Evaluate(variables ...Variable) float64 {
 	return l.Value
 }
 
+func (p *Parser) parseSignedExpression() Expression {
+	var left Expression = Literal{Value: 0}
+
+	if p.token == PLUS || p.token == MINUS {
+		if p.token == MINUS {
+			left = Literal{-1}
+		} else {
+			left = Literal{1}
+		}
+		p.nextNoWhitespace()
+
+		left = BinaryExpression{
+			Operator: MULTIPLY,
+			Left:     left,
+			Right:    p.parseExpression(),
+		}
+	}
+
+	return left
+}
+
 func (p *Parser) parseGroupExpression() Expression {
-	var exp Expression = Literal{Value: 0}
+	exp := p.parseSignedExpression()
 
 	if p.token == LEFT_PARENTHESIS {
 		p.nextNoWhitespace()
 		exp = p.parseExpression()
 
 		if p.token != RIGHT_PARENTHESIS {
-			p.error("Error, Missing close parenthesis")
+			p.unexpectedError()
 		}
 		p.nextNoWhitespace()
 	}
@@ -72,33 +98,27 @@ func (p *Parser) parseGroupExpression() Expression {
 	return exp
 }
 
-func (p *Parser) parseLiteralExpression() Expression {
-	left := p.parseGroupExpression()
+func (p *Parser) parseIdentifierExpression() Expression {
+	exp := p.parseGroupExpression()
 
-	tkn := PLUS
-	if p.token == PLUS || p.token == MINUS {
-		tkn = p.token
+	if p.token == IDENTIFIER {
+		exp = Identifier{Name: p.literal}
 		p.nextNoWhitespace()
 	}
 
-	if p.token == NUMBER || p.token == IDENTIFIER {
-		var right Expression
-		if p.token == NUMBER {
-			value, _ := strconv.ParseFloat(p.literal, 64)
-			right = Literal{Value: value}
-			p.nextNoWhitespace()
-		} else if p.token == IDENTIFIER {
-			right = Identifier{Name: p.literal}
-			p.nextNoWhitespace()
-		}
-		left = BinaryExpression{
-			Operator: tkn,
-			Left:     left,
-			Right:    right,
-		}
+	return exp
+}
+
+func (p *Parser) parseLiteralExpression() Expression {
+	exp := p.parseIdentifierExpression()
+
+	if p.token == NUMBER {
+		value, _ := strconv.ParseFloat(p.literal, 64)
+		exp = Literal{Value: value}
+		p.nextNoWhitespace()
 	}
 
-	return left
+	return exp
 }
 
 func (p *Parser) parsePowerExpression() Expression {
