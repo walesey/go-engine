@@ -41,11 +41,18 @@ func (glRenderer *OpenglRenderer) CreatePostEffect(shader *renderer.Shader) {
 	glRenderer.UseShader(shader)
 	glRenderer.enableShader()
 
+	//Get render buffer dimensions
+	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+	var dims [4]int32
+	gl.GetIntegerv(gl.VIEWPORT, &dims[0])
+	bufferWidth := dims[2]
+	bufferHeight := dims[3]
+
 	//Create depth buffer
 	var dbo uint32
 	gl.GenRenderbuffers(1, &dbo)
 	gl.BindRenderbuffer(gl.RENDERBUFFER, dbo)
-	gl.RenderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, int32(glRenderer.WindowWidth), int32(glRenderer.WindowHeight))
+	gl.RenderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, bufferWidth, bufferHeight)
 
 	//Create frame buffer
 	var fbo uint32
@@ -68,7 +75,7 @@ func (glRenderer *OpenglRenderer) CreatePostEffect(shader *renderer.Shader) {
 		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
 		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
 		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-		gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, int32(glRenderer.WindowWidth), int32(glRenderer.WindowHeight), 0, gl.RGBA, gl.UNSIGNED_BYTE, nil)
+		gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, bufferWidth, bufferHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, nil)
 		gl.FramebufferTexture2D(gl.FRAMEBUFFER, buffers[i], gl.TEXTURE_2D, fbo_texture, 0)
 		fbo_textures[i] = renderer.NewTexture(fmt.Sprintf("tex%v", i), nil, false)
 		fbo_textures[i].TextureId = fbo_texture
