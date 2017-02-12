@@ -12,7 +12,7 @@ type Element interface {
 	GetId() string
 	SetId(id string)
 	GetChildren() Children
-	mouseMove(position mgl32.Vec2)
-	mouseClick(button int, release bool, position mgl32.Vec2)
+	mouseMove(position mgl32.Vec2) bool
+	mouseClick(button int, release bool, position mgl32.Vec2) bool
 	keyClick(key string, release bool)
 }

@@ -56,6 +56,10 @@ func (pg *ParticleGroup) BoundingRadius() float32 {
 	return pg.Node.BoundingRadius()
 }
 
+func (pg *ParticleGroup) OrthoOrder() int {
+	return pg.Node.OrthoOrder()
+}
+
 func NewParticleGroup(camera *renderer.Camera, particles ...*ParticleSystem) *ParticleGroup {
 	node := renderer.NewNode()
 	for _, particle := range particles {

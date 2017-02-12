@@ -44,6 +44,12 @@ func main() {
 		if err != nil {
 			panic("error importing shader")
 		}
+		shader.AddTexture("diffuseMap")
+		shader.AddTexture("normalMap")
+		shader.AddTexture("aoMap")
+		shader.AddTexture("metalnessMap")
+		shader.AddTexture("roughnessMap")
+		shader.AddTexture("glowMap")
 		shader.FragDataLocations = []string{"outputColor", "brightColor"}
 		gameEngine.DefaultShader(shader)
 
@@ -223,7 +229,7 @@ func fireParticles() *effects.ParticleSystem {
 
 func sparkParticles() *effects.ParticleSystem {
 	img, _ := assets.ImportImageCached("TestAssets/Spark.png")
-	smoke := effects.CreateParticleSystem(effects.ParticleSettings{
+	sparks := effects.CreateParticleSystem(effects.ParticleSettings{
 		MaxParticles:     7,
 		ParticleEmitRate: 7,
 		BaseGeometry:     renderer.CreateBox(float32(1), float32(1)),
@@ -246,6 +252,6 @@ func sparkParticles() *effects.ParticleSystem {
 			p.Orientation = mgl32.QuatBetweenVectors(mgl32.Vec3{1, 0, 0}, p.Velocity)
 		},
 	})
-	smoke.Node.Material = renderer.NewMaterial(renderer.NewTexture("glowMap", img, false))
-	return smoke
+	sparks.Node.Material = renderer.NewMaterial(renderer.NewTexture("glowMap", img, false))
+	return sparks
 }

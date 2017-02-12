@@ -79,6 +79,10 @@ func (sprite *Sprite) BoundingRadius() float32 {
 	return sprite.Node.BoundingRadius()
 }
 
+func (sprite *Sprite) OrthoOrder() int {
+	return sprite.Node.OrthoOrder()
+}
+
 func (sprite *Sprite) SetTranslation(translation mgl32.Vec3) {
 	sprite.Node.SetTranslation(translation)
 }

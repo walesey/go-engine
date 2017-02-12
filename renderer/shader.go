@@ -23,15 +23,16 @@ func NewShader() *Shader {
 	}
 }
 
-func (shader *Shader) AddTexture(tex *Texture) int32 {
-	index, ok := shader.TextureUnits[tex.TextureName]
+// AddTexture - allocates a texture unit to the shader
+func (shader *Shader) AddTexture(textureName string) int32 {
+	index, ok := shader.TextureUnits[textureName]
 	if !ok {
 		index = shader.textureUnitCounter
 		shader.textureUnitCounter = shader.textureUnitCounter + 1
-		shader.TextureUnits[tex.TextureName] = index
+		shader.TextureUnits[textureName] = index
 	}
 
-	shader.Uniforms[tex.TextureName] = index
+	shader.Uniforms[textureName] = index
 	return index
 }
 

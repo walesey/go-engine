@@ -7,6 +7,8 @@ import (
 	"github.com/walesey/go-engine/renderer"
 )
 
+var activeWindow *Window
+
 type Activatable interface {
 	Active() bool
 	Activate()
@@ -44,6 +46,10 @@ func (w *Window) Optimize(geometry *renderer.Geometry, transform mgl32.Mat4) {
 
 func (w *Window) BoundingRadius() float32 {
 	return w.node.BoundingRadius()
+}
+
+func (w *Window) OrthoOrder() int {
+	return w.node.OrthoOrder()
 }
 
 func (w *Window) SetScale(scale mgl32.Vec3) {
@@ -117,7 +123,14 @@ func (w *Window) mouseClick(button int, release bool) {
 		if !release {
 			deactivateAllTextFields(w.element)
 		}
-		w.element.mouseClick(button, release, w.mousePos)
+		if w.element.mouseClick(button, release, w.mousePos) {
+			// set this to the active window
+			if activeWindow != nil {
+				activeWindow.node.OrthoOrderValue = 10
+			}
+			w.node.OrthoOrderValue = 100
+			activeWindow = w
+		}
 	}
 }
 
@@ -147,6 +160,7 @@ func NewWindow() *Window {
 	background.Add(box)
 	node.Add(background)
 	node.Add(elementNode)
+	node.OrthoOrderValue = 10
 	return &Window{
 		node:          node,
 		backgroundBox: box,

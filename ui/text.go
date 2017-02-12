@@ -220,12 +220,12 @@ func (te *TextElement) GetChildren() Children {
 	return []Element{}
 }
 
-func (te *TextElement) mouseMove(position mgl32.Vec2) {
-	te.img.mouseMove(position)
+func (te *TextElement) mouseMove(position mgl32.Vec2) bool {
+	return te.img.mouseMove(position)
 }
 
-func (te *TextElement) mouseClick(button int, release bool, position mgl32.Vec2) {
-	te.img.mouseClick(button, release, position)
+func (te *TextElement) mouseClick(button int, release bool, position mgl32.Vec2) bool {
+	return te.img.mouseClick(button, release, position)
 }
 
 func (te *TextElement) keyClick(key string, release bool) {

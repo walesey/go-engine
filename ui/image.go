@@ -100,14 +100,14 @@ func (ie *ImageElement) SetImage(img image.Image) {
 	ie.img = img
 }
 
-func (ie *ImageElement) mouseMove(position mgl32.Vec2) {
+func (ie *ImageElement) mouseMove(position mgl32.Vec2) bool {
 	offsetPos := position.Sub(ie.offset)
-	ie.Hitbox.MouseMove(offsetPos)
+	return ie.Hitbox.MouseMove(offsetPos)
 }
 
-func (ie *ImageElement) mouseClick(button int, release bool, position mgl32.Vec2) {
+func (ie *ImageElement) mouseClick(button int, release bool, position mgl32.Vec2) bool {
 	offsetPos := position.Sub(ie.offset)
-	ie.Hitbox.MouseClick(button, release, offsetPos)
+	return ie.Hitbox.MouseClick(button, release, offsetPos)
 }
 
 func (ie *ImageElement) keyClick(key string, release bool) {}

@@ -2,6 +2,7 @@ package renderer
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/util"
@@ -31,6 +32,7 @@ type Node struct {
 	Orientation mgl32.Quat
 
 	FrustrumCulling bool
+	OrthoOrderValue int
 	Shader          *Shader
 	Material        *Material
 	CubeMap         *CubeMap
@@ -39,6 +41,20 @@ type Node struct {
 	parent   *Node
 	children []Spatial
 	deleted  []Spatial
+}
+
+type byOrthoOrder []Spatial
+
+func (b byOrthoOrder) Len() int {
+	return len(b)
+}
+
+func (b byOrthoOrder) Less(i, j int) bool {
+	return b[i].OrthoOrder() < b[j].OrthoOrder()
+}
+
+func (b byOrthoOrder) Swap(i, j int) {
+	b[i], b[j] = b[j], b[i]
 }
 
 func NewNode() *Node {
@@ -69,6 +85,7 @@ func DefaultRendererParams() RendererParams {
 }
 
 func (node *Node) Draw(renderer Renderer, transform mgl32.Mat4) {
+	sort.Sort(byOrthoOrder(node.children))
 	tx := transform.Mul4(node.Transform)
 	for _, child := range node.children {
 		node.DrawChild(renderer, tx, child)
@@ -240,6 +257,10 @@ func (node *Node) BoundingRadius() float32 {
 
 	point := mgl32.TransformCoordinate(mgl32.Vec3{}, node.Transform)
 	return mgl32.TransformCoordinate(mgl32.Vec3{radius, 0, 0}, node.Transform).Sub(point).Len()
+}
+
+func (node *Node) OrthoOrder() int {
+	return node.OrthoOrderValue
 }
 
 func (node *Node) SetFrustrumCullingRecursive(enable bool) {

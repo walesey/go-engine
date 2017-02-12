@@ -40,6 +40,7 @@ type Spatial interface {
 	Destroy(renderer Renderer)
 	Center() mgl32.Vec3
 	BoundingRadius() float32
+	OrthoOrder() int
 	SetParent(parent *Node)
 }
 

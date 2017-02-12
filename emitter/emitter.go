@@ -4,10 +4,12 @@ import "sync"
 
 type Event interface{}
 
+type EventChan <-chan Event
+
 type EventEmitter interface {
-	On(topic string, handlers ...func(Event)) <-chan Event
-	Off(topic string, channels ...<-chan Event)
-	Listeners(topic string) []<-chan Event
+	On(topic string, handlers ...func(Event)) EventChan
+	Off(topic string, channels ...EventChan)
+	Listeners(topic string) []EventChan
 	Emit(topic string, event Event)
 	Close()
 	FlushAll()
@@ -36,7 +38,7 @@ func New(channelSize int) *Emitter {
 }
 
 // On - creates a new topic listener with optional handlers and returns the
-func (e *Emitter) On(topic string, handlers ...func(Event)) <-chan Event {
+func (e *Emitter) On(topic string, handlers ...func(Event)) EventChan {
 	l := listener{
 		handlers: handlers,
 		ch:       make(chan Event, e.channelSize),
@@ -49,7 +51,7 @@ func (e *Emitter) On(topic string, handlers ...func(Event)) <-chan Event {
 	return l.ch
 }
 
-func (e *Emitter) Off(topic string, channels ...<-chan Event) {
+func (e *Emitter) Off(topic string, channels ...EventChan) {
 	if topicListeners, ok := e.getListeners(topic); ok {
 		if len(channels) > 0 {
 			for _, ch := range channels {
@@ -70,15 +72,15 @@ func (e *Emitter) Off(topic string, channels ...<-chan Event) {
 	}
 }
 
-func (e *Emitter) Listeners(topic string) []<-chan Event {
+func (e *Emitter) Listeners(topic string) []EventChan {
 	if topicListeners, ok := e.getListeners(topic); ok {
-		listeners := make([]<-chan Event, len(topicListeners))
+		listeners := make([]EventChan, len(topicListeners))
 		for i, l := range topicListeners {
 			listeners[i] = l.ch
 		}
 		return listeners
 	}
-	return []<-chan Event{}
+	return []EventChan{}
 }
 
 // Emit - writes an event to the given topic

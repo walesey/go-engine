@@ -60,12 +60,12 @@ func (tf *TextField) GetChildren() Children {
 	return []Element{}
 }
 
-func (tf *TextField) mouseMove(position mgl32.Vec2) {
-	tf.container.mouseMove(position)
+func (tf *TextField) mouseMove(position mgl32.Vec2) bool {
+	return tf.container.mouseMove(position)
 }
 
-func (tf *TextField) mouseClick(button int, release bool, position mgl32.Vec2) {
-	tf.container.mouseClick(button, release, position)
+func (tf *TextField) mouseClick(button int, release bool, position mgl32.Vec2) bool {
+	return tf.container.mouseClick(button, release, position)
 }
 
 func (tf *TextField) keyClick(key string, release bool) {

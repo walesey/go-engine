@@ -277,7 +277,7 @@ func (glRenderer *OpenglRenderer) enableMaterial() {
 		}
 		// set textures
 		for _, tex := range glRenderer.activeMaterial.Textures {
-			textureUnit := glRenderer.activeShader.AddTexture(tex) + gl.TEXTURE0
+			textureUnit := glRenderer.activeShader.AddTexture(tex.TextureName) + gl.TEXTURE0
 			gl.ActiveTexture(uint32(textureUnit))
 			gl.BindTexture(gl.TEXTURE_2D, tex.TextureId)
 		}

@@ -100,6 +100,10 @@ func (ps *ParticleSystem) BoundingRadius() float32 {
 	return ps.Node.BoundingRadius()
 }
 
+func (ps *ParticleSystem) OrthoOrder() int {
+	return ps.Node.OrthoOrder()
+}
+
 func (ps *ParticleSystem) SetCameraLocation(cameraLocation mgl32.Vec3) {
 	ps.cameraPosition = cameraLocation
 }

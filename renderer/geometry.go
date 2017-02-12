@@ -117,6 +117,10 @@ func (geometry *Geometry) BoundingRadius() float32 {
 	return geometry.boundingRadius
 }
 
+func (geometry *Geometry) OrthoOrder() int {
+	return 0
+}
+
 func (geometry *Geometry) SetUVs(uvs ...float32) {
 	for i := 0; i < len(uvs); i = i + 2 {
 		geometry.Verticies[((i/2)*VertexStride)+6] = uvs[i]

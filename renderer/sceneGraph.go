@@ -5,13 +5,15 @@ import (
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl32/matstack"
+	"github.com/walesey/go-engine/util"
 )
 
 type SceneGraph struct {
-	opaqueNode        *Node
-	transparentNode   *Node
-	txStack           *matstack.TransformStack
-	transparentBucket bucketEntries
+	opaqueNode      *Node
+	transparentNode *Node
+	txStack         *matstack.TransformStack
+	bucketCount     int
+	bucket          bucketEntries
 }
 
 //factory
@@ -42,18 +44,15 @@ func (sceneGraph *SceneGraph) Remove(spatial Spatial, destroy bool) {
 
 func (sceneGraph *SceneGraph) RenderScene(renderer Renderer, cameraLocation mgl32.Vec3) {
 	//setup buckets
-	sceneGraph.transparentBucket = sceneGraph.transparentBucket[:0]
-	sceneGraph.buildBuckets(sceneGraph.transparentNode)
-	sceneGraph.sortBuckets(renderer, cameraLocation)
+	sceneGraph.bucketCount = 0
+	sceneGraph.buildBuckets(sceneGraph.transparentNode, cameraLocation)
+	sort.Sort(sceneGraph.bucket)
 	//render buckets
 	sceneGraph.opaqueNode.Draw(renderer, mgl32.Ident4())
-	for _, entry := range sceneGraph.transparentBucket {
-		renderEntry(entry, renderer)
+	for i := 0; i < sceneGraph.bucketCount; i++ {
+		entry := sceneGraph.bucket[i]
+		entry.parent.DrawChild(renderer, entry.transform, entry.spatial)
 	}
-}
-
-func renderEntry(entry bucketEntry, renderer Renderer) {
-	entry.parent.DrawChild(renderer, entry.transform, entry.spatial)
 }
 
 type bucketEntry struct {
@@ -77,27 +76,27 @@ func (slice bucketEntries) Swap(i, j int) {
 	slice[i], slice[j] = slice[j], slice[i]
 }
 
-func (sceneGraph *SceneGraph) buildBuckets(node *Node) {
+func (sceneGraph *SceneGraph) buildBuckets(node *Node, cameraLocation mgl32.Vec3) {
 	sceneGraph.txStack.Push(node.Transform)
 	for _, child := range node.children {
 		nextNode, ok := child.(*Node)
 		if ok {
-			sceneGraph.buildBuckets(nextNode)
+			sceneGraph.buildBuckets(nextNode, cameraLocation)
 		} else {
+			transform := sceneGraph.txStack.Peek()
 			entry := bucketEntry{
-				spatial:   child,
-				parent:    node,
-				transform: sceneGraph.txStack.Peek(),
+				spatial:     child,
+				parent:      node,
+				transform:   transform,
+				cameraDelta: util.Vec3LenSq(mgl32.TransformCoordinate(child.Center(), transform).Sub(cameraLocation)),
 			}
-			sceneGraph.transparentBucket = append(sceneGraph.transparentBucket, entry)
+			if sceneGraph.bucketCount < len(sceneGraph.bucket) {
+				sceneGraph.bucket[sceneGraph.bucketCount] = entry
+			} else {
+				sceneGraph.bucket = append(sceneGraph.bucket, entry)
+			}
+			sceneGraph.bucketCount = sceneGraph.bucketCount + 1
 		}
 	}
 	sceneGraph.txStack.Pop()
-}
-
-func (sceneGraph *SceneGraph) sortBuckets(renderer Renderer, cameraLocation mgl32.Vec3) {
-	for index, entry := range sceneGraph.transparentBucket {
-		sceneGraph.transparentBucket[index].cameraDelta = mgl32.TransformCoordinate(entry.spatial.Center(), entry.transform).Sub(cameraLocation).Len()
-	}
-	sort.Sort(sceneGraph.transparentBucket)
 }

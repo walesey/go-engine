@@ -116,7 +116,7 @@ func (glRenderer *OpenglRenderer) renderPostEffect(pe postEffect) {
 	gl.Disable(gl.CULL_FACE)
 
 	for _, texture := range pe.textures {
-		textureUnit := pe.shader.AddTexture(texture) + gl.TEXTURE0
+		textureUnit := pe.shader.AddTexture(texture.TextureName) + gl.TEXTURE0
 		gl.ActiveTexture(uint32(textureUnit))
 		gl.BindTexture(gl.TEXTURE_2D, texture.TextureId)
 	}

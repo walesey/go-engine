@@ -207,20 +207,20 @@ func (c *Container) SetId(id string) {
 	c.id = id
 }
 
-func (c *Container) mouseMove(position mgl32.Vec2) {
+func (c *Container) mouseMove(position mgl32.Vec2) bool {
 	offsetPos := position.Sub(c.offset)
-	c.Hitbox.MouseMove(offsetPos.Sub(c.backgroundOffset))
 	for _, child := range c.children {
 		child.mouseMove(offsetPos.Sub(c.elementsOffset))
 	}
+	return c.Hitbox.MouseMove(offsetPos.Sub(c.backgroundOffset))
 }
 
-func (c *Container) mouseClick(button int, release bool, position mgl32.Vec2) {
+func (c *Container) mouseClick(button int, release bool, position mgl32.Vec2) bool {
 	offsetPos := position.Sub(c.offset)
-	c.Hitbox.MouseClick(button, release, offsetPos.Sub(c.backgroundOffset))
 	for _, child := range c.children {
 		child.mouseClick(button, release, offsetPos.Sub(c.elementsOffset))
 	}
+	return c.Hitbox.MouseClick(button, release, offsetPos.Sub(c.backgroundOffset))
 }
 
 func (c *Container) keyClick(key string, release bool) {
