@@ -75,6 +75,8 @@ void pbrCompositeTextures() {
 	metalDiffuse = mix(diffuse, vec4(0), metalness.r);
 }
 
+
+
 float pow2(float x) { 
 	return x*x; 
 }
@@ -82,6 +84,7 @@ float pow2(float x) {
 float pow3(float x) { 
 	return x*x*x; 
 }
+
 
 vec4 fresnelEffect(vec4 baseSpecular, vec4 normalValue) {
 	vec3 normal_tangentSpace = (normalValue.xyz*2) - 1;
@@ -111,6 +114,8 @@ vec3 directLight( vec3 light, vec3 direction, vec4 diffuse, vec4 specular, vec4 
 
 	return color * light;
 }
+
+
 
 #define MAX_POINT_LIGHTS 4
 
@@ -175,6 +180,7 @@ void glowOutput() {
 
 	brightColor = fragColor * texture(glowMap, overflowTextCoord);
 }
+
 
 void main() {
   textures();

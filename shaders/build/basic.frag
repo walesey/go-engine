@@ -69,6 +69,7 @@ float pow3(float x) {
 	return x*x*x; 
 }
 
+
 vec3 directLight( vec3 light, vec3 direction, vec4 diffuse, vec4 specular, vec4 normalValue ) {
 	vec3 normal_tangentSpace = (normalValue.xyz*2) - 1;
 	vec3 direction_tangentSpace = direction * TBNMatrix;
@@ -83,6 +84,8 @@ vec3 directLight( vec3 light, vec3 direction, vec4 diffuse, vec4 specular, vec4 
 
 	return color * light;
 }
+
+
 
 #define MAX_POINT_LIGHTS 4
 
@@ -124,6 +127,7 @@ vec3 directionalLights(vec4 diffuse, vec4 specular, vec4 normalValue) {
 	}
 	return totalLight;
 }
+
 
 void main() {
 	textures();

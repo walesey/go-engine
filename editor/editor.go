@@ -61,15 +61,29 @@ func (e *Editor) Start() {
 
 	e.gameEngine.Start(func() {
 
-		shader, err := assets.ImportShader(
+		if shader, err := assets.ImportShader(
 			filepath.Join(e.assetDir, "shaders/build/pbrComposite.vert"),
 			filepath.Join(e.assetDir, "shaders/build/pbrComposite.frag"),
-		)
-		if err != nil {
+		); err == nil {
+			shader.AddTexture("diffuseMap")
+			shader.AddTexture("normalMap")
+			shader.AddTexture("compositeMap")
+			shader.AddTexture("glowMap")
+			shader.FragDataLocations = []string{"outputColor", "brightColor"}
+			e.gameEngine.DefaultShader(shader)
+		} else {
 			panic("error importing shader")
 		}
 
-		e.gameEngine.DefaultShader(shader)
+		if shader, err := assets.ImportShader(
+			filepath.Join(e.assetDir, "shaders/build/postEffects/glow.vert"),
+			filepath.Join(e.assetDir, "shaders/build/postEffects/glow.frag"),
+		); err == nil {
+			shader.InputBuffers = 2
+			glRenderer.CreatePostEffect(shader)
+		} else {
+			panic("error importing shaders")
+		}
 
 		// Sky cubemap
 		skyImg, err := assets.ImportImage(filepath.Join(e.assetDir, "TestAssets/cloudSky.jpg"))

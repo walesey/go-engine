@@ -40,7 +40,9 @@ func (e *Editor) openFileBrowser(heading string, callback func(filePath string),
 
 		e.uiAssets.AddCallback("fileBrowserOpen", func(element ui.Element, args ...interface{}) {
 			if len(args) >= 2 && !args[1].(bool) { // not on release
-				e.fileBrowser.callback(e.fileBrowser.GetFileTextField())
+				filepath := e.fileBrowser.GetFileTextField()
+				cleanFilepath := strings.Replace(filepath, "\\", "/", -1)
+				e.fileBrowser.callback(cleanFilepath)
 			}
 		})
 

@@ -9,6 +9,7 @@ uniform vec3 cameraTranslation;
 uniform bool unlit;
 uniform bool useTextures;
 
+
 in vec3 vert;
 in vec3 normal;
 in vec2 texCoord;
@@ -53,6 +54,8 @@ float pow3(float x) {
 	return x*x*x; 
 }
 
+
+
 void roughnessTexture() {}
 
 void glowOutput() {}
@@ -62,6 +65,7 @@ void main() {
 	roughnessTexture();
 	glowOutput();
 
+	
 	worldTransform();
 	gl_Position = projection * camera * model * vec4(vert, 1);
 

@@ -15,6 +15,7 @@ float cell( float source ) {
 	return 1;
 }
 
+
 void main() {
 
 	vec4 finalColor = vec4(0,0,0,1);
