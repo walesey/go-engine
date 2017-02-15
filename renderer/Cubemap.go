@@ -8,20 +8,18 @@ import (
 
 type CubeMap struct {
 	Id     uint32
-	Name   string
 	Lod    bool
 	Loaded bool
 
 	Right, Left, Top, Bottom, Back, Front image.Image
 }
 
-func NewCubemap(name string, baseImage image.Image, lod bool) *CubeMap {
+func NewCubemap(baseImage image.Image, lod bool) *CubeMap {
 	cubeMap := new(CubeMap)
 
 	x := baseImage.Bounds().Max.X
 	y := baseImage.Bounds().Max.Y
 
-	cubeMap.Name = name
 	cubeMap.Lod = lod
 	cubeMap.Right = imaging.Crop(baseImage, image.Rect(x/2, y/3, 3*x/4, 2*y/3))
 	cubeMap.Left = imaging.Crop(baseImage, image.Rect(0, y/3, x/4, 2*y/3))

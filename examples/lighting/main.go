@@ -151,7 +151,7 @@ func setupScene(gameEngine engine.Engine, shader *renderer.Shader) {
 		skyNode.Add(geom)
 		gameEngine.AddSpatial(skyNode)
 		// create an environmentMap using the skybox texture
-		envCubeMap := renderer.NewCubemap("environmentMap", skyImg, true)
+		envCubeMap := renderer.NewCubemap(skyImg, true)
 		gameEngine.DefaultCubeMap(envCubeMap)
 	}
 

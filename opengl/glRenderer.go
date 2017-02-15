@@ -285,7 +285,7 @@ func (glRenderer *OpenglRenderer) enableMaterial() {
 }
 
 func (glRenderer *OpenglRenderer) enableCubeMap() {
-	if glRenderer.cubeMap == glRenderer.activeCubeMap {
+	if glRenderer.cubeMap == glRenderer.activeCubeMap || glRenderer.activeShader == nil {
 		return
 	}
 
@@ -293,12 +293,14 @@ func (glRenderer *OpenglRenderer) enableCubeMap() {
 	cubeMap := glRenderer.activeCubeMap
 
 	// setup cubeMap
-	if glRenderer.activeShader != nil && cubeMap != nil {
+	gl.ActiveTexture(gl.TEXTURE20)
+	if cubeMap == nil {
+		gl.BindTexture(gl.TEXTURE_CUBE_MAP, glRenderer.defaultTextureId)
+	} else {
 		glRenderer.createCubeMap(glRenderer.activeCubeMap)
-		gl.ActiveTexture(gl.TEXTURE10)
 		gl.BindTexture(gl.TEXTURE_CUBE_MAP, cubeMap.Id)
-		glRenderer.activeShader.Uniforms[cubeMap.Name] = int32(10)
 	}
+	glRenderer.activeShader.Uniforms["environmentMap"] = int32(20)
 }
 
 func (glRenderer *OpenglRenderer) enableShader() {

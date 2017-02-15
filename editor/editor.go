@@ -69,6 +69,7 @@ func (e *Editor) Start() {
 			shader.AddTexture("normalMap")
 			shader.AddTexture("compositeMap")
 			shader.AddTexture("glowMap")
+			shader.AddTexture("environmentMap")
 			shader.FragDataLocations = []string{"outputColor", "brightColor"}
 			e.gameEngine.DefaultShader(shader)
 		} else {
@@ -99,7 +100,7 @@ func (e *Editor) Start() {
 			skyNode.Add(geom)
 			e.gameEngine.AddSpatial(skyNode)
 			// create an environmentMap using the skybox texture
-			envCubeMap := renderer.NewCubemap("environmentMap", skyImg, true)
+			envCubeMap := renderer.NewCubemap(skyImg, true)
 			e.gameEngine.DefaultCubeMap(envCubeMap)
 		}
 
