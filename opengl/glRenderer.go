@@ -34,11 +34,11 @@ type OpenglRenderer struct {
 	postEffectVbo uint32
 	postEffects   []postEffect
 
-	material, activeMaterial *renderer.Material
 	shader, activeShader     *renderer.Shader
+	material, activeMaterial *renderer.Material
 	cubeMap, activeCubeMap   *renderer.CubeMap
 
-	defaultTextureId uint32
+	defaultTextureId, defaultCubemapId uint32
 
 	transparency   renderer.Transparency
 	rendererParams renderer.RendererParams
@@ -154,6 +154,9 @@ func (glRenderer *OpenglRenderer) Start() {
 		Rect:   image.Rectangle{Min: image.Point{0, 0}, Max: image.Point{1, 1}},
 	}
 	glRenderer.defaultTextureId = glRenderer.loadTexture(defaultImg, gl.TEXTURE0, false)
+	glRenderer.defaultCubemapId = glRenderer.loadCubeMap(
+		defaultImg, defaultImg, defaultImg, defaultImg, defaultImg, defaultImg, gl.TEXTURE20, true,
+	)
 
 	window.SetRefreshCallback(func(w *glfw.Window) {
 		glRenderer.mainLoop()
@@ -175,7 +178,6 @@ func (glRenderer *OpenglRenderer) mainLoop() {
 	//set defaults
 	glRenderer.UseRendererParams(renderer.DefaultRendererParams())
 	glRenderer.UseMaterial(nil)
-	glRenderer.enableMaterial()
 
 	if len(glRenderer.postEffects) == 0 {
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
@@ -258,59 +260,52 @@ func (glRenderer *OpenglRenderer) enableUnlit(unlit bool) {
 	glRenderer.unlit = unlit
 }
 
-func (glRenderer *OpenglRenderer) enableMaterial() {
-	if glRenderer.material == glRenderer.activeMaterial {
+func (glRenderer *OpenglRenderer) enableShader() {
+	if glRenderer.shader == nil ||
+		(glRenderer.shader == glRenderer.activeShader &&
+			glRenderer.material == glRenderer.activeMaterial &&
+			glRenderer.cubeMap == glRenderer.activeCubeMap) {
 		return
 	}
 
+	// Create and enable the shader in opengl
+	glRenderer.createShader(glRenderer.shader)
+	glRenderer.activeShader = glRenderer.shader
+	gl.UseProgram(glRenderer.activeShader.Program)
+
+	glRenderer.activeCubeMap = glRenderer.cubeMap
+	cubeMap := glRenderer.activeCubeMap
+
+	// Create and enable the cubeMap in opengl
+	gl.ActiveTexture(gl.TEXTURE20)
+	glRenderer.activeShader.Uniforms["environmentMap"] = int32(20)
+	if cubeMap == nil {
+		gl.BindTexture(gl.TEXTURE_CUBE_MAP, glRenderer.defaultCubemapId)
+	} else {
+		glRenderer.createCubeMap(glRenderer.activeCubeMap)
+		gl.BindTexture(gl.TEXTURE_CUBE_MAP, cubeMap.Id)
+	}
+
+	// Create and enable material in opengl
 	glRenderer.activeMaterial = glRenderer.material
 	glRenderer.useTextures = (glRenderer.activeMaterial != nil && len(glRenderer.activeMaterial.Textures) > 0)
 
-	// setup material
-	if glRenderer.activeShader != nil && glRenderer.activeMaterial != nil {
+	// clear textures
+	for _, i := range glRenderer.activeShader.TextureUnits {
+		textureUnit := i + gl.TEXTURE0
+		gl.ActiveTexture(uint32(textureUnit))
+		gl.BindTexture(gl.TEXTURE_2D, glRenderer.defaultTextureId)
+	}
+	// set textures
+	if glRenderer.activeMaterial != nil {
 		glRenderer.createMaterial(glRenderer.activeMaterial)
-		// // clear textures
-		for _, i := range glRenderer.activeShader.TextureUnits {
-			textureUnit := i + gl.TEXTURE0
-			gl.ActiveTexture(uint32(textureUnit))
-			gl.BindTexture(gl.TEXTURE_2D, glRenderer.defaultTextureId)
-		}
-		// set textures
 		for _, tex := range glRenderer.activeMaterial.Textures {
 			textureUnit := glRenderer.activeShader.AddTexture(tex.TextureName) + gl.TEXTURE0
 			gl.ActiveTexture(uint32(textureUnit))
 			gl.BindTexture(gl.TEXTURE_2D, tex.TextureId)
 		}
 	}
-}
 
-func (glRenderer *OpenglRenderer) enableCubeMap() {
-	if glRenderer.cubeMap == glRenderer.activeCubeMap || glRenderer.activeShader == nil {
-		return
-	}
-
-	glRenderer.activeCubeMap = glRenderer.cubeMap
-	cubeMap := glRenderer.activeCubeMap
-
-	// setup cubeMap
-	gl.ActiveTexture(gl.TEXTURE20)
-	if cubeMap == nil {
-		gl.BindTexture(gl.TEXTURE_CUBE_MAP, glRenderer.defaultTextureId)
-	} else {
-		glRenderer.createCubeMap(glRenderer.activeCubeMap)
-		gl.BindTexture(gl.TEXTURE_CUBE_MAP, cubeMap.Id)
-	}
-	glRenderer.activeShader.Uniforms["environmentMap"] = int32(20)
-}
-
-func (glRenderer *OpenglRenderer) enableShader() {
-	if glRenderer.shader == glRenderer.activeShader {
-		return
-	}
-
-	glRenderer.createShader(glRenderer.shader)
-	glRenderer.activeShader = glRenderer.shader
-	gl.UseProgram(glRenderer.activeShader.Program)
 }
 
 // CreateGeometry - add geometry to the renderer
@@ -366,7 +361,7 @@ func (glRenderer *OpenglRenderer) createCubeMap(cubeMap *renderer.CubeMap) {
 	}
 
 	cm := cubeMap
-	cubeMap.Id = glRenderer.loadCubeMap(cm.Right, cm.Left, cm.Top, cm.Bottom, cm.Back, cm.Front, uint32(10), cm.Lod)
+	cubeMap.Id = glRenderer.loadCubeMap(cm.Right, cm.Left, cm.Top, cm.Bottom, cm.Back, cm.Front, gl.TEXTURE20, cm.Lod)
 	cubeMap.Loaded = true
 }
 
@@ -532,8 +527,6 @@ func (glRenderer *OpenglRenderer) UseCubeMap(cubeMap *renderer.CubeMap) {
 
 func (glRenderer *OpenglRenderer) DrawGeometry(geometry *renderer.Geometry, transform mgl32.Mat4) {
 	glRenderer.enableShader()
-	glRenderer.enableMaterial()
-	glRenderer.enableCubeMap()
 
 	if glRenderer.activeShader == nil {
 		panic("ERROR: No shader is configured.")
