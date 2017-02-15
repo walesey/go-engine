@@ -199,9 +199,11 @@ func NewEngine(r renderer.Renderer) Engine {
 	engine.transparentNode.RendererParams.DepthMask = false
 	sceneGraph.AddTransparent(engine.transparentNode)
 
-	engine.orthoNode.RendererParams = renderer.NewRendererParams()
-	engine.orthoNode.RendererParams.CullBackface = false
-	engine.orthoNode.RendererParams.Unlit = true
+	engine.orthoNode.RendererParams = &renderer.RendererParams{
+		Unlit:        true,
+		DepthMask:    true,
+		Transparency: renderer.NON_EMISSIVE,
+	}
 	return engine
 }
 
