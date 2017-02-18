@@ -12,6 +12,7 @@ import (
 	"github.com/go-gl/glfw/v3.1/glfw"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/renderer"
+	"github.com/walesey/go-engine/util"
 )
 
 const MAX_POINT_LIGHTS = 4
@@ -147,12 +148,8 @@ func (glRenderer *OpenglRenderer) Start() {
 
 	glRenderer.onInit()
 
-	// load default texture (1 transparent pixel)
-	defaultImg := &image.RGBA{
-		Pix:    []uint8{0, 0, 0, 0},
-		Stride: 4,
-		Rect:   image.Rectangle{Min: image.Point{0, 0}, Max: image.Point{1, 1}},
-	}
+	// load default texture (1 opaque pixel)
+	defaultImg := util.ImageColor(0, 0, 0, 255)
 	glRenderer.defaultTextureId = glRenderer.loadTexture(defaultImg, gl.TEXTURE0, false)
 	glRenderer.defaultCubemapId = glRenderer.loadCubeMap(
 		defaultImg, defaultImg, defaultImg, defaultImg, defaultImg, defaultImg, gl.TEXTURE20, true,
