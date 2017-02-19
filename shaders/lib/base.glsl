@@ -15,6 +15,6 @@ in vec4 color;
 #endvert
 
 #frag
-out vec4 outputColor;
+layout(location = 0) out vec4 outputColor;
 #endfrag
 

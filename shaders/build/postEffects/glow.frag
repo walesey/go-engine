@@ -11,16 +11,16 @@ uniform float gaussian[100] = float[] (0.23696313590506837, 0.22576837913554718,
 
 void main() {
 
-  vec2 tex_offset = sample / textureSize(tex0, 0);
-  vec3 result = texture(tex1, fragTexCoord).rgb;
-  result += texture(tex0, fragTexCoord).rgb * gaussian[0];
+  vec2 tex_offset = sample / textureSize(tex1, 0);
+  vec3 result = texture(tex0, fragTexCoord).rgb;
+  result += texture(tex1, fragTexCoord).rgb * gaussian[0];
   for (int i = 1; i < iterations; ++i) {
-    result += texture(tex0, fragTexCoord + vec2(tex_offset.x * i, 0.0)).rgb * gaussian[int((100*i)/iterations)]*sample;
-    result += texture(tex0, fragTexCoord - vec2(tex_offset.x * i, 0.0)).rgb * gaussian[int((100*i)/iterations)]*sample;
+    result += texture(tex1, fragTexCoord + vec2(tex_offset.x * i, 0.0)).rgb * gaussian[int((100*i)/iterations)]*sample;
+    result += texture(tex1, fragTexCoord - vec2(tex_offset.x * i, 0.0)).rgb * gaussian[int((100*i)/iterations)]*sample;
   }
   for (int i = 1; i < iterations; ++i) {
-    result += texture(tex0, fragTexCoord + vec2(0.0, tex_offset.y * i)).rgb * gaussian[int((100*i)/iterations)]*sample;
-    result += texture(tex0, fragTexCoord - vec2(0.0, tex_offset.y * i)).rgb * gaussian[int((100*i)/iterations)]*sample;
+    result += texture(tex1, fragTexCoord + vec2(0.0, tex_offset.y * i)).rgb * gaussian[int((100*i)/iterations)]*sample;
+    result += texture(tex1, fragTexCoord - vec2(0.0, tex_offset.y * i)).rgb * gaussian[int((100*i)/iterations)]*sample;
   }
   outputColor = vec4(result, 1.0);
   

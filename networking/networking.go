@@ -59,6 +59,7 @@ func (n *Network) Update(dt float64) {
 	n.FlushAll()
 }
 
+// ClientJoinedEvent - register an event to trigger when a new client joins the server
 func (n *Network) ClientJoinedEvent(fn func(clientId string)) {
 	n.On("newClient", func(event emitter.Event) {
 		if clientId, ok := event.(string); ok {
@@ -68,6 +69,7 @@ func (n *Network) ClientJoinedEvent(fn func(clientId string)) {
 }
 
 // RegisterEvent - register an event that will be triggered on clients and server.
+// RegisterEvent should be used to register syncronous events
 func (n *Network) RegisterEvent(name string, fn func(clientId string, data []byte)) {
 	n.On(name, func(event emitter.Event) {
 		if packet, ok := event.(Packet); ok {

@@ -9,7 +9,7 @@ uniform vec3 cameraTranslation;
 uniform bool unlit;
 uniform bool useTextures;
 
-out vec4 outputColor;
+layout(location = 0) out vec4 outputColor;
 
 in vec3 worldVertex;
 in vec3 worldNormal;
@@ -177,7 +177,7 @@ vec3 indirectLight(vec4 diffuse, vec4 specular, vec4 normalValue) {
 
 uniform sampler2D glowMap;
 
-out vec4 brightColor;
+layout(location = 1) out vec4 brightColor;
 
 void glowOutput() {
 	vec2 overflowTextCoord = repeatTextCoord();

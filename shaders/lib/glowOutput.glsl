@@ -4,7 +4,7 @@
 #frag
 uniform sampler2D glowMap;
 
-out vec4 brightColor;
+layout(location = 1) out vec4 brightColor;
 #endfrag
 
 #vert

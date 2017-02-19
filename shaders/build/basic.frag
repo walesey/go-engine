@@ -9,7 +9,7 @@ uniform vec3 cameraTranslation;
 uniform bool unlit;
 uniform bool useTextures;
 
-out vec4 outputColor;
+layout(location = 0) out vec4 outputColor;
 
 in vec3 worldVertex;
 in vec3 worldNormal;
