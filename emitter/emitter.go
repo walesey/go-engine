@@ -94,6 +94,7 @@ func (e *Emitter) Emit(topic string, event Event) {
 	}
 }
 
+// Close - closes all channels and removes all topics
 func (e *Emitter) Close() {
 	e.mux.Lock()
 	defer e.mux.Unlock()

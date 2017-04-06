@@ -158,7 +158,6 @@ func (n *Network) IsServer() bool {
 func (n *Network) Close() {
 	n.killClient()
 	n.killServer()
-	n.Close()
 	close(n.writeBuffer)
 }
 

@@ -34,7 +34,7 @@ func init() {
 
 //
 func main() {
-	glRenderer := opengl.NewOpenglRenderer("Lighting", 1920, 1080, true)
+	glRenderer := opengl.NewOpenglRenderer("Lighting", 1200, 800, false)
 	gameEngine := engine.NewEngine(glRenderer)
 	gameEngine.InitFpsDial()
 
