@@ -27,6 +27,7 @@ This project is currently in progress and it is likely to change significantly o
 Example programs can be found in `examples/*`.
 
 Go-Engine uses go-gl which requires opengl.
+Note: if you are using Xcode 8.3 or above, you will need go1.8.1 or above.
 
 ## Core Packages
 * renderer - package contains common renderer interface and scenegraph implementation.
