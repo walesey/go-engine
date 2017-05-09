@@ -55,7 +55,7 @@ func New(assetDir string) *Editor {
 
 func (e *Editor) Start() {
 
-	glRenderer := opengl.NewOpenglRenderer("GoEngine Editor", 1800, 900, false)
+	glRenderer := opengl.NewOpenglRenderer("GoEngine Editor", 0, 0, false)
 	e.renderer = glRenderer
 	e.gameEngine = engine.NewEngine(e.renderer)
 
@@ -105,7 +105,7 @@ func (e *Editor) Start() {
 		}
 
 		l := renderer.NewLight(renderer.DIRECTIONAL)
-		l.Color = [3]float32{0.7, 0.7, 0.8}
+		l.Color = [3]float32{0.3, 0.3, 0.4}
 		e.gameEngine.AddLight(l)
 
 		//root node
