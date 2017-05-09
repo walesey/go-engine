@@ -1,6 +1,7 @@
 package emitter
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -64,4 +65,18 @@ func TestOffCleanup(t *testing.T) {
 	e.Off("hello", helloChan3)
 	assert.EqualValues(t, len(e.Listeners("hello")), 1)
 	assert.EqualValues(t, e.Listeners("hello")[0], helloChan2)
+}
+
+func TestOffCleanupNested(t *testing.T) {
+	e := New(5)
+	var helloChan EventChan
+	helloChan = e.On("hello", func(event Event) {
+		fmt.Println("hellooo")
+		e.Off("hello", helloChan)
+	})
+	assert.EqualValues(t, 1, len(e.Listeners("hello")))
+
+	e.Emit("hello", "event")
+	e.FlushAll()
+	assert.EqualValues(t, 0, len(e.Listeners("hello")))
 }

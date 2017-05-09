@@ -110,7 +110,7 @@ func (e *Emitter) Close() {
 func (e *Emitter) FlushAll() {
 	e.mux.Lock()
 	defer e.mux.Unlock()
-	for topic, _ := range e.topics {
+	for topic := range e.topics {
 		e.mux.Unlock()
 		e.Flush(topic)
 		e.mux.Lock()
@@ -132,6 +132,9 @@ Loop:
 	for {
 		select {
 		case event := <-l.ch:
+			if event == nil {
+				break Loop
+			}
 			for _, h := range l.handlers {
 				h(event)
 			}
