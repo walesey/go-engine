@@ -8,6 +8,22 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 )
 
+func Vec3_64_from(v mgl32.Vec3) mgl64.Vec3 {
+	return mgl64.Vec3{float64(v[0]), float64(v[1]), float64(v[2])}
+}
+
+func Vec3_32_from(v mgl64.Vec3) mgl32.Vec3 {
+	return mgl32.Vec3{float32(v[0]), float32(v[1]), float32(v[2])}
+}
+
+func Quat_64_from(q mgl32.Quat) mgl64.Quat {
+	return mgl64.Quat{V: Vec3_64_from(q.V), W: float64(q.W)}
+}
+
+func Quat_32_from(q mgl64.Quat) mgl32.Quat {
+	return mgl32.Quat{V: Vec3_32_from(q.V), W: float32(q.W)}
+}
+
 func Vec3LenSq(v1 mgl32.Vec3) float32 {
 	return v1[0]*v1[0] + v1[1]*v1[1] + v1[2]*v1[2]
 }
@@ -132,8 +148,13 @@ func PointLiesInsideAABB(a, b, point mgl32.Vec2) bool {
 
 //FacingOrientation - return an orientation that always faces the given direction with rotation
 func FacingOrientation(rotation float32, direction, normal, tangent mgl32.Vec3) mgl32.Quat {
-	betweenVectorsQ := mgl32.QuatBetweenVectors(normal, direction)
-	angleQ := mgl32.QuatRotate(rotation, normal)
+	result := FacingOrientation64(float64(rotation), Vec3_64_from(direction), Vec3_64_from(normal), Vec3_64_from(tangent))
+	return Quat_32_from(result)
+}
+
+func FacingOrientation64(rotation float64, direction, normal, tangent mgl64.Vec3) mgl64.Quat {
+	betweenVectorsQ := mgl64.QuatBetweenVectors(normal, direction)
+	angleQ := mgl64.QuatRotate(rotation, normal)
 	orientation := betweenVectorsQ.Mul(angleQ)
 	return orientation
 }
