@@ -58,6 +58,11 @@ func Mat4From(scale, translation mgl32.Vec3, orientation mgl32.Quat) mgl32.Mat4 
 	return mgl32.Translate3D(tx[0], tx[1], tx[2]).Mul4(q.Mat4()).Mul4(mgl32.Scale3D(s[0], s[1], s[2]))
 }
 
+func Mat4From64(scale, translation mgl64.Vec3, orientation mgl64.Quat) mgl64.Mat4 {
+	s, tx, q := scale, translation, orientation
+	return mgl64.Translate3D(tx[0], tx[1], tx[2]).Mul4(q.Mat4()).Mul4(mgl64.Scale3D(s[0], s[1], s[2]))
+}
+
 func Round(val float32, roundOn float32, places int) float32 {
 	var round float64
 	pow := math.Pow(10, float64(places))
