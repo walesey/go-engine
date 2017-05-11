@@ -28,7 +28,15 @@ func Vec3LenSq(v1 mgl32.Vec3) float32 {
 	return v1[0]*v1[0] + v1[1]*v1[1] + v1[2]*v1[2]
 }
 
+func Vec3LenSq64(v1 mgl64.Vec3) float64 {
+	return v1[0]*v1[0] + v1[1]*v1[1] + v1[2]*v1[2]
+}
+
 func Vec2LenSq(v1 mgl32.Vec2) float32 {
+	return v1[0]*v1[0] + v1[1]*v1[1]
+}
+
+func Vec2LenSq64(v1 mgl64.Vec2) float64 {
 	return v1[0]*v1[0] + v1[1]*v1[1]
 }
 
