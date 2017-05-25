@@ -11,6 +11,7 @@ type EventEmitter interface {
 	Off(topic string, channels ...EventChan)
 	Listeners(topic string) []EventChan
 	Emit(topic string, event Event)
+	Do(topic string, event Event)
 	Close()
 	FlushAll()
 	Flush(topic string)
@@ -92,6 +93,12 @@ func (e *Emitter) Emit(topic string, event Event) {
 			l.ch <- event
 		}
 	}
+}
+
+// Do - writes an event to the given topic, then flushes the topic
+func (e *Emitter) Do(topic string, event Event) {
+	e.Emit(topic, event)
+	e.Flush(topic)
 }
 
 // Close - closes all channels and removes all topics
