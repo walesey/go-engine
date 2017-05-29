@@ -195,10 +195,10 @@ func (n *Network) killInterval() {
 func (n *Network) startMessageWriter() {
 	close(n.writeBuffer)
 	n.writeBuffer = make(chan message, 64)
-	go n.messageWriter()
+	go n.writeMessages()
 }
 
-func (n *Network) messageWriter() {
+func (n *Network) writeMessages() {
 	for msg := range n.writeBuffer {
 		if n.IsClient() {
 			n.client.WriteMessage(msg.Command, msg.Data)

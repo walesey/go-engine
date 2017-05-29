@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
 	"sync"
 	"time"
@@ -37,13 +38,13 @@ func NewServer() *Server {
 func (s *Server) Listen(port int) {
 	serverAddr, err := net.ResolveUDPAddr("udp", fmt.Sprintf(":%v", port))
 	if err != nil {
-		fmt.Println("Error Resolving udp address: ", err)
+		log.Println("Error Resolving udp address: ", err)
 		return
 	}
 
 	s.conn, err = net.ListenUDP("udp", serverAddr)
 	if err != nil {
-		fmt.Println("Error listening on udp address: ", err)
+		log.Println("Error listening on udp address: ", err)
 		return
 	}
 
@@ -52,7 +53,7 @@ func (s *Server) Listen(port int) {
 		for s.conn != nil {
 			n, addr, err := s.conn.ReadFromUDP(data)
 			if err != nil {
-				fmt.Println("Error reading udp packet: ", err)
+				log.Println("Error reading udp packet: ", err)
 				continue
 			}
 
@@ -60,13 +61,13 @@ func (s *Server) Listen(port int) {
 			dataBuf := bytes.NewBuffer(data[0:n])
 			gzipReader, err := gzip.NewReader(dataBuf)
 			if err != nil {
-				fmt.Println("Error creating gzip Reader for udp packet: ", err)
+				log.Println("Error creating gzip Reader for udp packet: ", err)
 				continue
 			}
 
 			unzipped, err := ioutil.ReadAll(gzipReader)
 			if err != nil {
-				fmt.Println("Error unzipping udp packet: ", err)
+				log.Println("Error unzipping udp packet: ", err)
 				continue
 			}
 
@@ -74,7 +75,7 @@ func (s *Server) Listen(port int) {
 			for i := 0; i < len(unzipped); {
 				packet, err, i = Decode(unzipped, i)
 				if err != nil {
-					fmt.Println("Error Decoding udp packet: ", err)
+					log.Println("Error Decoding udp packet: ", err)
 					continue
 				}
 
@@ -82,16 +83,14 @@ func (s *Server) Listen(port int) {
 					newSession := NewSession(addr)
 					s.setSession(newSession.token, newSession)
 					s.onClientJoined(newSession.token)
-					s.cleanupSessions()
 				}
 
-				if session, ok := s.getSession(packet.Token); ok {
+				if session, ok := s.getSession(packet.Token); ok && s.onPacketReceived != nil {
+					s.onPacketReceived(packet)
 					session.idleTimer = time.Now()
 				}
 
-				if s.onPacketReceived != nil {
-					s.onPacketReceived(packet)
-				}
+				s.cleanupSessions()
 			}
 		}
 	}()
@@ -100,21 +99,20 @@ func (s *Server) Listen(port int) {
 func (s *Server) WriteMessage(packet Packet) {
 	if session, ok := s.getSession(packet.Token); ok {
 		if _, err := session.packetBuffer.Write(Encode(packet)); err != nil {
-			fmt.Println("Error Writing udp message to session buffer: ", err)
+			log.Println("Error Writing udp message to session buffer: ", err)
 		}
 	}
 }
 
+// check for session timeouts
 func (s *Server) cleanupSessions() {
 	s.mux.Lock()
 	defer s.mux.Unlock()
-	// check for session timeouts
 	for token, session := range s.sessions {
 		if time.Since(session.idleTimer) > sessionTimeout {
-			fmt.Println("session timed out: ", token)
+			log.Println("session timed out: ", token)
 			delete(s.sessions, token)
 		}
-		session.idleTimer = time.Now()
 	}
 }
 
@@ -160,17 +158,17 @@ func (s *Server) FlushWriteBuffer(token string) {
 			gzipWriter := gzip.NewWriter(&gzipBuf)
 			_, err := gzipWriter.Write(data)
 			if err != nil {
-				fmt.Println("Error Gzip compressing udp message: ", err)
+				log.Println("Error Gzip compressing udp message: ", err)
 				return
 			}
 
 			if err := gzipWriter.Flush(); err != nil {
-				fmt.Println("Error Flushing Gzip writer for udp message: ", err)
+				log.Println("Error Flushing Gzip writer for udp message: ", err)
 				return
 			}
 
 			if err := gzipWriter.Close(); err != nil {
-				fmt.Println("Error Closing Gzip writer for udp message: ", err)
+				log.Println("Error Closing Gzip writer for udp message: ", err)
 				return
 			}
 
