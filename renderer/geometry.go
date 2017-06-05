@@ -201,18 +201,28 @@ func CreateSkyBox() *Geometry {
 	return CreateGeometry(cubeIndicies, skyboxVerticies)
 }
 
-// CreateBeam - creates a square prism oriented along the vector
-func CreateBeam(width float32, vector mgl32.Vec3) *Geometry {
-	direction := vector.Normalize()
-	geo := CreateBoxWithOffset(width, width, -width*0.5, -width*0.5)
-	geo2 := CreateBoxWithOffset(width, width, -width*0.5, -width*0.5)
-	facingTx := util.Mat4From(mgl32.Vec3{1, 1, 1}, mgl32.Vec3{}, util.FacingOrientation(0, direction, mgl32.Vec3{0, 0, 1}, mgl32.Vec3{1, 0, 0}))
-	geo.Transform(facingTx)
-	facingTx = util.Mat4From(mgl32.Vec3{1, 1, 1}, vector, util.FacingOrientation(0, direction, mgl32.Vec3{0, 0, -1}, mgl32.Vec3{1, 0, 0}))
-	geo2.Optimize(geo, facingTx)
+func CreateCube() *Geometry {
+	geo := CreateBoxWithOffset(1, 1, -0.5, -0.5)
+	geo.Transform(mgl32.Translate3D(0, 0, -0.5))
+	geo2 := CreateBoxWithOffset(1, 1, -0.5, -0.5)
+	geo2.Optimize(geo, mgl32.Translate3D(0, 0, 0.5))
 	geo.Indicies = append(geo.Indicies, 0, 1, 4, 4, 5, 0) //top
 	geo.Indicies = append(geo.Indicies, 1, 2, 7, 7, 4, 1) //side
 	geo.Indicies = append(geo.Indicies, 2, 3, 6, 6, 7, 2) //bottom
 	geo.Indicies = append(geo.Indicies, 3, 0, 5, 5, 6, 3) //side
 	return geo
+}
+
+// CreateBeam - creates a square prism oriented along the vector
+func CreateBeam(width float32, vector mgl32.Vec3) *Geometry {
+	geo := CreateCube()
+	geo.Transform(AlignedOrientation(width, vector))
+	return geo
+}
+
+func AlignedOrientation(width float32, vector mgl32.Vec3) mgl32.Mat4 {
+	len := vector.Len()
+	return mgl32.QuatBetweenVectors(mgl32.Vec3{0, 1, 0}, vector).Mat4().
+		Mul4(mgl32.Translate3D(0, 0.5*len, 0)).
+		Mul4(mgl32.Scale3D(width, len, width))
 }
