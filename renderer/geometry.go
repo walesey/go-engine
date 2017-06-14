@@ -220,6 +220,7 @@ func CreateBeam(width float32, vector mgl32.Vec3) *Geometry {
 	return geo
 }
 
+// CreateBeam - creates a square prism oriented along the vector
 func AlignedOrientation(width float32, vector mgl32.Vec3) mgl32.Mat4 {
 	len := vector.Len()
 	return mgl32.QuatBetweenVectors(mgl32.Vec3{0, 1, 0}, vector).Mat4().

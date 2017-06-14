@@ -229,6 +229,7 @@ func (node *Node) Optimize(geometry *Geometry, transform mgl32.Mat4) {
 	}
 }
 
+// RelativePosition - find the position of n relative to node (n must be a child of node)
 func (node *Node) RelativePosition(n *Node) (mgl32.Vec3, error) {
 	if node == n {
 		return mgl32.Vec3{}, nil

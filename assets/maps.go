@@ -86,12 +86,21 @@ func FindNodeById(nodeId string, model *editorModels.NodeModel) *editorModels.No
 }
 
 func FindNodeByClass(class string, model *editorModels.NodeModel) []*editorModels.NodeModel {
+	return findNodeByClass(class, model, model)
+}
+
+func findNodeByClass(class string, model, srcModel *editorModels.NodeModel) []*editorModels.NodeModel {
 	results := []*editorModels.NodeModel{}
 	if hasClass(class, model) {
 		results = append(results, model)
 	}
 	for _, childModel := range model.Children {
-		results = append(results, FindNodeByClass(class, childModel)...)
+		results = append(results, findNodeByClass(class, childModel, srcModel)...)
+	}
+	if model.Reference != nil {
+		if refModel := FindNodeById(*model.Reference, srcModel); refModel != nil {
+			results = append(results, findNodeByClass(class, refModel, srcModel)...)
+		}
 	}
 	return results
 }
