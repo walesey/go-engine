@@ -48,6 +48,10 @@ func (ie *ImageElement) Spatial() renderer.Spatial {
 	return ie.node
 }
 
+func (ie *ImageElement) GlobalOrthoOrder() int {
+	return 0
+}
+
 func (ie *ImageElement) GetId() string {
 	return ie.id
 }

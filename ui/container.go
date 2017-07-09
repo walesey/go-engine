@@ -3,6 +3,7 @@ package ui
 import (
 	"image"
 	"image/color"
+	"sort"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/walesey/go-engine/renderer"
@@ -17,22 +18,24 @@ type MarginPercentages struct {
 }
 
 type Container struct {
-	id               string
-	Hitbox           Hitbox
-	width, height    float32
-	percentWidth     bool
-	percentHeight    bool
-	margin, padding  Margin
-	marginPercent    MarginPercentages
-	paddingPercent   MarginPercentages
-	node             *renderer.Node
-	elementsNode     *renderer.Node
-	background       *renderer.Node
-	backgroundBox    *renderer.Geometry
-	size, offset     mgl32.Vec2
-	backgroundOffset mgl32.Vec2
-	elementsOffset   mgl32.Vec2
-	children         []Element
+	id                    string
+	Hitbox                Hitbox
+	width, height         float32
+	percentWidth          bool
+	percentHeight         bool
+	GlobalOrthoOrderValue int
+	margin, padding       Margin
+	marginPercent         MarginPercentages
+	paddingPercent        MarginPercentages
+	node                  *renderer.Node
+	elementsNode          *renderer.Node
+	background            *renderer.Node
+	backgroundBox         *renderer.Geometry
+	size, offset          mgl32.Vec2
+	backgroundOffset      mgl32.Vec2
+	elementsOffset        mgl32.Vec2
+	children              []Element
+	childrenByOrtho       []Element
 }
 
 func (c *Container) Render(size, offset mgl32.Vec2) mgl32.Vec2 {
@@ -79,6 +82,7 @@ func (c *Container) Render(size, offset mgl32.Vec2) mgl32.Vec2 {
 	c.elementsNode.SetTranslation(c.elementsOffset.Vec3(0))
 	c.node.SetTranslation(c.offset.Vec3(0))
 	c.Hitbox.SetSize(backgroundSize)
+	c.node.OrthoOrderValue = c.GlobalOrthoOrder()
 	return totalSize
 }
 
@@ -105,6 +109,17 @@ func convertMargin(margin Margin, percentages MarginPercentages, parentWidth flo
 
 func (c *Container) Spatial() renderer.Spatial {
 	return c.node
+}
+
+func (c *Container) GlobalOrthoOrder() int {
+	highestOrthoValue := c.GlobalOrthoOrderValue
+	for _, child := range c.children {
+		goo := child.GlobalOrthoOrder()
+		if goo > highestOrthoValue {
+			highestOrthoValue = goo
+		}
+	}
+	return highestOrthoValue
 }
 
 func (c *Container) SetWidth(width float32) {
@@ -167,6 +182,7 @@ func (c *Container) AddChildren(children ...Element) {
 	for _, child := range children {
 		c.elementsNode.Add(child.Spatial())
 	}
+	c.updateChildrenByOrtho()
 }
 
 func (c *Container) RemoveChildren(children ...Element) {
@@ -178,6 +194,7 @@ func (c *Container) RemoveChildren(children ...Element) {
 			}
 		}
 	}
+	c.updateChildrenByOrtho()
 }
 
 func (c *Container) RemoveAllChildren() {
@@ -185,6 +202,13 @@ func (c *Container) RemoveAllChildren() {
 		c.elementsNode.Remove(child.Spatial(), true)
 	}
 	c.children = c.children[:0]
+	c.childrenByOrtho = c.childrenByOrtho[:0]
+}
+
+func (c *Container) updateChildrenByOrtho() {
+	c.childrenByOrtho = make([]Element, len(c.children))
+	copy(c.childrenByOrtho, c.children)
+	sort.Sort(byGlobalOrthoOrder(c.childrenByOrtho))
 }
 
 func (c *Container) ElementById(id string) Element {
@@ -208,19 +232,27 @@ func (c *Container) SetId(id string) {
 }
 
 func (c *Container) mouseMove(position mgl32.Vec2) bool {
+	childMouseMoved := false
 	offsetPos := position.Sub(c.offset)
-	for _, child := range c.children {
-		child.mouseMove(offsetPos.Sub(c.elementsOffset))
+	for _, child := range c.childrenByOrtho {
+		if child.mouseMove(offsetPos.Sub(c.elementsOffset)) {
+			childMouseMoved = true
+			break
+		}
 	}
-	return c.Hitbox.MouseMove(offsetPos.Sub(c.backgroundOffset))
+	return c.Hitbox.MouseMove(offsetPos.Sub(c.backgroundOffset)) || childMouseMoved
 }
 
 func (c *Container) mouseClick(button int, release bool, position mgl32.Vec2) bool {
+	childClicked := false
 	offsetPos := position.Sub(c.offset)
-	for _, child := range c.children {
-		child.mouseClick(button, release, offsetPos.Sub(c.elementsOffset))
+	for _, child := range c.childrenByOrtho {
+		if child.mouseClick(button, release, offsetPos.Sub(c.elementsOffset)) {
+			childClicked = true
+			break
+		}
 	}
-	return c.Hitbox.MouseClick(button, release, offsetPos.Sub(c.backgroundOffset))
+	return c.Hitbox.MouseClick(button, release, offsetPos.Sub(c.backgroundOffset)) || childClicked
 }
 
 func (c *Container) keyClick(key string, release bool) {
@@ -248,13 +280,14 @@ func NewContainer() *Container {
 	node.Add(background)
 	node.Add(elementsNode)
 	return &Container{
-		node:          node,
-		elementsNode:  elementsNode,
-		background:    background,
-		backgroundBox: box,
-		children:      make([]Element, 0),
-		Hitbox:        NewHitbox(),
-		padding:       NewMargin(0),
-		margin:        NewMargin(0),
+		node:                  node,
+		elementsNode:          elementsNode,
+		background:            background,
+		backgroundBox:         box,
+		children:              make([]Element, 0),
+		Hitbox:                NewHitbox(),
+		padding:               NewMargin(0),
+		margin:                NewMargin(0),
+		GlobalOrthoOrderValue: 0,
 	}
 }

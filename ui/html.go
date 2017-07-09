@@ -37,12 +37,12 @@ func LoadHTML(container *Container, htmlInput, cssInput io.Reader, assets HtmlAs
 		return []Activatable{}, err
 	}
 
-	activatables := renderNode(container, document.FirstChild, styles, assets)
+	activatables := renderNode(container, container, document.FirstChild, styles, assets)
 
 	return activatables, nil
 }
 
-func renderNode(container *Container, node *html.Node, styles *css.Stylesheet, assets HtmlAssets) []Activatable {
+func renderNode(container, parent *Container, node *html.Node, styles *css.Stylesheet, assets HtmlAssets) []Activatable {
 	activatables := []Activatable{}
 	nextNode := node
 	for nextNode != nil {
@@ -62,6 +62,7 @@ func renderNode(container *Container, node *html.Node, styles *css.Stylesheet, a
 			//Parse other html tag types
 			var textField *TextField
 			var imageElement *ImageElement
+			var dropdown *Dropdown
 			tagType := nextNode.DataAtom.String()
 			switch {
 			case tagType == "input":
@@ -83,6 +84,17 @@ func renderNode(container *Container, node *html.Node, styles *css.Stylesheet, a
 					imageElement = NewImageElement(img)
 					newContainer.AddChildren(imageElement)
 				}
+			case tagType == "select":
+				dropdownValue := getAttribute(nextNode, "value")
+				options := []string{}
+				for option := nextNode.FirstChild; option != nil && option != option.NextSibling; option = option.NextSibling {
+					if option.DataAtom.String() == "option" {
+						options = append(options, strings.TrimSpace(option.FirstChild.Data))
+					}
+				}
+				dropdown = createDropdown(options, nextNode, newContainer, parent, styles, assets)
+				dropdown.SetText(dropdownValue)
+				activatables = append(activatables, dropdown)
 			}
 
 			//Parse Styles
@@ -184,7 +196,9 @@ func renderNode(container *Container, node *html.Node, styles *css.Stylesheet, a
 			}
 
 			//Render children
-			activatables = append(activatables, renderNode(newContainer, nextNode.FirstChild, styles, assets)...)
+			if dropdown == nil && textField == nil {
+				activatables = append(activatables, renderNode(newContainer, container, nextNode.FirstChild, styles, assets)...)
+			}
 		}
 		if nextNode == nextNode.NextSibling {
 			break
@@ -259,6 +273,13 @@ func createTextField(text string, node *html.Node, container *Container, styles 
 	container.AddChildren(textField)
 	createText(textField.text, node, container, styles, assets)
 	return textField
+}
+
+func createDropdown(options []string, node *html.Node, container, parent *Container, styles *css.Stylesheet, assets HtmlAssets) *Dropdown {
+	dropdown := NewDropdown(options, color.Black, 16, assets.fontMap["default"], parent)
+	container.AddChildren(dropdown)
+	createText(dropdown.text, node, container, styles, assets)
+	return dropdown
 }
 
 func createText(textElement *TextElement, node *html.Node, container *Container, styles *css.Stylesheet, assets HtmlAssets) {

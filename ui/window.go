@@ -121,7 +121,7 @@ func (w *Window) mouseMove(position mgl32.Vec2) {
 func (w *Window) mouseClick(button int, release bool) {
 	if w.element != nil {
 		if !release {
-			deactivateAllTextFields(w.element)
+			deactivateAllFields(w.element)
 		}
 		if w.element.mouseClick(button, release, w.mousePos) {
 			// set this to the active window
@@ -140,12 +140,14 @@ func (w *Window) keyClick(key string, release bool) {
 	}
 }
 
-func deactivateAllTextFields(elem Element) {
+func deactivateAllFields(elem Element) {
 	for _, child := range elem.GetChildren() {
-		deactivateAllTextFields(child)
-		text, ok := child.(*TextField)
-		if ok {
-			text.Deactivate()
+		deactivateAllFields(child)
+		switch t := child.(type) {
+		case *TextField:
+			t.Deactivate()
+		case *Dropdown:
+			t.deactivate_setFlag()
 		}
 	}
 }

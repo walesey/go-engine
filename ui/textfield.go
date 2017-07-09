@@ -48,6 +48,10 @@ func (tf *TextField) Spatial() renderer.Spatial {
 	return tf.container.Spatial()
 }
 
+func (tf *TextField) GlobalOrthoOrder() int {
+	return tf.container.GlobalOrthoOrder()
+}
+
 func (tf *TextField) GetId() string {
 	return tf.container.GetId()
 }
@@ -155,7 +159,7 @@ func (tf *TextField) SetWidth(width float32) {
 }
 
 func (tf *TextField) UsePercentWidth(usePercent bool) {
-	tf.container.UsePercentHeight(usePercent)
+	tf.container.UsePercentWidth(usePercent)
 }
 
 func (tf *TextField) SetHeight(height float32) {

@@ -110,11 +110,17 @@ func populateContent(content *ui.Container) []ui.Activatable {
 	imageElement := ui.NewImageElement(img)
 	imageElement.SetWidth(200)
 
+	// example dropdown
+	dd := ui.NewDropdown([]string{"option1", "option2", "option3"}, color.Black, 16, nil, content)
+	dd.SetBackgroundColor(255, 255, 255, 255)
+	dd.SetMargin(ui.Margin{10, 0, 10, 0})
+	dd.SetText("option2")
+
 	// example text field
 	tf := ui.NewTextField("", color.Black, 16, nil)
 	tf.SetPlaceholder("this is a placeholder")
 	tf.SetBackgroundColor(255, 255, 255, 255)
-	tf.SetMargin(ui.Margin{10, 0, 10, 0})
+	tf.SetMargin(ui.Margin{0, 0, 10, 0})
 
 	// example hidden text field
 	passwordTf := ui.NewTextField("", color.Black, 16, nil)
@@ -145,10 +151,10 @@ func populateContent(content *ui.Container) []ui.Activatable {
 	})
 
 	// add everything to the content container
-	content.AddChildren(textElement, imageElement, tf, passwordTf, button)
+	content.AddChildren(textElement, imageElement, dd, tf, passwordTf, button)
 
 	// return everything that should be included in the Tabs order
-	return []ui.Activatable{tf, passwordTf}
+	return []ui.Activatable{dd, tf, passwordTf}
 }
 
 func htmlContent(content *ui.Container) []ui.Activatable {
@@ -157,6 +163,11 @@ func htmlContent(content *ui.Container) []ui.Activatable {
 			<div class=content>
 				<h1 id=heading>UI EXAMPLE!</h1>
 				<img src=testImage></img>
+				<select value=option2>
+					<option>option1</option>
+					<option>option2</option>
+					<option>option3</option>
+				</select>
 				<input type=text placeholder="this is a placeholder"></input>
 				<input type=password></input>
 				<button onclick=clickButton></button>
@@ -169,7 +180,7 @@ func htmlContent(content *ui.Container) []ui.Activatable {
 			width: 200;
 		}
 
-		.content input {
+		.content input, select {
 			background-color: #fff;
 			margin: 10 0 0 0;
 		}
@@ -194,10 +205,10 @@ func htmlContent(content *ui.Container) []ui.Activatable {
 
 	// button click callback
 	htmlAssets.AddCallback("clickButton", func(element ui.Element, args ...interface{}) {
-		if len(args) >= 2 && !args[1].(bool) { // on release
+		if len(args) >= 2 && args[1].(bool) { // on release
 			content.TextElementById("heading").SetText("release").SetTextColor(color.NRGBA{254, 0, 0, 254}).ReRender()
-		} else {
-			content.TextElementById("heading").SetText("press").SetTextColor(color.NRGBA{0, 254, 0, 254}).ReRender()
+		} else { // on click
+			content.TextElementById("heading").SetText("click").SetTextColor(color.NRGBA{0, 254, 0, 254}).ReRender()
 		}
 	})
 

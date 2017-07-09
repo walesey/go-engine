@@ -208,6 +208,10 @@ func (te *TextElement) Spatial() renderer.Spatial {
 	return te.node
 }
 
+func (te *TextElement) GlobalOrthoOrder() int {
+	return 0
+}
+
 func (te *TextElement) GetId() string {
 	return te.id
 }
