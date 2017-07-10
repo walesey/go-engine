@@ -2,6 +2,7 @@ package ui
 
 import (
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/walesey/go-engine/emitter"
 	"github.com/walesey/go-engine/util"
 )
 
@@ -16,45 +17,63 @@ type Hitbox interface {
 }
 
 type HitboxImpl struct {
-	size         mgl32.Vec2
-	eventHandler *EventHandler
-	hoverState   bool
+	size       mgl32.Vec2
+	events     emitter.EventEmitter
+	hoverState bool
+}
+
+type clickEvent struct {
+	button   int
+	release  bool
+	position mgl32.Vec2
 }
 
 func (hb *HitboxImpl) AddOnClick(handler func(button int, release bool, position mgl32.Vec2)) {
-	hb.eventHandler.AddOnClick(handler)
+	hb.events.On("click", func(e emitter.Event) {
+		if ce, ok := e.(clickEvent); ok {
+			handler(ce.button, ce.release, ce.position)
+		}
+	})
 }
 
 func (hb *HitboxImpl) AddOnHover(handler func()) {
-	hb.eventHandler.AddOnHover(handler)
+	hb.events.On("hover", func(e emitter.Event) {
+		handler()
+	})
 }
 
 func (hb *HitboxImpl) AddOnUnHover(handler func()) {
-	hb.eventHandler.AddOnUnHover(handler)
+	hb.events.On("unHover", func(e emitter.Event) {
+		handler()
+	})
 }
 
 func (hb *HitboxImpl) AddOnMouseMove(handler func(position mgl32.Vec2)) {
-	hb.eventHandler.AddOnMouseMove(handler)
+	hb.events.On("mouseMove", func(e emitter.Event) {
+		if pos, ok := e.(mgl32.Vec2); ok {
+			handler(pos)
+		}
+	})
 }
 
 func (hb *HitboxImpl) MouseMove(position mgl32.Vec2) bool {
 	if util.PointLiesInsideAABB(mgl32.Vec2{}, hb.size, position) {
 		if !hb.hoverState {
 			hb.hoverState = true
-			hb.eventHandler.onHover()
+			hb.events.Do("hover", 1)
 		}
-		hb.eventHandler.onMouseMove(position)
+		hb.events.Do("mouseMove", position)
 		return true
 	} else if hb.hoverState {
 		hb.hoverState = false
-		hb.eventHandler.onUnHover()
+		hb.events.Do("unHover", 1)
 	}
 	return false
 }
 
 func (hb *HitboxImpl) MouseClick(button int, release bool, position mgl32.Vec2) bool {
 	if util.PointLiesInsideAABB(mgl32.Vec2{}, hb.size, position) {
-		hb.eventHandler.onClick(button, release, position)
+		hb.events.Do("click", clickEvent{button, release, position})
 		return true
 	}
 	return false
@@ -66,6 +85,6 @@ func (hb *HitboxImpl) SetSize(size mgl32.Vec2) {
 
 func NewHitbox() Hitbox {
 	return &HitboxImpl{
-		eventHandler: NewEventHandler(),
+		events: emitter.New(1),
 	}
 }
