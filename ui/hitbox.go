@@ -60,13 +60,13 @@ func (hb *HitboxImpl) MouseMove(position mgl32.Vec2) bool {
 	if util.PointLiesInsideAABB(mgl32.Vec2{}, hb.size, position) {
 		if !hb.hoverState {
 			hb.hoverState = true
-			hb.events.Do("hover", 1)
+			hb.events.Do("hover", position)
 		}
 		hb.events.Do("mouseMove", position)
 		return true
 	} else if hb.hoverState {
 		hb.hoverState = false
-		hb.events.Do("unHover", 1)
+		hb.events.Do("unHover", position)
 	}
 	return false
 }

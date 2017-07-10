@@ -237,7 +237,6 @@ func (c *Container) mouseMove(position mgl32.Vec2) bool {
 	for _, child := range c.childrenByOrtho {
 		if child.mouseMove(offsetPos.Sub(c.elementsOffset)) {
 			childMouseMoved = true
-			break
 		}
 	}
 	return c.Hitbox.MouseMove(offsetPos.Sub(c.backgroundOffset)) || childMouseMoved
