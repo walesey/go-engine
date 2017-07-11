@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
+	"sync"
 )
 
 const clientPacketBufferSize = 100
@@ -18,12 +19,14 @@ type Client struct {
 	bytesReceived        int64
 	bytesSentByEvent     map[string]int64
 	bytesReceivedByEvent map[string]int64
+	bytesByEventMux      *sync.Mutex
 }
 
 func NewClient() *Client {
 	return &Client{
 		bytesSentByEvent:     make(map[string]int64),
 		bytesReceivedByEvent: make(map[string]int64),
+		bytesByEventMux:      &sync.Mutex{},
 	}
 }
 
@@ -126,19 +129,44 @@ func (c *Client) Close() {
 }
 
 func (c *Client) updateBytesSent(event string, sent int64) {
+	c.bytesByEventMux.Lock()
 	c.bytesSent += sent
 	total, ok := c.bytesSentByEvent[event]
 	if !ok {
 		c.bytesSentByEvent[event], total = 0, 0
 	}
 	c.bytesSentByEvent[event] = sent + total
+	c.bytesByEventMux.Unlock()
 }
 
 func (c *Client) updateBytesReceived(event string, sent int64) {
+	c.bytesByEventMux.Lock()
 	c.bytesReceived += sent
 	total, ok := c.bytesReceivedByEvent[event]
 	if !ok {
 		c.bytesReceivedByEvent[event], total = 0, 0
 	}
 	c.bytesReceivedByEvent[event] = sent + total
+	c.bytesByEventMux.Unlock()
+}
+
+func (c *Client) GetBytesSentByEvent() (byEvent map[string]int64) {
+	c.bytesByEventMux.Lock()
+	byEvent = make(map[string]int64)
+	for k, v := range c.bytesSentByEvent {
+		byEvent[k] = v
+	}
+	c.bytesByEventMux.Unlock()
+	return byEvent
+}
+
+func (c *Client) GetBytesReceivedByEvent() (byEvent map[string]int64) {
+	c.bytesByEventMux.Lock()
+	byEvent = make(map[string]int64)
+	byEvent = make(map[string]int64)
+	for k, v := range c.bytesReceivedByEvent {
+		byEvent[k] = v
+	}
+	c.bytesByEventMux.Unlock()
+	return byEvent
 }

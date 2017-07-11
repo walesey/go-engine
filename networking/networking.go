@@ -135,14 +135,14 @@ func (n *Network) BytesReceived() int64 {
 
 func (n *Network) BytesSentByCommand() map[string]int64 {
 	if n.IsClient() {
-		return n.client.bytesSentByEvent
+		return n.client.GetBytesSentByEvent()
 	}
 	return map[string]int64{}
 }
 
 func (n *Network) BytesReceivedByCommand() map[string]int64 {
 	if n.IsClient() {
-		return n.client.bytesReceivedByEvent
+		return n.client.GetBytesReceivedByEvent()
 	}
 	return map[string]int64{}
 }
