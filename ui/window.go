@@ -120,16 +120,20 @@ func (w *Window) mouseMove(position mgl32.Vec2) {
 
 func (w *Window) mouseClick(button int, release bool) {
 	if w.element != nil {
+		// Deselect all fields
 		if !release {
 			deactivateAllFields(w.element)
 		}
+		// Process the click
 		if w.element.mouseClick(button, release, w.mousePos) {
 			// set this to the active window
-			if activeWindow != nil {
-				activeWindow.node.OrthoOrderValue = 10
+			if !release {
+				if activeWindow != nil {
+					activeWindow.node.OrthoOrderValue = 10
+				}
+				w.node.OrthoOrderValue = 100
+				activeWindow = w
 			}
-			w.node.OrthoOrderValue = 100
-			activeWindow = w
 		}
 	}
 }
