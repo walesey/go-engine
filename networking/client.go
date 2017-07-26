@@ -163,7 +163,6 @@ func (c *Client) GetBytesSentByEvent() (byEvent map[string]int64) {
 func (c *Client) GetBytesReceivedByEvent() (byEvent map[string]int64) {
 	c.bytesByEventMux.Lock()
 	byEvent = make(map[string]int64)
-	byEvent = make(map[string]int64)
 	for k, v := range c.bytesReceivedByEvent {
 		byEvent[k] = v
 	}
