@@ -16,7 +16,7 @@ import (
 	"github.com/walesey/go-engine/engine"
 	"github.com/walesey/go-engine/glfwController"
 	"github.com/walesey/go-engine/opengl"
-	"github.com/walesey/go-engine/physics/chipmunk"
+	chipmunkPhysics "github.com/walesey/go-engine/physics/chipmunk"
 	"github.com/walesey/go-engine/physics/physicsAPI"
 	"github.com/walesey/go-engine/renderer"
 )

@@ -1,6 +1,8 @@
 package renderer
 
-import "time"
+import (
+	"time"
+)
 
 type FPSMeter struct {
 	start      time.Time

@@ -16,7 +16,7 @@ import (
 	"github.com/walesey/go-engine/networking"
 	"github.com/walesey/go-engine/opengl"
 	"github.com/walesey/go-engine/renderer"
-	"github.com/walesey/go-engine/util"
+	"github.com/walesey/go-engine/serializer"
 )
 
 /*
@@ -75,16 +75,16 @@ func main() {
 	//Networked Game events
 	network.ClientJoinedEvent(func(clientId string) {
 		fmt.Println("client joined, clientId: ", clientId)
-		network.TriggerOnServerAndClients("spawn", util.SerializeArgs(clientId, startingPosition))
+		network.TriggerOnServerAndClients("spawn", serializer.SerializeArgs(clientId, startingPosition))
 		for _, player := range players {
-			network.TriggerEvent("spawn", clientId, util.SerializeArgs(player.clientId, player.position))
+			network.TriggerEvent("spawn", clientId, serializer.SerializeArgs(player.clientId, player.position))
 		}
 	})
 
 	network.RegisterEvent("spawn", func(clientId string, data []byte) {
 		buf := bytes.NewBuffer(data)
-		playerID := util.Stringfrombytes(buf)
-		position := util.Vector2frombytes(buf)
+		playerID := serializer.Stringfrombytes(buf)
+		position := serializer.Vector2frombytes(buf)
 		if _, ok := players[playerID]; !ok {
 			player := &Player{clientId: playerID}
 			players[player.clientId] = player
@@ -102,15 +102,15 @@ func main() {
 
 	network.RegisterEvent("move", func(clientId string, data []byte) {
 		buf := bytes.NewBuffer(data)
-		playerID := util.Stringfrombytes(buf)
-		velocity := util.Vector2frombytes(buf)
+		playerID := serializer.Stringfrombytes(buf)
+		velocity := serializer.Vector2frombytes(buf)
 		if network.IsServer() && clientId != playerID {
 			return // client is only allowed to control the player assigned to them.
 		}
 		if player, ok := players[playerID]; ok {
 			player.velocity = velocity
 			if network.IsServer() {
-				network.BroadcastEvent("updatePlayer", util.SerializeArgs(playerID, player.position, player.velocity))
+				network.BroadcastEvent("updatePlayer", serializer.SerializeArgs(playerID, player.position, player.velocity))
 				network.FlushAllWriteBuffers()
 			}
 		}
@@ -119,9 +119,9 @@ func main() {
 	network.RegisterEvent("updatePlayer", func(clientId string, data []byte) {
 		if network.IsClient() { // This is a server to client update only
 			buf := bytes.NewBuffer(data)
-			playerID := util.Stringfrombytes(buf)
-			position := util.Vector2frombytes(buf)
-			velocity := util.Vector2frombytes(buf)
+			playerID := serializer.Stringfrombytes(buf)
+			position := serializer.Vector2frombytes(buf)
+			velocity := serializer.Vector2frombytes(buf)
 			if player, ok := players[playerID]; ok {
 				player.position = position
 				player.velocity = velocity
@@ -145,7 +145,7 @@ func main() {
 
 			// networked movement controls
 			move := func(velocity mgl32.Vec2) {
-				network.TriggerOnServerAndClients("move", util.SerializeArgs(network.ClientToken(), velocity))
+				network.TriggerOnServerAndClients("move", serializer.SerializeArgs(network.ClientToken(), velocity))
 			}
 
 			customController := controller.CreateController()
